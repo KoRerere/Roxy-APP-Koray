@@ -14,8 +14,6 @@ type UserTemplateComposerSource = UserTemplateDTO | MyTemplateItem
 
 let agentSkillInstalledRoot = ''
 
-const SKILL_SLUG_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/
-
 export function setAgentSkillInstalledRoot(root: string | undefined) {
   agentSkillInstalledRoot = typeof root === 'string' ? root.trim() : ''
 }
@@ -24,9 +22,36 @@ export function getAgentSkillInstalledRoot() {
   return agentSkillInstalledRoot
 }
 
+function toSafeSkillDirName(name: string): string {
+  return name.trim().replace(/[^\w-]/g, '_').replace(/_+/g, '_')
+}
+
+function normalizeSkillStorageSlug(slug: string | undefined): string {
+  const trimmed = slug?.trim()
+  if (!trimmed) {
+    return ''
+  }
+
+  const normalizedInput = trimmed.replace(/\\/g, '/')
+  if (!normalizedInput || normalizedInput.startsWith('/') || /^[a-z]:/i.test(normalizedInput)) {
+    return ''
+  }
+
+  const segments = normalizedInput.split('/')
+  if (segments.includes('..')) {
+    return ''
+  }
+
+  const normalized = segments.filter(segment => segment && segment !== '.').join('/')
+  if (!normalized) {
+    return ''
+  }
+  return toSafeSkillDirName(normalized)
+}
+
 export function buildAgentSkillMarkdownPath(slug: string | undefined): string {
-  const normalizedSlug = slug?.trim()
-  if (!agentSkillInstalledRoot || !normalizedSlug || !SKILL_SLUG_PATTERN.test(normalizedSlug)) {
+  const normalizedSlug = normalizeSkillStorageSlug(slug)
+  if (!agentSkillInstalledRoot || !normalizedSlug) {
     return ''
   }
 
@@ -71,7 +96,7 @@ function normalizeTemplateSlugAsSkillSlug(slug: string): string {
   return slug.startsWith('official-') ? slug.slice('official-'.length) : slug
 }
 
-function readSkillSlugFromMetadata(metadata: Record<string, unknown>): string {
+export function readSkillSlugFromMetadata(metadata: Record<string, unknown>): string {
   const direct = readFirstString(metadata, [
     'packageSlug',
     'package_slug',
@@ -79,23 +104,33 @@ function readSkillSlugFromMetadata(metadata: Record<string, unknown>): string {
     'skill_slug',
   ])
   if (direct) {
-    return direct
+    const normalized = normalizeSkillStorageSlug(normalizeTemplateSlugAsSkillSlug(direct))
+    if (normalized) {
+      return normalized
+    }
   }
 
   if (isRecord(metadata.skillMetadata)) {
     const nestedDirect = readFirstString(metadata.skillMetadata, ['packageSlug', 'package_slug', 'skillSlug', 'skill_slug'])
     if (nestedDirect) {
-      return nestedDirect
+      const normalized = normalizeSkillStorageSlug(normalizeTemplateSlugAsSkillSlug(nestedDirect))
+      if (normalized) {
+        return normalized
+      }
     }
 
     const nestedTemplateSlug = readString(metadata.skillMetadata.slug)
     if (nestedTemplateSlug) {
-      return normalizeTemplateSlugAsSkillSlug(nestedTemplateSlug)
+      return normalizeSkillStorageSlug(normalizeTemplateSlugAsSkillSlug(nestedTemplateSlug))
     }
   }
 
   const templateSlug = readString(metadata.slug)
-  return templateSlug ? normalizeTemplateSlugAsSkillSlug(templateSlug) : ''
+  if (!templateSlug) {
+    return ''
+  }
+
+  return normalizeSkillStorageSlug(normalizeTemplateSlugAsSkillSlug(templateSlug))
 }
 
 function readRecommendedSkillSlug(template: Pick<RecommendedTemplateComposerSource, 'metadata' | 'slug'>): string {
@@ -137,6 +172,17 @@ function createTemplateToken(options: {
     ? buildAgentSkillMarkdownPath(options.skillSlug)
     : ''
 
+  if (options.kind === 'skill') {
+    console.info('[skill-template-debug] create skill template token', {
+      id: options.id,
+      namespace: options.namespace,
+      title: options.title,
+      skillSlug: options.skillSlug,
+      installedRoot: getAgentSkillInstalledRoot(),
+      skillPath,
+    })
+  }
+
   return {
     id: skillPath || templateRef,
     kind: options.kind,
@@ -160,12 +206,27 @@ export function mapUserTemplateComposerItem(row: UserTemplateComposerSource, loc
   const title = pickLocalized(row.name, locale) || String(row.id)
   const prompt = readTemplatePrompt(metadata, locale)
   const description = pickLocalized(row.description, locale) || prompt
+  const skillSlug = templateKind === 'skill' ? readSkillSlugFromMetadata(metadata) : ''
+  if (templateKind === 'skill') {
+    console.info('[skill-template-debug] map user skill template composer item', {
+      id: row.id,
+      title,
+      officialTemplateId: row.officialTemplateId,
+      metadataKeys: Object.keys(metadata),
+      packageSlug: metadata.packageSlug,
+      skillSlug: metadata.skillSlug,
+      normalizedSkillSlug: skillSlug,
+      skillMdPath: metadata.skillMdPath,
+      nestedSkillSlug: isRecord(metadata.skillMetadata) ? metadata.skillMetadata.slug : undefined,
+      installedRoot: getAgentSkillInstalledRoot(),
+    })
+  }
   const tokens = templateKind === 'script' || templateKind === 'skill'
     ? [createTemplateToken({
         id: row.id,
         kind: templateKind,
         namespace: 'user',
-        skillSlug: templateKind === 'skill' ? readSkillSlugFromMetadata(metadata) : undefined,
+        skillSlug: templateKind === 'skill' ? skillSlug : undefined,
         title,
         description,
       })]

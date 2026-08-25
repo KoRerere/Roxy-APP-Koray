@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { grantAgentOnboardingGuidePoints } from '../onboarding-gift'
 import AgentTooltip from './AgentTooltip.vue'
@@ -24,6 +25,7 @@ const emit = defineEmits<{
   experience: [scenario: OnboardingScenarioId]
 }>()
 
+const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
 
 const scenarios: OnboardingScenario[] = [
@@ -70,6 +72,7 @@ const readyToSend = ref(false)
 const sendGuideVisible = ref(false)
 const submitted = ref(false)
 const completed = ref(false)
+const completionDialogVisible = ref(false)
 const completionCredits = ref(0)
 const progress = ref(0)
 const createExecutionText = ref('')
@@ -107,7 +110,7 @@ const createExecutionLines = [
 ]
 const publishProfiles = ['TikTok-1', 'TikTok-2', 'TikTok-3', 'TikTok-4']
 const publishExecutionLines = [
-  $t('收到，已链接 4 个窗口'),
+  $t('收到，已连接 4 个窗口'),
   $t('4 个窗口开始上传视频'),
   $t('正在填写信息'),
   $t('视频发布完成 4/4'),
@@ -121,7 +124,7 @@ const nurtureExecutionLines = [
 ]
 const nurtureStage = computed(() => Math.min(4, Math.floor(progress.value / 25)))
 const analyticsExecutionLines = [
-  $t('收到，已连接4个窗口'),
+  $t('收到，已连接 4 个窗口'),
   $t('开始收集四个账号的评论信息'),
   $t('归纳用户痛点、购买意向、常见问题和负面反馈'),
   $t('正在生成 CSV 文件'),
@@ -193,6 +196,7 @@ function resetDemo() {
   sendGuideVisible.value = false
   submitted.value = false
   completed.value = false
+  completionDialogVisible.value = false
   progress.value = 0
   createExecutionText.value = ''
   publishExecutionText.value = ''
@@ -223,6 +227,17 @@ async function refreshWelcomeGift() {
 
   try {
     const response = await grantAgentOnboardingGuidePoints(workspaceId)
+    const giftGranted = response.code === 0 && !response.data.alreadyGifted
+
+    if (giftGranted) {
+      try {
+        await userStore.getUserPayInfo()
+      }
+      catch (error) {
+        console.warn('[agent-console] Failed to refresh pay info after granting onboarding guide points', error)
+      }
+    }
+
     if (
       requestVersion !== welcomeGiftRequestVersion
       || workspaceStore.currentWorkspace?.id !== workspaceId
@@ -231,7 +246,7 @@ async function refreshWelcomeGift() {
       return
     }
 
-    welcomeGiftVisible.value = response.code === 0 && !response.data.alreadyGifted
+    welcomeGiftVisible.value = giftGranted
   }
   catch (error) {
     console.error('[agent-console] Failed to grant onboarding guide points', error)
@@ -547,6 +562,14 @@ function backToChoose() {
   page.value = 2
 }
 
+function showCompletionDialog() {
+  if (page.value !== 4 || !completed.value)
+    return
+
+  completionDialogVisible.value = true
+  playCompletionCreditsCountUp()
+}
+
 function close() {
   clearTimers()
   emit('close')
@@ -576,7 +599,7 @@ const ScenarioPrompt = defineComponent({
 
       const profile = h('span', { class: 'demo-token demo-token--profile' }, [
         h('span', { class: 'demo-token__prefix' }, `${$t('窗口')}`),
-        h('span', { class: 'demo-token__detail' }, $t(`{'@'}TikTok-1 · TikTok-2 · TikTok-3等4个`)),
+        h('span', { class: 'demo-token__detail' }, $t('{at}TikTok-1 · TikTok-2 · TikTok-3等4个', { at: '@' })),
       ])
 
       if (scenarioProps.scenarioId === 'publish') {
@@ -612,8 +635,8 @@ watch(() => props.visible, (visible) => {
 
 watch(completed, (isCompleted) => {
   completionCredits.value = 0
-  if (isCompleted)
-    playCompletionCreditsCountUp()
+  if (!isCompleted)
+    completionDialogVisible.value = false
 }, { flush: 'sync' })
 
 watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
@@ -1095,7 +1118,7 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
                         <div v-for="(profile, index) in publishProfiles" :key="profile" :class="{ selected: index < publishSelectedCount }">
                           <span class="demo-checkbox"><i><img src="/images/agent-onboarding/icons/check.svg" alt=""></i></span>
                           <SvgIcon name="base/rx_ic_route2" size="15" color="var(--colors-icon-icon-tertiary)" />
-                          <strong>{{ $t('窗口{index}:', { index: index + 1 }) }} {{ profile }}</strong>
+                          <strong>{{ $t('窗口 {index}', { index: index + 1 }) }}: {{ profile }}</strong>
                         </div>
                       </div>
                       <div class="demo-window-picker__footer">
@@ -1117,7 +1140,7 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
                       :show-template="promptTemplateVisible"
                     />
                     <span v-else-if="!submitted">{{ draft }}</span>
-                    <span v-else class="composer-placeholder-text">{{ $t("直接对我说出您的需求，输入 {'@'} 选择窗口，/ 使用模板") }}</span>
+                    <span v-else class="composer-placeholder-text">{{ $t('直接对我说出您的需求，输入 {at} 选择窗口，/ 使用模板', { at: '@' }) }}</span>
                   </div>
                   <div class="composer-toolbar-row">
                     <div class="composer-tools">
@@ -1155,10 +1178,13 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
             <button class="secondary-action" type="button" @click="backToChoose">
               {{ $t('上一步') }}
             </button>
+            <button v-if="completed" class="primary-action compact" type="button" @click="showCompletionDialog">
+              {{ $t('完成') }}
+            </button>
           </div>
 
           <Transition name="completion-dialog">
-            <div v-if="completed" class="onboarding-completion-mask">
+            <div v-if="completionDialogVisible" class="onboarding-completion-mask">
               <section class="onboarding-completion-dialog" role="dialog" aria-modal="true" :aria-labelledby="`onboarding-completion-title-${sessionKey}`">
                 <div class="onboarding-completion-visual" aria-hidden="true">
                   <i v-for="index in 18" :key="index" class="onboarding-completion-particle" />

@@ -3,6 +3,7 @@ import SingleCreate from './modes/single-create.vue'
 import BatchCreate from './modes/batch-create.vue'
 import ImportCreate from './modes/import-create.vue'
 import { useCreatePageShared } from './modes/useCreatePageShared'
+import { API } from '/@/api'
 import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent'
 import { useSimpleLocale } from '/@/stores/locale'
 import { AI_BATCH_CREATE_AGENT_ROUTE } from '/@/views/agent-console/batch-create-prefill'
@@ -14,6 +15,10 @@ const { opening: aiAgentOpening, openRoxyAIAgent } = useOpenRoxyAIAgent()
 const useWideRecommendationBadge = computed(() => /^(?:en|ru)(?:-|$)/i.test(simpleLocale.currentLocale))
 
 function toAgentBatchCreate() {
+  void API.base.userReportAppEventCreate({
+    eventName: 'ai_bath_create',
+    eventProperties: {},
+  }).catch(console.error)
   return openRoxyAIAgent(AI_BATCH_CREATE_AGENT_ROUTE)
 }
 </script>

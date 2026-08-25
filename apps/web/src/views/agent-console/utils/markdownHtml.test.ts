@@ -167,6 +167,11 @@ test('uses input token presentation instead of the skill fallback', () => {
   assert.equal(kind, 'input')
   assert.equal(getAgentMarkdownTokenLabel(kind, 'Product name', ''), 'Product name')
   assert.equal(getAgentMarkdownTokenLabel(kind, 'Product name', 'Roxy Browser'), 'Roxy Browser')
+  const textareaKind = normalizeAgentMarkdownTokenKind('textarea')
+
+  assert.equal(textareaKind, 'textarea')
+  assert.equal(getAgentMarkdownTokenLabel(textareaKind, 'Notes', ''), 'Notes')
+  assert.equal(getAgentMarkdownTokenLabel(textareaKind, 'Notes', 'Long notes'), 'Long notes')
   assert.equal(normalizeAgentMarkdownTokenKind('unknown'), 'skill')
 })
 test('renders input protocol tokens like composer tokens', () => {
@@ -175,6 +180,14 @@ test('renders input protocol tokens like composer tokens', () => {
 
   assert.match(filled, /<roxy-agent-token kind="input" title="Roxy Browser" target="Roxy Browser"><\/roxy-agent-token>/)
   assert.match(empty, /<roxy-agent-token kind="input" title="Product name" target=""><\/roxy-agent-token>/)
+})
+
+test('renders textarea protocol tokens like composer input tokens', () => {
+  const filled = renderMarkdown('Use [textarea:Notes](Line one)')
+  const empty = renderMarkdown('Use [textarea:Notes]()')
+
+  assert.match(filled, /<roxy-agent-token kind="textarea" title="Line one" target="Line one"><\/roxy-agent-token>/)
+  assert.match(empty, /<roxy-agent-token kind="textarea" title="Notes" target=""><\/roxy-agent-token>/)
 })
 
 test('renders url protocol tokens with their dedicated token kind', () => {

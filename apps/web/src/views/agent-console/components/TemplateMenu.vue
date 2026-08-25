@@ -19,7 +19,7 @@
   height: 36px;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   border-radius: 10px;
   color: var(--color-text-primary);
   font-size: 14px;

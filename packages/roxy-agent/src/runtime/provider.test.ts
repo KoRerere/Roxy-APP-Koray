@@ -31,6 +31,7 @@ describe('runtime model cache', () => {
 
     expect(getUserModel).toHaveBeenCalledTimes(1)
     expect(first.model).toBe('deepseek-v4-flash')
+    expect(first.modelType).toBe('text_model')
     expect(second.model).toBe('deepseek-v4-flash')
     expect(first.headers).toMatchObject({ 'Conversation-Id': 'conversation-1', 'Turn-Id': 'turn-1' })
     expect(second.headers).toMatchObject({ 'Conversation-Id': 'conversation-2', 'Turn-Id': 'turn-2' })
@@ -47,6 +48,7 @@ describe('runtime model cache', () => {
 
     await expect(getRuntimeModel()).resolves.toMatchObject({
       model: 'deepseek-v4-flash-vision-exp',
+      modelType: 'vlm_model',
       modelInfo: { model: 'deepseek-v4-flash-vision-exp' },
     })
   })

@@ -6,9 +6,10 @@ import { agentModelApi } from '@/api/agentApiClient'
 import { aiAgentResponsesUrl, aiAgentToken, env } from '@/config'
 import { retryRuntimeOperation, withRuntimeNetworkRetry } from './retrying-provider'
 
-interface CachedRuntimeModel {
+export interface RuntimeModelSelection {
   model: string
   modelInfo: AiAgentModelConfig
+  modelType: 'vlm_model' | 'text_model'
 }
 
 interface RuntimeModelOptions {
@@ -18,8 +19,8 @@ interface RuntimeModelOptions {
   onRetry?: (event: RuntimeRetryEvent) => void
 }
 
-const runtimeModelCache = new Map<string, CachedRuntimeModel>()
-const runtimeModelPending = new Map<string, Promise<CachedRuntimeModel>>()
+const runtimeModelCache = new Map<string, RuntimeModelSelection>()
+const runtimeModelPending = new Map<string, Promise<RuntimeModelSelection>>()
 let runtimeModelCacheGeneration = 0
 
 function runtimeModelCacheKey(): string {
@@ -60,13 +61,14 @@ export async function getRuntimeModel(options: RuntimeModelOptions = {}) {
       { onRetry: options.onRetry },
       options.signal,
     ).then((modelInfo) => {
-      const info = modelInfo.vlm_model ?? modelInfo.text_model
+      const modelType = modelInfo.vlm_model?.model ? 'vlm_model' : 'text_model'
+      const info = modelInfo[modelType]
       const model = info?.model
       if (!info || !model) {
         throw new Error('获取模型信息失败')
       }
 
-      const resolved: CachedRuntimeModel = { model, modelInfo: info }
+      const resolved: RuntimeModelSelection = { model, modelInfo: info, modelType }
       if (runtimeModelCacheGeneration === requestGeneration) {
         runtimeModelCache.set(cacheKey, resolved)
       }

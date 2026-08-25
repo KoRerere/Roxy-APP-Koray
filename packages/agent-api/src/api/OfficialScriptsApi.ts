@@ -30,12 +30,13 @@ export class OfficialScriptsApi<SecurityDataType = unknown> {
   }
 
   /**
-   * No description
+   * @description **Deprecated:** 脚本分类接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/template-label-categories` 和 `/v1/template-labels` 管理模板分类/标签。
    *
    * @tags OfficialScripts
    * @name ListScriptCategories
    * @summary 列出启用的官方脚本分类
    * @request GET:/v1/script-categories
+   * @deprecated
    * @response `200` `ListScriptCategoriesData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -59,12 +60,13 @@ export class OfficialScriptsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 官方脚本接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/templates?templateType=script` 获取官方脚本模板。
    *
    * @tags OfficialScripts
    * @name ListOfficialScripts
    * @summary 列出官方脚本
    * @request GET:/v1/official/scripts
+   * @deprecated
    * @response `200` `ListOfficialScriptsData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -92,12 +94,13 @@ export class OfficialScriptsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 官方脚本详情接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/templates/{template_id_or_slug}` 获取官方模板详情。
    *
    * @tags OfficialScripts
    * @name GetOfficialScript
    * @summary 按 ID 或 slug 获取官方脚本详情
    * @request GET:/v1/official/scripts/{script_id_or_slug}
+   * @deprecated
    * @response `200` `GetOfficialScriptData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized

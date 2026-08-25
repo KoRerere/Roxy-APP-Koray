@@ -17,6 +17,7 @@ import type {
   ChatResponse,
   ChatStreamChunk,
   ContentBlock,
+  FileBlock,
   ImageBlock,
   IModelProvider,
   JsonSchema,
@@ -110,12 +111,22 @@ function toolResultText(content: ToolResultBlock['content']): string {
   return typeof content === 'string' ? content : content.map((block) => block.text).join('\n')
 }
 
-type ResponsesMessageContent = { type: 'input_text'; text: string } | { type: 'input_image'; image_url: string }
+type ResponsesMessageContent =
+  | { type: 'input_text'; text: string }
+  | { type: 'input_image'; image_url: string }
+  | { type: 'input_image'; file_id: string }
 
 function mapImageBlock(block: ImageBlock): ResponsesMessageContent {
   return {
     type: 'input_image',
     image_url: `data:${block.mimeType};base64,${block.data}`,
+  }
+}
+
+function mapFileBlock(block: FileBlock): ResponsesMessageContent {
+  return {
+    type: 'input_image',
+    file_id: block.fileId,
   }
 }
 
@@ -199,6 +210,10 @@ function mapMessages(messages: Message[], customToolNames: ReadonlySet<string>):
       }
       if (block.type === 'image') {
         pendingContent.push(mapImageBlock(block))
+        continue
+      }
+      if (block.type === 'file') {
+        pendingContent.push(mapFileBlock(block))
         continue
       }
       flushMessageContent()

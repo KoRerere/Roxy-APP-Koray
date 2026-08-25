@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AgentTaskStatus } from '../types'
+import GridLoaderIcon from '/@/assets/icons/roxy-agent/grid-loader.svg?component'
 
 defineProps<{
   status: AgentTaskStatus
@@ -16,7 +17,8 @@ const labels = computed<Record<AgentTaskStatus, string>>(() => ({
 
 <template>
   <span class="status-badge" :class="status">
-    <span class="status-icon" aria-hidden="true" />
+    <GridLoaderIcon v-if="status === 'running'" class="status-icon" aria-hidden="true" />
+    <span v-else class="status-icon" aria-hidden="true" />
     <span class="status-label">{{ labels[status] }}</span>
   </span>
 </template>
@@ -45,21 +47,33 @@ const labels = computed<Record<AgentTaskStatus, string>>(() => ({
     background: transparent;
 
     .status-icon {
-      width: 12px;
-      height: 12px;
-      border: 1.5px solid transparent;
-      border-right-color: #f359dc;
-      border-bottom-color: #f359dc;
-      border-left-color: #3faaf6;
-      border-radius: 999px;
-      animation: task-status-spin 0.8s linear infinite;
+      width: 10px;
+      height: 10px;
+      color: var(--color-text-primary);
     }
 
     .status-label {
+      --status-shimmer-solid: #141414;
+      --status-shimmer-fade: rgb(20 20 20 / 45%);
+
       color: transparent;
-      background: var(--agent-gradient);
+      background: linear-gradient(
+        90deg,
+        var(--status-shimmer-solid) 0%,
+        var(--status-shimmer-solid) 30%,
+        var(--status-shimmer-fade) 45%,
+        var(--status-shimmer-fade) 55%,
+        var(--status-shimmer-solid) 70%,
+        var(--status-shimmer-solid) 100%
+      );
+      background-size: 300% 100%;
       background-clip: text;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 18px;
+      -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      animation: status-label-shine 2.25s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
     }
   }
 
@@ -152,14 +166,30 @@ const labels = computed<Record<AgentTaskStatus, string>>(() => ({
   }
 }
 
-@keyframes task-status-spin {
-  to {
-    transform: rotate(360deg);
+:global(html[data-theme='dark'] body.agent-console-window .status-badge.running .status-label),
+:global(html.app-dark body.agent-console-window .status-badge.running .status-label),
+:global(body.agent-console-window[data-theme='dark'] .status-badge.running .status-label) {
+  --status-shimmer-solid: #fcfcfc;
+  --status-shimmer-fade: rgb(252 252 252 / 45%);
+}
+
+@keyframes status-label-shine {
+  0%,
+  18% {
+    background-position: 100% 0;
+  }
+
+  82%,
+  100% {
+    background-position: 0% 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .status-badge.running .status-icon {
+  .status-badge.running .status-label {
+    color: var(--color-text-primary);
+    background: none;
+    -webkit-text-fill-color: currentColor;
     animation: none;
   }
 }

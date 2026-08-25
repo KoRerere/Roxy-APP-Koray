@@ -89,7 +89,7 @@ export const AgentToken = Node.create({
       profileCount,
       getProfileTokenDirIds(attrs),
     )
-    const isEmptyInput = (kind === 'input' || kind === 'url') && !attrs.payload.value?.trim()
+    const isEmptyInput = (kind === 'input' || kind === 'textarea' || kind === 'url') && !attrs.payload.value?.trim()
     const isEmptyProfile = kind === 'profile' && profileCount === 0
 
     return [
@@ -154,7 +154,7 @@ export const AgentToken = Node.create({
             ]],
             ['span', { class: 'agent-token__label' }, label],
           ]),
-      ...(kind === 'input' || kind === 'url' || (kind === 'profile' && profileCount > 0)
+      ...(kind === 'input' || kind === 'textarea' || kind === 'url' || (kind === 'profile' && profileCount > 0)
         ? []
         : [[
             'span',
@@ -215,11 +215,11 @@ function parseTokenPayload(payload: string) {
 }
 
 export function normalizeTokenKind(kind: string): AgentComposerTokenKind {
-  return kind === 'profile' || kind === 'script' || kind === 'skill' || kind === 'input' || kind === 'url' ? kind : 'skill'
+  return kind === 'profile' || kind === 'script' || kind === 'skill' || kind === 'input' || kind === 'textarea' || kind === 'url' ? kind : 'skill'
 }
 
 export function getAgentTokenIconName(kind: AgentComposerTokenKind) {
-  if (kind === 'input') {
+  if (kind === 'input' || kind === 'textarea') {
     return 'roxy-agent/rx-ic-prompts'
   }
 
@@ -243,7 +243,7 @@ function getAgentTokenLabel(attrs: AgentComposerItem) {
     return getProfileTokenCount(attrs) > 0 ? $t('窗口') : $t('选择窗口')
   }
 
-  if (attrs.kind !== 'input' && attrs.kind !== 'url') {
+  if (attrs.kind !== 'input' && attrs.kind !== 'textarea' && attrs.kind !== 'url') {
     return attrs.title
   }
 

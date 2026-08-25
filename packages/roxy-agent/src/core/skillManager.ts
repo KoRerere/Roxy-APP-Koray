@@ -67,6 +67,30 @@ function toSafeDirName(name: string): string {
   return name.trim().replace(/[^\w-]/g, '_').replace(/_+/g, '_')
 }
 
+function normalizeInstalledSkillSlug(slug: string): string {
+  const trimmed = slug.trim()
+  if (!trimmed) {
+    return ''
+  }
+
+  const normalizedInput = trimmed.replace(/\\/g, '/')
+  if (!normalizedInput || path.posix.isAbsolute(normalizedInput) || /^[a-z]:/i.test(normalizedInput)) {
+    return ''
+  }
+
+  const segments = normalizedInput.split('/')
+  if (segments.includes('..')) {
+    return ''
+  }
+
+  const normalized = segments.filter(segment => segment && segment !== '.').join('/')
+  if (!normalized) {
+    return ''
+  }
+
+  return toSafeDirName(normalized)
+}
+
 function isPathInsideOrEqual(parent: string, target: string): boolean {
   const relative = path.relative(parent, target)
   return parent === target || (relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative))
@@ -228,6 +252,37 @@ export class SkillManager {
 
       return Boolean(identity.packageName && record.name === identity.packageName)
     }) ?? null
+  }
+
+  async deleteInstalledSkillBySlug(slug: string): Promise<boolean> {
+    const normalizedSlug = normalizeInstalledSkillSlug(slug)
+    if (!normalizedSlug) {
+      throw new Error('Invalid installed Skill slug.')
+    }
+    const deleted = await Promise.all([
+      this.deleteSkillDirectoryBySlug(this.installedSkillsDir, normalizedSlug, 'Installed'),
+      this.deleteSkillDirectoryBySlug(this.skillsDir, normalizedSlug, 'User'),
+    ])
+    return deleted.some(Boolean)
+  }
+
+  private async deleteSkillDirectoryBySlug(rootDir: string, normalizedSlug: string, label: string): Promise<boolean> {
+    const root = path.resolve(rootDir)
+    const targetDir = path.resolve(root, normalizedSlug)
+    if (!isPathInsideOrEqual(root, targetDir) || targetDir === root) {
+      throw new Error('Invalid installed Skill slug.')
+    }
+
+    const stat = await lstat(targetDir).catch(error => (error as NodeJS.ErrnoException).code === 'ENOENT' ? null : Promise.reject(error))
+    if (!stat) {
+      return false
+    }
+    if (!stat.isDirectory() || stat.isSymbolicLink()) {
+      throw new Error(`${label} Skill path is not a directory.`)
+    }
+
+    await rm(targetDir, { recursive: true, force: true })
+    return true
   }
 
   async refreshInstalledTemplateSkillMetadata(

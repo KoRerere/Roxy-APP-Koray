@@ -5,7 +5,7 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { afterAll, beforeAll, describe, it, vi } from 'vitest'
 import { recoverInterruptedConversationRuns } from '@/core/agent-events/conversationRunState'
-import { ChatContextAPI, closeDatabase, ConversationManager } from './index'
+import { ChatContextAPI, closeDatabase, ConversationManager, FileRecordStore } from './index'
 
 const testState = vi.hoisted(() => ({ root: '' }))
 
@@ -92,6 +92,27 @@ describe('conversationManager.update', () => {
     assert.equal(updatedConversation?.model, 'model-b')
     assert.equal(updatedConversation?.is_title_set, 0)
     assert.equal(ConversationManager.update(conversationId, {}), false)
+  })
+})
+
+describe('fileRecordStore upstream fields', () => {
+  it('persists provider file references independently from the OSS URL', () => {
+    const record = FileRecordStore.insert({
+      file_id: 'file-with-upstream-id',
+      file_name: 'image.png',
+      local_path: '/tmp/image.png',
+      oss_url: 'https://oss.example/image.png',
+      upstream_file_id: 'file-api-1',
+      upstream_file_service: 'deepseek',
+      mime_type: 'image/png',
+      size: 3,
+      hash: 'image-hash',
+    })
+
+    assert.equal(record.oss_url, 'https://oss.example/image.png')
+    assert.equal(record.upstream_file_id, 'file-api-1')
+    assert.equal(record.upstream_file_service, 'deepseek')
+    assert.equal(FileRecordStore.getByUpstreamFileId('file-api-1')?.file_id, record.file_id)
   })
 })
 
@@ -396,6 +417,8 @@ describe('conversation schema migration', () => {
       fileColumns.some((column) => column.name === 'remote_file_id'),
       false,
     )
+    assert.equal(fileColumns.some((column) => column.name === 'upstream_file_id'), true)
+    assert.equal(fileColumns.some((column) => column.name === 'upstream_file_service'), true)
     const tables = migratedDb.prepare("SELECT name FROM sqlite_master WHERE type IN ('table', 'view')").all() as unknown as Array<{ name: string }>
     assert.equal(
       tables.some((table) => table.name === 'assets'),

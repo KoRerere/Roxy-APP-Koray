@@ -118,6 +118,10 @@ export interface AgentSkillPathInfo {
   skillMdPath?: string
 }
 
+export interface AgentInstalledSkillDeleteResult {
+  deleted: boolean
+}
+
 function getResponseMessage(value: AgentConsoleApiResponse<unknown>) {
   return value.msg || value.message || 'Agent request failed'
 }
@@ -379,6 +383,12 @@ export function useAgentConsoleApi() {
     return request<AgentSkillPathInfo>(`/api/skills/path-info${query}`)
   }
 
+  function deleteInstalledSkill(slug: string) {
+    return request<AgentInstalledSkillDeleteResult>(`/api/skills/installed/${encodeURIComponent(slug)}`, {
+      method: 'DELETE',
+    })
+  }
+
   async function uploadFile(data: string, mimeType: string, fileName: string, conversationId?: string) {
     return request<AgentConsoleUploadResult>('/api/upload', {
       method: 'POST',
@@ -475,6 +485,7 @@ export function useAgentConsoleApi() {
     fileToBase64,
     getFileUrl,
     scriptSelfDescription,
+    deleteInstalledSkill,
     skillPathInfo,
     stopTaskLog,
     syncTasks,

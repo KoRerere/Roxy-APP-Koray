@@ -202,6 +202,15 @@ export interface ApiResponseUploadedFileInfo {
   message: string;
 }
 
+/** ApiResponse[UpstreamUploadedFileInfo] */
+export interface ApiResponseUpstreamUploadedFileInfo {
+  /** Code */
+  code: 0;
+  data: UpstreamUploadedFileInfo;
+  /** Message */
+  message: string;
+}
+
 /** ApiResponse[UserModelInfo] */
 export interface ApiResponseUserModelInfo {
   /** Code */
@@ -391,6 +400,11 @@ export interface BodyImportTemplatesAdminApiTemplatesImportPost {
    * @format binary
    */
   file: File;
+  /**
+   * Manifest
+   * 官方模板导入索引；ZIP 内只包含 assets/ 文件
+   */
+  manifest: string;
 }
 
 /** Body_upload_file_v1_files_upload_post */
@@ -409,6 +423,24 @@ export interface BodyUploadFileV2V2FilesUploadPost {
    * @format binary
    */
   file: File;
+}
+
+/** Body_upload_file_v3_v3_files_upload_post */
+export interface BodyUploadFileV3V3FilesUploadPost {
+  /**
+   * File
+   * @format binary
+   */
+  file: File;
+  /**
+   * Forward
+   * @default false
+   */
+  forward?: boolean;
+  /** Model */
+  model?: string | null;
+  /** Expires After Seconds */
+  expires_after_seconds?: number | null;
 }
 
 /** Body_upload_icon_file_admin_api_templates_upload_icon_post */
@@ -1003,7 +1035,7 @@ export interface ModelUpdate {
 export interface OfficialScriptCreate {
   /**
    * Slug
-   * 以 official- 开头的脚本唯一标识
+   * 脚本唯一标识，兼容传入 official- 前缀
    * @minLength 1
    * @maxLength 128
    */
@@ -1108,7 +1140,7 @@ export interface OfficialScriptInfo {
 export interface OfficialScriptUpdate {
   /**
    * Slug
-   * 以 official- 开头的脚本唯一标识
+   * 脚本唯一标识，兼容传入 official- 前缀
    */
   slug?: string | null;
   /** Category Id */
@@ -1172,9 +1204,7 @@ export interface OfficialTemplateMetadataInfo {
   /** Sha512 */
   sha512?: string | null;
   /** Version */
-  version?: number | null;
-  /** Scriptversion */
-  scriptVersion?: string | null;
+  version?: string | null;
   /** Optionsschema */
   optionsSchema?: string | null;
   /** Skillmetadata */
@@ -1491,6 +1521,22 @@ export interface RatesInput {
    * @default 0
    */
   video_second?: number;
+}
+
+/** ReorderPayload */
+export interface ReorderPayload {
+  /**
+   * Moved Id
+   * @min 1
+   */
+  moved_id: number;
+  /**
+   * Target Id
+   * @min 1
+   */
+  target_id: number;
+  /** Placement */
+  placement: ReorderPayloadPlacementEnum;
 }
 
 /**
@@ -2185,6 +2231,24 @@ export interface UploadedFileInfo {
   url: string;
 }
 
+/** UpstreamUploadedFileInfo */
+export interface UpstreamUploadedFileInfo {
+  /** File Id */
+  file_id: string;
+  /** Filename */
+  filename: string | null;
+  /** Content Type */
+  content_type: string;
+  /** Size */
+  size: number;
+  /** Url */
+  url: string;
+  /** Upstream File Id */
+  upstream_file_id?: string | null;
+  /** Upstream Service */
+  upstream_service?: string | null;
+}
+
 /** UserModelConfig */
 export interface UserModelConfig {
   /** Model */
@@ -2651,6 +2715,12 @@ export enum OfficialTemplateInfoTemplateTypeEnum {
   Prompt = "prompt",
 }
 
+/** Placement */
+export enum ReorderPayloadPlacementEnum {
+  Before = "before",
+  After = "after",
+}
+
 /** Action */
 export enum TaskStateRequestActionEnum {
   Start = "start",
@@ -3086,8 +3156,15 @@ export type ListUserTemplatesData = ApiResponseUserTemplatePage;
 export type ListUserTemplatesError = ApiErrorResponse;
 
 export interface GetUserTemplateParams {
+  /**
+   * Template Type
+   * 按类型过滤：script/skill/prompt
+   */
+  template_type?: string | null;
+  /** Templatetype */
+  templateType?: string | null;
   /** Template Id */
-  templateId: number;
+  templateId: string;
 }
 
 export type GetUserTemplateData = ApiResponseUserTemplateInfo;
@@ -3263,6 +3340,11 @@ export interface GetFileV2V2FilesFileIdGetParams {
 }
 
 export type GetFileV2V2FilesFileIdGetError = ApiErrorResponse;
+
+export type UploadFileV3V3FilesUploadPostData =
+  ApiResponseUpstreamUploadedFileInfo;
+
+export type UploadFileV3V3FilesUploadPostError = ApiErrorResponse;
 
 export type VerifySecretAdminApiVerifySecretPostData = any;
 
@@ -3498,6 +3580,11 @@ export interface ListUsersAdminApiUsersGetParams {
    * 排序方向：asc / desc
    */
   sortOrder?: string | null;
+  /**
+   * Activefilter
+   * 活跃用户筛选：today（当日）/ last7days（近7天）
+   */
+  activeFilter?: string | null;
 }
 
 export type ListUsersAdminApiUsersGetData = any;
@@ -4154,6 +4241,12 @@ export type DownloadConversationAdminApiConversationGetData = any;
 export type DownloadConversationAdminApiConversationGetError =
   HTTPValidationError;
 
+export type DownloadBatchConversationExportAdminApiConversationsBatchExportDownloadGetData =
+  any;
+
+export type DownloadBatchConversationExportAdminApiConversationsBatchExportDownloadGetError =
+  HTTPValidationError;
+
 export type ListSettingsAdminApiSettingsGetData = any;
 
 export type ListSettingsAdminApiSettingsGetError = HTTPValidationError;
@@ -4550,6 +4643,11 @@ export type ExportTemplatesAdminApiTemplatesExportGetData = any;
 export type ExportTemplatesAdminApiTemplatesExportGetError =
   HTTPValidationError;
 
+export type ReorderTemplatesAdminApiTemplatesReorderPutData = any;
+
+export type ReorderTemplatesAdminApiTemplatesReorderPutError =
+  HTTPValidationError;
+
 export interface ImportTemplatesAdminApiTemplatesImportPostParams {
   /**
    * Overwrite
@@ -4625,6 +4723,12 @@ export type CreateTemplateLabelCategoryAdminApiTemplateLabelCategoriesPostData =
 export type CreateTemplateLabelCategoryAdminApiTemplateLabelCategoriesPostError =
   HTTPValidationError;
 
+export type ReorderTemplateLabelCategoriesAdminApiTemplateLabelCategoriesReorderPutData =
+  any;
+
+export type ReorderTemplateLabelCategoriesAdminApiTemplateLabelCategoriesReorderPutError =
+  HTTPValidationError;
+
 export interface UpdateTemplateLabelCategoryAdminApiTemplateLabelCategoriesCategoryIdPutParams {
   /** Category Id */
   categoryId: number;
@@ -4693,6 +4797,11 @@ export type ListTemplateLabelsAdminApiTemplateLabelsGetError =
 export type CreateTemplateLabelAdminApiTemplateLabelsPostData = any;
 
 export type CreateTemplateLabelAdminApiTemplateLabelsPostError =
+  HTTPValidationError;
+
+export type ReorderTemplateLabelsAdminApiTemplateLabelsReorderPutData = any;
+
+export type ReorderTemplateLabelsAdminApiTemplateLabelsReorderPutError =
   HTTPValidationError;
 
 export interface UpdateTemplateLabelAdminApiTemplateLabelsLabelIdPutParams {

@@ -304,6 +304,7 @@ export class AgentImpl implements Agent {
     const userMessage: Message = {
       role: 'user',
       content: rawUserMessage.content,
+      ...(rawUserMessage.metadata ? { metadata: rawUserMessage.metadata } : {}),
       ...(rawUserMessage.transcriptItems ? { transcriptItems: rawUserMessage.transcriptItems } : {}),
     }
     const history = await this.deps.memory.getAll(this.sessionId)

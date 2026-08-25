@@ -147,12 +147,18 @@ export async function preloadSkillMarkdownLinks(
   message: string,
   signal?: AbortSignal,
 ): Promise<SkillMarkdownPreloadResult> {
+  console.info('[skill-template-debug] preload skill markdown links', {
+    messageLength: message.length,
+    hasInstalledSkillMarkdownPath: /library[\\/]skills[\\/]installed[\\/].+[\\/]SKILL\.md/.test(message),
+    preview: message.slice(0, 500),
+  })
   const result: SkillMarkdownPreloadResult = {
     existing: [],
     downloaded: [],
     errors: [],
   }
   const links = findSkillMarkdownLinks(message)
+  console.info('[skill-template-debug] parsed skill markdown links', links)
   const seen = new Set<string>()
 
   for (const link of links) {
@@ -163,9 +169,17 @@ export async function preloadSkillMarkdownLinks(
 
     try {
       const preload = await ensureSkillLinkDownloaded(link, signal)
+      console.info('[skill-template-debug] ensured skill link downloaded', {
+        link,
+        preload,
+      })
       result[preload.status].push(preload.slug)
     }
     catch (error) {
+      console.error('[skill-template-debug] failed to ensure skill link downloaded', {
+        link,
+        error,
+      })
       result.errors.push({
         title: link.title,
         path: link.path,

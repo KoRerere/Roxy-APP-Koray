@@ -2,10 +2,11 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { afterAll, beforeAll, describe, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, it, vi } from 'vitest'
 import { projectMessagesFromRollout } from './rolloutHistory'
 
 const testState = vi.hoisted(() => ({ root: '' }))
+const getByUpstreamFileId = vi.hoisted(() => vi.fn())
 
 vi.mock('@/core/storage/agentPaths', () => ({
   agentPaths: {
@@ -18,8 +19,16 @@ vi.mock('@/core/storage/agentPaths', () => ({
   },
 }))
 
+vi.mock('@/database/conversations', () => ({
+  FileRecordStore: { getByUpstreamFileId },
+}))
+
 beforeAll(() => {
   testState.root = fs.mkdtempSync(path.join(os.tmpdir(), 'roxy-rollout-history-'))
+})
+
+beforeEach(() => {
+  getByUpstreamFileId.mockReset()
 })
 
 afterAll(() => {
@@ -27,6 +36,90 @@ afterAll(() => {
 })
 
 describe('rollout history projector', () => {
+  it('restores attachment cards from visible user-input metadata after reload', () => {
+    const conversationId = 'conversation-attachment-history'
+    const attachments = [{
+      fileId: 'local-image-1',
+      fileName: 'image.png',
+      mimeType: 'image/png',
+      size: 3,
+      url: '/api/files/local-image-1',
+      localUrl: '/api/files/local-image-1',
+      remoteUrl: 'https://oss.example/image.png',
+      fileUrl: 'https://oss.example/image.png',
+    }]
+    writeRollout(conversationId, [
+      {
+        type: 'user_input',
+        message: {
+          role: 'user',
+          content: [{ type: 'text', text: 'describe' }, { type: 'file', fileId: 'file-api-1' }],
+          metadata: { attachments },
+        },
+        ts: 1000,
+      },
+      {
+        type: 'assistant_turn',
+        items: [{
+          type: 'message',
+          id: 'answer-1',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'done' }],
+        }],
+        stopReason: 'end_turn',
+        ts: 2000,
+      },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 2100 },
+    ])
+
+    const messages = projectMessagesFromRollout(conversationId)
+    assert.deepEqual(messages[0]?.metadata?.attachments, attachments)
+    const userEvent = messages[1]?.events?.find(item => item.event.type === 'user_message')?.event
+    assert.ok(userEvent?.type === 'user_message')
+    assert.deepEqual(userEvent.data.attachments, attachments)
+  })
+
+  it('recovers current-version VLM cards from FileBlock and SQLite when metadata is absent', () => {
+    const conversationId = 'conversation-legacy-vlm-attachment'
+    getByUpstreamFileId.mockReturnValue({
+      file_id: 'local-image-1',
+      file_name: 'image.png',
+      local_path: '/tmp/image.png',
+      oss_url: 'https://oss.example/image.png',
+      upstream_file_id: 'file-api-1',
+      upstream_file_service: 'deepseek',
+      mime_type: 'image/png',
+      size: 3,
+      hash: 'hash',
+      source: 'upload',
+      created_at: '2026-08-24T00:00:00Z',
+      updated_at: '2026-08-24T00:00:00Z',
+    })
+    writeRollout(conversationId, [
+      {
+        type: 'user_input',
+        message: {
+          role: 'user',
+          content: [{ type: 'text', text: 'describe' }, { type: 'file', fileId: 'file-api-1' }],
+        },
+        ts: 1000,
+      },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 1100 },
+    ])
+
+    const messages = projectMessagesFromRollout(conversationId)
+    assert.deepEqual(messages[0]?.metadata?.attachments, [{
+      fileId: 'local-image-1',
+      fileName: 'image.png',
+      mimeType: 'image/png',
+      size: 3,
+      url: '/api/files/local-image-1',
+      localUrl: '/api/files/local-image-1',
+      remoteUrl: 'https://oss.example/image.png',
+      fileUrl: 'https://oss.example/image.png',
+    }])
+  })
+
   it('restores complete script output embedded in the tool result', () => {
     // Regression: replay discarded complete script logs already stored in small tool results.
     // Fixed by: preferring the existing Log output block before resolving a local file.
@@ -442,6 +535,53 @@ describe('rollout history projector', () => {
         message: 'Agent stopped: User cancelled',
       },
     })
+  })
+
+  it('preserves insufficient-points errors when projecting failed rollout history', () => {
+    // Regression: live run_failed events carried insufficient_points and requestId, but
+    // reopening the conversation rebuilt failed rollout turns as agent_internal_error.
+    // Fixed by: normalizing the persisted terminal error message during history projection.
+    const conversationId = 'conversation-rollout-insufficient-points'
+    writeRollout(conversationId, [
+      {
+        type: 'session_start',
+        sessionId: conversationId,
+        createdAt: 1,
+      },
+      {
+        type: 'user_input',
+        message: { role: 'user', content: 'run script' },
+        ts: 1000,
+      },
+      {
+        type: 'turn_error',
+        phase: 'turn_failed',
+        name: 'APIError',
+        message: '402 {"code":"insufficient_points","message":"Your account points balance is insufficient","data":{"source":"local","category":"billing","retryable":false,"request_id":"3eea5fb5-0144-402a-b031-74023bec4b60"},"request_id":"3eea5fb5-0144-402a-b031-74023bec4b60"}',
+        ts: 2000,
+      },
+      {
+        type: 'turn_failed',
+        message: '402 {"code":"insufficient_points","message":"Your account points balance is insufficient","data":{"source":"local","category":"billing","retryable":false,"request_id":"3eea5fb5-0144-402a-b031-74023bec4b60"},"request_id":"3eea5fb5-0144-402a-b031-74023bec4b60"}',
+        ts: 2000,
+      },
+    ])
+
+    const events = projectMessagesFromRollout(conversationId)[1]?.events ?? []
+    const failed = events.at(-1)?.event
+
+    assert.equal(failed?.type, 'run_failed')
+    if (failed?.type === 'run_failed') {
+      assert.deepEqual(failed.data, {
+        code: 'insufficient_points',
+        message: 'Your account points balance is insufficient',
+        category: 'billing',
+        retryable: false,
+        source: 'local',
+        requestId: '3eea5fb5-0144-402a-b031-74023bec4b60',
+        httpStatus: 402,
+      })
+    }
   })
 
   it('projects multi-question ask_user calls into clarification HITL events', () => {

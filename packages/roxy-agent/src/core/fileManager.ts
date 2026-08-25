@@ -1,5 +1,6 @@
 import type { FileRecord } from '@/database/conversations'
 import type { Buffer } from 'node:buffer'
+import type { FileUploadOptions, FileUploadResult } from '@/api/agentApiClient'
 import { createHash, randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -140,6 +141,8 @@ export interface ResolvedAttachment {
   localUrl?: string
   remoteUrl?: string
   fileUrl?: string
+  upstreamFileId?: string
+  upstreamFileService?: string
 }
 
 export interface SaveBufferInput {
@@ -149,6 +152,8 @@ export interface SaveBufferInput {
   source?: string
   /** true：同步等待 OSS 上传完成（沿用 /api/upload 语义）；false（默认）：懒上传，后续 resolveRemoteUrl 时再传 */
   uploadNow?: boolean
+  /** 仅输入图片使用：forward=true 时 v3 同时上传到模型对应的文件服务。 */
+  uploadOptions?: FileUploadOptions
   /** file_id 前缀；不传则按 source 推断（generated → 'generated'） */
   prefix?: string
   /** 单次保存的目标目录；不传则使用全局 orphaned uploads 兼容旧入口 */
@@ -187,13 +192,19 @@ export class FileManager {
    * 读取本地文件并上传到 AI Agent 服务端（OSS），返回永久可访问 URL。
    * 失败返回 undefined（吞掉异常，由调用方决定是否回退/报错）。
    */
-  private async uploadLocalFileToOss(file: { fileId?: string, fileName?: string, filePath: string, mimeType?: string }): Promise<string | undefined> {
+  private async uploadLocalFile(
+    file: { fileId?: string, fileName?: string, filePath: string, mimeType?: string },
+    options: FileUploadOptions = {},
+  ): Promise<FileUploadResult> {
     const filename = file.fileName || path.basename(file.filePath)
     const contentType = resolveFileMimeType(file.mimeType, filename || file.filePath)
     const buffer = await fs.promises.readFile(file.filePath)
     const blob = new Blob([new Uint8Array(buffer)], { type: contentType })
-    const result = await agentFilesApi.upload(blob, filename)
-    // V2 接口返回的 url 直接为可永久访问的 OSS URL
+    return agentFilesApi.upload(blob, filename, options)
+  }
+
+  private async uploadLocalFileToOss(file: { fileId?: string, fileName?: string, filePath: string, mimeType?: string }): Promise<string | undefined> {
+    const result = await this.uploadLocalFile(file)
     const ossUrl = result.url
     if (typeof ossUrl !== 'string' || !ossUrl) {
       throw new Error('File upload response did not include url')
@@ -244,6 +255,8 @@ export class FileManager {
     const existing = FileRecordStore.getByHashAny(hash)
     let localPath: string
     let ossUrl: string | null = null
+    let upstreamFileId: string | null = null
+    let upstreamFileService: string | null = null
 
     if (!input.uploadsDir && existing?.local_path && fs.existsSync(existing.local_path)) {
       // 物理去重：复用已有本地文件与（如已具备的）OSS URL
@@ -256,7 +269,19 @@ export class FileManager {
       ossUrl = existing?.oss_url ?? null
     }
 
-    if (!ossUrl && input.uploadNow) {
+    if (input.uploadNow && input.uploadOptions?.forward) {
+      const result = await this.uploadLocalFile(
+        { fileId, fileName: input.fileName, filePath: localPath, mimeType },
+        input.uploadOptions,
+      )
+      if (!result.upstream_file_id) {
+        throw new Error('Forwarded file upload response did not include upstream_file_id')
+      }
+      ossUrl = result.url
+      upstreamFileId = result.upstream_file_id
+      upstreamFileService = result.upstream_service ?? null
+    }
+    else if (!ossUrl && input.uploadNow) {
       ossUrl = (await this.uploadToOss({ fileId, fileName: input.fileName, filePath: localPath, mimeType })) ?? null
     }
 
@@ -265,6 +290,8 @@ export class FileManager {
       file_name: input.fileName ?? null,
       local_path: localPath,
       oss_url: ossUrl,
+      upstream_file_id: upstreamFileId,
+      upstream_file_service: upstreamFileService,
       mime_type: mimeType,
       size: buffer.length,
       hash,
@@ -288,6 +315,8 @@ export class FileManager {
       file_name: input.fileName ?? input.fileId,
       local_path: filePath,
       oss_url: input.ossUrl ?? null,
+      upstream_file_id: null,
+      upstream_file_service: null,
       mime_type: mimeType,
       size: buffer.length,
       hash: this.hashBuffer(buffer),
@@ -441,6 +470,8 @@ export class FileManager {
     const fileName = record?.file_name || partial.fileName || fileId
     const mimeType = resolveFileMimeType(record?.mime_type || partial.mimeType, fileName)
     const remoteUrl = record?.oss_url || partial.remoteUrl || partial.fileUrl || undefined
+    const upstreamFileId = record?.upstream_file_id || partial.upstreamFileId || undefined
+    const upstreamFileService = record?.upstream_file_service || partial.upstreamFileService || undefined
     const localUrl = hasLocal ? `/api/files/${fileId}` : (partial.localUrl || partial.url)
     return {
       fileId,
@@ -451,6 +482,8 @@ export class FileManager {
       localUrl,
       remoteUrl,
       fileUrl: remoteUrl,
+      upstreamFileId,
+      upstreamFileService,
     }
   }
 }

@@ -186,7 +186,7 @@ export class UserTemplatesApi<SecurityDataType = unknown> {
    *
    * @tags UserTemplates
    * @name GetUserTemplate
-   * @summary 获取用户模板详情
+   * @summary 按 ID 或 metadata.slug 获取用户模板详情
    * @request GET:/v1/user/templates/{template_id}
    * @response `200` `GetUserTemplateData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
@@ -204,12 +204,13 @@ export class UserTemplatesApi<SecurityDataType = unknown> {
    * @response `504` `ApiErrorResponse` Gateway Timeout
    */
   getUserTemplate = (
-    { templateId }: GetUserTemplateParams,
+    { templateId, ...query }: GetUserTemplateParams,
     params: RequestParams = {},
   ) =>
     this.http.request<GetUserTemplateData, GetUserTemplateError>({
       path: `/v1/user/templates/${templateId}`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

@@ -166,6 +166,39 @@ describe('OpenAIResponsesProvider API', () => {
     expect(body.tools).toContainEqual({ type: 'web_search' })
   })
 
+  it('maps provider-hosted image files to Responses input_image content', async () => {
+    const client = makeClient(() => makeResponse([]))
+    const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
+
+    await provider.invoke(
+      request({
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Describe this' },
+              { type: 'file', fileId: 'file-api-1' },
+            ],
+            metadata: {
+              attachments: [{ fileId: 'local-image-1', fileName: 'image.png' }],
+            },
+          },
+        ],
+      }),
+    )
+
+    const body = client.responses.create.mock.calls[0]?.[0] as ResponseCreateParams
+    expect(body.input).toContainEqual({
+      type: 'message',
+      role: 'user',
+      content: [
+        { type: 'input_text', text: 'Describe this' },
+        { type: 'input_image', file_id: 'file-api-1' },
+      ],
+    })
+    expect(JSON.stringify(body.input)).not.toContain('local-image-1')
+  })
+
   it('preserves developer-role context as developer input', () => {
     // Regression: host-provided Skill context was represented as a hidden user
     // message, weakening its instruction priority in Responses requests.

@@ -44,12 +44,13 @@ export class SkillsApi<SecurityDataType = unknown> {
   }
 
   /**
-   * No description
+   * @description **Deprecated:** Skill 分类接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/template-label-categories` 和 `/v1/template-labels` 管理模板分类/标签。
    *
    * @tags Skills
    * @name ListSkillCategories
    * @summary List enabled skill categories
    * @request GET:/v1/skill-categories
+   * @deprecated
    * @response `200` `ListSkillCategoriesData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -73,12 +74,13 @@ export class SkillsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** Skill 接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/templates?templateType=skill` 获取官方 Skill 模板。
    *
    * @tags Skills
    * @name ListSkills
    * @summary List published skills
    * @request GET:/v1/skills
+   * @deprecated
    * @response `200` `ListSkillsData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -103,12 +105,13 @@ export class SkillsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** Skill 详情接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/templates/{template_id_or_slug}` 获取官方模板详情。
    *
    * @tags Skills
    * @name GetSkill
    * @summary Get skill detail
    * @request GET:/v1/skills/{slug}
+   * @deprecated
    * @response `200` `GetSkillData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -132,12 +135,13 @@ export class SkillsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** Skill 下载接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/templates/{template_id_or_slug}`，从模板 `metadata.ossUrl` 获取资源地址。
    *
    * @tags Skills
    * @name DownloadSkill
    * @summary Download skill package
    * @request GET:/v1/skills/{slug}/download
+   * @deprecated
    * @response `302` `void` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -160,12 +164,13 @@ export class SkillsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 用户 Skill 安装列表接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates?templateType=skill` 管理用户 Skill 模板。
    *
    * @tags Skills
    * @name ListUserSkills
    * @summary List installed skills for current user
    * @request GET:/v1/user/skills
+   * @deprecated
    * @response `200` `ListUserSkillsData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -189,12 +194,13 @@ export class SkillsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** Skill 安装接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates` 从官方模板创建用户模板快照。
    *
    * @tags Skills
    * @name InstallUserSkill
    * @summary Record skill installation
    * @request POST:/v1/user/skills/{slug}/install
+   * @deprecated
    * @response `200` `InstallUserSkillData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -221,12 +227,13 @@ export class SkillsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** Skill 启停接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates` 和用户任务接口完成模板管理。
    *
    * @tags Skills
    * @name SetUserSkillEnabled
    * @summary Toggle installed skill enabled
    * @request PUT:/v1/user/skills/{slug}/enabled
+   * @deprecated
    * @response `200` `SetUserSkillEnabledData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -256,12 +263,13 @@ export class SkillsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 用户 Skill 移除接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates/{template_id}` 管理用户模板。
    *
    * @tags Skills
    * @name RemoveUserSkill
    * @summary Remove installed skill record
    * @request DELETE:/v1/user/skills/{slug}
+   * @deprecated
    * @response `200` `RemoveUserSkillData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized

@@ -2,7 +2,7 @@
 import AgentTooltip from './AgentTooltip.vue'
 import { useProfileMonitorContext } from '../composables/useProfileMonitorContext'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     variant?: 'pill' | 'icon'
   }>(),
@@ -12,13 +12,14 @@ const props = withDefaults(
 )
 
 const { open, available, runningTaskCount, toggle } = useProfileMonitorContext()
+const visible = computed(() => available.value && !open.value)
 const activityGradientId = `task-monitor-activity-${useId().replace(/[^\w-]/g, '')}`
 const activityGradientStroke = `url(#${activityGradientId})`
 </script>
 
 <template>
   <div
-    v-if="available"
+    v-if="visible"
     class="task-monitor-toggle"
     :class="[`task-monitor-toggle--${variant}`, { 'is-running': runningTaskCount > 0 }]"
   >

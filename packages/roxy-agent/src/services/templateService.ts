@@ -198,10 +198,6 @@ function readLocalizedString(value: unknown): string | undefined {
   return undefined
 }
 
-function toOfficialSkillSlug(slug: string): string {
-  return slug.startsWith('official-') ? slug : `official-${slug}`
-}
-
 function toInstalledSkillSlug(slug: string): string {
   return slug.startsWith('official-') ? slug.slice('official-'.length) : slug
 }
@@ -864,22 +860,67 @@ export async function ensureRemoteSkillInstalledBySlug(
   if (!normalizedSlug) {
     throw new TemplateReferenceError('invalid_template_ref', 'Invalid Skill slug.')
   }
-  const officialSlug = toOfficialSkillSlug(normalizedSlug)
+  console.info('[skill-template-debug] ensure remote Skill installed by slug', {
+    inputSlug: slug,
+    normalizedSlug,
+    requestSlug: normalizedSlug,
+  })
 
   let rawDetail: unknown
   try {
-    rawDetail = await agentTemplatesApi.getById(officialSlug)
+    rawDetail = await agentUserTemplatesApi.getById(normalizedSlug)
+    console.info('[skill-template-debug] resolved Skill via user template detail', {
+      requestSlug: normalizedSlug,
+    })
   }
   catch (error) {
-    throw new TemplateReferenceError(
-      'template_fetch_failed',
-      `Failed to fetch Skill ${officialSlug}.`,
-      error,
-    )
+    const isMissingUserTemplate = error instanceof AiAgentHttpError && (error.status === 404 || error.code === 'not_found')
+    if (!isMissingUserTemplate) {
+      console.error('[skill-template-debug] failed to fetch user Skill template detail', {
+        requestSlug: normalizedSlug,
+        error,
+      })
+      throw new TemplateReferenceError(
+        'template_fetch_failed',
+        `Failed to fetch Skill ${normalizedSlug}.`,
+        error,
+      )
+    }
+
+    console.info('[skill-template-debug] user Skill template detail not found, falling back to official template detail', {
+      requestSlug: normalizedSlug,
+    })
+
+    try {
+      rawDetail = await agentTemplatesApi.getById(normalizedSlug)
+      console.info('[skill-template-debug] resolved Skill via official template detail', {
+        requestSlug: normalizedSlug,
+      })
+    }
+    catch (officialError) {
+      console.error('[skill-template-debug] failed to fetch official Skill template detail', {
+        requestSlug: normalizedSlug,
+        error: officialError,
+      })
+      throw new TemplateReferenceError(
+        'template_fetch_failed',
+        `Failed to fetch Skill ${normalizedSlug}.`,
+        officialError,
+      )
+    }
   }
 
+  const resolved = normalizeRemoteSkillDetail(normalizedSlug, rawDetail)
+  console.info('[skill-template-debug] resolved remote Skill detail', {
+    slug: resolved.slug,
+    name: resolved.name,
+    metadataKeys: Object.keys(resolved.metadata ?? {}),
+    packageSlug: resolved.metadata?.packageSlug,
+    skillMdPath: resolved.metadata?.skillMdPath,
+  })
+
   return ensureResolvedTemplateSkillInstalled(
-    remoteSkillToResolvedTemplate(normalizeRemoteSkillDetail(normalizedSlug, rawDetail)),
+    remoteSkillToResolvedTemplate(resolved),
     signal,
   )
 }
@@ -921,8 +962,21 @@ async function ensureTemplateSkillInstalledUncached(
   const identity = toTemplateSkillIdentity(template, asset)
   const manager = getSkillManager()
   const existing = await manager.findInstalledTemplateSkill(identity)
+  console.info('[skill-template-debug] ensure template Skill installed uncached', {
+    ref: ref.value,
+    templateSlug: template.slug,
+    assetPackageSlug: asset.packageSlug,
+    assetSkillMdPath: asset.skillMdPath,
+    identity,
+    hasExisting: Boolean(existing),
+  })
   const reused = await tryReuseInstalledSkill(ref, asset, identity, existing)
   if (reused) {
+    console.info('[skill-template-debug] reused existing installed Skill', {
+      ref: ref.value,
+      dirPath: reused.dirPath,
+      skillMdPath: reused.skillMdPath,
+    })
     return reused
   }
 
@@ -969,8 +1023,18 @@ async function ensureTemplateSkillInstalledUncached(
 
     const extractedRoot = await resolveExtractedSkillRoot(extractedDir)
     await validateInstalledSkill(ref, extractedRoot, asset.skillMdPath)
+    console.info('[skill-template-debug] validated extracted Skill root', {
+      ref: ref.value,
+      extractedRoot,
+      assetSkillMdPath: asset.skillMdPath,
+    })
 
     const installed = await manager.installTemplateSkillFromDir(extractedRoot, identity)
+    console.info('[skill-template-debug] installed template Skill from dir', {
+      ref: ref.value,
+      dirPath: installed.dirPath,
+      skillMdPath: installed.skillMdPath,
+    })
     return validateInstalledSkill(ref, installed.dirPath, asset.skillMdPath)
   }
   catch (error) {

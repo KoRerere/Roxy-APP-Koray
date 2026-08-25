@@ -407,10 +407,12 @@ describe('template protocol tokens', () => {
 
 describe('input protocol tokens', () => {
   it('resolves the today-date default for input tokens using the local date', () => {
-    assert.equal(
-      resolveInputDefaultValue('今天日期', new Date(2026, 7, 12, 23, 59)),
-      '2026-08-12',
-    )
+    const now = new Date(2026, 7, 12, 23, 59)
+
+    for (const defaultValue of ['今天日期', 'Today\'s date', 'Сегодняшняя дата']) {
+      assert.equal(resolveInputDefaultValue(defaultValue, now), '2026-08-12')
+    }
+
     assert.equal(resolveInputDefaultValue('普通默认值', new Date(2026, 7, 12)), '普通默认值')
   })
 
@@ -530,6 +532,49 @@ describe('input protocol tokens', () => {
     assert.equal(
       serializePromptDoc(updateInputTokenValue(doc, '产品名', 'XX榨汁杯')),
       '[input:产品名](XX榨汁杯) / [input:产品名](XX榨汁杯)',
+    )
+  })
+})
+
+describe('textarea protocol tokens', () => {
+  it('parses textarea placeholders into editable multiline input tokens', () => {
+    const doc = parsePromptString('补充说明：[textarea:备注]()', {
+      profiles: [],
+      slashItems: [],
+    })
+
+    const token = doc.content?.[0]?.content?.[1]
+    assert.equal(token?.attrs?.kind, 'textarea')
+    assert.equal(token?.attrs?.title, '备注')
+    assert.equal(token?.attrs?.payload?.value, '')
+    assert.equal(serializePromptDoc(doc), '补充说明：[textarea:备注]()')
+    assert.equal(hasComposerProtocolTokens('[textarea:备注]()'), true)
+  })
+
+  it('updates textarea tokens and keeps them distinct from single-line inputs', () => {
+    const doc = parsePromptString('[textarea:备注]() [input:备注]()', {
+      profiles: [],
+      slashItems: [],
+    })
+    const serialized = serializePromptDoc(updateInputTokenValue(doc, '备注', '第一行\n第二行', 'textarea'))
+
+    assert.equal(serialized, '[textarea:备注](第一行\n第二行) [input:备注]()')
+
+    const reopenedDoc = parsePromptString(serialized, {
+      profiles: [],
+      slashItems: [],
+    })
+    const textareaToken = reopenedDoc.content?.[0]?.content?.[0]
+    assert.equal(textareaToken?.attrs?.kind, 'textarea')
+    assert.equal(textareaToken?.attrs?.title, '备注')
+    assert.equal(textareaToken?.attrs?.payload?.value, '第一行\n第二行')
+    assert.equal(serializePromptDoc(reopenedDoc), serialized)
+  })
+
+  it('reports empty textarea fields when a skill is referenced', () => {
+    assert.deepEqual(
+      getMissingComposerTokenLabels('[$总结](user:42) [textarea:备注]()'),
+      ['备注'],
     )
   })
 })

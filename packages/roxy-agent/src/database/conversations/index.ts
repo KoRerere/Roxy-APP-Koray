@@ -170,6 +170,8 @@ function initDatabase() {
       file_name      TEXT,
       local_path     TEXT,
       oss_url        TEXT,
+      upstream_file_id TEXT,
+      upstream_file_service TEXT,
       mime_type      TEXT,
       size           INTEGER,
       hash           TEXT,
@@ -178,9 +180,27 @@ function initDatabase() {
       updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `)
+
+  // 上游 Files API 引用与 OSS URL 语义独立；已有数据库按列增量升级。
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(files)').all() as unknown as Array<{
+      name: string
+    }>
+    const columns = new Set(tableInfo.map(column => column.name))
+    if (!columns.has('upstream_file_id')) {
+      db.exec('ALTER TABLE files ADD COLUMN upstream_file_id TEXT')
+    }
+    if (!columns.has('upstream_file_service')) {
+      db.exec('ALTER TABLE files ADD COLUMN upstream_file_service TEXT')
+    }
+  }
+  catch (error) {
+    console.warn(`⚠️ Migration check for files upstream fields failed:`, error)
+  }
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_files_hash ON files(hash);
     CREATE INDEX IF NOT EXISTS idx_files_oss_url ON files(oss_url);
+    CREATE INDEX IF NOT EXISTS idx_files_upstream_file_id ON files(upstream_file_id);
   `)
 
   // 数据库迁移：脚本后端同步链路已删除，移除不再使用的远程文件 ID。
@@ -461,11 +481,18 @@ function buildStatements(): StatementMap {
 
     // File operations
     insertFile: db.prepare(`
-    INSERT INTO files (file_id, file_name, local_path, oss_url, mime_type, size, hash, source)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO files (
+      file_id, file_name, local_path, oss_url, upstream_file_id,
+      upstream_file_service, mime_type, size, hash, source
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `),
 
     getFileById: db.prepare('SELECT * FROM files WHERE file_id = ?'),
+
+    getFileByUpstreamFileId: db.prepare(
+      'SELECT * FROM files WHERE upstream_file_id = ? ORDER BY created_at ASC LIMIT 1',
+    ),
 
     getFileByHashAny: db.prepare('SELECT * FROM files WHERE hash = ? ORDER BY created_at ASC LIMIT 1'),
 
@@ -744,6 +771,8 @@ export interface FileRecord {
   file_name: string | null
   local_path: string | null
   oss_url: string | null
+  upstream_file_id: string | null
+  upstream_file_service: string | null
   mime_type: string | null
   size: number | null
   hash: string | null
@@ -757,6 +786,8 @@ export interface CreateFileInput {
   file_name?: string | null
   local_path?: string | null
   oss_url?: string | null
+  upstream_file_id?: string | null
+  upstream_file_service?: string | null
   mime_type?: string | null
   size?: number | null
   hash?: string | null
@@ -769,6 +800,8 @@ function mapFileRow(row: any): FileRecord {
     file_name: row.file_name ?? null,
     local_path: row.local_path ?? null,
     oss_url: row.oss_url ?? null,
+    upstream_file_id: row.upstream_file_id ?? null,
+    upstream_file_service: row.upstream_file_service ?? null,
     mime_type: row.mime_type ?? null,
     size: row.size != null ? Number(row.size) : null,
     hash: row.hash ?? null,
@@ -789,6 +822,8 @@ export class FileRecordStore {
       input.file_name ?? (null as any),
       input.local_path ?? (null as any),
       input.oss_url ?? (null as any),
+      input.upstream_file_id ?? (null as any),
+      input.upstream_file_service ?? (null as any),
       input.mime_type ?? (null as any),
       input.size ?? (null as any),
       input.hash ?? (null as any),
@@ -806,6 +841,14 @@ export class FileRecordStore {
       return null
     }
     const row = statements.getFileById.get(fileId)
+    return row ? mapFileRow(row) : null
+  }
+
+  static getByUpstreamFileId(upstreamFileId: string): FileRecord | null {
+    if (!upstreamFileId) {
+      return null
+    }
+    const row = statements.getFileByUpstreamFileId.get(upstreamFileId)
     return row ? mapFileRow(row) : null
   }
 

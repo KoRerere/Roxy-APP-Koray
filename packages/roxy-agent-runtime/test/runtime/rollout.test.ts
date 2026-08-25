@@ -67,7 +67,13 @@ describe('agent loop rollout double-write', () => {
         compactionKey: 'metadata',
         compactionOrder: 0,
       },
-      { role: 'user', content: 'visible request' },
+      {
+        role: 'user',
+        content: 'visible request',
+        metadata: {
+          attachments: [{ fileId: 'file-1', fileName: 'image.png', mimeType: 'image/png' }],
+        },
+      },
     ])
 
     const userInputs = (await store.read('internal-context-sid')).filter(
@@ -81,7 +87,13 @@ describe('agent loop rollout double-write', () => {
         compactionKey: 'metadata',
         compactionOrder: 0,
       },
-      { role: 'user', content: 'visible request' },
+      {
+        role: 'user',
+        content: 'visible request',
+        metadata: {
+          attachments: [{ fileId: 'file-1', fileName: 'image.png', mimeType: 'image/png' }],
+        },
+      },
     ])
 
     const replayedMemory = new InMemoryProvider()
@@ -94,7 +106,13 @@ describe('agent loop rollout double-write', () => {
         compactionKey: 'metadata',
         compactionOrder: 0,
       },
-      { role: 'user', content: 'visible request' },
+      {
+        role: 'user',
+        content: 'visible request',
+        metadata: {
+          attachments: [{ fileId: 'file-1', fileName: 'image.png', mimeType: 'image/png' }],
+        },
+      },
       expect.objectContaining({ role: 'assistant' }),
     ])
   })

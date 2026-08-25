@@ -35,6 +35,12 @@ export interface ImageBlock {
   mimeType: string
 }
 
+/** A provider-hosted image referenced by its upstream Files API identifier. */
+export interface FileBlock {
+  type: 'file'
+  fileId: string
+}
+
 export interface ToolUseBlock {
   type: 'tool_use'
   id: string
@@ -68,7 +74,7 @@ export interface ThinkingBlock {
   signature: string
 }
 
-export type ContentBlock = TextBlock | ImageBlock | ToolUseBlock | ToolResultBlock | ThinkingBlock
+export type ContentBlock = TextBlock | ImageBlock | FileBlock | ToolUseBlock | ToolResultBlock | ThinkingBlock
 
 export interface RoxyReasoningItem {
   type: 'reasoning'
@@ -164,6 +170,8 @@ export type SystemBlock = SystemTextBlock
 export interface Message {
   role: Role
   content: string | ContentBlock[]
+  /** Host-owned durable presentation data. Providers must not serialize this field. */
+  metadata?: Record<string, unknown>
   /** `false` keeps the persisted model message out of user-facing projections. Defaults to visible. */
   visible?: boolean
   /** Latest message with the same key is restored after context compaction. */

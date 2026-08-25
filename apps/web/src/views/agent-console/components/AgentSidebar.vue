@@ -249,7 +249,7 @@ onBeforeUnmount(() => {
 }
 
 .sidebar-new-chat-wrap {
-  margin-bottom: 4px;
+  margin-bottom: 1px;
   padding-right: 16px;
 }
 
@@ -257,9 +257,9 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 36px;
+  height: 32px;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   border: 0;
   border-radius: 10px;
   color: var(--color-text-primary);
@@ -357,6 +357,6 @@ onBeforeUnmount(() => {
 .sidebar-menu {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
 }
 </style>

@@ -104,7 +104,7 @@ async function handleTopUp() {
 .sidebar-footer {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
   padding-right: 16px;
 }
 
@@ -118,10 +118,10 @@ async function handleTopUp() {
 }
 
 .feedback-button {
-  height: 36px;
+  height: 32px;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   border-radius: 10px;
   color: var(--color-text-primary);
   background: transparent;
@@ -143,7 +143,7 @@ async function handleTopUp() {
 .credits-card {
   flex-direction: column;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   border-radius: 10px;
   color: var(--color-text-primary);
   background: var(--color-bg-primary);
@@ -240,11 +240,11 @@ async function handleTopUp() {
 
 .footer-actions {
   display: flex;
-  height: 36px;
+  height: 32px;
   width: 100%;
   align-items: center;
   gap: 10px;
-  padding: 0 8px;
+  padding: 6px 8px;
   border-radius: 10px;
 
   &:hover,

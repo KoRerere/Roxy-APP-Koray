@@ -566,6 +566,7 @@ h1 {
   left: 0;
   display: flex;
   flex-direction: column;
+  gap: 4px;
   padding: 4px;
   border: 1px solid var(--color-border-secondary);
   border-radius: 10px;

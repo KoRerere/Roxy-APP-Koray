@@ -1278,10 +1278,12 @@ onBeforeUnmount(() => {
                     <SvgIcon name="base/rx_ic_plus" size="14" aria-hidden="true" />
                     <span>{{ $t('添加计划') }}</span>
                   </button>
-                  <TaskStatusBadge
+                  <span
                     v-else-if="taskDisplayStatus(task) === 'running' && !isTaskStopping(task)"
-                    status="running"
-                  />
+                    class="status-pill running"
+                  >
+                    <TaskStatusBadge status="running" />
+                  </span>
                   <span
                     v-else
                     class="status-pill"
@@ -1833,7 +1835,7 @@ h1 {
   max-width: 100%;
   align-items: center;
   gap: 4px;
-  padding: 2px 7px 2px 6px;
+  padding: 2px 7px 2px 8px;
   border: 1px solid var(--color-border-secondary);
   border-radius: 999px;
   font-size: 14px;

@@ -20,7 +20,7 @@ import {
   resolveProfileSelectionItem,
   searchComposerItems,
   serializePromptDoc,
-  templateItemToPrompt,
+  templateItemToInsertionPrompt,
   tokenToProtocol,
   updateInputTokenValue,
 } from './protocol'
@@ -92,7 +92,7 @@ export function useAgentComposer(options: {
   const completeProfileItems = ref<AgentComposerItem[] | undefined>()
   const inputEditor = reactive({
     open: false,
-    kind: 'input' as 'input' | 'url',
+    kind: 'input' as 'input' | 'textarea' | 'url',
     label: '',
     value: '',
     nodePos: 0,
@@ -300,7 +300,7 @@ export function useAgentComposer(options: {
           return true
         }
 
-        if (node.type.name === 'agentToken' && (node.attrs.kind === 'input' || node.attrs.kind === 'url')) {
+        if (node.type.name === 'agentToken' && (node.attrs.kind === 'input' || node.attrs.kind === 'textarea' || node.attrs.kind === 'url')) {
           event.preventDefault()
           openInputTokenEditor(node, nodePos, target?.closest('.agent-token, .mention') as HTMLElement | null)
           return true
@@ -547,7 +547,7 @@ export function useAgentComposer(options: {
   function openInputTokenEditor(node: any, nodePos: number, anchorEl?: HTMLElement | null) {
     closeSuggestion()
     inputEditor.open = true
-    inputEditor.kind = node.attrs.kind === 'url' ? 'url' : 'input'
+    inputEditor.kind = node.attrs.kind === 'url' ? 'url' : node.attrs.kind === 'textarea' ? 'textarea' : 'input'
     inputEditor.label = node.attrs.title || node.attrs.label || node.attrs.id
     inputEditor.value = node.attrs.payload?.value || ''
     inputEditor.nodePos = nodePos
@@ -1356,8 +1356,7 @@ function insertComposerItem(editor: any, item: AgentComposerItem, range?: { from
 }
 
 function insertTemplatePrompt(editor: any, item: AgentComposerItem, range?: { from: number, to: number }) {
-  const isSkillTemplate = item.payload.templateType === 'skill' || item.payload.templateType === 'skills'
-  const prompt = templateItemToPrompt(item, { includeAuxiliaryPrompt: !isSkillTemplate })
+  const prompt = templateItemToInsertionPrompt(item)
 
   if (!prompt) {
     return

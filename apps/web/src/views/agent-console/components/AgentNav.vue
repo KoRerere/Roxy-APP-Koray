@@ -47,16 +47,16 @@ function onNavigate(event: MouseEvent, item: AgentNavItem, navigate: (event?: Mo
 .agent-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 36px;
+  height: 32px;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   border: 0;
   border-radius: 10px;
   color: var(--color-text-primary);

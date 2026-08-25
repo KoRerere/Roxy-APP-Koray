@@ -1,4 +1,4 @@
-import type { UserTemplateInfo } from '@roxy/agent-api'
+import type { UpstreamUploadedFileInfo, UserTemplateInfo } from '@roxy/agent-api'
 import {
   FilesApi,
   HttpClient,
@@ -37,6 +37,8 @@ const httpClient = new HttpClient({
   baseURL: aiAgentUrl,
   timeout: 15000,
 })
+
+const FILE_UPLOAD_TIMEOUT_MS = 10 * 60 * 1000
 
 httpClient.instance.interceptors.request.use((config) => {
   Object.assign(config.headers, {
@@ -102,12 +104,11 @@ const userApi = new UserApi(httpClient)
 const userTasksApi = new UserTasksApi(httpClient)
 const userTemplatesApi = new UserTemplatesApi(httpClient)
 
-export interface FileUploadResult {
-  file_id: string
-  filename: string | null
-  content_type: string
-  size: number
-  url: string
+export type FileUploadResult = UpstreamUploadedFileInfo
+
+export interface FileUploadOptions {
+  forward?: boolean
+  model?: string
 }
 
 /**
@@ -127,15 +128,21 @@ export const agentTemplatesApi = {
 }
 
 /**
- * 文件上传（POST /v2/files/upload，OSS）。
- * 接口与原 aiAgentFilesApi.upload 一致：传 Blob + fileName，返回 { file_id, url, ... }。
- * 预构造 FormData 以保留文件名（@roxy/agent-api 的 createFormData 对 FormData 直通）。
+ * 文件上传（POST /v3/files/upload）。所有文件保存 OSS；forward=true 时再转发到模型对应的文件服务。
+ * 预构造 FormData 以保留文件名，并复用 @roxy/agent-api 生成的 v3 方法。
  */
 export const agentFilesApi = {
-  upload(file: Blob, fileName: string): Promise<FileUploadResult> {
+  upload(file: Blob, fileName: string, options: FileUploadOptions = {}): Promise<FileUploadResult> {
     const formData = new FormData()
     formData.append('file', file, fileName)
-    return unwrap<FileUploadResult>(filesApi.uploadFileV2V2FilesUploadPost(formData as never))
+    formData.append('forward', String(options.forward ?? false))
+    if (options.model) {
+      formData.append('model', options.model)
+    }
+    return unwrap<FileUploadResult>(filesApi.uploadFileV3V3FilesUploadPost(
+      formData as never,
+      { timeout: FILE_UPLOAD_TIMEOUT_MS },
+    ))
   },
 }
 

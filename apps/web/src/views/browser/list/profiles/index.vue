@@ -376,6 +376,10 @@ async function createAutomation(data: Data[] = selectedProfiles.value) {
   if (!windowIds.length)
     return
 
+  void API.base.userReportAppEventCreate({
+    eventName: 'ai_automation',
+    eventProperties: {},
+  }).catch(console.error)
   await openRoxyAIAgent(buildCreateAutomationAgentRoute(windowIds))
 }
 

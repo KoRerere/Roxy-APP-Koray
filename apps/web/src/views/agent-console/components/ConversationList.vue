@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AgentConversation } from '../types'
+import GridLoaderIcon from '/@/assets/icons/roxy-agent/grid-loader.svg?component'
 import AgentPopover from './AgentPopover.vue'
 
 const props = defineProps<{
@@ -179,10 +180,7 @@ function getConversationItemClasses(conversation: AgentConversation) {
               :title="$t('对话中')"
               role="status"
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10.5 6C10.5 3.51472 8.48528 1.5 6 1.5C3.51472 1.5 1.5 3.51472 1.5 6C1.5 8.48528 3.51472 10.5 6 10.5C8.48528 10.5 10.5 8.48528 10.5 6ZM11.5 6C11.5 9.03757 9.03757 11.5 6 11.5C2.96243 11.5 0.5 9.03757 0.5 6C0.5 2.96243 2.96243 0.5 6 0.5C9.03757 0.5 11.5 2.96243 11.5 6Z" fill="var(--color-bg-quaternary)" />
-                <path d="M0.498047 6C0.498047 2.96243 2.96048 0.500003 5.99805 0.5C6.27419 0.5 6.49805 0.723858 6.49805 1C6.49805 1.27614 6.27419 1.5 5.99805 1.5C3.51277 1.5 1.49805 3.51472 1.49805 6C1.49805 8.48526 3.51277 10.5 5.99805 10.5C8.4833 10.5 10.498 8.48526 10.498 6C10.498 5.72386 10.7219 5.5 10.998 5.5C11.2742 5.5 11.498 5.72386 11.498 6C11.498 9.03754 9.03559 11.5 5.99805 11.5C2.96048 11.5 0.498047 9.03754 0.498047 6Z" fill="var(--color-bg-primary-inverse)" />
-              </svg>
+              <GridLoaderIcon />
             </span>
 
             <AgentPopover
@@ -275,8 +273,8 @@ function getConversationItemClasses(conversation: AgentConversation) {
   align-items: center;
   gap: 12px;
   width: 100%;
-  min-height: 36px;
-  padding: 8px;
+  height: 32px;
+  padding: 6px 8px;
   border: 0;
   border-radius: 10px;
   background: transparent;
@@ -356,8 +354,6 @@ function getConversationItemClasses(conversation: AgentConversation) {
   flex: none;
   width: 12px;
   height: 12px;
-  transform-origin: center;
-  animation: conversation-status-spin 0.8s linear infinite;
 }
 
 .conversation-status--ended {
@@ -430,15 +426,5 @@ function getConversationItemClasses(conversation: AgentConversation) {
 :global(.conversation-action-menu__action:focus-visible) {
   background: var(--color-bg-secondary-hover, #f5f5f5);
   outline: none;
-}
-
-@keyframes conversation-status-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

@@ -2,10 +2,12 @@ import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
 import type { AgentConversationRunStartCommand } from '@roxy/shared/channel'
-import type { ImageBlock, Message, TextBlock } from 'roxy-agent-runtime'
+import type { FileBlock, Message, TextBlock } from 'roxy-agent-runtime'
 import { fileManager, resolveFileMimeType } from '@/core/fileManager'
 import { agentPaths } from '@/core/storage/agentPaths'
 import { FileRecordStore } from '@/database/conversations'
+import type { RuntimeModelSelection } from '@/runtime/provider'
+import { getRuntimeModel } from '@/runtime/provider'
 import { env } from '../config'
 
 const INLINE_TEXT_MIME_TYPES = new Set([
@@ -18,8 +20,6 @@ const INLINE_TEXT_MIME_TYPES = new Set([
 
 const MAX_FILE_SIZE_MB = 100
 const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024
-const MAX_INLINE_IMAGE_SIZE_MB = 32
-const MAX_INLINE_IMAGE_SIZE = MAX_INLINE_IMAGE_SIZE_MB * 1024 * 1024
 const VISION_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
 
 type LocalAttachmentRef = NonNullable<AgentConversationRunStartCommand['localAttachments']>[number]
@@ -79,13 +79,22 @@ export async function saveUpload(input: UploadInput): Promise<UploadResult> {
     throw new Error(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit`)
   }
 
-  // 统一交给 FileManager：写本地 + sha256 去重 + 同步上传 OSS + 元信息入库
+  const imageMimeType = resolveImageMimeType(finalMimeType)
+  const runtimeModel = imageMimeType
+    ? await getRuntimeModel({ conversationId })
+    : undefined
+  const shouldForward = runtimeModel?.modelType === 'vlm_model'
+
+  // 所有普通附件保存 OSS；只有实际使用 VLM 的支持图片再转发到上游 Files API。
   const record = await fileManager.saveBuffer({
     buffer,
     fileName,
     mimeType: finalMimeType,
     source: 'upload',
     uploadNow: true,
+    ...(shouldForward
+      ? { uploadOptions: { forward: true, model: runtimeModel.model } }
+      : {}),
     ...(conversationId ? { uploadsDir: agentPaths.sessionUploadsDir(conversationId) } : {}),
   })
   const localUrl = `/api/files/${record.file_id}`
@@ -133,6 +142,13 @@ export interface AttachmentRef {
   localUrl?: string
   remoteUrl?: string
   fileUrl?: string
+  upstreamFileId?: string
+  upstreamFileService?: string
+}
+
+export interface MaterializedLocalAttachments {
+  attachments: AttachmentRef[]
+  remainingLocalAttachments: LocalAttachmentRef[]
 }
 
 function getAttachmentFilePath(fileId: string) {
@@ -145,40 +161,11 @@ function resolveImageMimeType(mimeType: string): string | undefined {
   return VISION_IMAGE_MIME_TYPES.has(canonical) ? canonical : undefined
 }
 
-/**
- * Builds the visible user turn. Image attachments only contribute base64 image
- * blocks and never append attachment-description text to the user's prompt.
- */
-function readLocalImageBlock(att: LocalAttachmentRef): ImageBlock | undefined {
-  const imageMimeType = resolveImageMimeType(att.mimeType)
-  if (!imageMimeType) {
-    return undefined
-  }
-  if (att.kind !== 'file' || !path.isAbsolute(att.localPath)) {
-    throw new Error(`Invalid local image attachment path: ${att.localPath}`)
-  }
-
-  const stats = fs.statSync(att.localPath)
-  if (!stats.isFile()) {
-    throw new Error(`Local image attachment is not a file: ${att.localPath}`)
-  }
-  if (stats.size > MAX_INLINE_IMAGE_SIZE) {
-    throw new Error(`Image size exceeds ${MAX_INLINE_IMAGE_SIZE_MB}MB limit: ${att.fileName}`)
-  }
-
-  return {
-    type: 'image',
-    data: fs.readFileSync(att.localPath).toString('base64'),
-    mimeType: imageMimeType,
-  }
-}
-
 export function buildUserMessageContent(
   message: string,
   attachments: AttachmentRef[],
-  localAttachments: LocalAttachmentRef[] = [],
 ): Message['content'] {
-  const content: Array<TextBlock | ImageBlock> = []
+  const content: Array<TextBlock | FileBlock> = []
   if (message?.trim()) {
     content.push({ type: 'text', text: message.trim() })
   }
@@ -188,35 +175,88 @@ export function buildUserMessageContent(
     if (!imageMimeType) {
       continue
     }
-    if (!att.fileId || !fileManager.exists(att.fileId)) {
-      console.warn(`Attachment file not found: ${att.fileId}`)
+    if (!att.upstreamFileId) {
       continue
     }
 
     content.push({
-      type: 'image',
-      data: fileManager.readBuffer(att.fileId).toString('base64'),
-      mimeType: imageMimeType,
+      type: 'file',
+      fileId: att.upstreamFileId,
     })
-  }
-
-  for (const att of localAttachments) {
-    const imageBlock = readLocalImageBlock(att)
-    if (imageBlock) {
-      content.push(imageBlock)
-    }
   }
 
   return content
 }
 
-/** Builds one hidden user message containing every non-image attachment. */
+export async function materializeLocalAttachments(
+  localAttachments: LocalAttachmentRef[] = [],
+  conversationId?: string,
+): Promise<MaterializedLocalAttachments> {
+  const attachments: AttachmentRef[] = []
+  const remainingLocalAttachments: LocalAttachmentRef[] = []
+  let runtimeModel: RuntimeModelSelection | undefined
+
+  for (const attachment of localAttachments) {
+    if (attachment.kind === 'folder') {
+      remainingLocalAttachments.push(attachment)
+      continue
+    }
+    if (!path.isAbsolute(attachment.localPath)) {
+      throw new Error(`Invalid local attachment path: ${attachment.localPath}`)
+    }
+
+    const stats = await fs.promises.stat(attachment.localPath)
+    if (!stats.isFile()) {
+      throw new Error(`Local attachment is not a file: ${attachment.localPath}`)
+    }
+    if (stats.size > MAX_FILE_SIZE) {
+      throw new Error(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit: ${attachment.fileName}`)
+    }
+
+    const mimeType = resolveFileMimeType(attachment.mimeType, attachment.fileName)
+    const imageMimeType = resolveImageMimeType(mimeType)
+    if (imageMimeType && !runtimeModel) {
+      runtimeModel = await getRuntimeModel({ conversationId })
+    }
+    const forwardModel = imageMimeType && runtimeModel?.modelType === 'vlm_model'
+      ? runtimeModel.model
+      : undefined
+    const buffer = await fs.promises.readFile(attachment.localPath)
+    const record = await fileManager.saveBuffer({
+      buffer,
+      fileName: attachment.fileName,
+      mimeType,
+      source: 'upload',
+      uploadNow: true,
+      ...(forwardModel
+        ? { uploadOptions: { forward: true, model: forwardModel } }
+        : {}),
+      ...(conversationId ? { uploadsDir: agentPaths.sessionUploadsDir(conversationId) } : {}),
+    })
+    const localUrl = `/api/files/${record.file_id}`
+    attachments.push({
+      fileId: record.file_id,
+      fileName: attachment.fileName,
+      mimeType: record.mime_type || mimeType,
+      size: record.size ?? buffer.length,
+      url: localUrl,
+      localUrl,
+      ...(record.oss_url ? { remoteUrl: record.oss_url, fileUrl: record.oss_url } : {}),
+      ...(record.upstream_file_id ? { upstreamFileId: record.upstream_file_id } : {}),
+      ...(record.upstream_file_service ? { upstreamFileService: record.upstream_file_service } : {}),
+    })
+  }
+
+  return { attachments, remainingLocalAttachments }
+}
+
+/** Builds one hidden user message for non-images and images without an upstream file reference. */
 export function buildNonImageAttachmentContent(attachments: AttachmentRef[]): string {
   const chunks: string[] = []
   const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
 
   for (const att of attachments) {
-    if (resolveImageMimeType(att.mimeType)) {
+    if (resolveImageMimeType(att.mimeType) && att.upstreamFileId) {
       continue
     }
     const filePath = getAttachmentFilePath(att.fileId)
@@ -246,10 +286,6 @@ export function buildLocalAttachmentContent(attachments: LocalAttachmentRef[] = 
   const isZh = env.SYSTEM_LANGUAGE === 'zh-CN'
 
   for (const att of attachments) {
-    if (resolveImageMimeType(att.mimeType)) {
-      continue
-    }
-
     chunks.push(att.kind === 'folder'
       ? (isZh
           ? `[目录] 名称: ${att.fileName}, 本地路径: ${att.localPath}`

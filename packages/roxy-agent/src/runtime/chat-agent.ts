@@ -108,7 +108,11 @@ export interface RuntimeChatAgentOptions {
 export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): Promise<{
   agent: Agent
   setFullAccess: () => void
-  createInput: (content: Message['content'], trailingMessages?: Message[]) => AgentInput
+  createInput: (
+    content: Message['content'],
+    trailingMessages?: Message[],
+    metadata?: Message['metadata'],
+  ) => AgentInput
   destroy: () => Promise<void>
   consumeFiles: () => RuntimeCollectedFile[]
 }> {
@@ -403,7 +407,11 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
     return {
       agent,
       setFullAccess: () => hitl.enableFullAccess(),
-      createInput: (content: Message['content'], trailingMessages: Message[] = []) => {
+      createInput: (
+        content: Message['content'],
+        trailingMessages: Message[] = [],
+        metadata?: Message['metadata'],
+      ) => {
         const memoryIndex = pendingMemoryIndex
         pendingMemoryIndex = undefined
         const input: Message[] = [
@@ -414,7 +422,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
             memoryIndexFile: agentPaths.memoryIndexFile,
             ...(memoryIndex !== undefined ? { memoryIndex } : {}),
           }),
-          { role: 'user', content },
+          { role: 'user', content, ...(metadata ? { metadata } : {}) },
         ]
         return trailingMessages.length > 0 ? { input, trailingMessages } : input
       },

@@ -38,12 +38,13 @@ export class UserScriptsApi<SecurityDataType = unknown> {
   }
 
   /**
-   * No description
+   * @description **Deprecated:** 用户脚本接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates?templateType=script` 管理用户脚本模板；上传脚本文件请使用 `/v1/user/templates/upload-script`。
    *
    * @tags UserScripts
    * @name CreateUserScript
    * @summary 创建用户脚本
    * @request POST:/v1/user/scripts
+   * @deprecated
    * @response `200` `CreateUserScriptData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -69,12 +70,13 @@ export class UserScriptsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 用户脚本接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates?templateType=script` 管理用户脚本模板；上传脚本文件请使用 `/v1/user/templates/upload-script`。
    *
    * @tags UserScripts
    * @name ListUserScripts
    * @summary 分页列出用户脚本
    * @request GET:/v1/user/scripts
+   * @deprecated
    * @response `200` `ListUserScriptsData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -102,12 +104,13 @@ export class UserScriptsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 用户脚本详情/更新/删除接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates/{template_id}` 管理用户模板。
    *
    * @tags UserScripts
    * @name GetUserScript
    * @summary 获取脚本详情
    * @request GET:/v1/user/scripts/{script_id}
+   * @deprecated
    * @response `200` `GetUserScriptData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -134,12 +137,13 @@ export class UserScriptsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 用户脚本详情/更新/删除接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates/{template_id}` 管理用户模板。
    *
    * @tags UserScripts
    * @name UpdateUserScript
    * @summary 更新脚本
    * @request PUT:/v1/user/scripts/{script_id}
+   * @deprecated
    * @response `200` `UpdateUserScriptData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized
@@ -169,12 +173,13 @@ export class UserScriptsApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * No description
+   * @description **Deprecated:** 用户脚本详情/更新/删除接口已废弃。脚本和 Skill 已合并为模板，请使用 `/v1/user/templates/{template_id}` 管理用户模板。
    *
    * @tags UserScripts
    * @name DeleteUserScript
    * @summary 删除脚本
    * @request DELETE:/v1/user/scripts/{script_id}
+   * @deprecated
    * @response `200` `DeleteUserScriptData` Successful Response
    * @response `400` `ApiErrorResponse` Bad Request
    * @response `401` `ApiErrorResponse` Unauthorized

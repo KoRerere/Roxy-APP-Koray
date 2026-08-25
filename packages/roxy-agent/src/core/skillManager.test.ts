@@ -150,6 +150,59 @@ describe('skillManager local Skill index', () => {
 })
 
 describe('skillManager template installation', () => {
+  it('deletes the requested installed and user Skill directories by slug', async () => {
+    // Regression: deleting a user Skill template removed only the remote template record,
+    // leaving its local Skill package on disk.
+    // Fixed by: deleting the matching direct child under installed and user Skill roots.
+    const { dirs, manager } = await createFixture()
+    const installedDir = path.join(dirs.installedSkillsDir, 'template-package')
+    const otherInstalledDir = path.join(dirs.installedSkillsDir, 'other-package')
+    const userDir = path.join(dirs.skillsDir, 'template-package')
+    const builtinDir = path.join(dirs.builtinSkillsDir, 'template-package')
+    await Promise.all([
+      writeSkill(installedDir, 'installed-template', 'Installed'),
+      writeSkill(otherInstalledDir, 'other-template', 'Other installed'),
+      writeSkill(userDir, 'user-template', 'User'),
+      writeSkill(builtinDir, 'builtin-template', 'Builtin'),
+    ])
+
+    assert.equal(await manager.deleteInstalledSkillBySlug('template-package'), true)
+    assert.equal(await manager.deleteInstalledSkillBySlug('template-package'), false)
+    await assert.rejects(readFile(path.join(installedDir, 'SKILL.md'), 'utf8'))
+    assert.match(await readFile(path.join(otherInstalledDir, 'SKILL.md'), 'utf8'), /other-template/)
+    await assert.rejects(readFile(path.join(userDir, 'SKILL.md'), 'utf8'))
+    assert.match(await readFile(path.join(builtinDir, 'SKILL.md'), 'utf8'), /builtin-template/)
+    await assert.rejects(manager.deleteInstalledSkillBySlug('../user/template-package'), /Invalid installed Skill slug/)
+  })
+
+  it('normalizes slash-containing slugs to the local directory name before deleting', async () => {
+    // Regression: slash-containing slugs could not be deleted even when the installed
+    // directory used the same canonical safe name as the installer.
+    // Fixed by: normalizing the input slug before resolving the directory path.
+    const { dirs, manager } = await createFixture()
+    const installedDir = path.join(dirs.installedSkillsDir, 'research_skill')
+    const userDir = path.join(dirs.skillsDir, 'research_skill')
+    await writeSkill(installedDir, 'research-skill', 'Installed')
+    await writeSkill(userDir, 'research-skill-user', 'User')
+
+    assert.equal(await manager.deleteInstalledSkillBySlug('research/skill'), true)
+    await assert.rejects(readFile(path.join(installedDir, 'SKILL.md'), 'utf8'))
+    await assert.rejects(readFile(path.join(userDir, 'SKILL.md'), 'utf8'))
+  })
+
+  it('deletes a matching user Skill even when no installed copy exists', async () => {
+    // Regression: local user Skill sources created from "My Templates" could survive
+    // deletion and still appear in the runtime Skill catalog.
+    // Fixed by: checking the user Skill root as part of template Skill cleanup.
+    const { dirs, manager } = await createFixture()
+    const userDir = path.join(dirs.skillsDir, 'template-package')
+    await writeSkill(userDir, 'user-template', 'User')
+
+    assert.equal(await manager.deleteInstalledSkillBySlug('template-package'), true)
+    assert.equal(await manager.deleteInstalledSkillBySlug('template-package'), false)
+    await assert.rejects(readFile(path.join(userDir, 'SKILL.md'), 'utf8'))
+  })
+
   it('installs template Skills under installed and records their canonical ref', async () => {
     const { dirs, manager } = await createFixture()
     const sourceDir = path.join(path.dirname(dirs.skillsDir), 'source-skill')

@@ -1,7 +1,7 @@
 import type { AttachmentRef } from './fileService'
 import type { RunEventPublisher } from '@/core/agent-events/runEventHub'
 import type { RuntimeCollectedFile } from '@/runtime/file-collector'
-import type { AgentConversationRunStartCommand, AgentRunEvent } from '@roxy/shared/channel'
+import type { AgentConversationRunStartCommand, AgentRunAttachmentDTO, AgentRunEvent } from '@roxy/shared/channel'
 import type { RolloutArtifact, RolloutArtifactSource } from 'roxy-agent-runtime'
 import { randomUUID } from 'node:crypto'
 import fsPromises from 'node:fs/promises'
@@ -35,6 +35,7 @@ import {
   buildNonImageAttachmentContent,
   buildUserMessageContent,
   hydrateAttachmentFileUrls,
+  materializeLocalAttachments,
 } from './fileService'
 import { preloadSkillMarkdownLinks } from './skillMarkdownResolver'
 
@@ -294,6 +295,19 @@ export interface RunConversationTurnOptions {
   fullAccess?: boolean
 }
 
+function projectRunAttachments(attachments: AttachmentRef[]): AgentRunAttachmentDTO[] {
+  return attachments.map(attachment => ({
+    fileId: attachment.fileId,
+    fileName: attachment.fileName,
+    mimeType: attachment.mimeType,
+    size: attachment.size,
+    url: attachment.url,
+    localUrl: attachment.localUrl,
+    remoteUrl: attachment.remoteUrl,
+    fileUrl: attachment.fileUrl,
+  }))
+}
+
 export function startConversationRun(
   command: AgentConversationRunStartCommand,
   requestId: string,
@@ -338,12 +352,15 @@ export function startConversationRun(
   executionCenter.start(runId)
   return conversationRunQueue.enqueue(conversationId, async () => {
     try {
-      const attachmentList = await hydrateAttachmentFileUrls(command.attachments ?? [], abortController.signal)
+      const [attachmentList, materializedLocal] = await Promise.all([
+        hydrateAttachmentFileUrls(command.attachments ?? [], abortController.signal),
+        materializeLocalAttachments(command.localAttachments ?? [], conversationId),
+      ])
       await runConversationTurn({
         message: command.message,
-        localAttachments: command.localAttachments,
+        localAttachments: materializedLocal.remainingLocalAttachments,
         conversationId,
-        attachmentList,
+        attachmentList: [...attachmentList, ...materializedLocal.attachments],
         conversation,
         signal: abortController.signal,
         publisher,
@@ -383,6 +400,7 @@ export async function runConversationTurn(opts: RunConversationTurnOptions): Pro
   ChatContextAPI.setActiveConversation(conversationId)
   const userMessageId = publisher.identity.turnId
   let taskMonitorTitle = conversation.title
+  const projectedAttachments = projectRunAttachments(attachmentList)
 
   await browserOpsManager.ensure(conversationId)
 
@@ -406,7 +424,7 @@ export async function runConversationTurn(opts: RunConversationTurnOptions): Pro
     data: {
       messageId: userMessageId,
       content: message,
-      attachments: attachmentList,
+      attachments: projectedAttachments,
       createdAt: Date.now(),
     },
   }, '/root'))
@@ -459,13 +477,28 @@ export async function runConversationTurn(opts: RunConversationTurnOptions): Pro
 
   try {
     const messageContent = buildMessageContentAsPlainText(message || '', attachmentList)
-    const userMessageContent = buildUserMessageContent(message || '', attachmentList, localAttachments)
+    const userMessageContent = buildUserMessageContent(message || '', attachmentList)
     const attachmentContent = [
       buildNonImageAttachmentContent(attachmentList),
       buildLocalAttachmentContent(localAttachments),
     ].filter(Boolean).join('\n\n')
-    await preloadSkillMarkdownLinks(messageContent || message || '', signal)
+    const skillPreloadInput = messageContent || message || ''
+    console.info('[skill-template-debug] chat run skill preload input', {
+      conversationId,
+      runId: publisher.identity.runId,
+      messageLength: (message || '').length,
+      messageContentLength: messageContent.length,
+      preloadInputLength: skillPreloadInput.length,
+      hasInstalledSkillMarkdownPath: /library[\\/]skills[\\/]installed[\\/].+[\\/]SKILL\.md/.test(skillPreloadInput),
+      preview: skillPreloadInput.slice(0, 500),
+    })
+    await preloadSkillMarkdownLinks(skillPreloadInput, signal)
       .then((result) => {
+        console.info('[skill-template-debug] chat run skill preload result', {
+          conversationId,
+          runId: publisher.identity.runId,
+          result,
+        })
         if (result.errors.length > 0) {
           console.warn('[chat] Failed to preload selected Skill markdown links:', result.errors)
         }
@@ -479,7 +512,11 @@ export async function runConversationTurn(opts: RunConversationTurnOptions): Pro
     const trailingMessages = attachmentContent
       ? [{ role: 'user' as const, content: attachmentContent, visible: false }]
       : []
-    for await (const event of agent.stream(createInput(userMessageContent, trailingMessages), signal)) {
+    for await (const event of agent.stream(createInput(
+      userMessageContent,
+      trailingMessages,
+      { attachments: projectedAttachments },
+    ), signal)) {
       runtimePublisher.handle(event)
       if (event.type === 'done') {
         terminalStopReason = event.stopReason

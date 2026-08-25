@@ -160,9 +160,54 @@ describe('resolveTemplate', () => {
 })
 
 describe('ensureRemoteSkillInstalledBySlug', () => {
-  it('downloads a remote Skill through the official template slug endpoint without requiring SHA-512 metadata', async () => {
+  it('prefers the user template detail endpoint before falling back to official template detail', async () => {
     const data = skillArchive('Remote skill content.')
     const responseBody = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+    mocks.userGetById.mockRejectedValue(new AiAgentHttpError(404, 'Not found'))
+    mocks.officialGetById.mockResolvedValue({
+      id: 999,
+      slug: 'amazon-price-tracker',
+      templateType: 'skill',
+      name: { us: 'Amazon Price Tracker' },
+      description: { us: 'Track product prices' },
+      meta: {
+        ossUrl: 'https://roxy-web.oss-cn-beijing.aliyuncs.com/skills/amazon-price-tracker.zip',
+        packageSlug: 'amazon-price-tracker',
+        skillMdPath: 'SKILL.md',
+      },
+    })
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      arrayBuffer: async () => responseBody,
+      headers: new Headers({ 'content-length': String(data.byteLength) }),
+    } as unknown as Response)
+    vi.stubGlobal('fetch', fetchMock)
+
+    const installed = await ensureRemoteSkillInstalledBySlug('amazon-price-tracker')
+
+    assert.equal(installed.skillMdPath, `${mocks.root}/library/skills/installed/amazon-price-tracker/SKILL.md`)
+    assert.equal(mocks.userGetById.mock.calls[0]?.[0], 'amazon-price-tracker')
+    assert.equal(mocks.officialGetById.mock.calls[0]?.[0], 'amazon-price-tracker')
+    assert.equal(fetchMock.mock.calls.length, 1)
+  })
+
+  it('downloads a remote Skill through the template slug endpoint without requiring SHA-512 metadata', async () => {
+    const data = skillArchive('Remote skill content.')
+    const responseBody = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+    mocks.userGetById.mockResolvedValue({
+      id: 998,
+      slug: 'amazon-price-tracker',
+      templateType: 'skill',
+      name: { us: 'Amazon Price Tracker' },
+      description: { us: 'Track product prices' },
+      metadata: {
+        ossUrl: 'https://roxy-web.oss-cn-beijing.aliyuncs.com/skills/amazon-price-tracker.zip',
+        packageSlug: 'amazon-price-tracker',
+        skillMdPath: 'SKILL.md',
+      },
+    })
     mocks.officialGetById.mockResolvedValue({
       id: 999,
       slug: 'amazon-price-tracker',
@@ -188,13 +233,15 @@ describe('ensureRemoteSkillInstalledBySlug', () => {
 
     assert.equal(installed.skillMdPath, `${mocks.root}/library/skills/installed/amazon-price-tracker/SKILL.md`)
     assert.equal(installed.name, 'Template Skill')
-    assert.equal(mocks.officialGetById.mock.calls[0]?.[0], 'official-amazon-price-tracker')
+    assert.equal(mocks.userGetById.mock.calls[0]?.[0], 'amazon-price-tracker')
+    assert.equal(mocks.officialGetById.mock.calls.length, 0)
     assert.equal(fetchMock.mock.calls.length, 1)
   })
 
   it('keeps an existing official- slug stable while still installing under the local slug', async () => {
     const data = skillArchive('Remote skill content.')
     const responseBody = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
+    mocks.userGetById.mockRejectedValue(new AiAgentHttpError(404, 'Not found'))
     mocks.officialGetById.mockResolvedValue({
       id: 1000,
       slug: 'official-amazon-price-tracker',
@@ -220,6 +267,18 @@ describe('ensureRemoteSkillInstalledBySlug', () => {
 
     assert.equal(installed.skillMdPath, `${mocks.root}/library/skills/installed/amazon-price-tracker/SKILL.md`)
     assert.equal(mocks.officialGetById.mock.calls[0]?.[0], 'official-amazon-price-tracker')
+  })
+
+  it('reports a missing Skill when both user and official template detail lookups fail', async () => {
+    mocks.userGetById.mockRejectedValue(new AiAgentHttpError(404, 'Not found'))
+    mocks.officialGetById.mockRejectedValue(new AiAgentHttpError(404, 'Not found'))
+
+    await assert.rejects(
+      ensureRemoteSkillInstalledBySlug('amazon-price-tracker'),
+      /Failed to fetch Skill amazon-price-tracker\./,
+    )
+    assert.equal(mocks.userGetById.mock.calls[0]?.[0], 'amazon-price-tracker')
+    assert.equal(mocks.officialGetById.mock.calls[0]?.[0], 'amazon-price-tracker')
   })
 })
 

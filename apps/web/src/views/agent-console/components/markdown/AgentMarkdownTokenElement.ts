@@ -130,6 +130,7 @@ const styles = `
 }
 
 .agent-token--input,
+.agent-token--textarea,
 .agent-token--url {
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
@@ -141,7 +142,8 @@ const styles = `
  * attribute is the serialized source of truth, while the shadow component
  * may still be upgraded after the HTML has been inserted.
  */
-:host([kind="input"]) .agent-token {
+:host([kind="input"]) .agent-token,
+:host([kind="textarea"]) .agent-token {
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
 }
@@ -154,17 +156,19 @@ const styles = `
 }
 
 :host([kind="input"][target=""]) .agent-token,
-:host([kind="input"]:not([target])) .agent-token {
+:host([kind="input"]:not([target])) .agent-token,
+:host([kind="textarea"][target=""]) .agent-token,
+:host([kind="textarea"]:not([target])) .agent-token {
   border: 1px dashed currentColor;
   color: #c2410c;
   background: rgba(251, 146, 60, 0.12);
 }
 `
 
-export type AgentMarkdownTokenKind = 'profile' | 'skill' | 'script' | 'input' | 'url'
+export type AgentMarkdownTokenKind = 'profile' | 'skill' | 'script' | 'input' | 'textarea' | 'url'
 
 export function normalizeAgentMarkdownTokenKind(kind: unknown): AgentMarkdownTokenKind {
-  return kind === 'profile' || kind === 'skill' || kind === 'script' || kind === 'input' || kind === 'url'
+  return kind === 'profile' || kind === 'skill' || kind === 'script' || kind === 'input' || kind === 'textarea' || kind === 'url'
     ? kind
     : 'skill'
 }
@@ -174,7 +178,7 @@ export function getAgentMarkdownTokenLabel(
   title: string,
   target: string,
 ) {
-  return kind === 'input' || kind === 'url' ? target.trim() || title : title
+  return kind === 'input' || kind === 'textarea' || kind === 'url' ? target.trim() || title : title
 }
 
 const AgentMarkdownTokenElement = defineCustomElement({
@@ -191,7 +195,7 @@ const AgentMarkdownTokenElement = defineCustomElement({
     const iconName = getAgentTokenIconName(kind)
     const count = kind === 'profile' ? this.count.trim() : ''
     const isEmptyProfile = kind === 'profile' && !this.target.trim()
-    const isEmptyInput = (kind === 'input' || kind === 'url') && !this.target.trim()
+    const isEmptyInput = (kind === 'input' || kind === 'textarea' || kind === 'url') && !this.target.trim()
     const label = getAgentMarkdownTokenLabel(kind, this.title, this.target)
 
     return h('span', {
@@ -238,7 +242,7 @@ function getAgentTokenIconName(kind: string) {
   if (kind === 'profile')
     return 'roxy-agent/rx-ic-token-profile'
 
-  if (kind === 'input')
+  if (kind === 'input' || kind === 'textarea')
     return 'roxy-agent/rx-ic-prompts'
 
   if (kind === 'url')

@@ -1,13 +1,17 @@
-import type { Conversation, Message } from '@/database/conversations'
-import type { AgentClarificationQuestion, AgentConversationRunEventDTO, AgentRunEvent } from '@roxy/shared/channel'
+import type { Conversation, FileRecord, Message } from '@/database/conversations'
+import type { AgentClarificationQuestion, AgentConversationRunEventDTO, AgentRunAttachmentDTO, AgentRunEvent } from '@roxy/shared/channel'
+import { AgentRunAttachmentDTOSchema } from '@roxy/shared/channel'
 import fs from 'node:fs'
 import path from 'node:path'
+import { normalizeAgentError } from '@/core/agentError'
 import { agentPaths } from '@/core/storage/agentPaths'
+import { FileRecordStore } from '@/database/conversations'
 import { runEvents } from './events'
 
 interface RolloutMessage {
   role?: unknown
   content?: unknown
+  metadata?: unknown
   visible?: unknown
 }
 
@@ -82,6 +86,7 @@ interface RolloutProjectedEvent {
 interface RolloutTurn {
   userContent: string
   userTimestamp?: number
+  attachments: AgentRunAttachmentDTO[]
   events: RolloutProjectedEvent[]
   terminal?: RolloutTurnTerminal
 }
@@ -172,6 +177,57 @@ function asRolloutMessage(value: unknown): RolloutMessage | undefined {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function recoveredAttachment(upstreamFileId: string): AgentRunAttachmentDTO | undefined {
+  let record: FileRecord | null
+  try {
+    record = FileRecordStore.getByUpstreamFileId(upstreamFileId)
+  }
+  catch (error) {
+    console.warn('Failed to recover rollout attachment from SQLite:', error)
+    return undefined
+  }
+  if (!record) {
+    return undefined
+  }
+
+  const localUrl = `/api/files/${record.file_id}`
+  return {
+    fileId: record.file_id,
+    fileName: record.file_name ?? record.file_id,
+    mimeType: record.mime_type ?? 'application/octet-stream',
+    ...(record.size !== null ? { size: record.size } : {}),
+    url: localUrl,
+    localUrl,
+    ...(record.oss_url
+      ? { remoteUrl: record.oss_url, fileUrl: record.oss_url }
+      : {}),
+  }
+}
+
+function rolloutMessageAttachments(message: RolloutMessage | undefined): AgentRunAttachmentDTO[] {
+  const parsed = AgentRunAttachmentDTOSchema.array().safeParse(asRecord(message?.metadata).attachments)
+  if (parsed.success) {
+    return parsed.data
+  }
+
+  if (!Array.isArray(message?.content)) {
+    return []
+  }
+
+  const recovered = new Map<string, AgentRunAttachmentDTO>()
+  for (const block of message.content) {
+    const record = asRecord(block)
+    if (record.type !== 'file' || typeof record.fileId !== 'string') {
+      continue
+    }
+    const attachment = recoveredAttachment(record.fileId)
+    if (attachment) {
+      recovered.set(attachment.fileId, attachment)
+    }
+  }
+  return [...recovered.values()]
 }
 
 function parseToolArguments(value: unknown): unknown {
@@ -848,6 +904,7 @@ function readRolloutTurns(
       current = {
         userContent: rolloutMessageText(message),
         userTimestamp: rolloutEventTimestamp(event),
+        attachments: rolloutMessageAttachments(message),
         events: [],
       }
       continue
@@ -925,6 +982,24 @@ function lastContentText(events: RolloutProjectedEvent[]): string {
   return ''
 }
 
+function failedRunEvent(message?: string): AgentRunEvent {
+  const error = normalizeAgentError(message ?? 'Agent run failed.')
+  return {
+    type: 'run_failed',
+    data: {
+      code: error.code,
+      message: error.message,
+      category: error.data.category,
+      retryable: error.data.retryable,
+      source: error.data.source,
+      ...(error.data.requestId ? { requestId: error.data.requestId } : {}),
+      ...(error.data.provider ? { provider: error.data.provider } : {}),
+      ...(error.data.model ? { model: error.data.model } : {}),
+      ...(error.data.httpStatus ? { httpStatus: error.data.httpStatus } : {}),
+    },
+  }
+}
+
 function terminalEvent(
   terminal: RolloutTurnTerminal | undefined,
   status: Conversation['latest_run_status'],
@@ -943,31 +1018,13 @@ function terminalEvent(
     }
   }
   if (terminal?.status === 'failed') {
-    return {
-      type: 'run_failed',
-      data: {
-        code: 'agent_internal_error',
-        message: terminal.message ?? 'Agent run failed.',
-        category: 'internal',
-        retryable: false,
-        source: 'agent',
-      },
-    }
+    return failedRunEvent(terminal.message)
   }
   if (status === 'streaming') {
     return undefined
   }
   if (status === 'failed') {
-    return {
-      type: 'run_failed',
-      data: {
-        code: 'agent_internal_error',
-        message: 'Agent run failed.',
-        category: 'internal',
-        retryable: false,
-        source: 'agent',
-      },
-    }
+    return failedRunEvent()
   }
   if (status === 'cancelled') {
     return { type: 'run_cancelled', data: { reason: 'user' } }
@@ -1027,7 +1084,7 @@ function buildRolloutRunEvents(input: {
         data: {
           messageId: input.user.id,
           content: input.user.content ?? input.turn.userContent,
-          attachments: [],
+          attachments: input.turn.attachments,
           createdAt: startedAt,
         },
       },
@@ -1085,6 +1142,9 @@ export function projectMessagesFromRollout(conversationId: string, options: Roll
       content: turn.userContent,
       content_type: 'text',
       storage_type: 'inline',
+      ...(turn.attachments.length > 0
+        ? { metadata: { attachments: turn.attachments } }
+        : {}),
       created_at: messageCreatedAt(turn.userTimestamp, fallbackCreatedAt),
     }
     messages.push(user)

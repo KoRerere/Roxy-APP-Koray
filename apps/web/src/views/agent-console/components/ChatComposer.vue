@@ -61,12 +61,14 @@ const composerStyle = computed(() => isPromptField.value && props.promptMinHeigh
 const shellRef = ref<HTMLElement | null>(null)
 const composerShellRef = ref<HTMLElement | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
-const inputTokenInputRef = ref<HTMLInputElement | null>(null)
+const inputTokenInputRef = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
 const inputTokenPopoverRef = ref<HTMLElement | null>(null)
+const inputTokenActionsRef = ref<HTMLElement | null>(null)
 const hitlValues = ref<Record<string, AgentHitlControlValue>>({})
 const inputTokenValue = ref('')
 const inputUrlProtocol = ref<'http://' | 'https://'>('https://')
 const inputTokenComposing = ref(false)
+const inputTokenTextareaMultiline = ref(false)
 const missingPromptWarning = ref('')
 const inputTokenPopoverStyle = reactive({
   left: '0px',
@@ -84,6 +86,8 @@ const clarificationSelections = ref<Record<string, string>>({})
 interface ClarificationDisplayOption extends AgentHitlChoiceOption {
   description?: string
 }
+const INPUT_TOKEN_TEXTAREA_MIN_HEIGHT = 30
+const INPUT_TOKEN_TEXTAREA_MAX_HEIGHT = 52
 
 const {
   allMentionItemsSelected,
@@ -134,6 +138,7 @@ const hasComposerPayload = computed(() => hasPromptContent.value || props.pendin
 const showStopButton = computed(() => props.thinking && !hasComposerPayload.value)
 let autoFocusFrame = 0
 let inputTokenPopoverFrame = 0
+let inputTokenActionsAnimationFrame = 0
 let inputTokenGlobalListenersBound = false
 let inputTokenPopoverResizeObserver: ResizeObserver | undefined
 let clarificationDescriptionFrame = 0
@@ -362,6 +367,14 @@ function handleInputTokenKeydown(event: KeyboardEvent) {
   }
 
   if (event.key === 'Enter') {
+    if (inputEditor.kind === 'textarea') {
+      if (event.metaKey || event.ctrlKey) {
+        event.preventDefault()
+        submitInputTokenEdit()
+      }
+      return
+    }
+
     event.preventDefault()
     submitInputTokenEdit()
     return
@@ -387,6 +400,52 @@ function scheduleInputTokenPopoverSync() {
     syncInputTokenPopoverPosition()
   })
 }
+
+function syncInputTokenTextareaHeight() {
+  if (inputEditor.kind !== 'textarea') {
+    inputTokenTextareaMultiline.value = false
+    return
+  }
+
+  const inputEl = inputTokenInputRef.value
+  if (!(inputEl instanceof HTMLTextAreaElement))
+    return
+
+  inputEl.style.height = `${INPUT_TOKEN_TEXTAREA_MIN_HEIGHT}px`
+  const nextHeight = Math.min(
+    Math.max(INPUT_TOKEN_TEXTAREA_MIN_HEIGHT, inputEl.scrollHeight),
+    INPUT_TOKEN_TEXTAREA_MAX_HEIGHT,
+  )
+  const hasMultilineContent = inputEl.scrollHeight > INPUT_TOKEN_TEXTAREA_MIN_HEIGHT + 2
+  inputEl.style.height = `${nextHeight}px`
+  inputEl.style.overflowY = inputEl.scrollHeight > INPUT_TOKEN_TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden'
+  inputTokenTextareaMultiline.value ||= hasMultilineContent
+  scheduleInputTokenPopoverSync()
+}
+
+function runInputTokenActionsMoveAnimation(previousRect: DOMRect, nextRect: DOMRect) {
+  const actionsEl = inputTokenActionsRef.value
+  if (!actionsEl)
+    return
+
+  const deltaX = previousRect.left - nextRect.left
+  const deltaY = previousRect.top - nextRect.top
+  if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1)
+    return
+
+  if (inputTokenActionsAnimationFrame)
+    window.cancelAnimationFrame(inputTokenActionsAnimationFrame)
+
+  actionsEl.classList.remove('input-token-popover__actions--moving')
+  actionsEl.style.setProperty('--input-token-actions-from-x', `${deltaX}px`)
+  actionsEl.style.setProperty('--input-token-actions-from-y', `${deltaY}px`)
+
+  inputTokenActionsAnimationFrame = window.requestAnimationFrame(() => {
+    inputTokenActionsAnimationFrame = 0
+    actionsEl.classList.add('input-token-popover__actions--moving')
+  })
+}
+
 function getInputTokenPopoverZIndex(anchorEl: HTMLElement) {
   let highestAncestorZIndex = 80
   let current: HTMLElement | null = anchorEl
@@ -906,10 +965,11 @@ watch(
 )
 
 watch(
-  () => [inputEditor.open, inputEditor.label, inputEditor.value] as const,
+  () => [inputEditor.open, inputEditor.label, inputEditor.value, inputEditor.kind] as const,
   async ([open, _label, value]) => {
     if (!open) {
       inputTokenComposing.value = false
+      inputTokenTextareaMultiline.value = false
       unbindInputTokenGlobalListeners()
       inputTokenPopoverResizeObserver?.disconnect()
       inputTokenPopoverResizeObserver = undefined
@@ -934,9 +994,34 @@ watch(
     }
     inputTokenInputRef.value?.focus()
     inputTokenInputRef.value?.select()
+    syncInputTokenTextareaHeight()
     scheduleInputTokenPopoverSync()
   },
 )
+watch(inputTokenValue, async () => {
+  if (!inputEditor.open || inputEditor.kind !== 'textarea')
+    return
+
+  await nextTick()
+  syncInputTokenTextareaHeight()
+})
+
+watch(inputTokenTextareaMultiline, async (isMultiline) => {
+  if (!inputEditor.open || inputEditor.kind !== 'textarea' || !isMultiline) {
+    return
+  }
+
+  const previousRect = inputTokenActionsRef.value?.getBoundingClientRect()
+  await nextTick()
+  syncInputTokenTextareaHeight()
+
+  const nextRect = inputTokenActionsRef.value?.getBoundingClientRect()
+  if (!previousRect || !nextRect) {
+    return
+  }
+
+  runInputTokenActionsMoveAnimation(previousRect, nextRect)
+}, { flush: 'pre' })
 
 watch(model, (value) => {
   if (!missingPromptWarning.value) {
@@ -965,6 +1050,9 @@ onBeforeUnmount(() => {
     window.cancelAnimationFrame(clarificationDescriptionFrame)
   }
 
+  if (inputTokenActionsAnimationFrame)
+    window.cancelAnimationFrame(inputTokenActionsAnimationFrame)
+
   unbindInputTokenGlobalListeners()
   inputTokenPopoverResizeObserver?.disconnect()
   clarificationDescriptionResizeObserver?.disconnect()
@@ -974,7 +1062,7 @@ onBeforeUnmount(() => {
 defineExpose({
   getComposerElement: () => composerShellRef.value,
   getEmptyInputTokenElement: () => composerShellRef.value?.querySelector<HTMLElement>(
-    '[data-agent-token="input"].agent-token--input-empty',
+    '[data-agent-token="input"].agent-token--input-empty, [data-agent-token="textarea"].agent-token--input-empty',
   ) ?? null,
   getEmptyProfileTokenElement: () => composerShellRef.value?.querySelector<HTMLElement>(
     '[data-agent-token="profile"].agent-token--profile-empty',
@@ -1274,10 +1362,33 @@ defineExpose({
         <div class="input-token-popover__label">
           {{ inputEditor.label }}
         </div>
-        <div class="input-token-popover__row">
-          <div class="input-token-popover__input" :class="{ 'input-token-popover__input--url': inputEditor.kind === 'url' }">
+        <div
+          class="input-token-popover__row"
+          :class="{
+            'input-token-popover__row--textarea': inputEditor.kind === 'textarea',
+            'input-token-popover__row--textarea-multiline': inputEditor.kind === 'textarea' && inputTokenTextareaMultiline,
+          }"
+        >
+          <div
+            class="input-token-popover__input"
+            :class="{
+              'input-token-popover__input--url': inputEditor.kind === 'url',
+              'input-token-popover__input--textarea': inputEditor.kind === 'textarea',
+            }"
+          >
             <span v-if="inputEditor.kind === 'url'" class="input-token-popover__protocol">{{ inputUrlProtocol }}</span>
+            <textarea
+              v-if="inputEditor.kind === 'textarea'"
+              ref="inputTokenInputRef"
+              v-model="inputTokenValue"
+              rows="1"
+              :placeholder="$t('请输入内容')"
+              @compositionend="inputTokenComposing = false"
+              @compositionstart="inputTokenComposing = true"
+              @keydown="handleInputTokenKeydown"
+            />
             <input
+              v-else
               ref="inputTokenInputRef"
               v-model="inputTokenValue"
               type="text"
@@ -1288,12 +1399,14 @@ defineExpose({
               @paste="inputEditor.kind === 'url' && handleUrlTokenPaste($event)"
             >
           </div>
-          <button type="button" class="input-token-popover__button" @click="cancelInputTokenEdit">
-            {{ $t('取消') }}
-          </button>
-          <button type="button" class="input-token-popover__button input-token-popover__button--primary" @click="submitInputTokenEdit">
-            {{ $t('确定') }}
-          </button>
+          <div ref="inputTokenActionsRef" class="input-token-popover__actions">
+            <button type="button" class="input-token-popover__button" @click="cancelInputTokenEdit">
+              {{ $t('取消') }}
+            </button>
+            <button type="button" class="input-token-popover__button input-token-popover__button--primary" @click="submitInputTokenEdit">
+              {{ $t('确定') }}
+            </button>
+          </div>
         </div>
         <span class="input-token-popover__arrow" aria-hidden="true" />
       </div>
@@ -2130,6 +2243,7 @@ defineExpose({
 }
 
 :deep(.agent-token--input),
+:deep(.agent-token--textarea),
 :deep(.agent-token--url) {
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
@@ -2174,6 +2288,15 @@ defineExpose({
   gap: 8px;
 }
 
+.input-token-popover__row--textarea {
+  align-items: flex-start;
+}
+
+.input-token-popover__row--textarea-multiline {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .input-token-popover__input {
   min-width: 0;
   flex: 1;
@@ -2186,9 +2309,18 @@ defineExpose({
   background: var(--color-bg-primary);
 }
 
-.input-token-popover__input input {
+.input-token-popover__input--textarea {
+  height: auto;
+  align-items: stretch;
+}
+
+.input-token-popover__row--textarea-multiline .input-token-popover__input {
+  width: 100%;
+}
+
+.input-token-popover__input input,
+.input-token-popover__input textarea {
   min-width: 0;
-  height: 100%;
   flex: 1;
   padding: 6px 10px;
   border: 0;
@@ -2196,8 +2328,29 @@ defineExpose({
   color: var(--color-text-primary);
   background: transparent;
   box-sizing: border-box;
+  font-family: inherit;
   font-size: 14px;
   line-height: 20px;
+}
+
+.input-token-popover__input input {
+  height: 100%;
+}
+
+.input-token-popover__input textarea {
+  height: 30px;
+  min-height: 30px;
+  max-height: 118px;
+  display: block;
+  overflow-y: hidden;
+  line-height: 18px;
+  resize: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .input-token-popover__input:focus-within {
@@ -2213,6 +2366,33 @@ defineExpose({
   color: var(--color-text-secondary);
   background: var(--color-bg-tertiary);
   user-select: none;
+}
+
+.input-token-popover__actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+.input-token-popover__row--textarea-multiline .input-token-popover__actions {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.input-token-popover__actions--moving {
+  animation: input-token-actions-move 160ms ease-out;
+}
+
+@keyframes input-token-actions-move {
+  from {
+    opacity: 0.78;
+    transform: translate(var(--input-token-actions-from-x, 0), var(--input-token-actions-from-y, 0));
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
 }
 
 .input-token-popover__button {

@@ -8,14 +8,18 @@ import type { AgentComposerDoc, AgentComposerItem, AgentComposerTokenKind } from
 import { cacheAgentProfileLabels, getCachedAgentProfileLabels, normalizeAgentProfileLabel } from '../../profile-token-display'
 
 function createProtocolTokenPattern() {
-  return /\[(@profile|@script):([^\]]*)\]\(([^)]*)\)|\[(input|url):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]*)\)/g
+  return /\[(@profile|@script):([^\]]*)\]\(([^)]*)\)|\[(input|textarea|url):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]*)\)/g
 }
 
 const MARKDOWN_LINK_PATTERN = /\[((?:\\.|[^\]\\\n])*)\]\(((?:\\.|[^)\\\n])*)\)/g
-const TODAY_DATE_INPUT_DEFAULT = '今天日期'
+const TODAY_DATE_INPUT_DEFAULTS = new Set([
+  '今天日期',
+  'today\'s date',
+  'сегодняшняя дата',
+])
 
 export function resolveInputDefaultValue(value: string, now = new Date()): string {
-  if (value.trim() !== TODAY_DATE_INPUT_DEFAULT) {
+  if (!TODAY_DATE_INPUT_DEFAULTS.has(value.trim().toLowerCase())) {
     return value
   }
 
@@ -46,7 +50,7 @@ function parseProtocolToken(match: RegExpMatchArray): ComposerProtocolToken {
     ? 'profile'
     : match[1] === '@script'
       ? 'script'
-      : match[4] === 'input' || match[4] === 'url'
+      : match[4] === 'input' || match[4] === 'textarea' || match[4] === 'url'
         ? match[4]
         : 'skill'
   const title = match[2] || match[5] || match[7] || ''
@@ -80,7 +84,7 @@ export function scanComposerProtocolTokens(prompt: string): ComposerProtocolToke
 
 export function hasComposerProtocolTokens(prompt: string) {
   return scanComposerProtocolTokens(prompt).some((token) => {
-    return token.kind === 'profile' || token.kind === 'input' || token.kind === 'url' || Boolean(token.templateRef || token.skillPath)
+    return token.kind === 'profile' || token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url' || Boolean(token.templateRef)
   })
 }
 
@@ -95,7 +99,7 @@ export function getMissingComposerTokenLabels(prompt: string) {
   const labels: string[] = []
 
   for (const token of tokens) {
-    if ((token.kind === 'input' || token.kind === 'url') && !token.target.trim()) {
+    if ((token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url') && !token.target.trim()) {
       labels.push(token.title)
     }
   }
@@ -134,8 +138,8 @@ export function searchComposerItems(items: AgentComposerItem[], query: string) {
   ].some(value => value?.toLowerCase().includes(keyword)))
 }
 
-export function tokenToProtocol(item: AgentComposerItem): string {
-  if (item.kind === 'input' || item.kind === 'url') {
+export function tokenToProtocol(item: AgentComposerItem) {
+  if (item.kind === 'input' || item.kind === 'textarea' || item.kind === 'url') {
     return inputTokenToProtocol(item)
   }
 
@@ -182,6 +186,10 @@ function inputTokenToProtocol(item: AgentComposerItem) {
     return `[url:${item.title || item.id}](${normalizeUrlValue(value)})`
   }
 
+  if (item.kind === 'textarea') {
+    return `[textarea:${item.title || item.id}](${value ?? ''})`
+  }
+
   return `[input:${item.title || item.id}](${value ?? ''})`
 }
 
@@ -193,6 +201,10 @@ export function templateItemToPrompt(
   const prompt = options.includeAuxiliaryPrompt === false ? '' : item.template?.prompt.trim() ?? ''
 
   return [tokenPrompt, prompt].filter(Boolean).join(' ').trim()
+}
+
+export function templateItemToInsertionPrompt(item: AgentComposerItem): string {
+  return templateItemToPrompt(item)
 }
 
 function profileTokenToProtocol(dirIds: string[]) {
@@ -265,7 +277,7 @@ export function findStoredComposerItem(options: {
 }): AgentComposerItem | undefined {
   const { kind, title, target, profiles, slashItems } = options
 
-  if (kind === 'input' || kind === 'url') {
+  if (kind === 'input' || kind === 'textarea' || kind === 'url') {
     return createInputTokenItem(title, target, kind)
   }
 
@@ -347,7 +359,7 @@ function createTemplateReferenceItem(options: {
 export function createInputTokenItem(
   title: string,
   value = '',
-  kind: Extract<AgentComposerTokenKind, 'input' | 'url'> = 'input',
+  kind: Extract<AgentComposerTokenKind, 'input' | 'textarea' | 'url'> = 'input',
 ): AgentComposerItem {
   const normalizedValue = kind === 'url' ? normalizeUrlValue(value) : value
   return {
@@ -391,7 +403,7 @@ export function updateInputTokenValue(
   doc: AgentComposerDoc | undefined,
   title: string,
   value: string,
-  kind: Extract<AgentComposerTokenKind, 'input' | 'url'> = 'input',
+  kind: Extract<AgentComposerTokenKind, 'input' | 'textarea' | 'url'> = 'input',
 ) {
   if (!doc) {
     return doc
@@ -449,7 +461,7 @@ export function parsePromptString(
     slashItems: AgentComposerItem[]
   },
 ): AgentComposerDoc {
-  const lines = prompt.split(/\n/)
+  const lines = splitPromptLines(prompt)
   const content = lines.map(line => ({
     type: 'paragraph',
     content: parsePromptLine(line, options),
@@ -459,6 +471,34 @@ export function parsePromptString(
     type: 'doc',
     content: content.length ? content : [{ type: 'paragraph' }],
   }
+}
+
+function splitPromptLines(prompt: string) {
+  const tokens = scanComposerProtocolTokens(prompt)
+  const lines: string[] = []
+  let lineStart = 0
+  let tokenIndex = 0
+
+  for (let index = 0; index < prompt.length; index++) {
+    while (tokens[tokenIndex] && tokens[tokenIndex].index + tokens[tokenIndex].raw.length <= index) {
+      tokenIndex++
+    }
+
+    const token = tokens[tokenIndex]
+    const isInsideToken = Boolean(
+      token
+      && index >= token.index
+      && index < token.index + token.raw.length,
+    )
+
+    if (prompt[index] === '\n' && !isInsideToken) {
+      lines.push(prompt.slice(lineStart, index))
+      lineStart = index + 1
+    }
+  }
+
+  lines.push(prompt.slice(lineStart))
+  return lines
 }
 
 export function serializePromptDoc(doc: AgentComposerDoc | undefined) {
@@ -677,7 +717,7 @@ function parsePromptLine(
       const token = parseProtocolToken(tokenMatch)
       const targets = token.kind === 'profile' ? splitProfileDirIds(token.target) : [token.target]
 
-      if (token.kind === 'input' || token.kind === 'url') {
+      if (token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url') {
         const value = token.kind === 'input'
           ? resolveInputDefaultValue(token.target)
           : token.target

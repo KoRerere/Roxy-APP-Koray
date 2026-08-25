@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 // eslint-disable-next-line test/no-import-node-test
 import test from 'node:test'
 import type { UserTemplateDTO } from '../../my-templates'
-import { templateItemToPrompt } from './protocol'
+import { templateItemToInsertionPrompt, templateItemToPrompt } from './protocol'
 import {
   mapRecommendedTemplateComposerItem,
   mapUserTemplateComposerItem,
   mergeTemplateComposerItems,
+  readSkillSlugFromMetadata,
   recommendedTemplateToChatPrompt,
   scriptTemplateToRunPrompt,
   setAgentSkillInstalledRoot,
@@ -23,9 +24,20 @@ import {
 const skillRoot = '/tmp/roxy-agent/library/skills/installed'
 const skillPath = `${skillRoot}/amazon-price-tracker/SKILL.md`
 const configuredSkillPath = `${skillRoot}/configured-skill/SKILL.md`
-const officialSkillPath = `${skillRoot}/official-skill/SKILL.md`
+const officialSkillPath = `${skillRoot}/skill/SKILL.md`
 
 setAgentSkillInstalledRoot(skillRoot)
+
+test('reads the installed Skill slug from template metadata used by Markdown links', () => {
+  // Regression: template deletion could not identify the installed Skill after Skill
+  // references switched from user:<id> to installed SKILL.md paths.
+  // Fixed by: sharing the same metadata-to-slug mapping with Skill link generation.
+  assert.equal(readSkillSlugFromMetadata({ packageSlug: 'research-skill' }), 'research-skill')
+  assert.equal(readSkillSlugFromMetadata({ skillMetadata: { slug: 'official-viral-trend-catcher' } }), 'viral-trend-catcher')
+  assert.equal(readSkillSlugFromMetadata({ slug: 'official-amazon-price-tracker' }), 'amazon-price-tracker')
+  assert.equal(readSkillSlugFromMetadata({ packageSlug: 'research/skill' }), 'research_skill')
+  assert.equal(readSkillSlugFromMetadata({ packageSlug: '../unsafe' }), '')
+})
 
 function userTemplate(overrides: Partial<UserTemplateDTO> = {}): UserTemplateDTO {
   return {
@@ -113,6 +125,23 @@ test('recommended Skill uses a canonical installed SKILL.md path', () => {
   assert.equal(item.template?.tokens[0]?.payload.skillPath, skillPath)
   assert.equal(
     templateItemToPrompt(item),
+    `[$Competitor teardown](${skillPath}) Analyze the selected competitor.`,
+  )
+})
+
+test('selecting a Skill template appends its prompt after the Skill reference', () => {
+  const item = mapRecommendedTemplateComposerItem({
+    id: 105,
+    kind: 'skill',
+    title: 'Competitor teardown',
+    description: 'Analyze a competitor.',
+    iconName: 'roxy-agent/rx-ic-skills',
+    metadata: { packageSlug: 'amazon-price-tracker' },
+    prompt: 'Analyze the selected competitor.',
+  })
+
+  assert.equal(
+    templateItemToInsertionPrompt(item),
     `[$Competitor teardown](${skillPath}) Analyze the selected competitor.`,
   )
 })

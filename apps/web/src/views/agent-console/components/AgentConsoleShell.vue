@@ -743,7 +743,7 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
   min-width: 0;
   min-height: 0;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
   padding: 16px;
   background: var(--color-bg-tertiary, var(--color-bg-quaternary));
 }
@@ -781,10 +781,10 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
   display: flex;
   box-sizing: border-box;
   width: 100%;
-  height: 36px;
+  height: 32px;
   align-items: center;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   border-radius: 10px;
   color: var(--color-text-primary, var(--color-text-primary));
   font-size: 14px;

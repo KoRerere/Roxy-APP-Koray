@@ -119,8 +119,8 @@ const emit = defineEmits<{
 }>()
 
 const ONBOARDING_SCRIPT_TEMPLATE_SLUGS = {
-  nurture: 'official-tiktok-for-you-nurture',
-  analytics: 'official-tiktok-comment-analyzer',
+  nurture: 'tiktok-for-you-nurture',
+  analytics: 'tiktok-comment-analyzer',
 } as const
 
 type OnboardingScriptTemplateSlug = typeof ONBOARDING_SCRIPT_TEMPLATE_SLUGS[keyof typeof ONBOARDING_SCRIPT_TEMPLATE_SLUGS]
@@ -1684,7 +1684,7 @@ onBeforeUnmount(() => {
 }
 
 .template-card__copy h2 {
-  margin: 0 0 8px;
+  margin: 0 0 2px;
   overflow: hidden;
   color: var(--color-text-primary);
   font-size: 16px;

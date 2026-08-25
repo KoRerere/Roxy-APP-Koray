@@ -17,6 +17,7 @@ import {
 } from '../my-templates'
 import { useAgentConsoleApi } from '../api'
 import { isTemplateUnread, markTemplateRead, markTemplateUnread, readUnreadTemplateKeys } from '../template-unread'
+import { deleteMyTemplate } from '../my-template-deletion'
 import {
   getAgentSkillInstalledRoot,
   setAgentSkillInstalledRoot,
@@ -202,9 +203,25 @@ async function createTaskFromTemplate(item: MyTemplateItem) {
 }
 
 async function runTemplateInChat(item: MyTemplateItem) {
+  console.info('[skill-template-debug] run template in chat clicked', {
+    id: item.id,
+    kind: item.kind,
+    name: item.name,
+    officialTemplateId: item.officialTemplateId,
+    metadataKeys: Object.keys(item.metadata ?? {}),
+    packageSlug: item.metadata?.packageSlug,
+    skillSlug: item.metadata?.skillSlug,
+    skillMdPath: item.metadata?.skillMdPath,
+    nestedSkillSlug: typeof item.metadata?.skillMetadata === 'object' && item.metadata.skillMetadata !== null
+      ? (item.metadata.skillMetadata as Record<string, unknown>).slug
+      : undefined,
+    installedRootReady: Boolean(getAgentSkillInstalledRoot()),
+    installedRoot: getAgentSkillInstalledRoot(),
+  })
   if (!getAgentSkillInstalledRoot()) {
     try {
       const info = await agentApi.skillPathInfo()
+      console.info('[skill-template-debug] loaded installed Skill root', info)
       setAgentSkillInstalledRoot(info.installedRoot)
     }
     catch (error) {
@@ -212,6 +229,11 @@ async function runTemplateInChat(item: MyTemplateItem) {
     }
   }
   prompt.value = userTemplateToChatPrompt(item)
+  console.info('[skill-template-debug] generated chat prompt from template', {
+    id: item.id,
+    kind: item.kind,
+    prompt: prompt.value,
+  })
   void router.push({
     name: 'agent-console-chat',
     query: route.query,
@@ -239,8 +261,13 @@ function deleteTemplate(item: MyTemplateItem) {
     accept: async () => {
       setTemplateDeleting(item.id, true)
       try {
-        const response = await agentApi.userTemplates.deleteUserTemplate({ templateId: item.id })
-        readUserTemplateVoidMutation(response, $t('删除模板失败'))
+        await deleteMyTemplate(item, {
+          deleteInstalledSkill: agentApi.deleteInstalledSkill,
+          deleteRemoteTemplate: async (templateId) => {
+            const response = await agentApi.userTemplates.deleteUserTemplate({ templateId })
+            readUserTemplateVoidMutation(response, $t('删除模板失败'))
+          },
+        })
         await fetchAllTemplates()
       }
       catch (error) {
