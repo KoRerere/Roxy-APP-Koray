@@ -8,7 +8,7 @@ roxy-agent 是模块化通用 AI Agent 框架。runtime 内部使用统一的 me
 
 五大功能模块：动态技能（SKILL.md 模型驱动）、MCP、记忆、HITL、子 Agent；外加基础设施（logging/observability/provider）与编排层（runtime）。
 
-**内置工具：** `ls` / `read_file` / `write_file` / `edit_file`（默认文件更新工具，HITL diff 预览）/ `apply_patch`（DeepSeek Responses custom V4A 多文件补丁，显式启用时替换 write/edit）/ `glob`（max_results+offset 分页）/ `grep`（max_results+offset 分页）/ `exec_command`（Codex 风格 shell 执行，命令级权限 `CommandPermissions`）/ `write_stdin`（后台命令 session 轮询）/ `ask_user`（真实澄清通道）/ `update_plan`。
+**内置工具：** `read_file` / `write_file` / `edit_file`（默认文件更新工具，HITL diff 预览）/ `apply_patch`（DeepSeek Responses custom V4A 多文件补丁，显式启用时替换 write/edit）/ `grep`（无 `rg` 时的内容搜索 fallback，max_results+offset 分页）/ `exec_command`（Codex 风格 shell 执行，命令级权限 `CommandPermissions`）/ `write_stdin`（后台命令 session 轮询）/ `ask_user`（真实澄清通道）/ `update_plan`。
 
 联网搜索由 OpenAI Responses API / DeepSeek Responses API 的服务端
 `{ type: "web_search" }` 工具提供，runtime 不注册本地 `web_fetch` 工具。
@@ -147,9 +147,9 @@ contract 测试锚点：`test/helpers/miniToolRegistry.ts`（工具契约）、`
 - `OpenAIResponsesProvider`（通用 Responses API；显式 `customToolNames: ['apply_patch']` 时使用 DeepSeek custom tool）
 - `AgentRuntime.create` + `.invoke` + `.stream` + `.structured` 公共生命周期接口
 - 内部 `AgentImpl.invoke` + `.stream` 完整运行循环（含 usage-driven compaction）
-- 所有内置工具（ls/read_file/write_file/edit_file/apply_patch/glob/grep/exec_command/write_stdin/ask_user/update_plan）
+- 所有注册的内置工具（read_file/write_file/edit_file/apply_patch/grep/exec_command/write_stdin/ask_user/update_plan）
 - `update_plan` 无状态快照与 `plan_updated` 工具事件转发
-- `glob` / `grep` 分页（`max_results` + `offset`，附 footer 提示总数与下一页 offset）
+- `grep` 分页（`max_results` + `offset`，附 footer 提示总数与下一页 offset）
 - `write_file` / `edit_file` 默认提供 unified diff HITL 预览；Responses custom apply_patch 路径提供 V4A patch 预览
 - `CommandPermissions`（deny > 安全命令链校验 > allow > ask 优先级，glob 匹配，支持运行时 `addAllow`）
 - `SuspendingClarificationHandler`（Promise parking，onPending 回调）

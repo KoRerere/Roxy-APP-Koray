@@ -30,12 +30,10 @@
 
 | 工具           | ToolAnnotations                                 | 特性                                                                                          |
 | -------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `ls`           | `readOnlyHint: true`, `openWorldHint: false`    | 目录读取；path-gated；cap-bounded                                                             |
 | `read_file`    | `readOnlyHint: true`, `openWorldHint: false`    | UTF-8 文本读取；DSH envelope；1-based `offset` + `limit` 分页；大文件流式读取                 |
 | `write_file`   | `destructiveHint: true`, `openWorldHint: false` | 默认写入工具；HITL unified diff 预览                                                          |
 | `edit_file`    | `destructiveHint: true`, `openWorldHint: false` | 默认精确替换工具；支持 multi-edit 与 HITL unified diff 预览                                   |
 | `apply_patch`  | `destructiveHint: true`, `openWorldHint: false` | 仅 Responses `customToolNames` 启用时注册；DeepSeek V4A patch；HITL patch 预览                |
-| `glob`         | `readOnlyHint: true`, `openWorldHint: false`    | `max_results`+`offset` 分页，footer 显示总数与下一页 hint                                     |
 | `grep`         | `readOnlyHint: true`, `openWorldHint: false`    | `max_results`+`offset` 分页（content 模式按匹配行，files_with_matches 模式按文件）            |
 | `exec_command` | `destructiveHint: true`, `openWorldHint: true`  | Codex 风格 shell 执行，`CommandPermissions` 命令级权限（deny > 安全命令链校验 > allow > ask） |
 | `write_stdin`  | `destructiveHint: true`, `openWorldHint: true`  | 轮询后台 `exec_command` session 输出；非 PTY stdin 写入暂不支持                               |
@@ -131,7 +129,7 @@ DeepSeek 的自由文本调用在 runtime 内始终保持原始 patch 字符串�
 - 不做工具级权限/隐藏（敏感性仅驱动 HITL，不改变 `toAnthropicTools` 可见性）。
 - 不做自动重试或超时（由 `ctx.signal` 协作式取消，超时由 runtime 设置 signal）。
 - 不允许 handler 各自实现结构校验；executor 对所有注册工具统一执行 Zod 校验，handler 只处理解析后的值和业务约束。
-- `glob` / `grep` 分页由工具自身通过 `max_results`+`offset` 参数实现；executor 层不做额外截断。
+- `grep` 分页由工具自身通过 `max_results`+`offset` 参数实现；executor 层不做额外截断。
 - 不提供不可表示 schema 的宽松 fallback；转换失败必须在工具定义处修复。
 - 不做工具版本化（同名即覆盖）。
 - 不做内置工具的并行执行（executor 单工具调度，并行由 runtime 在多 tool_use 块层调度）。

@@ -8,7 +8,7 @@ import type {
 import path from 'node:path'
 import { applyPatchInputSchema, normalizeApplyPatchInput } from 'roxy-agent-runtime'
 
-const FILE_TOOLS = /^(read_file|write_file|edit_file|apply_patch|ls|glob|grep)$/
+const FILE_TOOLS = /^(read_file|write_file|edit_file|apply_patch|grep)$/
 
 export interface RuntimeFilesystemMiddlewareOptions {
   workspaceDir: string

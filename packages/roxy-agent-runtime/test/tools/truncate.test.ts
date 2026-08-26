@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { splitOverlongLine, createContentPreview, capEntries } from '../../src/tools/builtin/truncate.ts'
+import { splitOverlongLine, createContentPreview } from '../../src/tools/builtin/truncate.ts'
 
 describe('splitOverlongLine', () => {
   it('returns the line unchanged when under the max', () => {
@@ -34,18 +34,5 @@ describe('createContentPreview', () => {
     expect(preview).toContain('L19')
     expect(preview).toContain('lines truncated')
     expect(preview).not.toContain('L10')
-  })
-})
-
-describe('capEntries', () => {
-  it('returns entries unchanged under the cap', () => {
-    expect(capEntries(['a', 'b'], 5, 'X')).toEqual(['a', 'b'])
-  })
-
-  it('caps and appends a footer noting the total', () => {
-    const entries = Array.from({ length: 10 }, (_, i) => `e${i}`)
-    const out = capEntries(entries, 3, '(capped)')
-    expect(out).toEqual(['e0', 'e1', 'e2', '(capped)'])
-    expect(capEntries(entries, 3, 'X')[3]).toBe('X')
   })
 })

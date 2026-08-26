@@ -44,13 +44,13 @@ export interface PathPermissionsOptions {
 /**
  * Pure value object deciding whether a filesystem path may be read. Built once
  * per agent (see AgentRuntime.create / buildTestAgent) and closed over by the read
- * tools (read_file/ls/glob/grep).
+ * tools (read_file/grep).
  *
  * Inheritance from {@link SkillRegistry.readFileInSkill}: the
  * `resolve` + `relative` + `..`-segment rejection is generalized from a single
  * skill dir to a set of allow roots, plus a deny list of sensitive patterns.
  *
- * - `checkPath` is binary (allow/deny) — used by ls/glob/grep to gate the
+ * - `checkPath` is binary (allow/deny) — used by grep to gate the
  *   search root and by read_file for the fast allow path.
  * - `classify` adds `ask` (outside roots, not denied) which the read handler
  *   routes to HITL in strict/delegate modes.
@@ -168,7 +168,7 @@ export interface PermissionDeps {
 /**
  * Shared read-path guard. Returns a `ToolHandlerResult` to short-circuit with
  * (deny error, or rejected-approval feedback), or `null` to proceed with the
- * read. Used by read_file/ls/glob/grep.
+ * read. Used by read_file/grep.
  *
  * - No `permissions` dep ⇒ unrestricted (null) — back-compat.
  * - `classify` allow ⇒ proceed (null).

@@ -7,7 +7,7 @@ import { createScriptToolInvokeConfig, registerRuntimeScriptTools, runtimeScript
 describe('runtime script tool registration', () => {
   it('registers only the executable script tools', () => {
     // Regression: list_scripts duplicated filesystem discovery already covered
-    // by ls/glob/grep and encouraged a stale global script index.
+    // by read_file/grep/exec_command and encouraged a stale global script index.
     // Fixed by: keeping only self-description and execution in the tool registry.
     const registry = new ToolRegistry()
     registerRuntimeScriptTools(registry, {

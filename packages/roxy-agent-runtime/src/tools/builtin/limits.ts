@@ -32,15 +32,6 @@ export const MAX_READ_BYTES = READ_MAX_BYTES
 /** Hard cap on grep matches before a "narrow your search" footer is appended. */
 export const MAX_GREP_MATCHES = 1_000
 
-/** Cap on ls entries before a footer is appended. */
-export const MAX_LS_ENTRIES = 200
-
-/** Cap on glob results before a footer is appended. */
-export const MAX_GLOB_RESULTS = 1_000
-
-/** Default page size for glob (max_results default when not specified). */
-export const DEFAULT_GLOB_PAGE = 50
-
 /** Default page size for grep in content mode (max_results default). */
 export const DEFAULT_GREP_PAGE = 50
 

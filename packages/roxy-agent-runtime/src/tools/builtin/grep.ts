@@ -4,7 +4,6 @@ import { z } from 'zod'
 import type { BuiltinTool } from './index.ts'
 import type { PermissionDeps } from './permissions.ts'
 import { readPermissionGuard } from './permissions.ts'
-import { globToRegex } from './glob_matcher.ts'
 import { MAX_GREP_MATCHES, DEFAULT_GREP_PAGE, DEFAULT_GREP_FILES_PAGE } from './limits.ts'
 import { defineTool } from '../schema.ts'
 
@@ -37,6 +36,16 @@ interface GrepState {
   matches: MatchRecord[]
   filesWithMatch: string[]
   capped: boolean
+}
+
+function globToRegex(pattern: string): RegExp {
+  const sentinel = '__ROXY_DOUBLE_STAR__'
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, sentinel)
+    .replace(/\*/g, '[^/]*')
+    .replace(new RegExp(sentinel, 'g'), '.*')
+  return new RegExp(`^${escaped}$`)
 }
 
 async function searchFile(

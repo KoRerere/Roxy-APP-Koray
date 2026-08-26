@@ -1,13 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { join } from 'node:path'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import type { ToolContext } from '../../../src/core/interfaces.ts'
 import { edit_fileTool } from '../../../src/tools/builtin/edit_file.ts'
 import { execCommandTool } from '../../../src/tools/builtin/exec_command.ts'
 import { ExecCommandProcessManager } from '../../../src/tools/builtin/exec_command_process_manager.ts'
-import { globTool } from '../../../src/tools/builtin/glob.ts'
 import { grepTool } from '../../../src/tools/builtin/grep.ts'
-import { lsTool } from '../../../src/tools/builtin/ls.ts'
 import { read_fileTool } from '../../../src/tools/builtin/read_file.ts'
 import { write_fileTool } from '../../../src/tools/builtin/write_file.ts'
 import { makeTempDir } from '../../helpers/tempDir.ts'
@@ -199,82 +197,6 @@ describe('exec_command', () => {
     const { handler } = execCommandTool()
     const result = await handler({}, ctx)
     expect(result.isError).toBe(true)
-  })
-})
-
-describe('glob', () => {
-  let tmpPath: string
-  let cleanup: () => Promise<void>
-
-  beforeEach(async () => {
-    ;({ path: tmpPath, cleanup } = await makeTempDir())
-    await writeFile(join(tmpPath, 'a.ts'), '')
-    await writeFile(join(tmpPath, 'b.ts'), '')
-    await writeFile(join(tmpPath, 'c.txt'), '')
-    await mkdir(join(tmpPath, 'sub'))
-    await writeFile(join(tmpPath, 'sub', 'd.ts'), '')
-  })
-  afterEach(() => cleanup())
-
-  it('matches files by extension', async () => {
-    const { handler } = globTool()
-    const result = await handler({ pattern: '*.ts', cwd: tmpPath }, ctx)
-    expect(result.isError).toBe(false)
-    const lines = result.content.split('\n').filter(Boolean)
-    expect(lines).toContain('a.ts')
-    expect(lines).toContain('b.ts')
-    expect(lines).not.toContain('c.txt')
-  })
-
-  it('matches nested files with **', async () => {
-    const { handler } = globTool()
-    const result = await handler({ pattern: '**/*.ts', cwd: tmpPath }, ctx)
-    expect(result.isError).toBe(false)
-    const lines = result.content.split('\n').filter(Boolean)
-    expect(lines.some((l) => l.includes('d.ts'))).toBe(true)
-  })
-
-  it('returns empty string for no matches (not an error)', async () => {
-    const { handler } = globTool()
-    const result = await handler({ pattern: '*.xyz', cwd: tmpPath }, ctx)
-    expect(result.isError).toBe(false)
-    expect(result.content.trim()).toBe('')
-  })
-
-  it('descriptor is read-only', () => {
-    const { descriptor } = globTool()
-    expect(descriptor.annotations).toEqual({ readOnlyHint: true, openWorldHint: false })
-  })
-})
-
-describe('ls', () => {
-  let tmpPath: string
-  let cleanup: () => Promise<void>
-
-  beforeEach(async () => {
-    ;({ path: tmpPath, cleanup } = await makeTempDir())
-    await writeFile(join(tmpPath, 'file.txt'), '')
-    await mkdir(join(tmpPath, 'subdir'))
-  })
-  afterEach(() => cleanup())
-
-  it('lists entries with type info', async () => {
-    const { handler } = lsTool()
-    const result = await handler({ path: tmpPath }, ctx)
-    expect(result.isError).toBe(false)
-    expect(result.content).toMatch(/file\.txt.*file|file.*file\.txt/i)
-    expect(result.content).toMatch(/subdir.*dir|dir.*subdir/i)
-  })
-
-  it('returns isError for non-existent directory', async () => {
-    const { handler } = lsTool()
-    const result = await handler({ path: join(tmpPath, 'ghost') }, ctx)
-    expect(result.isError).toBe(true)
-  })
-
-  it('descriptor is read-only', () => {
-    const { descriptor } = lsTool()
-    expect(descriptor.annotations).toEqual({ readOnlyHint: true, openWorldHint: false })
   })
 })
 

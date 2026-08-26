@@ -4,13 +4,14 @@ import { ToolRegistry } from '../../src/tools/registry.ts'
 
 describe('registerBuiltinTools', () => {
   it('defaults to the filesystem + shell tools', () => {
+    // Regression: glob and ls stayed in the default builtin registry after
+    // exec_command became the shell-backed path for listing and file discovery.
+    // Fixed by: registering only read_file/grep plus shell and mutation tools.
     const names = registerBuiltinTools({}).map((t) => t.descriptor.name)
     expect(names).toEqual(
       expect.arrayContaining([
         'read_file',
-        'glob',
         'grep',
-        'ls',
         'write_file',
         'edit_file',
         'exec_command',
@@ -18,6 +19,8 @@ describe('registerBuiltinTools', () => {
       ]),
     )
     expect(names).not.toContain('execute')
+    expect(names).not.toContain('glob')
+    expect(names).not.toContain('ls')
     expect(names).not.toContain('apply_patch')
     expect(names).not.toContain('web_fetch')
   })
@@ -25,9 +28,11 @@ describe('registerBuiltinTools', () => {
   it('uses apply_patch instead of write/edit when the Responses custom tool is enabled', () => {
     const names = registerBuiltinTools({ customToolNames: ['apply_patch'] }).map((t) => t.descriptor.name)
     expect(names).toEqual(
-      expect.arrayContaining(['read_file', 'glob', 'grep', 'ls', 'apply_patch', 'exec_command', 'write_stdin']),
+      expect.arrayContaining(['read_file', 'grep', 'apply_patch', 'exec_command', 'write_stdin']),
     )
     expect(names).not.toContain('execute')
+    expect(names).not.toContain('glob')
+    expect(names).not.toContain('ls')
     expect(names).not.toContain('write_file')
     expect(names).not.toContain('edit_file')
   })
@@ -55,9 +60,9 @@ describe('registerBuiltinTools', () => {
     })
     // read-only family stays unattended in default delegate mode.
     expect(byName.get('read_file')?.annotations).toEqual({ readOnlyHint: true, openWorldHint: false })
-    expect(byName.get('glob')?.annotations).toEqual({ readOnlyHint: true, openWorldHint: false })
     expect(byName.get('grep')?.annotations).toEqual({ readOnlyHint: true, openWorldHint: false })
-    expect(byName.get('ls')?.annotations).toEqual({ readOnlyHint: true, openWorldHint: false })
+    expect(byName.get('glob')).toBeUndefined()
+    expect(byName.get('ls')).toBeUndefined()
   })
 
   it('includes update_plan + ask_user only when their deps are provided', () => {
@@ -83,9 +88,7 @@ describe('registerBuiltinTools', () => {
     expect(reg.all().map((d) => d.name)).toEqual(
       expect.arrayContaining([
         'read_file',
-        'glob',
         'grep',
-        'ls',
         'write_file',
         'edit_file',
         'exec_command',
@@ -93,6 +96,8 @@ describe('registerBuiltinTools', () => {
       ]),
     )
     expect(reg.all().map((d) => d.name)).not.toContain('execute')
+    expect(reg.all().map((d) => d.name)).not.toContain('glob')
+    expect(reg.all().map((d) => d.name)).not.toContain('ls')
     expect(reg.all().map((d) => d.name)).not.toContain('apply_patch')
     expect(reg.all().map((d) => d.name)).not.toContain('web_fetch')
   })

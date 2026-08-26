@@ -123,25 +123,27 @@ describe('runtime chat agent tree configuration', () => {
     const prompt = createRuntimeSystemPrompt({ hasRipgrep: true })
     const generalPrompt = createGeneralPurposeSystemPrompt({ hasRipgrep: true })
 
-    expect(prompt).toContain('- Use `read_file` and `ls` to inspect known files/directories. For text or file searches, use `exec_command` with `rg` or `rg --files` first')
+    expect(prompt).toContain('- Use `read_file` to inspect known files. For directory listings, text search, or file search, use `exec_command` with `rg` or `rg --files` first')
     expect(prompt).toContain('reach first for `exec_command` with `rg` or `rg --files`')
     expect(prompt).toContain('use `exec_command` with `rg`')
     expect(prompt).not.toContain('`grep` to inspect files before making assumptions')
     expect(prompt).not.toContain('use the available file tools (`grep`, `glob`, `ls`, `read_file`)')
-    expect(generalPrompt).toContain('- Use `read_file` and `ls` to inspect known files/directories. For text or file searches, use `exec_command` with `rg` or `rg --files` first')
+    expect(generalPrompt).toContain('- Use `read_file` to inspect known files. For directory listings, text search, or file search, use `exec_command` with `rg` or `rg --files` first')
     expect(generalPrompt).toContain('- When you search for text or files, reach first for `exec_command` with `rg` or `rg --files`')
   })
 
   it('keeps grep-oriented guidance when ripgrep is unavailable', () => {
     const prompt = createRuntimeSystemPrompt({ hasRipgrep: false })
 
-    expect(prompt).toContain('Use `read_file`, `ls`, `glob`, and `grep`')
-    expect(prompt).toContain('use the available file tools (`grep`, `glob`, `ls`, `read_file`) as appropriate')
+    expect(prompt).toContain('Use `read_file` and `grep`')
+    expect(prompt).toContain('When you search file contents, use `grep` or `exec_command` as appropriate')
     expect(prompt).toContain('`grep`')
+    expect(prompt).not.toContain('`glob`')
+    expect(prompt).not.toContain('`ls`')
     expect(prompt).not.toContain('reach first for `exec_command` with `rg` or `rg --files`')
   })
 
-  it('uses the builtin grep tool only when ripgrep is unavailable', () => {
+  it('uses the builtin grep fallback tool only when ripgrep is unavailable', () => {
     const builtins: ToolDefinition[] = [
       {
         descriptor: {

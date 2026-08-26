@@ -12,10 +12,10 @@ const SEARCH_WORK_RULE = '<!-- ROXY_SEARCH_WORK_RULE -->'
 const MEMORY_SEARCH_TOOL = '<!-- ROXY_MEMORY_SEARCH_TOOL -->'
 const MEMORY_DISCOVERY_TOOL = '<!-- ROXY_MEMORY_DISCOVERY_TOOL -->'
 
-const RIPGREP_FILE_INSPECTION_RULE = '- Use `read_file` and `ls` to inspect known files/directories. For text or file searches, use `exec_command` with `rg` or `rg --files` first; if `rg` is unavailable or fails, use the next best available file-search tool without fuss.'
-const DEFAULT_FILE_INSPECTION_RULE = '- Use `read_file`, `ls`, `glob`, and `grep` to inspect files before making assumptions about their contents.'
+const RIPGREP_FILE_INSPECTION_RULE = '- Use `read_file` to inspect known files. For directory listings, text search, or file search, use `exec_command` with `rg` or `rg --files` first; if `rg` is unavailable or fails, use the next best available command without fuss.'
+const DEFAULT_FILE_INSPECTION_RULE = '- Use `read_file` and `grep` to inspect files before making assumptions about their contents. For directory listings or file search, use `exec_command` with the appropriate shell command.'
 const RIPGREP_SEARCH_WORK_RULE = '- When you search for text or files, reach first for `exec_command` with `rg` or `rg --files`; they are much faster than grep-style scans. If `rg` is unavailable or fails, use the next best tool without fuss.'
-const DEFAULT_SEARCH_WORK_RULE = '- When you search for text or files, use the available file tools (`grep`, `glob`, `ls`, `read_file`) as appropriate. If `rg` is available through `exec_command`, prefer `rg` or `rg --files` first.'
+const DEFAULT_SEARCH_WORK_RULE = '- When you search file contents, use `grep` or `exec_command` as appropriate. When you search filenames or list directories, use `exec_command` with the appropriate shell command.'
 const RIPGREP_MEMORY_SEARCH_TOOL = '`exec_command` with `rg`'
 const DEFAULT_MEMORY_SEARCH_TOOL = '`grep`'
 

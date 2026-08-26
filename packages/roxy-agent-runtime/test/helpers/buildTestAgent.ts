@@ -72,7 +72,7 @@ export function buildTestAgent(opts: TestAgentOpts = {}): {
   const memory = new InMemoryProvider()
   const registry = new ToolRegistry()
   // Mirror AgentRuntime.create: register the builtin file/shell family so test
-  // agents reflect production tool availability (read_file/glob/grep/ls/...).
+  // agents reflect production tool availability (read_file/grep/exec_command/...).
   for (const t of registerBuiltinTools()) {
     registry.add(t.descriptor, t.handler)
   }

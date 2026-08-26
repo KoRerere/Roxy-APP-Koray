@@ -1,7 +1,6 @@
 /**
  * Shared formatting helpers for the builtin filesystem tools:
- *  - head/tail preview for evicted tool results,
- *  - entry capping for ls/glob.
+ *  - head/tail preview for evicted tool results.
  *
  * Pure functions, no I/O.
  */
@@ -52,15 +51,4 @@ export function createContentPreview(
     preview: head.join('\n') + `\n... [${omitted} lines truncated] ...\n` + tail.join('\n'),
     omitted,
   }
-}
-
-/**
- * Cap an entry list to `max`, appending `footer` when truncation happened.
- * Returns the original array when under the cap.
- */
-export function capEntries<T>(entries: T[], max: number, footer: T): T[] {
-  if (entries.length <= max) {
-    return entries
-  }
-  return [...entries.slice(0, max), footer]
 }
