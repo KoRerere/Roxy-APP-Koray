@@ -9,6 +9,7 @@ import { strConcat } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
+import { BuyProxyListType, ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
 import { PayIdentity, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { emitter } from '/@/utils/eventBus'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
@@ -20,6 +21,8 @@ import { useBuyPoints } from '/@/views/agent-console/components/buy-points/useBu
 import { isEmpty } from 'es-toolkit/compat'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import LifetimeProfileModal from '/@/views/pay/wallet/components/lifetime-profile-modal.vue'
+import { percentOffToZhe } from '/@/views/agent/shop/utils/long-renew-first'
 
 const router = useRouter()
 const { isEcommerce } = useRouteContext()
@@ -28,7 +31,8 @@ const [showModal] = RxUseDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { isOwner } = storeToRefs(useRoleStore())
 const { userPayInfo, identityInfo } = storeToRefs(useUserStore())
-const { buyProxy, viewExpiresSoonProxy } = useProxy()
+const { getUserPayInfo } = useUserStore()
+const { buyProxy, renewProxy, viewExpiresSoonProxy } = useProxy()
 const { handleBusinessCode } = useHandleBusinessCode()
 const { buyPoints } = useBuyPoints()
 
@@ -39,7 +43,7 @@ const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Exp
 const isPremiumPartner = computed(() => identityInfo.value.identity === PayIdentity.agent && isOwner.value)
 const usedWindowCount = computed(() => userPayInfo.value.useWindowCount)
 const otherCards = computed(() => {
-  const { proxyExpireCount, proxyUsingCount, useMemberCount, maxMemberCount, useWorkspaceCount, maxWorkspaceCount, points } = userPayInfo.value
+  const { proxyExpireCount, proxyUsingCount, useMemberCount, maxMemberCount, useWorkspaceCount, maxWorkspaceCount, points, showProxyRenewMinDiscount, proxyRenewMinDiscount, purchasePermanentWindowCount } = userPayInfo.value
   return [
     {
       title: billingLabels.value.proxyEntity,
@@ -60,6 +64,12 @@ const otherCards = computed(() => {
           viewExpiresSoonProxy()
         }
       },
+      renewClick: renewExpiresSoonProxy,
+      // 账户级开关：有可享长续首享的可续费 IP 时由后端置 true
+      showLongRenewBanner: !!showProxyRenewMinDiscount,
+      // 中文展示折数，英/俄展示 % Off，缺省按 30% Off（7 折）
+      longRenewZhe: percentOffToZhe(proxyRenewMinDiscount || 30),
+      longRenewOff: proxyRenewMinDiscount || 30,
     },
     {
       title: $t('团队成员'),
@@ -85,6 +95,15 @@ const otherCards = computed(() => {
       addText: $t('购买'),
       addClick: buyPoints,
       visible: !isEcommerce.value,
+    },
+    {
+      // 终身窗口为一次性买断资源，无总量上限，仅电商渠道隐藏；独占一行避免与半宽卡并排
+      title: $t('终身窗口'),
+      used: purchasePermanentWindowCount || 0,
+      addText: $t('购买'),
+      addClick: buyLifetimeProfile,
+      visible: !isEcommerce.value,
+      fullRow: true,
     },
   ].filter(item => item.visible !== false)
 })
@@ -117,7 +136,7 @@ const planActions = computed(() => {
     {
       label: $t('续费'),
       visible: (!isFree.value && !isTrial.value && !userPayInfo.value.isAuto) || (isExpired.value && userPayInfo.value.isAuto),
-      severity: 'info',
+      severity: 'inf00o',
       outlined: false,
       class: 'renew-btn',
       command: () => {
@@ -160,8 +179,9 @@ const animationGradient = computed(() => {
 })
 
 const subscribeInfo = computed(() => {
-  if (isEmpty(userPayInfo.value))
+  if (isEmpty(userPayInfo.value)) {
     return {}
+  }
 
   const profileCount = currency(userPayInfo.value.maxWindowCount, { symbol: '', precision: 0 })
   const create = isPremiumPartner.value ? $t('无限用量') : profileCount.multiply(30).format()
@@ -182,18 +202,56 @@ onBeforeMount(() => {
 })
 
 async function getNextBillingDate() {
-  if (!userPayInfo.value.autoRenewDowngrade)
+  if (!userPayInfo.value.autoRenewDowngrade) {
     return
+  }
 
   const { code, data, msg } = await API.pay.userGetDowngradeSubscriptionInfoList()
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   nextBillText.value = billingLabels.value.nextBillEntities({
     count: data.windowCount,
     amount: currency(data.amount).format(),
     date: format(data.windowStartDate, 'yyyy/MM/dd'),
+  })
+}
+
+/**
+ * 钱包资源卡只有即将过期数量，续费弹窗需要代理行数据。
+ * 先拉即将过期列表，再打开与商店「续费」相同的弹窗。
+ */
+async function renewExpiresSoonProxy() {
+  const expireCount = userPayInfo.value.proxyExpireCount
+  if (!expireCount) {
+    return
+  }
+
+  const { code, data, msg } = await API.proxy.userGetProxyListMergedList({
+    type: BuyProxyListType.List,
+    proxyExpireStatus: ProxyExpireStatus.soon,
+    page_size: String(Math.max(expireCount, 100)),
+  } as Parameters<typeof API.proxy.userGetProxyListMergedList>[0] & { proxyExpireStatus: number })
+  onlyErrorToast(code, msg)
+  if (code !== 0) {
+    return
+  }
+
+  // 与商店续费入口一致：仅已完成订单且即将过期的代理可续费
+  const renewList = (data?.rows || []).filter(item =>
+    item.proxyExpireStatus === ProxyExpireStatus.soon
+    && item.orderStatus === ProxyOrderStatus.done,
+  )
+  if (!renewList.length) {
+    viewExpiresSoonProxy()
+    return
+  }
+
+  renewProxy(renewList, () => {
+    emitter.emit('updateBillList')
+    void getUserPayInfo()
   })
 }
 
@@ -223,6 +281,21 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     defaultType,
     paySuccess: () => {
       emitter.emit('updateBillList')
+    },
+  })
+}
+
+/** 打开终身窗口购买弹窗（仅钱包结算） */
+function buyLifetimeProfile() {
+  showModal({
+    header: 'lifetime-profile-purchase',
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => (
+        <LifetimeProfileModal onClose={hideModal} />
+      ),
     },
   })
 }
@@ -333,19 +406,26 @@ async function openPrimeDialog() {
         {{ $t('我的资源') }}
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <div v-for="item in otherCards" :key="item.title" class="h-[105px] flex flex-col justify-between flex-1 pa-4 rounded-xl others">
-          <div class="flex justify-between items-center">
-            <span class="others-title">{{ item.title }}</span>
-            <RxButton class="card-add-btn" variant="outlined" size="xxs" :label="strConcat('+ ', item.addText)" @click="item.addClick" />
-          </div>
-          <div class="flex justify-between items-baseline">
-            <div class="flex items-baseline" :class="{ 'cursor-pointer': item.visibleJump }" @click="item.jump">
-              <span class="others-used" :class="item.textClass">{{ item.used }}</span>
-              <span class="others-total">{{ strConcat('/', item.total?.toString()) }}</span>
-              <span class="ml-1.5 others-text">{{ item.text }}</span>
-              <span class="ml-1.5 others-text" :class="item.extraTextClass">{{ item.extraText }}</span>
+        <div v-for="item in otherCards" :key="item.title" class="flex flex-col flex-1 rounded-xl others overflow-hidden min-h-[105px]" :class="{ 'col-span-2': item.fullRow }">
+          <div class="flex flex-col justify-between flex-1 pa-4" :class="{ 'pb-2': item.showLongRenewBanner }">
+            <div class="flex justify-between items-center">
+              <span class="others-title">{{ item.title }}</span>
+              <RxButton class="card-add-btn" variant="outlined" size="xxs" :label="strConcat('+ ', item.addText)" @click="item.addClick" />
             </div>
-            <RxButton v-if="item.visibleJump && item.jump" text severity="secondary" size="xxs" icon="base/rx_ic_arrow_right_2" @click="item.jump" />
+            <div class="flex justify-between items-end">
+              <div class="flex items-baseline" :class="{ 'cursor-pointer': item.visibleJump }" @click="item.jump">
+                <span class="others-used" :class="item.textClass">{{ item.used }}</span>
+                <span class="others-total">{{ strConcat('/', item.total?.toString()) }}</span>
+                <span class="ml-1.5 others-text">{{ item.text }}</span>
+                <span class="ml-1.5 others-text" :class="item.extraTextClass">{{ item.extraText }}</span>
+              </div>
+              <!-- 有长续首享底栏时以底栏作为续费入口，避免与「续费」按钮重复 -->
+              <RxButton v-if="item.visibleJump && item.renewClick && !item.showLongRenewBanner" text size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" class="!text-[var(--colors-text-text-primary)] !shadow-none" :on-click="item.renewClick" />
+            </div>
+          </div>
+          <div v-if="item.showLongRenewBanner" class="flex items-center justify-center gap-1.5 py-1.5 cursor-pointer shrink-0 long-renew-banner" @click="item.jump">
+            <span>{{ $t('长续首享·低至 {discount}折', { discount: item.longRenewZhe, off: item.longRenewOff }) }}</span>
+            <SvgIcon name="base/rx_ic_arrow_right_2" size="16" color="#fff" />
           </div>
         </div>
       </div>
@@ -496,6 +576,14 @@ async function openPrimeDialog() {
       color: var(--colors-text-text-warning);
     }
   }
+}
+
+.long-renew-banner {
+  background: linear-gradient(to left, #11cd69, #05b1d7);
+  color: #fff;
+  font-family: 'DingTalk JinBuTi', sans-serif;
+  font-size: 13px;
+  line-height: 18px;
 }
 
 .line {

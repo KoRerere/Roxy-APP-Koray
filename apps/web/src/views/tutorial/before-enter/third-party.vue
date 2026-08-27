@@ -59,7 +59,7 @@ const inputs = ref([
         if (isEmptyValue(Object.values(result).filter(Boolean)))
           return
 
-        const { host, port, proxyUserName, proxyPassword, remark } = result
+        const { protocol, host, port, proxyUserName, proxyPassword, remark } = result
 
         const ipType = host?.startsWith('[') ? IPType.IPV6 : IPType.IPV4
 
@@ -69,6 +69,8 @@ const inputs = ref([
           port,
           proxyUserName,
           proxyPassword,
+          // 解析出的协议对应代理类型下拉（字典值为 SOCKS5/HTTP 等大写）；无协议时保留当前选择
+          ...(protocol ? { proxyCategory: protocol.toLocaleUpperCase() } : {}),
           proxyRules: '',
         })
 

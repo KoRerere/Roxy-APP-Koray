@@ -18,5 +18,7 @@ export interface Duration {
   discount: number
   discountStr?: string
   label?: string
+  /** 新人窗口买赠的额外天数，无活动时为 0 */
+  giftDays?: number
   [key: string]: any
 }

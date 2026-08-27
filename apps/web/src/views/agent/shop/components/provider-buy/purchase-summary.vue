@@ -12,6 +12,8 @@ import { ProxyIpType } from '/@/enums/proxy'
 import { getProxyTypePriceForSelectedDuration } from './utils'
 import type { BandwidthOption, BusinessUseOption, DurationOption, ProxyTypeOption } from './utils'
 import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
+import ExclusivePriceRow from '/@/views/campaign/new-user/exclusive-price-row.vue'
+import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 
 const {
   isCN,
@@ -26,6 +28,7 @@ const {
   canPay,
   payTooltip,
   officialWebsiteUrl,
+  countryCode,
   // vendorName = '',
 } = defineProps<{
   isCN: boolean
@@ -40,6 +43,8 @@ const {
   canPay: boolean
   payTooltip?: string
   officialWebsiteUrl: string
+  /** 当前选中国家码，静态住宅用它对照福利白名单 */
+  countryCode?: string
   // vendorName?: string
 }>()
 
@@ -48,6 +53,7 @@ const emit = defineEmits<{
 }>()
 
 const labels = useProxyPurchaseLabels()
+const newUserBenefitStore = useNewUserBenefitStore()
 
 const ONE_BUY_MAX = 1000
 
@@ -70,6 +76,65 @@ function inputPurchaseMember(value: number) {
 }
 
 const notes = computed(() => labels.value.notes)
+
+/** 按当前选中代理类型决定是否展示新人专享价签 */
+const newUserOfferKind = computed(() => {
+  const current = proxyTypeOptions.find(item => item.id === proxyTypeValue.value)
+  if (current?.proxyType === ProxyIpType.Residential)
+    return 'residential' as const
+  if (current?.proxyType === ProxyIpType.Datacenter)
+    return 'datacenter' as const
+  return undefined
+})
+
+/** 选中类型 + 30 天且仍有额度；电商设备购买不展示 */
+const priceRowOfferActive = computed(() => {
+  if (labels.value.mode === 'device')
+    return false
+  const kind = newUserOfferKind.value
+  if (!kind)
+    return false
+  return newUserBenefitStore.isNewUserIpOffer(kind, subscriptionMonths?.day ?? 0, countryCode)
+})
+
+/** 有福利且买 2 条以上：列表只展示原价，并提示首条新人价 */
+const showFirstIpHint = computed(() => priceRowOfferActive.value && purchaseMember.value >= 2)
+
+/** 类型列表上展示的现价 / 是否划线原价 */
+function listUnitDisplay(item: ProxyTypeOption) {
+  const unit = getUnitPrice(item)
+  if (!unit)
+    return undefined
+
+  const kind = item.proxyType === ProxyIpType.Residential
+    ? 'residential' as const
+    : item.proxyType === ProxyIpType.Datacenter
+      ? 'datacenter' as const
+      : undefined
+  const offer = kind && labels.value.mode !== 'device'
+    ? newUserBenefitStore.isNewUserIpOffer(kind, subscriptionMonths?.day ?? 0, countryCode)
+    : false
+  const catalogOriginal = unit.originalProxyPrice || unit.proxyPrice
+
+  if (!offer) {
+    return {
+      price: unit.proxyPrice,
+      original: unit.originalProxyPrice,
+      showOriginal: unit.proxyPrice < unit.originalProxyPrice,
+    }
+  }
+
+  if (purchaseMember.value >= 2) {
+    return { price: catalogOriginal, original: catalogOriginal, showOriginal: false }
+  }
+
+  const newPrice = newUserBenefitStore.newUserIpUnitPrice(kind!)
+  return {
+    price: newPrice,
+    original: catalogOriginal,
+    showOriginal: newPrice < catalogOriginal,
+  }
+}
 </script>
 
 <template>
@@ -109,16 +174,19 @@ const notes = computed(() => labels.value.notes)
                     </div>
                     <SvgIcon v-if="item.desc" v-tooltip.top="item.desc" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
                   </div>
-                  <div v-if="getUnitPrice(item)" class="flex gap-2 shrink-0 whitespace-nowrap">
+                  <div v-if="listUnitDisplay(item)" class="flex gap-2 shrink-0 whitespace-nowrap">
                     <span class="tt-secondary text-4 font-[DingTalk_JinBuTi] leading-5">
-                      {{ $t('{month}/个', { month: currency(getUnitPrice(item)!.proxyPrice).format() }) }}
+                      {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.price).format() }) }}
                     </span>
-                    <span v-if="getUnitPrice(item)!.proxyPrice < getUnitPrice(item)!.originalProxyPrice" class="tt-inactive text-3 leading-5 line-through">
-                      {{ $t('{month}/个', { month: currency(getUnitPrice(item)!.originalProxyPrice).format() }) }}
+                    <span v-if="listUnitDisplay(item)!.showOriginal" class="tt-inactive text-3 leading-5 line-through">
+                      {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.original).format() }) }}
                     </span>
                   </div>
                 </div>
               </label>
+              <div v-if="showFirstIpHint && newUserOfferKind" class="tt-tertiary text-3 leading-4.5">
+                {{ $t('首条 IP 享受 {price} 新用户价，不与其他折扣叠加', { price: currency(newUserBenefitStore.newUserIpUnitPrice(newUserOfferKind)).format() }) }}
+              </div>
             </div>
           </div>
         </template>
@@ -164,19 +232,7 @@ const notes = computed(() => labels.value.notes)
           </div>
         </template>
         <template #price="{ item }">
-          <div class="flex justify-between items-center">
-            <div class="details-label">
-              {{ item.label }}
-            </div>
-            <div>
-              <div class="details-price">
-                {{ item.value }}
-              </div>
-              <div v-if="item.diffValue > 0" class="details-diffprice">
-                {{ $t('节省 {value}', { value: currency(item.diffValue).format() }) }}
-              </div>
-            </div>
-          </div>
+          <ExclusivePriceRow :kind="newUserOfferKind ?? 'any'" :offer-active="priceRowOfferActive" :value="String(item.value ?? '')" :diff-value="item.diffValue" />
         </template>
         <template #after>
           <div class="flex-1 flex flex-col justify-end mt-3 gap-3">

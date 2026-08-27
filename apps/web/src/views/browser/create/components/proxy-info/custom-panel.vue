@@ -3,7 +3,7 @@ import TsForm from '/@/views/lab/components/form/index.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import RxButton from '/@/components/rx-button'
 import { deepClone, getDictMap, isEmptyValue, parseProxyUrl } from '/@/utils'
-import { IPType } from '/@/enums/proxy'
+import { IPType, ProxyType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
@@ -43,7 +43,7 @@ function onProxyRulesBlur(event: Event) {
   if (isEmptyValue(Object.values(result).filter(Boolean)))
     return
 
-  const { host, port, proxyUserName, proxyPassword, refreshUrl } = result
+  const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = result
   const ipType = host?.startsWith('[') ? IPType.IPV6 : IPType.IPV4
 
   formRef.value?.setValues({
@@ -52,6 +52,8 @@ function onProxyRulesBlur(event: Event) {
     port,
     proxyUserName,
     proxyPassword,
+    // 解析出的协议对应代理类型下拉（字典值为 SOCKS5/HTTP 等大写）；无协议时保留当前选择
+    ...(protocol ? { proxyCategory: protocol.toLocaleUpperCase() } : {}),
     refreshUrl,
     proxyRules: '',
   })
@@ -354,7 +356,7 @@ async function onCheckProxyStatus() {
     isDirect: userPayInfo.value.isDirectWhitelist,
   })
   loading.value = false
-  batchTestShowToast([result], {
+  batchTestShowToast([{ ...result, proxyType: ProxyType.resource }], {
     reCheck: () => onCheckProxyStatus(),
   })
   if (model.value)

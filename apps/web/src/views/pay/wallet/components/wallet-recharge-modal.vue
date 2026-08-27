@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPaymentMethods from '/@/views/pay/wallet/components/wallet-payment-methods.vue'
-import NextBouns from '/@/views/campaign/june-eighteen/next-bouns.vue'
+import PaywayCategorySelect from '/@/views/pay/wallet/components/payway-category-select.vue'
+import { PAYWAY_ALL_CATEGORY } from '/@/views/pay/wallet/components/payway-category'
+import NextBouns from '/@/views/campaign/new-user/next-bouns.vue'
 import currency from 'currency.js'
 import { debounce } from 'es-toolkit'
 import { useUserStore } from '/@/stores/user'
@@ -10,6 +12,7 @@ import { PayWay } from '/@/enums/pay'
 import { ceilByStep } from '/@/views/pay/subscribe/util'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
+import type { UserGetPayChannelFeesListData } from '@roxy/backend-api'
 
 interface Props {
   needAmount?: number
@@ -23,25 +26,49 @@ const emit = defineEmits<{
 }>()
 
 const [_, onlyErrorToast] = useResponseToast()
-const { mixpanelTrack } = useUserStore()
+const { walletRechargeMinAmount } = storeToRefs(useUserStore())
+const { mixpanelTrack, getUserPayInfo } = useUserStore()
 const { getActivityTotalRecharge } = useCampaignStore()
 
-const paywayList = [PayWay.Wechat, PayWay.Alipay, PayWay.Card, PayWay.USDT, PayWay.USDC].map(item => ({ value: item }))
-const selectedPayway = ref(paywayList[0].value)
+type PayChannelFee = UserGetPayChannelFeesListData['data'][number]
 
-const disabledMethods = ref<PayWay[]>([])
-const DEFAULT_MIN = 10
+const selectedPayway = ref<PayWay>(PayWay.Wechat)
+const selectedCategory = ref(PAYWAY_ALL_CATEGORY)
+/** 有绑卡时默认只看卡片，展开「其它支付方式」后才显示分类下拉 */
+const otherPayOpen = ref(false)
 const DEFAULT_MAX = 10 ** 5
-const DEFAULT_STEP = 10
 const loading = ref(false)
 const lockModal = ref(false)
-const playInfoList = ref()
+const playInfoList = ref<PayChannelFee[]>()
+
+/** 仅展示接口 isShow 的渠道，并带上 category 供筛选 */
+const paywayList = computed(() => {
+  return (playInfoList.value ?? [])
+    .filter(item => item.isShow)
+    .map(item => ({ value: item.payType as PayWay, category: item.category }))
+})
+
+/** 下拉选项按接口出现顺序去重 */
+const payCategories = computed(() => {
+  const seen = new Set<string>()
+  const list: string[] = []
+  for (const item of paywayList.value) {
+    if (!item.category || seen.has(item.category))
+      continue
+    seen.add(item.category)
+    list.push(item.category)
+  }
+  return list
+})
+
+/** 首充用 5 美金步长才能选到 5；已充值用户仍按 10 美金步进 */
+const defaultStep = computed(() => walletRechargeMinAmount.value)
 
 /** 余额不足时最低充值不得低于缺口金额（按 step 向上取整） */
 const min = computed(() => {
   if (!needAmount)
-    return DEFAULT_MIN
-  return Math.max(ceilByStep(currency(needAmount).value, DEFAULT_STEP), DEFAULT_MIN)
+    return walletRechargeMinAmount.value
+  return Math.max(ceilByStep(currency(needAmount).value, defaultStep.value), walletRechargeMinAmount.value)
 })
 
 const amount = ref(min.value)
@@ -49,13 +76,12 @@ const rechargeAmount = computed(() => amount.value ?? min.value)
 const lockMessage = computed(() => lockModal.value ? $t('正在处理支付，请勿关闭。') : '')
 
 const playInfo = computed(() => {
-  if (!playInfoList.value)
-    return {}
-
-  const data = playInfoList.value.find((item: any) => item.payType === selectedPayway.value)
+  const data = playInfoList.value?.find(item => item.payType === selectedPayway.value)
 
   return {
-    ...data,
+    total: data?.total ?? 0,
+    fee: data?.fee ?? 0,
+    feeRate: data?.feeRate ?? 0,
     activityTotalRecharge: getActivityTotalRecharge(rechargeAmount.value),
   }
 })
@@ -73,7 +99,21 @@ onBeforeMount(() => {
   else {
     mixpanelTrack('wallet_recharge_click')
   }
+  // 刷新 isFirstRecharge，避免沿用过期的最低充值门槛
+  void getUserPayInfo()
   querySupportPayway()
+})
+
+watch([min, walletRechargeMinAmount], ([nextMin], [, prevWalletMin]) => {
+  // 付费信息到达后：金额低于新门槛则抬升；仍停在旧下限则对齐到新的默认值（如 10→5）
+  if (amount.value < nextMin || amount.value === prevWalletMin)
+    amount.value = nextMin
+})
+
+watch(otherPayOpen, (open) => {
+  // 收起其它支付方式后回到 All，避免下次展开仍停在旧分类
+  if (!open)
+    selectedCategory.value = PAYWAY_ALL_CATEGORY
 })
 
 const delayQuery = debounce(querySupportPayway, 300)
@@ -86,18 +126,17 @@ async function querySupportPayway() {
   if (code !== 0)
     return
 
-  const payway = data.filter(item => item.isShow).map(item => item.payType) as PayWay[]
-  disabledMethods.value = Object.values(PayWay).filter(item => !payway.includes(item))
   playInfoList.value = data
+  const payway = data.filter(item => item.isShow).map(item => item.payType) as PayWay[]
 
-  if (!payway.includes(selectedPayway.value)) {
+  if (payway.length && !payway.includes(selectedPayway.value)) {
     selectedPayway.value = payway[0]!
   }
 }
 
 function onUpdate(value: number) {
   nextTick(() => {
-    amount.value = Math.min(Math.max(ceilByStep(currency(value).value, DEFAULT_STEP), min.value), DEFAULT_MAX)
+    amount.value = Math.min(Math.max(ceilByStep(currency(value).value, defaultStep.value), min.value), DEFAULT_MAX)
     delayQuery()
   })
 }
@@ -155,7 +194,7 @@ function close(isCancel: boolean) {
     <div class="flex flex-col gap-6 px-6">
       <ItemBlock :title="$t('请输入充值金额')">
         <div class="flex flex-col items-center gap-4">
-          <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="DEFAULT_MAX" :step="DEFAULT_STEP" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
+          <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="DEFAULT_MAX" :step="defaultStep" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
                        :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @update:model-value="onUpdate" @change="delayQuery"
           />
           <div class="px-6 justify-between flex gap-3 tt-tertiary">
@@ -174,15 +213,17 @@ function close(isCancel: boolean) {
           </div>
           <div class="mt-1 flex flex-col gap-2.5">
             <RxAmountQuickCheck :min="min" @select="quickSelect" />
-            <NextBouns :amount="rechargeAmount" />
           </div>
         </div>
       </ItemBlock>
     </div>
     <div class="flex-1 flex-col px-6 pb-6 gap-6 overflow-y-auto">
       <ItemBlock :title="$t('选择支付方式')">
-        <WalletPaymentMethods v-model="selectedPayway" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList" :disabled-methods="disabledMethods"
-                              :on-confirm="confirm" :play-info="playInfo"
+        <template v-if="otherPayOpen" #extra>
+          <PaywayCategorySelect v-model="selectedCategory" :categories="payCategories" />
+        </template>
+        <WalletPaymentMethods v-model="selectedPayway" :category="selectedCategory" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList"
+                              :on-confirm="confirm" @other-pay-open="otherPayOpen = $event"
         />
       </ItemBlock>
     </div>

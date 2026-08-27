@@ -141,6 +141,7 @@ import {
   UserGetLoginInfoListData,
   UserGetMessageTipsCreateData,
   UserGetMessageTipsCreatePayload,
+  UserGetNewUserBenefitConfigListData,
   UserGetNotifyListData,
   UserGetNotifyListParams,
   UserGetOssCredentialV2ListData,
@@ -2604,6 +2605,22 @@ export class BaseApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name UserGetNewUserBenefitConfigList
+   * @summary 获取用户福利资格与剩余状态
+   * @request GET:/user_get_new_user_benefit_config
+   * @response `200` `UserGetNewUserBenefitConfigListData`
+   */
+  userGetNewUserBenefitConfigList = (params: RequestParams = {}) =>
+    this.http.request<UserGetNewUserBenefitConfigListData, any>({
+      path: `/user_get_new_user_benefit_config`,
+      method: "GET",
       format: "json",
       ...params,
     });

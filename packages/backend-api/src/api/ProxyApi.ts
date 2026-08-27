@@ -51,6 +51,7 @@ import {
   UserGetProxyDeviceBoundAccountsListParams,
   UserGetProxyDeviceDetailListData,
   UserGetProxyDeviceDetailListParams,
+  UserGetProxyDurationDiscountsByDaysListData,
   UserGetProxyListMergedListData,
   UserGetProxyListMergedListParams,
   UserGetProxyModuleListData,
@@ -1174,6 +1175,22 @@ export class ProxyApi<SecurityDataType = unknown> {
   userGetRandomAvailableProxyMergedList = (params: RequestParams = {}) =>
     this.http.request<UserGetRandomAvailableProxyMergedListData, any>({
       path: `/user_get_random_available_proxy_merged`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyDurationDiscountsByDaysList
+   * @summary 获取代理时长续费折扣
+   * @request GET:/user_get_proxy_duration_discounts_by_days
+   * @response `200` `UserGetProxyDurationDiscountsByDaysListData`
+   */
+  userGetProxyDurationDiscountsByDaysList = (params: RequestParams = {}) =>
+    this.http.request<UserGetProxyDurationDiscountsByDaysListData, any>({
+      path: `/user_get_proxy_duration_discounts_by_days`,
       method: "GET",
       format: "json",
       ...params,

@@ -8,13 +8,20 @@ import {
   transformerVariantGroup,
 } from 'unocss'
 
+// 与 theme store 写入的 html[data-theme] 对齐（深色同时会加 .app-dark）
+const colorSchemeSelectors = {
+  dark: '[data-theme="dark"]',
+  light: '[data-theme="light"]',
+}
+
 // https://github.com/unocss/unocss#readme
 export default defineConfig({
   presets: [
-    presetMini({ dark: 'class' }),
+    presetMini({ dark: colorSchemeSelectors }),
     // https://unocss.dev/presets/attributify#properties-conflicts
     presetAttributify({ prefix: 'un-', prefixedOnly: true }),
     presetWind3({
+      dark: colorSchemeSelectors,
       // important: 'body'
     }),
   ],
@@ -22,6 +29,22 @@ export default defineConfig({
     animation: 'loadingCircle 1s infinite linear',
   }]],
   transformers: [transformerDirectives(), transformerVariantGroup()],
+  // i18n 会把 locale 写到 <html lang>，用 lang-en:w-40 / lang-zh:(text-sm) 按语言出样式
+  variants: [
+    {
+      name: 'lang',
+      match: (matcher) => {
+        const m = /^lang-([\w-]+):(.*)$/.exec(matcher)
+        if (!m)
+          return
+        return {
+          matcher: m[2],
+          selector: s => `html:lang(${m[1]}) ${s}`,
+        }
+      },
+      autocomplete: 'lang-(zh|zh-CN|en|ru):',
+    },
+  ],
   shortcuts: {
     'wh-full': 'w-full h-full',
     'flex-ac': 'flex justify-around items-center',

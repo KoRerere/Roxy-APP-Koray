@@ -83,9 +83,7 @@ export function useAuthentication() {
                 return (
                   <div class="w-full flex gap-6 items-center justify-end">
                     {hasEmail
-                      ? withDirectives(h('div', { class: 'truncate' }, userStore.userInfo?.email), [
-                          [TooltipHook, { value: userStore.userInfo?.email }, '', { top: true }],
-                        ])
+                      ? userStore.userInfo?.email
                       : <div class="shrink-0">{$t('当前未设置邮箱')}</div>}
                     <RxButton
                       severity="secondary"

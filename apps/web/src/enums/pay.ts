@@ -15,6 +15,84 @@ export enum PayWay {
   USDC = 'USDC',
   /** PayPal */
   PayPal = 'PayPal',
+  /** Apple Pay */
+  ApplePay = 'ApplePay',
+  /** Google Pay */
+  GooglePay = 'GooglePay',
+  // 以下值为后端 user_get_pay_channel_fees 的 payType，需与接口完全一致
+  /** 马来西亚 FPX 网上银行 */
+  FpxMy = 'fpx_my',
+  /** 菲律宾 GCash */
+  GcashPh = 'gcash_ph',
+  /** 印度 UPI */
+  UpiIn = 'upi_in',
+  /** 奥地利 EPS */
+  EpsAt = 'eps_at',
+  /** 波兰 Przelewy24 */
+  P24Pl = 'p24_pl',
+  /** 波兰 PayU */
+  PayuPl = 'payu_pl',
+  /** 捷克 PayU */
+  PayuCz = 'payu_cz',
+  /** 葡萄牙 Multibanco */
+  MultibancoPt = 'multibanco_pt',
+  /** 比特币 */
+  Bitcoin = 'bitcoin',
+  /** 马来西亚 GrabPay */
+  GrabpayMy = 'grabpay_my',
+  /** 波兰 BLIK */
+  BlikPl = 'blik_pl',
+  /** 巴西 Pix */
+  PixBr = 'pix_br',
+  /** 马来西亚 Touch 'n Go */
+  TouchngoMy = 'touchngo_my',
+  /** 马来西亚 DuitNow */
+  DuitnowMy = 'duitnow_my',
+  /** 俄罗斯 SBP（Система быстрых платежей） */
+  SbpRu = 'sbp_ru',
+  /** 俄罗斯 YooMoney */
+  YoomoneyRu = 'yoomoney_ru',
+  /** 俄罗斯 SberPay */
+  SberpayRu = 'sberpay_ru',
+  /** 泰国 PromptPay */
+  PromptpayTh = 'promptpay_th',
+  /** 泰国 TrueMoney */
+  TruemoneyTh = 'truemoney_th',
+  /** 越南 VietQR */
+  VietqrVn = 'vietqr_vn',
+}
+
+/** 支付方式展示文案 */
+export const PayWayStr = {
+  get [PayWay.Card]() { return $t('银行卡') },
+  get [PayWay.Balance]() { return $t('Roxy 钱包') },
+  get [PayWay.Alipay]() { return $t('支付宝') },
+  get [PayWay.Wechat]() { return $t('微信支付') },
+  get [PayWay.USDT]() { return 'USDT' },
+  get [PayWay.USDC]() { return 'USDC' },
+  get [PayWay.PayPal]() { return 'PayPal' },
+  get [PayWay.ApplePay]() { return 'Apple Pay' },
+  get [PayWay.GooglePay]() { return 'Google Pay' },
+  get [PayWay.FpxMy]() { return 'FPX' },
+  get [PayWay.GcashPh]() { return 'GCash' },
+  get [PayWay.UpiIn]() { return 'UPI' },
+  get [PayWay.EpsAt]() { return 'EPS' },
+  get [PayWay.P24Pl]() { return 'Przelewy24' },
+  get [PayWay.PayuPl]() { return 'PayU PL' },
+  get [PayWay.PayuCz]() { return 'PayU CZ' },
+  get [PayWay.MultibancoPt]() { return 'Multibanco' },
+  get [PayWay.Bitcoin]() { return 'Bitcoin' },
+  get [PayWay.GrabpayMy]() { return 'GrabPay' },
+  get [PayWay.BlikPl]() { return 'BLIK' },
+  get [PayWay.PixBr]() { return 'Pix' },
+  get [PayWay.TouchngoMy]() { return "Touch 'n Go" },
+  get [PayWay.DuitnowMy]() { return 'DuitNow' },
+  get [PayWay.SbpRu]() { return 'SBP' },
+  get [PayWay.YoomoneyRu]() { return 'YooMoney' },
+  get [PayWay.SberpayRu]() { return 'SberPay' },
+  get [PayWay.PromptpayTh]() { return 'PromptPay' },
+  get [PayWay.TruemoneyTh]() { return 'TrueMoney' },
+  get [PayWay.VietqrVn]() { return 'VietQR' },
 }
 
 export enum OrderType {

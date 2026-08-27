@@ -784,7 +784,7 @@ export interface UserGetWorkspaceListApiListData {
     total: number;
     rows: {
       /** 工作空间ID */
-      id?: number;
+      id?: string;
       /** 用户ID */
       userId?: number;
       /** 工作空间名称 */
@@ -4840,6 +4840,65 @@ export interface UserGetMessageTipsCreateData {
   msg: string;
 }
 
+export interface UserGetNewUserBenefitConfigListData {
+  /** 接口返回码，0 通常表示成功 */
+  code: number;
+  /** 接口业务数据主体 */
+  data: {
+    /** 活动开始时间，13位毫秒时间戳 */
+    start_timestamp: number;
+    /** 活动结束时间，13位毫秒时间戳 */
+    end_timestamp: number;
+    /** 服务器当前 UTC 时间，13位毫秒时间戳，用于和活动时间做比较 */
+    server_utc_timestamp: number;
+    /** 当前用户是否满足领取/参与该新用户福利的资格 */
+    eligible: boolean;
+    /** 当前活动是否处于开启状态 */
+    promoActive: boolean;
+    /** 当前是否仍在“注册后可参与”的有效时间窗口内 */
+    withinRegisterWindow: boolean;
+    /** 注册福利资格失效时间，13位毫秒时间戳，超过该时间可能无法再参与 */
+    registerExpireTimestamp: number;
+    /** 用户当前福利使用情况 */
+    usage: {
+      /** 数据中心代理福利是否已经使用过，false 表示未使用 */
+      datacenter: boolean;
+      /** 住宅代理福利是否已经使用过，false 表示未使用 */
+      residential: boolean;
+      /** 窗口期/套餐赠送福利是否已经使用过，false 表示未使用 */
+      window: boolean;
+    };
+    /** 用户当前各类福利是否还有剩余额度/可用资格 */
+    remaining: {
+      /** 数据中心代理福利是否仍可使用，true 表示还有 */
+      datacenter: boolean;
+      /** 住宅代理福利是否仍可使用，true 表示还有 */
+      residential: boolean;
+      /** 窗口期/赠送月数福利是否仍可使用，true 表示还有 */
+      window: boolean;
+    };
+    /** 数据中心代理的新用户优惠价格 */
+    datacenterPrice: number;
+    /** 住宅代理的新用户优惠价格 */
+    residentialPrice: number;
+    /** 支持住宅代理新用户福利的国家/地区列表 */
+    residentialCountries: string[];
+    /** 住宅代理中“自有资源”支持的国家/地区列表 */
+    residentialOwnCountries: string[];
+    /** 不同购买时长对应赠送月数的映射关系 */
+    windowGiftMonths: {
+      /** 购买 3 个月，赠送 1 个月 */
+      "3": number;
+      /** 购买 6 个月，赠送 2 个月 */
+      "6": number;
+      /** 购买 12 个月，赠送 4 个月 */
+      "12": number;
+    };
+  };
+  /** 接口返回消息，描述本次请求结果 */
+  msg: string;
+}
+
 export interface UserGetWindowInfoListListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -5669,51 +5728,59 @@ export interface UserMdfWindowInfoBatchV2CreateData {
 
 export interface UserMdfWindowDataBatchCreatePayload {
   requestType: string;
-  /**
-   * 代理选择/代理添加/删除代理/添加平台账号/选择平台账号/编辑平台账号/编辑cookie： proxy_select/proxy_add/proxy_delete/platform_add/platform_select/platform_edit/cookie_edit
-   * 代理选择/代理添加/删除代理/添加平台账号/选择平台账号/编辑cookie： proxy_select/proxy_add/proxy_delete/platform_add/platform_select/cookie_edit
-   */
+  /** 代理选择/代理添加/删除代理/添加平台账号/选择平台账号/编辑cookie： proxy_select/proxy_add/proxy_delete/platform_add/platform_select/cookie_edit */
   type: string;
-  ids: number[];
+  ids: string[];
   paramList?: {
-    platformUrlIds?: number[];
-    /**
-     * 添加账号平台
-     * 添加账号平台
-     */
-    windowPlatformList?: string[];
-    /**
-     * 选择代理
-     * 选择代理
-     */
+    platformUrlIds: number[];
+    /** 添加账号平台 */
+    windowPlatformList: string[];
+    /** 选择代理 */
+    moduleId: number;
+    /** 编辑cookie */
+    cookie: string[];
+    loading: boolean;
+    checkStatus: number;
+    error: string;
+    lastIp: string;
+    lastCity: string;
+    lastCountry: string;
+    timezone: string;
+    checkTime: string;
+    proxyRules: string;
+    ipType: string;
+    protocol: string;
+    proxyCategory: string;
+    host: string;
+    port: number;
+    proxyUserName: string;
+    proxyPassword: string;
+    refreshUrl: string;
+    checkChannel: string;
+    id: number;
+    dirId: string;
+    proxyMethod: string;
+  };
+  proxyList?: {
     moduleId?: number;
-    /**
-     * 编辑cookie
-     * 编辑cookie
-     */
-    cookie?: string[];
-    loading?: boolean;
+    proxyMethod?: string;
     checkStatus?: number;
-    error?: string;
     lastIp?: string;
     lastCity?: string;
     lastCountry?: string;
     timezone?: string;
     checkTime?: string;
-    proxyRules?: string;
-    ipType?: string;
-    protocol?: string;
-    proxyCategory?: string;
     host?: string;
-    port?: number;
+    port?: string;
     proxyUserName?: string;
     proxyPassword?: string;
+    proxyRules?: string;
+    ipType?: string;
+    proxyCategory?: string;
     refreshUrl?: string;
     checkChannel?: string;
-    id?: number;
-    dirId?: string;
-    proxyMethod?: string;
-  };
+    protocol?: string;
+  }[];
 }
 
 export interface UserMdfWindowDataBatchCreateData {
@@ -8551,6 +8618,7 @@ export interface UserGetProxyListMergedListData {
     total: number;
     rows: {
       id?: number;
+      buyProxyType?: number;
       userId?: number;
       workspaceId?: number;
       canBandwidthUpgrade?: boolean;
@@ -8596,6 +8664,10 @@ export interface UserGetProxyListMergedListData {
       checkChannelValue?: string;
       isBind?: boolean;
       bindCount?: number;
+      /** 是否仍具备长续首享资格 true 有 false 没有 */
+      longRenewFirstEligible?: boolean;
+      /** 是否已使用过长续首享  true 已使用 flase 未使用 */
+      longRenewFirstUsed?: boolean;
       bindList?: number[];
       bindAccountList?: string[];
       canRefund?: boolean;
@@ -8828,6 +8900,8 @@ export interface UserGetProxyCountryListByBusinessSceneListData {
     isNew: boolean;
     proxyTpye: string;
     status: string;
+    /** 代理类型列表 */
+    proxyTpyeList?: string[];
   }[];
   msg: string;
 }
@@ -10080,7 +10154,7 @@ export interface UserGetWorkspaceListListData {
   data: {
     rows: {
       /** ID */
-      id: number;
+      id: string;
       /** 创建人ID */
       userId: number;
       /** 工作空间名称 */
@@ -10462,6 +10536,12 @@ export interface UserGetUserPayInfoListData {
   code: number;
   data: {
     apiRate: number;
+    /** true 展示续费折扣  false 不展示 */
+    showProxyRenewMinDiscount: boolean;
+    /** 续费最低优化 */
+    proxyRenewMinDiscount: number;
+    /** 终身窗口购买数量 */
+    purchasePermanentWindowCount: number;
     points: number;
     isDirectWhitelist: boolean;
     autoRecharge: number;
@@ -10511,6 +10591,7 @@ export interface UserGetUserPayInfoListData {
     walletDiscount: number;
     workspaceSinglePrice: number;
     pointsDiscount: number;
+    isFirstRecharge: boolean;
   };
   msg: string;
 }
@@ -10663,56 +10744,28 @@ export interface UserSevenDayTrialCreateData {
 }
 
 export interface UserPaySettlementCreatePayload {
-  /**
-   * 购买数量
-   * 购买、订阅才有购买数量详细信息{"profile":100,"workspace":1,"staff":2}
-   */
-  purchaseMember?: {
-    profile?: number;
-    workspace?: number;
-    staff?: number;
+  purchaseMember: {
+    profile: number;
+    workspace: number;
+    staff: number;
   };
-  /**
-   * 购买类型(wallet/workspace/staff/profile/workspace_staff)
-   * 购买、订阅才有
-   */
-  purchaseType?: string;
-  /**
-   * 订阅等级(Basic/Pro/Business/Enterprise)
-   * 订阅才有
-   */
-  subLevel?: string;
-  /**
-   * 购买月数(1/3/6/12)
-   * 续费、订阅才有
-   */
-  subscriptionMonths?: number;
-  /**
-   * 是否自动购买和续费,
-   * 续费、订阅才有
-   */
-  isAuto?: boolean;
-  /**
-   * 订单号
-   * 续费才有
-   */
-  orderNo?: string;
-  /**
-   * 支付方式: Balance,Alipay,USDT,Wechat,Card
-   * 都有
-   */
+  /** 购买类型(wallet/workspace/staff/profile) */
+  purchaseType: string;
+  /** 订阅等级(Basic/Pro/Business/Enterprise) */
+  subLevel: string;
+  /** 购买月数(1/3/6/12) */
+  subscriptionMonths: number;
+  /** 购买天(7/30//90/180/360) 新版使用 */
+  subscriptionDays: number;
+  /** 是否自动购买和续费, */
+  isAuto: boolean;
+  /** 订单号 */
+  orderNo: string;
+  /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
   payType: string;
-  giftType?: string;
-  /**
-   * 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift)
-   * 都有
-   */
+  giftType: string;
+  /** 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift) */
   orderType: string;
-  /**
-   * 子订单类型upgrade:升级, purchase：购买
-   * 订阅才有
-   */
-  subOrderType?: string;
 }
 
 export interface UserPaySettlementCreateData {
@@ -10876,7 +10929,7 @@ export interface UserCancelSubscriptionListData {
 export interface UserDowngradeSubscriptionListParams {
   /**
    * 窗口数量
-   * @example 0
+   * @example ""
    */
   purchaseMember: number;
 }
@@ -10891,7 +10944,7 @@ export interface UserDowngradeSubscriptionListData {
 export interface UserDowngradeSubscriptionV2ListParams {
   /**
    * 窗口数量
-   * @example 0
+   * @example ""
    */
   purchaseMember: number;
 }
@@ -11266,13 +11319,59 @@ export interface UserGetPayChannelFeesListParams {
 export interface UserGetPayChannelFeesListData {
   code: number;
   data: {
-    payType: string;
-    feeRate: number;
-    total: number;
+    category: string;
     fee: number;
+    feeRate: number;
     isShow: boolean;
+    payType: string;
+    total: number;
   }[];
   msg: string;
+}
+
+export interface UserGetDurationDiscountsByDaysListData {
+  "7": number;
+  "30": number;
+  "90": number;
+  "180": number;
+  "360": number;
+}
+
+export interface UserPermanentWindowSettlementCreatePayload {
+  /** 支付类型 */
+  payType: string;
+  purchaseCount: number;
+}
+
+export interface UserPermanentWindowSettlementCreateData {
+  /** 业务状态码：0 表示成功 */
+  code: number;
+  /** 提示文案 */
+  msg: string;
+  data: {
+    /** 本次订单号（系统生成，可对账） */
+    orderNo: string;
+    /** 支付方式：钱包余额 */
+    payType: string;
+    /** 第三方支付单号；钱包即时扣款无第三方，固定为 0 */
+    payId: number;
+    /** 跳转支付链接；钱包支付无需跳转，为空 */
+    payUrl: string;
+    /** 应付金额（美元）：1 个终身窗口 × $20 */
+    orderAmount: number;
+    /** 原价（美元）；终身窗口无折扣，与应付一致 */
+    originalAmount: number;
+    /** 实付金额（美元）；与 orderAmount 一致 */
+    realAmount: number;
+    /** 本次购买数量：1 个终身窗口 */
+    purchaseCount: number;
+    /** 发货后用户永久窗口总数（user_identity_table.windowCount） */
+    windowCount: number;
+    /** 到期时间；终身窗口无过期，为空 */
+    endTime: string;
+    /** 是否即时到账：true = 扣款成功已直接加窗口 */
+    immediate: boolean;
+  };
 }
 
 export interface CheckIpDownloadLimitListData {
@@ -11768,6 +11867,17 @@ export interface UserGetProxySegmentReplaceListListData {
       oldExpireDate?: string;
       newExpireDate?: string;
     }[];
+  };
+  msg: string;
+}
+
+export interface UserGetProxyDurationDiscountsByDaysListData {
+  code: number;
+  data: {
+    "30": number;
+    "90": number;
+    "180": number;
+    "360": number;
   };
   msg: string;
 }

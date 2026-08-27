@@ -2,7 +2,7 @@
 import { h } from 'vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import FreedomActivity from '/@/views/campaign/june-eighteen/activity-info.vue'
+import FreedomActivity from '/@/views/campaign/new-user/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import RxButton from '/@/components/rx-button/'
@@ -464,7 +464,7 @@ function jumpToProfile() {
                     {{ item.value }}
                   </div>
                   <div v-if="item.diffValue > 0" class="details-diffprice">
-                    {{ $t('节省 {value}', {
+                    {{ $t('立省 {value}', {
                       value: currency(item.diffValue).format(),
                     }) }}
                   </div>

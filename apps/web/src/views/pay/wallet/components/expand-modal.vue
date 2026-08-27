@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { h } from 'vue'
-import ActivityInfoExpand from '/@/views/campaign/june-eighteen/activity-info-expand.vue'
+import ActivityInfoExpand from '/@/views/campaign/new-user/activity-info-expand.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
@@ -228,7 +228,7 @@ function close(isCancel: boolean) {
                 {{ item.value }}
               </div>
               <div v-if="discountAmount > 0" class="details-diffprice">
-                {{ $t('节省 {value}', {
+                {{ $t('立省 {value}', {
                   value: currency(discountAmount).format(),
                 }) }}
               </div>

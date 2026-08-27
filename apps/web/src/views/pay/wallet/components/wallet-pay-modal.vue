@@ -111,7 +111,7 @@ function close(isCancel: boolean) {
           </div>
           <div v-if="finalResult.showDiscount" class="flex justify-center items-baseline gap-2">
             <span v-if="finalResult.originalAmount" class="order-oldprice">{{ currency(finalResult.originalAmount).format() }}</span>
-            <span v-if="finalResult.discountAmount" class="order-discount">{{ $t('节省 {value}', { value: currency(finalResult.discountAmount).format() }) }}</span>
+            <span v-if="finalResult.discountAmount" class="order-discount">{{ $t('立省 {value}', { value: currency(finalResult.discountAmount).format() }) }}</span>
           </div>
         </div>
       </div>

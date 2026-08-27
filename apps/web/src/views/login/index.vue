@@ -23,6 +23,7 @@ import { getWorkspaceTypeLandingRoute } from '/@/utils/workspace-mode'
 import { ensureBeforeEnterStep, markBeforeEnterSession, needsBeforeEnter } from '/@/domain/before-enter'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
+import { markNewUserBenefitShowOnLogin } from '/@/views/campaign/new-user/useNewUserBenefitModal'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
 import { OFFICIAL_SITE_REDIRECT_SESSION } from '/@/constants/storage-key'
@@ -217,6 +218,8 @@ async function handleSubmitBy2fa(faCode: string) {
 
 async function afterLogin(loginData: LoginCreateData['data']) {
   setToken(loginData.token)
+  // 进入主界面后新人福利弹窗自动出现一次（不受 8 小时/当日次数限制）
+  markNewUserBenefitShowOnLogin()
   console.log('rememberMe', rememberMe.value)
 
   const officialSiteRedirect = sessionStorage.getItem(OFFICIAL_SITE_REDIRECT_SESSION)

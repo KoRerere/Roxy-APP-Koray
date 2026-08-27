@@ -3,6 +3,7 @@ import Tags from '/@/views/browser/list/tags'
 import Profiles from '/@/views/browser/list/profiles'
 import Recycle from '/@/views/browser/list/recycle'
 import Transfer from '/@/views/browser/list/transfer'
+import RenewalReminderDrawer from './components/renewal-reminder-drawer.vue'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { SvgNames } from '/@/components/rx-icon/'
 import { I18nT } from 'vue-i18n'
@@ -301,7 +302,7 @@ async function hidePopover() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full">
+  <div class="flex flex-col h-full w-full relative">
     <div class="flex items-center justify-between tabs">
       <Tabs v-model:value="active" class="overflow-hidden" scrollable>
         <TabList ref="tabList">
@@ -334,6 +335,8 @@ async function hidePopover() {
         <Profiles :current-filter="currentFilter" @update-filter-tabs="updateFilterTabs" @switch-tab="switchTab" />
       </div>
     </div>
+
+    <RenewalReminderDrawer />
   </div>
 
   <RyPopover ref="config" @hide="hidePopover">

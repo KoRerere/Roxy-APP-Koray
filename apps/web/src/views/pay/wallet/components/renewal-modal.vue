@@ -3,7 +3,7 @@ import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
-import ActivityInfoExpand from '/@/views/campaign/june-eighteen/activity-info-expand.vue'
+import ActivityInfo from '/@/views/campaign/new-user/activity-info.vue'
 import currency from 'currency.js'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { API } from '/@/api'
@@ -11,7 +11,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
-import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
+import { applyPriceDiscount, discountCalculate, durationAmountFromMonthly, hasVisiblePriceDiscount } from '/@/views/pay/subscribe/util.ts'
 import { SubLevelEnum } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
@@ -27,6 +27,8 @@ const billingLabels = useBillingEntityLabels()
 const selectedDuration = ref()
 const monthAmount = ref(0)
 const loading = ref(false)
+/** 活动入口可指定默认续费天数，缺档时 Duration 仍回落到第一项 */
+const defaultDays = dialogRef.value?.data?.defaultDays as number | undefined
 
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
@@ -48,9 +50,9 @@ const allDiscount = computed(() => {
 
 const disabled = computed(() => loading.value || !selectedDuration.value)
 
-const totalAmount = computed(() => currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).multiply(allDiscount.value.finalDiscount).value)
-const originalAmount = computed(() => currency(monthAmount.value).multiply(selectedDuration.value?.month ?? 1).value)
-const discountAmount = computed(() => currency(originalAmount.value).subtract(totalAmount.value).value)
+const originalAmount = computed(() => durationAmountFromMonthly(monthAmount.value, selectedDuration.value?.day ?? 30))
+const totalAmount = computed(() => applyPriceDiscount(originalAmount.value, allDiscount.value.finalDiscount))
+const discountAmount = computed(() => currency(originalAmount.value, { precision: 6 }).subtract(totalAmount.value).value)
 
 const detail = computed(() => {
   const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
@@ -77,7 +79,7 @@ const detail = computed(() => {
         },
         {
           label: $t('续费时长'),
-          value: selectedDuration.value?.title,
+          slot: 'duration',
         },
         {
           label: $t('到期时间'),
@@ -112,7 +114,7 @@ const detail = computed(() => {
         {
           label: $t('套餐原价'),
           value: currency(originalAmount.value).format(),
-          visible: originalAmount.value !== totalAmount.value,
+          visible: hasVisiblePriceDiscount(originalAmount.value, totalAmount.value),
           slot: 'oldprice',
         },
         {
@@ -164,7 +166,7 @@ async function confirm() {
             payType,
             isAuto,
             orderNo: userPayInfo.value!.orderNo,
-            subscriptionMonths: selectedDuration.value.month,
+            subscriptionDays: selectedDuration.value.day,
           })
           showFreedomActivityModal()
           close()
@@ -216,16 +218,25 @@ function onUpgradePlan() {
         </ItemBlock>
         <ItemBlock :title="$t('选择续费时长')">
           <div class="flex flex-col gap-2.5">
-            <Duration v-model="selectedDuration" :price="monthAmount" />
+            <Duration v-model="selectedDuration" :price="monthAmount" :default-days="defaultDays" />
             <div v-if="!isExpired" class="help">
               {{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}
             </div>
-            <ActivityInfoExpand />
+            <ActivityInfo :show-proxy-price="false" />
           </div>
         </ItemBlock>
       </div>
       <div class="flex flex-col gap-2.5 w-88">
         <Detail :list="detail">
+          <template #duration="{ item, classes }">
+            <div class="flex justify-between" :class="classes">
+              <div>{{ item.label }}</div>
+              <div class="flex items-baseline gap-1">
+                <span>{{ selectedDuration?.title }}</span>
+                <span v-if="selectedDuration?.giftDays" class="duration-gift">{{ $t('{day} 天', { day: `+ ${selectedDuration.giftDays}` }) }}</span>
+              </div>
+            </div>
+          </template>
           <template #oldprice="{ item }">
             <div class="flex justify-between">
               <div class="details-label">
@@ -245,8 +256,8 @@ function onUpgradePlan() {
                 <div class="details-price">
                   {{ item.value }}
                 </div>
-                <div v-if="discountAmount > 0" class="details-diffprice">
-                  {{ $t('节省 {value}', {
+                <div v-if="hasVisiblePriceDiscount(originalAmount, totalAmount)" class="details-diffprice">
+                  {{ $t('立省 {value}', {
                     value: currency(discountAmount).format(),
                   }) }}
                 </div>
@@ -319,6 +330,10 @@ function onUpgradePlan() {
     font-size: 24px;
     font-weight: 600;
     line-height: normal;
+
+    &-unit {
+      font-size: 16px;
+    }
   }
 
   &-diffprice {
@@ -329,6 +344,17 @@ function onUpgradePlan() {
     font-weight: 500;
     line-height: normal;
   }
+}
+
+.duration-gift {
+  background: linear-gradient(98deg, #0dc9bd 0.26%, #02cf4a 99.74%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'DingTalk JinBuTi', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .terms {

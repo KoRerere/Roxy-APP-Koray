@@ -3,13 +3,20 @@ import NewYear from '/@/views/campaign/new-year/index.vue'
 import SpringFestival from '/@/views/campaign/spring-festival/index.vue'
 import Easter from '/@/views/campaign/easter/index.vue'
 import Freedom from '/@/views/campaign/freedom/index.vue'
-import JuneEighteen from '/@/views/campaign/june-eighteen/index.vue'
+import NewUser from '/@/views/campaign/new-user/index.vue'
 import { useCampaignStore } from '/@/stores/campaign'
+import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { enhanceCountdown, sleep } from '/@/utils'
 import { ActivityType } from '/@/enums/base'
 
+const { collapsed = false } = defineProps<{
+  collapsed?: boolean
+}>()
+
 const { currentActivity, seasonalActivity } = storeToRefs(useCampaignStore())
 const { getActivityInfo } = useCampaignStore()
+const { visible: newUserVisible } = storeToRefs(useNewUserBenefitStore())
+const { fetchBenefit } = useNewUserBenefitStore()
 
 const stopCountdown = ref()
 const activityMap = {
@@ -29,10 +36,6 @@ const activityMap = {
     component: markRaw(Freedom),
     localStorageKey: '$FreedomModalStatus',
   },
-  [ActivityType.JuneEighteen]: {
-    component: markRaw(JuneEighteen),
-    localStorageKey: '$JuneEighteenModalStatus',
-  },
 }
 
 const activity = computed(() => {
@@ -50,7 +53,7 @@ onBeforeUnmount(() => {
 })
 
 async function getActivityBySeason() {
-  await getActivityInfo()
+  await Promise.all([getActivityInfo(), fetchBenefit()])
   stratHolidaySeasonCountdown()
   clearExpiredLocalStorageKey()
 }
@@ -81,7 +84,8 @@ function clearExpiredLocalStorageKey() {
 </script>
 
 <template>
-  <component :is="activity.component" v-if="seasonalActivity.active && activity" :local-storage-key="activity.localStorageKey" />
+    <NewUser v-if="newUserVisible" :collapsed />
+  <component :is="activity.component" v-if="seasonalActivity.active && activity" :collapsed :local-storage-key="activity.localStorageKey" />
 </template>
 
 <style scoped></style>

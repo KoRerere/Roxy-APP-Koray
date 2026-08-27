@@ -9,7 +9,8 @@ import type { Operation } from '/@/utils'
 
 interface Props {
   labels: any[]
-  projectId?: number
+  /** 列表接口常把 ID 序列化成字符串，与 OpenAPI number 不一致，需同时兼容 */
+  projectId?: number | string
   disabled?: boolean
   genTag?: boolean
 }
@@ -36,7 +37,7 @@ async function openMenu(event: MouseEvent) {
     return
 
   loading.value = true
-  const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(projectId) : [] as Operation[]])
+  const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(Number(projectId)) : [] as Operation[]])
   const value = labels?.map((item: any) => `${item.labelId}`)
   const options: Operation[] = memberList.concat(tagList)
   loading.value = false

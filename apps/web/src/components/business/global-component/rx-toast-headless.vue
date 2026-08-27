@@ -32,16 +32,18 @@ function closeToast(slotData: Recordable) {
 
 function handleToastClick(slotData: Recordable) {
   const { message } = slotData
-  if (typeof message.onClick !== 'function')
+  if (typeof message.onClick !== 'function') {
     return
+  }
 
   closeToast(slotData)
   message.onClick()
 }
 
 function handleToastKeydown(event: KeyboardEvent, slotData: Recordable) {
-  if (event.key !== 'Enter' && event.key !== ' ')
+  if (event.key !== 'Enter' && event.key !== ' ') {
     return
+  }
 
   event.preventDefault()
   handleToastClick(slotData)
@@ -118,7 +120,7 @@ function cacheToast(slotData: Recordable) {
       <OverlayBadge v-if="!message.hide" :value="message.count" class="badge" :class="[message.severity]" size="small">
         <section
           class="alert"
-          :class="{ 'alert--clickable': typeof message.onClick === 'function' }"
+          :class="{ 'alert--clickable': typeof message.onClick === 'function', 'alert--with-footer': !!message.footer }"
           :data-life="cacheToast({ message, closeCallback })"
           :role="typeof message.onClick === 'function' ? 'button' : undefined"
           :tabindex="typeof message.onClick === 'function' ? 0 : undefined"
@@ -147,6 +149,9 @@ function cacheToast(slotData: Recordable) {
           <div class="alert-close">
             <SvgIcon name="base/rx_ic_delete" size="16" class="cursor-pointer" @click.stop="closeToast({ message, closeCallback })" />
           </div>
+          <div v-if="message.footer" class="alert-footer" @click.stop>
+            <component :is="message.footer" />
+          </div>
         </section>
       </OverlayBadge>
     </template>
@@ -160,14 +165,17 @@ function cacheToast(slotData: Recordable) {
 }
 
 .alert {
-  display: flex;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr) 16px;
+  grid-template-areas: 'icon content close';
   width: 360px;
   word-break: break-all;
   white-space: pre-wrap;
   margin-bottom: 20px;
   padding: var(--spacing-xl, 12px);
   align-items: flex-start;
-  gap: 10px;
+  column-gap: 10px;
+  row-gap: 10px;
   border-radius: 4px;
   border: 0.5px solid var(--colors-border-border-overlay);
   background: var(--colors-background-bg-overlay);
@@ -177,6 +185,27 @@ function cacheToast(slotData: Recordable) {
     0px 1px 1px 0px rgba(0, 0, 0, 0.07);
 }
 
+.alert-icon {
+  grid-area: icon;
+}
+
+.alert-close {
+  grid-area: close;
+}
+
+// 广告条铺满 toast 内容区（含 icon 下方），避免旧 flex-wrap 把 footer 撑出大块空白
+.alert--with-footer {
+  grid-template-areas:
+    'icon content close'
+    'footer footer footer';
+  row-gap: 12px;
+}
+
+.alert-footer {
+  grid-area: footer;
+  min-width: 0;
+}
+
 .alert--clickable {
   cursor: pointer;
 }
@@ -184,6 +213,10 @@ function cacheToast(slotData: Recordable) {
 .alert--clickable:focus-visible {
   outline: 2px solid var(--colors-text-text-brand, #12a3fc);
   outline-offset: 2px;
+}
+
+.badge {
+  overflow: visible;
 }
 
 .badge.success {
@@ -231,12 +264,15 @@ function cacheToast(slotData: Recordable) {
 }
 
 .alert-content {
+  grid-area: content;
   flex: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
   align-self: stretch;
+  overflow: visible;
+  word-break: break-word;
 
   .alert-header {
     align-self: stretch;
@@ -250,6 +286,7 @@ function cacheToast(slotData: Recordable) {
 
   .alert-message {
     align-self: stretch;
+    overflow: visible;
     color: var(--colors-text-text-secondary, #b2b6b8);
     font-family: Inter;
     font-size: 12px;
@@ -257,7 +294,12 @@ function cacheToast(slotData: Recordable) {
     font-weight: 400;
     line-height: 18px;
     word-break: normal;
-    /* 150% */
+
+    :deep(.toast-roxy-ad) {
+      // icon 16 + column-gap 10，左右对称拉到 toast 内边距全宽（稿面 336px）
+      width: calc(100% + 52px);
+      margin-left: -26px;
+    }
   }
 }
 </style>

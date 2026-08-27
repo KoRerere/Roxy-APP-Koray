@@ -233,7 +233,7 @@ const discountRows = computed(() => {
       ].filter(row => row.percent > 0)
 })
 
-/** 节省金额 = 原价 - 实付 */
+/** 立省金额 = 原价 - 实付 */
 const savedAmount = computed(() => Math.max(originalAmount.value - actualAmount.value, 0))
 
 /** 账单明细行（分割线以上）。label 为 i18n key，模板中翻译 */
@@ -444,7 +444,7 @@ function handleClose() {
                   v-if="savedAmount > 0"
                   class="text-3 font-medium leading-[16px] text-right whitespace-nowrap text-[#fc9d12]"
                 >
-                  {{ $t('节省 {amount}', { amount: `$${savedAmount.toFixed(2)}` }) }}
+                  {{ $t('立省 {amount}', { amount: `$${savedAmount.toFixed(2)}` }) }}
                 </span>
               </div>
             </div>

@@ -18,7 +18,7 @@ const { list } = defineProps<{
 </script>
 
 <template>
-  <div class="flex flex-col gap-3 pa-4 rounded-md" :class="$style.subscribe">
+  <div class="flex flex-col gap-3 pa-4 rounded-md h-full" :class="$style.subscribe">
     <slot name="before" />
     <template v-for="(detail, index) in list" :key="detail.title">
       <RxDivider v-if="index > 0" line-style="dashed" line-only line-color="var(--colors-border-divider-dashed)" />

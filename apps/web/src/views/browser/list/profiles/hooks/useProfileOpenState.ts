@@ -164,6 +164,8 @@ export function useProfileOpenState() {
   function listenOpenMessage(options?: {
     onOpenSuccess?: (dirId: string | number) => void
     onOpenFailed?: (dirId: string | number) => void
+    /** 打开过程中出现代理检测失败警告时回调，供失败引导 toast 使用 */
+    onProxyDetectWarning?: (dirId: string | number, warningMessages: string[]) => void
   }) {
     return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
       if (event.code === 1 && event.message.includes('ERR101'))
@@ -185,6 +187,9 @@ export function useProfileOpenState() {
       if (typeof event.data === 'object' && event.data.percent === 100) {
         sendFirstOpenRecord()
         options?.onOpenSuccess?.(dirId)
+        const warningMessages = event.data.warningMessages?.filter(Boolean) ?? []
+        if (warningMessages.length)
+          options?.onProxyDetectWarning?.(dirId, warningMessages)
       }
     })
   }

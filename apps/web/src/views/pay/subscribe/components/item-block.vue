@@ -1,6 +1,7 @@
 <script setup lang="ts">
 interface Props {
-  title: string
+  /** 区块标题；与 extra 同时存在时标题在左、extra 在右 */
+  title?: string
 }
 
 defineProps<Props>()
@@ -8,8 +9,11 @@ defineProps<Props>()
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="title">
-      {{ title }}
+    <div v-if="title || $slots.extra" class="flex items-center justify-between gap-3">
+      <div v-if="title" class="title">
+        {{ title }}
+      </div>
+      <slot name="extra" />
     </div>
     <slot />
   </div>

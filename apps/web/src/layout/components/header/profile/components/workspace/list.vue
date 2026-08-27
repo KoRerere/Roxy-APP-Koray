@@ -64,12 +64,14 @@ async function _copyUserInfo() {
 }
 
 async function enterWorkspace(item: Data) {
-  if (item.id === currentWorkspace.value?.id)
+  if (item.id === currentWorkspace.value?.id) {
     return
+  }
 
   item.id && setCurrentWorkspace(item.id)
   globalThis.electronAPI.send('mcp:close')
   emit('hide')
+  router.push({ name: 'browser' })
 }
 
 async function showCreateWorkspaceDialog() {

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
+import { useUserStore } from '/@/stores/user'
+import { canUseLongRenewFirst } from '/@/views/agent/shop/utils/long-renew-first'
 import type { UnwrapRowType, UserGetProxyListMergedListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetProxyListMergedListData>
@@ -9,6 +11,8 @@ const { data, showRenew = false, onRenew = () => { } } = defineProps<{
   showRenew?: boolean
   onRenew?: (data: any) => void
 }>()
+
+const { userPayInfo } = storeToRefs(useUserStore())
 
 const ExpireStatusMap = {
   [ProxyExpireStatus.expired]: { text: $t('已过期'), color: 'var(--colors-text-text-inactive)' },
@@ -35,6 +39,16 @@ const isRenewable = computed(() => {
   return data.proxyExpireStatus === ProxyExpireStatus.soon && data.orderStatus === ProxyOrderStatus.done
 })
 
+/** 列表行有资格且未使用才可享；角标数字用账户最低长续档，与代理列表 / 右键特惠同一口径 */
+const showLongRenewBadge = computed(() => {
+  const off = Number(userPayInfo.value.proxyRenewMinDiscount ?? 0) || 0
+  return canUseLongRenewFirst(data) && off > 0
+})
+
+const longRenewBadgeText = computed(() => {
+  return $t('{discount}% Off', { discount: userPayInfo.value.proxyRenewMinDiscount })
+})
+
 const statusColor = computed(() => status.value.color)
 </script>
 
@@ -48,7 +62,10 @@ const statusColor = computed(() => status.value.color)
         {{ status.text }}
       </div>
     </div>
-    <RxButton v-if="showRenew && isRenewable" variant="outlined" size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" @click.stop="onRenew" />
+    <div v-if="showRenew && isRenewable" class="relative shrink-0">
+      <RxButton variant="outlined" size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" @click.stop="onRenew" />
+      <span v-if="showLongRenewBadge" class="renew-discount">{{ longRenewBadgeText }}</span>
+    </div>
   </div>
 </template>
 
@@ -65,5 +82,22 @@ const statusColor = computed(() => status.value.color)
   font-size: 12px;
   font-weight: 500;
   line-height: 16px;
+}
+
+.renew-discount {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  z-index: 1;
+  transform: translate(20%, -50%);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #fc9d12;
+  color: #fff;
+  font-family: 'DingTalk JinBuTi', sans-serif;
+  font-size: 12px;
+  line-height: normal;
+  white-space: nowrap;
+  pointer-events: none;
 }
 </style>

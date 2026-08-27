@@ -1,3 +1,5 @@
+import { purchaseMonthsToDays } from '/@/views/pay/subscribe/util'
+
 export interface BusinessUseOption {
   image?: string
   darkImage?: string
@@ -22,6 +24,10 @@ export interface CountryOption {
   status?: string
   isNew?: boolean
   isHot?: boolean
+  /** 该国主推代理类型（后端字段名拼写如此） */
+  proxyTpye?: string
+  /** 该国可售代理类型，判断新人 IP 福利样式时必须命中其中一项 */
+  proxyTpyeList?: string[]
 }
 
 export interface DurationOption {
@@ -56,7 +62,7 @@ export interface ProxyTypeOption {
 
 export function formatProxyPriceList(proxyPriceList: Array<Record<string, any>> = []): DurationOption[] {
   return proxyPriceList.map((row) => {
-    const day = row.proxyPurchaseMonths * 30
+    const day = purchaseMonthsToDays(row.proxyPurchaseMonths)
     return {
       label: $t('{day} 天', { day }),
       value: row.proxyPurchaseMonths,

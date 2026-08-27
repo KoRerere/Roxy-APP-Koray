@@ -1,10 +1,12 @@
 import Qrcode from '/@/views/agent/shop/components/proxy-qrcode.vue'
 import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
 import { canShowProxyQrcode, isDirectExportBlocked } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
+import { canUseLongRenewFirst, getLongRenewDealLabel } from '/@/views/agent/shop/utils/long-renew-first'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
 import { usePermission } from '/@/hooks/usePermission'
+import { useUserStore } from '/@/stores/user'
 import { useColumns } from './columns'
 import type { SortOrderNumber } from '/@/utils'
 import type { UnwrapRowType, UserGetProxyListMergedListData } from '@roxy/backend-api'
@@ -36,36 +38,48 @@ function getRowState(datas: ProxyItem[]) {
   let canUpgrade = false
 
   for (const item of datas) {
-    if (item.proxyExpireStatus === ProxyExpireStatus.expired)
+    if (item.proxyExpireStatus === ProxyExpireStatus.expired) {
       hasExpired = true
+    }
 
-    if (item.orderStatus === ProxyOrderStatus.pending)
+    if (item.orderStatus === ProxyOrderStatus.pending) {
       hasPending = true
-    if (item.orderStatus === ProxyOrderStatus.refunded)
+    }
+    if (item.orderStatus === ProxyOrderStatus.refunded) {
       hasRefunded = true
-    if (item.orderStatus !== ProxyOrderStatus.done)
+    }
+    if (item.orderStatus !== ProxyOrderStatus.done) {
       isDone = false
+    }
 
-    if (item.proxyType !== ProxyType.resource)
+    if (item.proxyType !== ProxyType.resource) {
       isResource = false
+    }
 
-    if (!item.proxyProviderId && !item.renewalTime && item.proxyType === ProxyType.buy)
+    if (!item.proxyProviderId && !item.renewalTime && item.proxyType === ProxyType.buy) {
       isGift = true
+    }
 
-    if (!isProxySpeedTestable(item))
+    if (!isProxySpeedTestable(item)) {
       canTest = false
-    if (!item.canRenew)
+    }
+    if (!item.canRenew) {
       canRenew = false
-    if (!item.refreshUrl)
+    }
+    if (!item.refreshUrl) {
       canRefresh = false
+    }
 
-    if (item.isDirect)
+    if (item.isDirect) {
       isDirect = true
-    if (isDirectExportBlocked(item))
+    }
+    if (isDirectExportBlocked(item)) {
       blockDirectExport = true
+    }
 
-    if (item.canBandwidthUpgrade)
+    if (item.canBandwidthUpgrade) {
       canUpgrade = true
+    }
   }
 
   return {
@@ -104,6 +118,14 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
 
   const canShowQrcode = canShowProxyQrcode(rowData)
   // 与「测试全部」筛选口径一致：导入过期仍可测，不能仅凭 hasExpired 禁用
+  // 勾选任意一条可享即可出标，不要求整批都能续费
+  const longRenewOff = rows.some(canUseLongRenewFirst)
+    ? Number(useUserStore().userPayInfo.proxyRenewMinDiscount ?? 0) || 0
+    : 0
+  const longRenewDealLabel = getLongRenewDealLabel(longRenewOff)
+  const longRenewDiscountBadge = longRenewOff > 0
+    ? $t('{discount}% Off', { discount: longRenewOff })
+    : ''
 
   return [
     {
@@ -182,6 +204,15 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
         name: 'G3',
         showLabel: true,
       },
+      ...(longRenewDealLabel
+        ? {
+            suffixIcon: 'base/fire',
+            suffixIconSize: 14,
+            suffixLabel: longRenewDealLabel,
+            suffixLabelClass: 'text-3 font-[DingTalk_JinBuTi] text-[#f53838] whitespace-nowrap',
+            discountBadge: longRenewDiscountBadge,
+          }
+        : {}),
     },
     {
       name: 'upgrade',

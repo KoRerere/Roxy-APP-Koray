@@ -19,6 +19,7 @@ import { openAliyunCaptcha } from '/@/utils/aliyun-captcha'
 import type { UserRechargeSettlementCreateData } from '@roxy/backend-api'
 
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { I18nT } from 'vue-i18n'
 import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent.tsx'
 import { isMainWindow } from '/@/utils/common'
@@ -148,6 +149,9 @@ export function usePay() {
   }
 
   async function planSuccess(notSlotMachine?: boolean) {
+    // 窗口订阅/续费成功后刷新新人买赠资格；无资格则跳过
+    void useNewUserBenefitStore().refreshBenefitIfEligible()
+
     if (!check('Cost_Center_all'))
       return
 

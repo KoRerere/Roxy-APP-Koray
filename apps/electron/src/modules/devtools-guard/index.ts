@@ -195,19 +195,20 @@ function isDevToolsShortcut(input: Input) {
   }
 
   const key = input.key?.toLowerCase?.() ?? ''
+  const code = input.code
 
   // F12：Windows/Linux 主要入口
-  if (key === 'f12') {
+  if (key === 'f12' || code === 'F12') {
     return true
   }
 
   // Ctrl+Shift+I / J / C
-  if (input.control && input.shift && ['i', 'j', 'c'].includes(key)) {
+  if (input.control && input.shift && (['i', 'j', 'c'].includes(key) || ['KeyI', 'KeyJ', 'KeyC'].includes(code))) {
     return true
   }
 
   // macOS：Command+Option+I / J / C，以及 Command+Option+U（查看源代码）
-  if (input.meta && input.alt && ['i', 'j', 'c', 'u'].includes(key)) {
+  if (input.meta && input.alt && (['i', 'j', 'c', 'u'].includes(key) || ['KeyI', 'KeyJ', 'KeyC', 'KeyU'].includes(code))) {
     return true
   }
 
@@ -220,7 +221,7 @@ function isUnlockComboKey(input: Input) {
     && (input.control || input.meta)
     && input.alt
     && input.shift
-    && input.key?.toLowerCase?.() === 'd'
+    && (input.key?.toLowerCase?.() === 'd' || input.code === 'KeyD')
 }
 
 /** 切换指定 webContents 的开发者工具 */

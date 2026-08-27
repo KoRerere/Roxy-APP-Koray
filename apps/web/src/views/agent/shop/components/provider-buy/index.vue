@@ -14,9 +14,10 @@ import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { PayWay } from '/@/enums/pay'
-import { BuyEntryType, ProxyOrderType } from '/@/enums/proxy'
+import { BuyEntryType, ProxyIpType, ProxyOrderType } from '/@/enums/proxy'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { createProxyPurchaseCountryCache, useProxyPurchaseApi, useProxyPurchaseForm, useProxyPurchasePricing } from '/@/views/agent/shop/components/provider-buy/useProxyPurchase.ts'
+import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import type { CountryOption } from '/@/views/agent/shop/components/provider-buy/utils'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { useProxyPurchaseLabels } from '/@/views/agent/shop/utils/proxy-purchase-labels'
@@ -30,6 +31,7 @@ const {
   toRola,
   cancelRedirect = true,
   workspaceType,
+  preferredProxyType,
 } = defineProps<{
   entryType?: BuyEntryType
   data?: Record<string, any>
@@ -39,6 +41,8 @@ const {
   cancelRedirect?: boolean
   /** 工作区类型；before-enter 需显式传入（此时工作区可能尚未切到电商） */
   workspaceType?: WorkspaceType
+  /** 新人福利等入口指定默认代理类型（机房 / 住宅） */
+  preferredProxyType?: ProxyIpType | 'datacenter' | 'residential'
 }>()
 
 const emit = defineEmits<{
@@ -100,6 +104,7 @@ const {
   getBusinessUseList: api.getBusinessUseList,
   getProxyTypeList: api.getProxyTypeList,
   countryCache,
+  preferredProxyType: () => preferredProxyType,
 })
 
 const {
@@ -201,8 +206,10 @@ async function onPay() {
     (payType === PayWay.Balance
       ? Promise.resolve()
       : openProcessing(data, 'silent', { cancelRedirect }))
-      .then(() => {
+      .then(async () => {
         showFreedomActivityModal()
+        // 买完后刷新新人资格，供活动弹窗把已用档位改灰；无资格则不打接口
+        await useNewUserBenefitStore().refreshBenefitIfEligible()
         emit('success', data)
         emit('close')
       })
@@ -223,7 +230,7 @@ async function onPay() {
     <PurchaseSummary v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:proxy-speed-value="proxySpeedValue" :is-c-n="isCN" :is-direct="isDirect"
                      :loading-proxy-type="loadingProxyType" :current-inventory="currentProxyType.inventory" :proxy-type-options="proxyTypeOptions" :proxy-speed-options="proxySpeedOptions"
                      :subscription-months="subscriptionMonths" :business-use="businessUse" :details="details" :can-pay="canPay" :pay-tooltip="payTooltip" :official-website-url="getOfficialWebsite('/copyright/user')"
-                     :vendor-name="provider.vendorName" @pay="checkStock"
+                     :country-code="purchaseCountry?.value" :vendor-name="provider.vendorName" @pay="checkStock"
     />
   </div>
 </template>

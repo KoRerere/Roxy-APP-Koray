@@ -59,7 +59,7 @@ export function executeSomethingByBackToSelfWorkspace(next: (...args: any[]) => 
 }
 
 export function executeSomethingByTargetWorkspace(next: (...args: any[]) => void) {
-  return async (targetWorkspaceId: number, ...args: any[]) => {
+  return async (targetWorkspaceId: string, ...args: any[]) => {
     const workspaceStore = useWorkspaceStore()
     if (workspaceStore.workspaceList.length === 0) {
       await workspaceStore.getWorkspaceList()
@@ -139,8 +139,9 @@ export function useHandleBusinessCode() {
     }
     else if (code === BUSINESS_CODE.WINDOW_MAX_LIMIT) {
       // 电商模式按设备绑定/续费约束，不走窗口额度升级链路
-      if (isCurrentEcommerceWorkspace())
+      if (isCurrentEcommerceWorkspace()) {
         return
+      }
 
       if (!check('Cost_Center_all')) {
         return showToast({
@@ -195,8 +196,9 @@ export function useHandleBusinessCode() {
     }
     else if (code === BUSINESS_CODE.DAILY_OPEN_LIMIT) {
       // 电商模式无「窗口打开次数」额度概念
-      if (isCurrentEcommerceWorkspace())
+      if (isCurrentEcommerceWorkspace()) {
         return
+      }
 
       if (!check('Cost_Center_all')) {
         return showToast({

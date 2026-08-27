@@ -29,10 +29,16 @@ export interface ProxyShopLabels {
   sellOutDescription: string
   /** 缺货通知 toast 详情 */
   sellOutNotifyDetail: string
+  /** 无购买权限弹窗标题 */
+  noBuyPermissionTitle: string
+  /** 无购买权限弹窗说明 */
+  noBuyPermissionDescription: string
   /** 续费弹窗标题 */
   renewTitle: string
   /** 续费弹窗数量说明 */
   renewCountDesc: (count: number) => string
+  /** 续费弹窗底部混合优惠：中文用 {discount} 折，英/俄用 {off}% off，{count} 留给人数高亮 */
+  mixedLongRenewEnjoy: string
   /** 升级带宽弹窗数量说明 */
   upgradeCountDesc: (count: number) => string
   /** 并发测速顶栏：个代理 IP / 个设备 正在测试中 */
@@ -60,6 +66,8 @@ interface ProxyShopLabelsBase {
   sellOutTitle: string
   sellOutDescription: string
   sellOutNotifyDetail: string
+  noBuyPermissionTitle: string
+  noBuyPermissionDescription: string
 }
 
 const PROXY_SHOP_LABELS: ProxyShopLabelsBase = {
@@ -81,6 +89,8 @@ const PROXY_SHOP_LABELS: ProxyShopLabelsBase = {
   sellOutTitle: $t('当前代理 IP 暂时缺货'),
   sellOutDescription: $t('点击下方按钮加入到货通知名单，代理 IP 补货后我们将第一时间通知您。你也可以通过 Rola-IP 进行选购。'),
   sellOutNotifyDetail: $t('当前代理 IP 补货或上架时，我们将通过站内通知提醒您'),
+  noBuyPermissionTitle: $t('暂无代理 IP 购买权限'),
+  noBuyPermissionDescription: $t('当前团队暂无代理 IP 购买权限，可前往个人空间购买或联系管理员开通权限。'),
 }
 
 const DEVICE_SHOP_LABELS: ProxyShopLabelsBase = {
@@ -102,6 +112,8 @@ const DEVICE_SHOP_LABELS: ProxyShopLabelsBase = {
   sellOutTitle: $t('当前设备暂时缺货'),
   sellOutDescription: $t('点击下方按钮加入到货通知名单，设备补货后我们将第一时间通知您。你也可以通过 Rola-IP 进行选购。'),
   sellOutNotifyDetail: $t('当前设备补货或上架时，我们将通过站内通知提醒您'),
+  noBuyPermissionTitle: $t('暂无设备购买权限'),
+  noBuyPermissionDescription: $t('当前团队暂无设备购买权限，可前往个人空间购买或联系管理员开通权限。'),
 }
 
 /** 按 workspace 模式生成代理商城弹窗文案 */
@@ -111,8 +123,11 @@ export function createProxyShopLabels(isEcommerce: boolean): ProxyShopLabels {
     ...base,
     renewTitle: isEcommerce ? $t('续费设备') : $t('续费代理 IP'),
     renewCountDesc: count => isEcommerce
-      ? $t('您将要续费 {count} 个设备:', { count })
-      : $t('您将要续费 {count} 个代理 IP:', { count }),
+      ? $t('本次续费设备：{count}', { count })
+      : $t('本次续费代理 IP：{count}', { count }),
+    mixedLongRenewEnjoy: isEcommerce
+      ? $t('享受 {discount} 折长续优惠的设备：{count}', { discount: '{discount}', off: '{off}', count: '{count}' })
+      : $t('享受 {discount} 折长续优惠的代理 IP：{count}', { discount: '{discount}', off: '{off}', count: '{count}' }),
     upgradeCountDesc: count => isEcommerce
       ? $t('您将要升级 {count} 个设备:', { count })
       : $t('您将要升级 {count} 个代理 IP:', { count }),

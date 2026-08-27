@@ -24,6 +24,7 @@ interface UseDialogCustomProps {
   cancelText?: string
   slots?: { [key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element }
   noAutoClose?: boolean
+  class?: string
 }
 
 export type UseDialogProps = DialogProps & UseDialogCustomProps
@@ -76,13 +77,15 @@ export function useDialog() {
 
     let closing = false
     async function tryClose(onClosed?: () => void): Promise<boolean> {
-      if (closing)
+      if (closing) {
         return false
+      }
       closing = true
       try {
         const result = await innerProps.value.beforeClose?.()
-        if (result === false)
+        if (result === false) {
           return false
+        }
         doHide()
         onClosed?.()
         return true

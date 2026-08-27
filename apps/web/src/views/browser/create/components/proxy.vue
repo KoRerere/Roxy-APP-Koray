@@ -62,8 +62,9 @@ const canBuy = computed(() => check('Cost_Center_all'))
 const canAdd = computed(() => (isBatch.value || !proxyList.value?.length) && !moreCountryDrawerVisible.value && check('Profiles_add_proxy_outside'))
 
 const providerProps = computed(() => {
-  if (!proxyProvider.value)
+  if (!proxyProvider.value) {
     return undefined
+  }
 
   return {
     proxyProviderId: proxyProvider.value.id,
@@ -76,8 +77,9 @@ const providerProps = computed(() => {
 async function openDualDrawer() {
   if (canBuy.value && !proxyProvider.value) {
     const data = await getProxyVendors()
-    if (!data)
+    if (!data) {
       return
+    }
     proxyProvider.value = data.find((item: any) => item.isOfficial)
   }
 

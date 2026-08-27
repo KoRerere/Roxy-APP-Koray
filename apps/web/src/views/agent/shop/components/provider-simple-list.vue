@@ -12,7 +12,7 @@ type ShopItem = UserGetProxyVendorListListData['data'][number] & {
 }
 
 const props = defineProps<{
-  onBuyProxy: (props?: Record<string, any>) => void
+  onBuyProxy: (props?: any) => Promise<void> | void
 }>()
 
 const route = useRoute()
@@ -35,8 +35,9 @@ const iconListOverflow = ref(false)
 function updateIconListOverflow() {
   const track = iconTrackRef.value
   const list = iconListRef.value
-  if (!track || !list)
+  if (!track || !list) {
     return
+  }
   iconListOverflow.value = list.scrollWidth > track.clientWidth
 }
 
@@ -54,8 +55,9 @@ onBeforeMount(() => {
 
 async function getShopList() {
   const data = await getProxyVendors(true)
-  if (!data)
+  if (!data) {
     return
+  }
   shopList.value = data.map((item) => {
     return {
       ...item,

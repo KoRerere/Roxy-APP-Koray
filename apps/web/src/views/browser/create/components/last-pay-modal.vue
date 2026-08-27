@@ -16,8 +16,11 @@ import { useUserStore } from '/@/stores/user'
 import { PayWay } from '/@/enums/pay'
 import { BuyEntryType, BuyProxyListType, ProxyOrderType } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
-import { discountCalculate } from '/@/views/pay/subscribe/util'
+import { purchaseMonthsToDays } from '/@/views/pay/subscribe/util'
 import { getProxyPurchaseNotes } from '/@/views/agent/shop/utils/proxy-purchase-notes'
+import ExclusivePriceRow from '/@/views/campaign/new-user/exclusive-price-row.vue'
+import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
+import { calcProxyPayAmount } from '/@/views/campaign/new-user/proxy-pricing'
 
 const {
   data: initialData,
@@ -37,6 +40,7 @@ const { openProcessing } = usePay()
 const { getOfficialWebsite } = useSimpleLocale()
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
+const newUserBenefitStore = useNewUserBenefitStore()
 
 const ONE_BUY_MAX = 1000
 const proxyData = ref({ ...initialData })
@@ -65,14 +69,46 @@ const configValue = computed(() => {
   }
 })
 
-const originalAmount = computed(() => {
-  const { subscriptionMonths, purchaseMember } = configValue.value
-  return currency(subscriptionMonths.proxyPrice * purchaseMember).value
+/** 住宅 30 天、仍有额度，且国家在 residentialCountries 白名单内才走首条新人价 */
+const newUserIpOfferActive = computed(() => {
+  return newUserBenefitStore.isNewUserIpOffer(
+    'residential',
+    configValue.value.subscriptionMonths?.day ?? 0,
+    configValue.value.purchaseCountry?.value,
+  )
 })
 
-const finalAmount = computed(() => {
-  const { proxyDiscount } = userPayInfo.value!
-  return currency(originalAmount.value).multiply(discountCalculate([proxyDiscount])).value
+const payResult = computed(() => {
+  const { subscriptionMonths, purchaseMember } = configValue.value
+  const { proxyDiscount = 0 } = userPayInfo.value!
+  return calcProxyPayAmount({
+    offerActive: newUserIpOfferActive.value,
+    quantity: purchaseMember,
+    unitPrice: subscriptionMonths.proxyPrice ?? 0,
+    originalUnitPrice: subscriptionMonths.originalProxyPrice || subscriptionMonths.proxyPrice || 0,
+    newUserUnitPrice: newUserBenefitStore.newUserIpUnitPrice('residential'),
+    bandwidthAmount: 0,
+    proxyDiscount,
+  })
+})
+
+const finalAmount = computed(() => payResult.value.amount)
+
+/** 有福利时 1 条展示新人价/原价划线，≥2 条只展示原价 */
+const ipUnitDisplay = computed(() => {
+  const { subscriptionMonths, purchaseMember } = configValue.value
+  const catalog = subscriptionMonths.originalProxyPrice || subscriptionMonths.proxyPrice
+  if (!newUserIpOfferActive.value) {
+    return {
+      price: subscriptionMonths.proxyPrice,
+      original: catalog,
+      showOriginal: subscriptionMonths.proxyPrice < catalog,
+    }
+  }
+  if (purchaseMember >= 2)
+    return { price: catalog, original: catalog, showOriginal: false }
+  const newPrice = newUserBenefitStore.newUserIpUnitPrice('residential')
+  return { price: newPrice, original: catalog, showOriginal: newPrice < catalog }
 })
 
 const details = computed(() => {
@@ -93,9 +129,16 @@ const details = computed(() => {
         },
         {
           label: $t('价格'),
-          value: $t('{month}/个', { month: currency(subscriptionMonths.proxyPrice).format() }),
+          slot: 'ipUnitPrice',
         },
-      ],
+        {
+          label: $t('首条 IP 享受 {price} 新用户价，不与其他折扣叠加', {
+            price: currency(newUserBenefitStore.newUserIpUnitPrice('residential')).format(),
+          }),
+          visible: newUserIpOfferActive.value && purchaseMember >= 2,
+          class: '!tt-tertiary !text-3',
+        },
+      ].filter(item => item.visible !== false),
     },
     {
       title: $t('订阅时长'),
@@ -120,12 +163,12 @@ const details = computed(() => {
           label: $t('专属折扣'),
           value: `-${proxyDiscount}%`,
           class: '!color-[#FC9D12]',
-          visible: !!proxyDiscount,
+          visible: !!proxyDiscount && !(newUserIpOfferActive.value && purchaseMember <= 1),
         },
         {
           label: $t('Roxy 独家特惠'),
-          value: currency(finalAmount.value).format(),
-          diffValue: currency(originalAmount.value).subtract(finalAmount.value).value,
+          value: currency(payResult.value.amount).format(),
+          diffValue: payResult.value.diffAmount,
           slot: 'price',
         },
       ].filter(item => item.visible !== false),
@@ -139,7 +182,7 @@ onMounted(async () => {
 
 function createDurationConfig(data: Record<string, any>) {
   const _durationOptions = data.proxyPriceList.map((item: any) => {
-    const day = item.proxyPurchaseMonths * 30
+    const day = purchaseMonthsToDays(item.proxyPurchaseMonths)
     return { label: $t('{day} 天', { day }), value: item.proxyPurchaseMonths, day, ...item }
   })
 
@@ -251,6 +294,7 @@ async function onPay() {
       ? Promise.resolve()
       : openProcessing(data, 'silent'))
       .then(() => {
+        void newUserBenefitStore.refreshBenefitIfEligible()
         buySuccess(data)
       })
   }
@@ -334,20 +378,19 @@ async function buySuccess(orderInfo: any) {
         <RxAlert v-if="isDirect" class="!w-full shrink-0" type="warn" :title="$t('温馨提示')" :content="$t('专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
 
         <Detail :list="details">
-          <template #price="{ item }">
+          <template #ipUnitPrice>
             <div class="flex justify-between items-center">
-              <div class="details-label">
-                {{ item.label }}
-              </div>
-              <div>
-                <div class="details-price">
-                  {{ item.value }}
-                </div>
-                <div v-if="item.diffValue > 0" class="details-diffprice">
-                  {{ $t('节省 {value}', { value: currency(item.diffValue).format() }) }}
-                </div>
+              <div>{{ $t('价格') }}</div>
+              <div class="flex gap-2 shrink-0 whitespace-nowrap">
+                <span>{{ $t('{month}/个', { month: currency(ipUnitDisplay.price).format() }) }}</span>
+                <span v-if="ipUnitDisplay.showOriginal" class="tt-inactive text-3 leading-5 line-through">
+                  {{ $t('{month}/个', { month: currency(ipUnitDisplay.original).format() }) }}
+                </span>
               </div>
             </div>
+          </template>
+          <template #price="{ item }">
+            <ExclusivePriceRow kind="residential" :offer-active="newUserIpOfferActive" :value="String(item.value ?? '')" :diff-value="item.diffValue" />
           </template>
           <template #after>
             <div class="flex-1 flex flex-col justify-end mt-3 gap-3">
@@ -433,35 +476,6 @@ async function buySuccess(orderInfo: any) {
   &-bold {
     color: var(--colors-text-text-secondary);
     font-weight: bold;
-  }
-}
-
-.details {
-  &-label {
-    font-family: 'DingTalk JinBuTi';
-    font-size: 15px;
-    line-height: 16px;
-    background: linear-gradient(90deg, #11a3fd 0%, #f047ff 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  &-price {
-    color: #12a3fc;
-    text-align: right;
-    font-size: 24px;
-    font-weight: 600;
-    line-height: normal;
-  }
-
-  &-diffprice {
-    color: var(--primitives-yellow-500);
-    text-align: right;
-    font-family: Inter;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: normal;
   }
 }
 

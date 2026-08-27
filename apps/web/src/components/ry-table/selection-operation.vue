@@ -27,8 +27,9 @@ const emit = defineEmits(['clearSelection', 'batchMore'])
 const loadingMap = ref<Record<string, boolean>>({})
 const multipleOptions = computed<Record<string, any>>(() => {
   const { menu, group, count } = props.operation.reduce((acc, item) => {
-    if (!item.multiple)
+    if (!item.multiple) {
       return acc
+    }
     const { items, ...rest } = toRaw(item)
     acc.menu.push({ ...rest, items: items?.filter((it: any) => it.multiple !== false) })
 
@@ -91,6 +92,7 @@ function onMore(event: Event) {
         >
           <RxSvgIcon class="pointer-events-none" :name="item.icon" v-bind="item.iconProps" />
           <span v-if="item.showLabel" class="icon-label">{{ item.label }}</span>
+          <span v-if="item.discountBadge" class="discount-badge">{{ item.discountBadge }}</span>
         </div>
       </div>
       <div v-if="multipleOptions.showMore" class="multiple-group cursor-pointer" @click.stop="onMore($event)">
@@ -174,6 +176,18 @@ function onMore(event: Event) {
       user-select: none;
     }
   }
+}
+
+.discount-badge {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #fc9d12;
+  color: #fff;
+  font-family: 'DingTalk JinBuTi', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  white-space: nowrap;
 }
 
 .disabled {

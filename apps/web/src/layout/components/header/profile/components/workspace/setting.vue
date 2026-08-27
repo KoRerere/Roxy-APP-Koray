@@ -140,8 +140,9 @@ function handleSwitchMode() {
     currentType,
     onConfirm: async () => {
       await switchWorkspaceType(targetType)
-      if (currentWorkspace.value?.workspaceType !== targetType)
+      if (currentWorkspace.value?.workspaceType !== targetType) {
         return false
+      }
 
       getWorkspaceList()
       emit('save')
@@ -150,8 +151,9 @@ function handleSwitchMode() {
 }
 
 async function handleSaveChange() {
-  if (errorMessage.value)
+  if (errorMessage.value) {
     return
+  }
 
   const { code, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value as any)
   if (code === 0) {

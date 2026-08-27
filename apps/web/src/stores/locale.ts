@@ -8,15 +8,18 @@ import { MP_DISTINCT_ID } from '/@/constants/storage-key'
 import { API } from '/@/api'
 import { clearDictCache, getDictMap } from '/@/utils/'
 import { defaultLanguage } from '/@/locales'
+import type { SupportedLanguagesType } from '/@/locales'
 import { getInviteCode } from '/@/api/util'
 
 /** 跨域名切换时携带的 Mixpanel 匿名 distinct_id（优先 localStorage，否则取当前会话） */
 function readMpDistinctIdForHandoff(): string {
   const stored = localStorage.getItem(MP_DISTINCT_ID)
-  if (stored)
+  if (stored) {
     return stored
-  if (typeof globalThis.mixpanel?.get_distinct_id === 'function')
+  }
+  if (typeof globalThis.mixpanel?.get_distinct_id === 'function') {
     return globalThis.mixpanel.get_distinct_id() || ''
+  }
   return ''
 }
 
@@ -26,11 +29,13 @@ function readRoxyTokenFromCookie(): string {
   for (const part of parts) {
     const trimmed = part.trim()
     const eq = trimmed.indexOf('=')
-    if (eq === -1)
+    if (eq === -1) {
       continue
+    }
     const name = trimmed.slice(0, eq)
-    if (name !== 'roxy_token')
+    if (name !== 'roxy_token') {
       continue
+    }
     return decodeURIComponent(trimmed.slice(eq + 1))
   }
   return ''
@@ -47,7 +52,7 @@ export function getLocaleAppOrigin(locale: string): string {
 
 export const useSimpleLocale = defineStore('locale', () => {
   // const primevue = usePrimeVue()
-  const currentLocale = ref(defaultLanguage)
+  const currentLocale = ref<SupportedLanguagesType>(defaultLanguage as SupportedLanguagesType)
 
   const siteLocale = computed(() => {
     return currentLocale.value?.split('-')[0]
@@ -87,11 +92,13 @@ export const useSimpleLocale = defineStore('locale', () => {
         const { useUserStore } = await import('/@/stores/user')
         handoffToken = useUserStore().token || ''
       }
-      if (handoffToken)
+      if (handoffToken) {
         dest.searchParams.set(LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, handoffToken)
+      }
       const inviteCode = await getInviteCode()
-      if (inviteCode)
+      if (inviteCode) {
         dest.searchParams.set(OFFICIAL_SITE_INVITE_CODE, inviteCode)
+      }
       const mpDistinctId = readMpDistinctIdForHandoff()
       if (mpDistinctId) {
         localStorage.setItem(MP_DISTINCT_ID, mpDistinctId)
@@ -107,8 +114,9 @@ export const useSimpleLocale = defineStore('locale', () => {
   /** 当前语言下 Web 版站点根 URL（见 VITE_LOCALE_APP_ORIGIN_*） */
   function getLocaleAppBaseUrl(pathname = '') {
     const origin = getLocaleAppOrigin(currentLocale.value)
-    if (!pathname)
+    if (!pathname) {
       return origin
+    }
     return `${origin}${pathname.startsWith('/') ? pathname : `/${pathname}`}`
   }
 

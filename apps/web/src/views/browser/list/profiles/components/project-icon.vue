@@ -6,7 +6,8 @@ import { ProfileReqType } from '/@/enums'
 
 interface Props {
   labels: any[]
-  projectId?: number
+  /** 列表接口常把 ID 序列化成字符串，与 OpenAPI number 不一致，需同时兼容 */
+  projectId?: number | string
   projectName?: string
   disabled?: boolean
 }

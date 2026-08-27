@@ -8,7 +8,7 @@ import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxAlert } from '/@/components/rx-alert/'
 import { useConfirm } from 'primevue/useconfirm'
 import { API } from '/@/api'
-import { ProxyCheckStatus } from '/@/enums'
+import { ProxyCheckStatus, ProxyType } from '/@/enums'
 import { IPType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
@@ -16,6 +16,7 @@ import { useUserStore } from '/@/stores/user'
 import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useProxyCreateLabels } from '../proxy-create-mode'
+import ProxyAdvertiseBanner from './proxy-advertise-banner.vue'
 import { getColumns } from './columns'
 
 interface ProxyItem {
@@ -47,8 +48,15 @@ interface IpCheckerConfig {
   onChange: () => void
 }
 
-const { onConfirm } = defineProps<{
+const { onConfirm, showAdvertise = false } = defineProps<{
   onConfirm: (data: ProxyItem[]) => Promise<void> | void
+  /** 窗口列表批量添加时展示购买广告；代理库创建页保持关闭 */
+  showAdvertise?: boolean
+}>()
+
+const emit = defineEmits<{
+  /** 广告「立即购买」：由父级决定购买并绑定窗口或弹出购买菜单 */
+  buy: []
 }>()
 
 const labels = useProxyCreateLabels()
@@ -110,12 +118,15 @@ const historyWarningMessage = computed(() => $t('有 {count} 条设备命中平�
 
 const messageAlertHeight = computed(() => {
   let height = 0
-  if (showMessage.value)
+  if (showMessage.value) {
     height += 52
-  if (showHistoryWarning.value)
+  }
+  if (showHistoryWarning.value) {
     height += 52
-  if (showMessage.value && showHistoryWarning.value)
+  }
+  if (showMessage.value && showHistoryWarning.value) {
     height += 10
+  }
   return `${height}px`
 })
 
@@ -207,8 +218,9 @@ async function parseValue() {
     item.historyChecking = false
   })
 
-  if (isTestingAll.value)
+  if (isTestingAll.value) {
     return
+  }
 
   isTestingAll.value = true
   try {
@@ -320,7 +332,7 @@ async function testProxy(data: ProxyItem | ProxyItem[], operateName: string) {
     secondCheckMap.clear()
   }
 
-  batchTestShowToast(results)
+  batchTestShowToast(results.filter(Boolean).map(item => ({ ...item, proxyType: item.proxyType ?? ProxyType.resource })))
 }
 
 function clearProxy() {
@@ -350,10 +362,12 @@ function syncHistoryWarning() {
 
 /** 连通性已有结果时，从历史批量结果中回填风险评级 */
 function applyHistoryResultToItem(item: ProxyItem) {
-  if (!isDeviceMode.value || item._missIndex || !item.host || !item.port)
+  if (!isDeviceMode.value || item._missIndex || !item.host || !item.port) {
     return
-  if (item.checkStatus === undefined)
+  }
+  if (item.checkStatus === undefined) {
     return
+  }
 
   if (historyCheckPending) {
     item.historyChecking = true
@@ -368,8 +382,9 @@ function applyHistoryResultToItem(item: ProxyItem) {
 /** 电商模式：并行发起历史库批量检测，结果缓存后随连通性结果逐条匹配 */
 async function startHistoryCheck(items: ProxyItem[]) {
   const validItems = items.filter(item => !item._missIndex && item.host && item.port)
-  if (!validItems.length)
+  if (!validItems.length) {
     return
+  }
 
   historyResultMap.clear()
   historyCheckPending = true
@@ -425,8 +440,9 @@ function deleteProxyItem(data: ProxyItem) {
 }
 
 async function testAllProxy() {
-  if (isTestingAll.value)
+  if (isTestingAll.value) {
     return
+  }
 
   isTestingAll.value = true
   try {
@@ -453,16 +469,18 @@ function deleteFailProxy() {
     },
     accept: () => {
       dataList.value = list
-      if (historyMatchCount.value === 0)
+      if (historyMatchCount.value === 0) {
         showHistoryWarning.value = false
+      }
     },
   })
 }
 
 async function onSave() {
   // 测试未结束时不允许提交，避免保存未出结果的代理
-  if (saveDisabled.value)
+  if (saveDisabled.value) {
     return
+  }
 
   const list = dataList.value.map(item => ({
     ...item,
@@ -511,6 +529,7 @@ async function onSave() {
 
 <template>
   <div class="flex-1 overflow-auto flex-col proxies-content">
+    <ProxyAdvertiseBanner v-if="showAdvertise" class="mb-4 [&>*:first-child]:flex-[0_0_fit-content]" @buy="emit('buy')" />
     <div class="parse-input w-full">
       <div class="flex flex-col gap-1.5 xl:w-60%">
         <div class="panel-title flex justify-between items-start xl:items-center flex-col xl:flex-row gap-1">

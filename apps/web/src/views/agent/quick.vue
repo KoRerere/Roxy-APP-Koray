@@ -3,9 +3,11 @@ import ShopSimple from './shop/simple.vue'
 
 defineOptions({ inheritAttrs: false })
 
-const { data, isBatch, onConfirm } = defineProps<{
+const { data, isBatch, createCount, onConfirm } = defineProps<{
   data?: any
   isBatch?: boolean
+  /** 批量勾选时的目标窗口数；ShopSimple 用于关联数量提示 */
+  createCount?: number
   onConfirm: (data: any) => void | Promise<void>
 }>()
 
@@ -14,7 +16,7 @@ const attrs = useAttrs()
 
 <template>
   <div class="flex flex-col h-full w-full">
-    <ShopSimple v-bind="attrs" :data="data" :is-batch="isBatch" @confirm="onConfirm" />
+    <ShopSimple v-bind="attrs" :data="data" :is-batch="isBatch" :create-count="createCount" @confirm="onConfirm" />
   </div>
 </template>
 

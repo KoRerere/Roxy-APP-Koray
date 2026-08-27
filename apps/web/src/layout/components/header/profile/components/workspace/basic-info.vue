@@ -58,12 +58,12 @@ function editWorkspace() {
 
 <template>
   <div class="w-full flex items-center py-2 pl-2.5 pr-1.5 gap-1.5">
-    <RxAvatar v-bind="avatarProps" />
-    <div>
-      <div class="tt-primary text-3.25 font-700 leading-4">
+    <RxAvatar v-bind="avatarProps" class="shrink-0" />
+    <div class="min-w-0 flex-1 overflow-hidden">
+      <div class="tt-primary text-3.25 font-700 leading-4 truncate">
         {{ currentWorkspace!.workspaceName }}
       </div>
-      <div class="flex items-center gap-0.75 tt-inactive text-3 leading-normal">
+      <div class="w-max flex items-center gap-0.75 tt-inactive text-3 leading-normal whitespace-nowrap">
         <span>{{ roleStr[currentWorkspace?.role as keyof typeof roleStr] }}</span>
         <span>·</span>
         <span>{{ userPayInfo.maxWindowCount }}</span>
@@ -73,7 +73,7 @@ function editWorkspace() {
         <span>{{ $t('成员') }}</span>
       </div>
     </div>
-    <RxButton class="mx-auto mr-0 shrink-0" icon="base/rx_ic_more-v" size="xxs" severity="secondary" variant="text" @click="editWorkspace" />
+    <RxButton class="ml-auto shrink-0" icon="base/rx_ic_more-v" size="xxs" severity="secondary" variant="text" @click="editWorkspace" />
   </div>
 </template>
 

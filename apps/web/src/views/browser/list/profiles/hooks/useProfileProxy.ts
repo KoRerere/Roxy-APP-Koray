@@ -8,9 +8,72 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useProxyStore } from '/@/stores/proxy'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import type { CheckResult } from '/@/views/agent/hooks'
-import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
+import type { UserGetWindowInfoListListData, UserMdfWindowDataBatchCreatePayload } from '@roxy/backend-api'
 
 import { clearProxyKeys, silentUpdateProxy } from '../components/util'
+
+/** 窗口批量接口 proxyList 单项 */
+type WindowProxyListItem = NonNullable<UserMdfWindowDataBatchCreatePayload['proxyList']>[number]
+
+/**
+ * 合约共有连接字段。moduleId / proxyMethod 由调用方按「入库选择 / 内联自定义」填，避免两套映射漂移。
+ */
+function toWindowProxyListFields(item: Record<string, any>): Omit<WindowProxyListItem, 'moduleId' | 'proxyMethod'> {
+  return {
+    checkStatus: item.checkStatus,
+    lastIp: item.lastIp,
+    lastCity: item.lastCity,
+    lastCountry: item.lastCountry,
+    timezone: item.timezone,
+    checkTime: item.checkTime,
+    host: item.host,
+    // 合约 port 为 string；列表/解析结果可能是数字
+    port: item.port == null ? undefined : String(item.port),
+    proxyUserName: item.proxyUserName,
+    proxyPassword: item.proxyPassword,
+    proxyRules: item.proxyRules,
+    ipType: item.ipType,
+    proxyCategory: item.proxyCategory || item.protocol,
+    refreshUrl: item.refreshUrl,
+    checkChannel: item.checkChannel,
+    protocol: item.protocol,
+  }
+}
+
+/**
+ * 把批量解析结果收成窗口内联绑定 payload。
+ * moduleId 固定 0：只绑到窗口，不写入用户代理库。
+ */
+export function toInlineWindowProxyList(proxies: Record<string, any>[]): WindowProxyListItem[] {
+  return proxies.map(item => ({
+    ...toWindowProxyListFields(item),
+    moduleId: 0,
+    proxyMethod: 'custom',
+  }))
+}
+
+/**
+ * 按 _proxyCount 展开勾选行。非法数量按 1 处理，避免展开成空数组导致后续窗口漏绑。
+ * 去掉 bindList：那是表格关联窗口展示字段，不能进绑定 payload。
+ */
+export function expandChosenProxyRows(proxies: Record<string, any>[]): Record<string, any>[] {
+  return proxies.flatMap(({ _proxyCount, bindList: _bindList, ...item }) => {
+    const count = Math.max(1, Number(_proxyCount) || 1)
+    return Array.from({ length: count }, () => item)
+  })
+}
+
+/**
+ * 把已有代理库勾选结果收成窗口绑定 payload。
+ * moduleId 用代理库 id；proxyMethod=choose，表示关联已有模块而非内联新建。
+ */
+export function toChosenWindowProxyList(proxies: Record<string, any>[]): WindowProxyListItem[] {
+  return expandChosenProxyRows(proxies).map(item => ({
+    ...toWindowProxyListFields(item),
+    moduleId: item.id ?? 0,
+    proxyMethod: 'choose',
+  }))
+}
 
 interface ProfileLike {
   id?: number

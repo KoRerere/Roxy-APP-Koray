@@ -35,6 +35,7 @@ import {
   UserGetBindCardListListData,
   UserGetBindCardListListParams,
   UserGetDowngradeSubscriptionInfoListData,
+  UserGetDurationDiscountsByDaysListData,
   UserGetDurationDiscountsListData,
   UserGetPayChannelFeesListData,
   UserGetPayChannelFeesListParams,
@@ -58,6 +59,8 @@ import {
   UserPayCaptchaTriggerListData,
   UserPaySettlementCreateData,
   UserPaySettlementCreatePayload,
+  UserPermanentWindowSettlementCreateData,
+  UserPermanentWindowSettlementCreatePayload,
   UserQueryOrderStatusListData,
   UserQueryOrderStatusListParams,
   UserQueryRedeemCodeListData,
@@ -864,6 +867,43 @@ export class PayApi<SecurityDataType = unknown> {
       path: `/user_get_pay_channel_fees`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserGetDurationDiscountsByDaysList
+   * @summary 获取用户的订阅时长折扣（天）
+   * @request GET:/user_get_duration_discounts_by_days
+   * @response `200` `UserGetDurationDiscountsByDaysListData`
+   */
+  userGetDurationDiscountsByDaysList = (params: RequestParams = {}) =>
+    this.http.request<UserGetDurationDiscountsByDaysListData, any>({
+      path: `/user_get_duration_discounts_by_days`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserPermanentWindowSettlementCreate
+   * @summary 用户购买终身窗口结算（仅支持钱包支付）
+   * @request POST:/user_permanent_window_settlement
+   * @response `200` `UserPermanentWindowSettlementCreateData`
+   */
+  userPermanentWindowSettlementCreate = (
+    data: UserPermanentWindowSettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserPermanentWindowSettlementCreateData, any>({
+      path: `/user_permanent_window_settlement`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

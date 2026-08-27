@@ -223,7 +223,8 @@ export function validateURL(url: string): boolean {
 
 const REGEX_PROXY_URL_1 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)(?::(?<user>[^:[\]{}]*))?(?::(?<pass>[^:[\]{}]*))?(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
 const REGEX_PROXY_URL_2 = /^(?:(?<protocol>https?|ssh|socks5):\/\/)?(?:(?<user>[^:@[\]{}]+):(?<pass>[^:@[\]{}]+)@(?<host>\[[^\]]+\]|[^:[\]{}@]+):(?<port>\d+)|(?<protocol2>https?|ssh|socks5):\/\/(?<host2>\[[^\]]+\]|[^:[\]{}@]+):(?<port2>\d+):(?<user2>[^:[\]{}]+):(?<pass2>[^:[\]{}]+))(?:\[(?<refresh>[^\]]*)\])?(?:\{(?<remark>[^}]*)\})?$/
-const REGEX_PROXY_URL_TYPE = /^[^:/\s]+:[^:/\s]+@/
+// 必须跳过可选协议前缀，否则 socks5://user:pass@host:port 会被误判成 host:port 格式
+const REGEX_PROXY_URL_TYPE = /^(?:(?:https?|ssh|socks5):\/\/)?[^:/\s]+:[^:/\s]+@/
 
 export function parseProxyUrl(url: string): {
   protocol?: string | undefined

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ActivityInfoWallet from '/@/views/campaign/june-eighteen/activity-info-wallet.vue'
+import ActivityInfoWallet from '/@/views/campaign/new-user/activity-info-wallet.vue'
 import currency from 'currency.js'
 // import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'

@@ -67,7 +67,10 @@ function onChange() {
         <div v-if="type === 'default'" :class="menu.item" @click="operationHandler(item)">
           <SvgIcon v-if="item.icon" :class="item.iconClass" :name="(item.icon as SvgNames)" />
           <span class="flex-1">{{ item.label }}</span>
-          <SvgIcon v-if="item.suffixIcon" :class="item.iconClass" :name="(item.suffixIcon as SvgNames)" />
+          <div v-if="item.suffixLabel || item.suffixIcon" class="flex items-center gap-1 shrink-0">
+            <SvgIcon v-if="item.suffixIcon" :class="item.iconClass" :name="(item.suffixIcon as SvgNames)" v-bind="item.suffixIconSize ? { size: item.suffixIconSize } : {}" />
+            <span v-if="item.suffixLabel" :class="item.suffixLabelClass">{{ item.suffixLabel }}</span>
+          </div>
           <SvgIcon v-if="item.items && !item.hideSubmenuIcon" :class="item.iconClass" name="base/rx_ic_chevron_right" />
         </div>
       </a>

@@ -11,6 +11,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useDialog } from '/@/hooks/useDialog'
 import { useEmitterEvent } from '/@/utils/eventBus'
 import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
+import RenewalReminderDrawer from '/@/views/browser/list/components/renewal-reminder-drawer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -101,7 +102,7 @@ function editProject() {
 </script>
 
 <template>
-  <div class="flex flex-col h-full w-full">
+  <div class="flex flex-col h-full w-full relative">
     <ViewsHeader>
       <template #title>
         <div class="cursor-pointer title" @click="() => router.replace({ name: 'projects' })">
@@ -121,6 +122,8 @@ function editProject() {
     <div class="flex-1 overflow-hidden">
       <Profiles ref="project" is-project-profile />
     </div>
+    <!-- 与窗口列表页共用到期提醒，关闭后同一档位不再弹出 -->
+    <RenewalReminderDrawer />
   </div>
 </template>
 

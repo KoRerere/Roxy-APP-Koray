@@ -16,6 +16,7 @@ import AccountCreate from '/@/views/account/create/quick.vue'
 import AccountList from '/@/views/account/list/quick.vue'
 import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
 import ProxyBuyAddDrawer from '/@/views/browser/create/components/proxy-buy-add-drawer.vue'
+import BatchProxies from '/@/views/agent/create/components/batch-proxies.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
@@ -24,7 +25,10 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
-import { ClearType, CoreType, ProfileModifyType, ProfileReqType, ProxyType } from '/@/enums'
+import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
+import { isLocalNetworkStopOpenMessage, isProxyDetectOpenWarning } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
+import { useCheckProxy } from '/@/views/agent/hooks'
+import { ClearType, CoreType, ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
@@ -40,7 +44,7 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter, useEmitterEvent } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
-import { PROXY_BUY_ADD_DRAWER_KEY, useProfileProxy, useProfileProxySpeedTest, useProxyBuyAddDrawer, usePurchaseOfficialProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
+import { PROXY_BUY_ADD_DRAWER_KEY, expandChosenProxyRows, toChosenWindowProxyList, toInlineWindowProxyList, useProfileProxy, useProfileProxySpeedTest, useProxyBuyAddDrawer, usePurchaseOfficialProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
 import { useProfileOpenState } from '/@/views/browser/list/profiles/hooks/useProfileOpenState'
@@ -86,6 +90,7 @@ const [show] = useContextMenu()
 const { showSimpleDialog } = useSimpleDialog()
 const { buildProxyData, confirmDeleteProxy } = useProfileProxy()
 const { runProxySpeedTestForRows } = useProfileProxySpeedTest()
+const { batchTestShowToast } = useCheckProxy()
 const { editCookieByProfile, startCookieRobot } = useCookie()
 const { saveLocalTrack } = useTrack()
 const { check } = usePermission()
@@ -173,8 +178,9 @@ function invalidateAndRefreshProfilesList(tabParams: Record<string, unknown> = {
 
 function getProfilesCacheEntry() {
   const workspaceId = workspaceStore.currentWorkspace?.id
-  if (!workspaceId)
+  if (!workspaceId) {
     return null
+  }
   return listCacheStore.get(
     LIST_CACHE_NAMESPACE.BROWSER_LIST,
     String(workspaceId),
@@ -185,10 +191,12 @@ function getProfilesCacheEntry() {
 /** 缓存仅对应离开时的单个 Tab；只有当前 Tab 与缓存 meta.activeTabId 一致时才允许恢复 */
 function shouldRestoreProfilesListCache() {
   const entry = getProfilesCacheEntry()
-  if (!entry)
+  if (!entry) {
     return false
-  if (props.isProjectProfile)
+  }
+  if (props.isProjectProfile) {
     return true
+  }
   const cachedTabId = entry.meta?.activeTabId as string | undefined
   const currentTabId = props.currentFilter?.id ?? 'rx_1000'
   return !!cachedTabId && cachedTabId === currentTabId
@@ -196,30 +204,36 @@ function shouldRestoreProfilesListCache() {
 
 /** 父组件尚未把 activeTab 切到缓存记录的 Tab 时，暂缓初始化 */
 function isWaitingForCachedTabRestore() {
-  if (props.isProjectProfile)
+  if (props.isProjectProfile) {
     return false
+  }
   const cachedTabId = getProfilesCacheEntry()?.meta?.activeTabId as string | undefined
-  if (!cachedTabId)
+  if (!cachedTabId) {
     return false
+  }
   const currentTabId = props.currentFilter?.id ?? 'rx_1000'
   return cachedTabId !== currentTabId
 }
 
 function listCacheMeta() {
   const meta: Record<string, unknown> = {}
-  if (!props.isProjectProfile)
+  if (!props.isProjectProfile) {
     meta.activeTabId = props.currentFilter?.id ?? 'rx_1000'
-  if (filtersMenu.value)
+  }
+  if (filtersMenu.value) {
     meta.filtersMenu = filtersMenu.value
+  }
   return meta
 }
 
 function tryRestoreProfilesFromCache() {
-  if (!shouldRestoreProfilesListCache())
+  if (!shouldRestoreProfilesListCache()) {
     return false
+  }
   const entry = getProfilesCacheEntry()
-  if (!entry)
+  if (!entry) {
     return false
+  }
   syncFromCacheEntry(entry)
   return true
 }
@@ -229,8 +243,9 @@ async function loadFiltersForCurrentTab() {
 }
 
 async function initializeProfilesList() {
-  if (listInitialized.value || isWaitingForCachedTabRestore())
+  if (listInitialized.value || isWaitingForCachedTabRestore()) {
     return
+  }
 
   listInitialized.value = true
   await loadFiltersForCurrentTab()
@@ -249,8 +264,9 @@ async function initializeProfilesList() {
 }
 
 async function refreshOnTabSwitch() {
-  if (!props.currentFilter)
+  if (!props.currentFilter) {
     return
+  }
 
   if (!listInitialized.value) {
     await initializeProfilesList()
@@ -274,8 +290,9 @@ watch(() => props.currentFilter?.id, () => {
 watch(
   () => route.params.id,
   async () => {
-    if (!route.params.id)
+    if (!route.params.id) {
       return
+    }
     listInitialized.value = false
     await nextTick()
     await initializeProfilesList()
@@ -290,8 +307,9 @@ let cancelWebWindowListener: (() => void) | undefined
 const scheduledCheckerProxyStatus = genPollingChecker({
   intervalMs: 5 * 60 * 1000,
   checkOnce: async () => {
-    if (!userConfig.value.autoDetectProxy)
+    if (!userConfig.value.autoDetectProxy) {
       return true
+    }
     await testAllProxy(true)
     return false
   },
@@ -312,6 +330,7 @@ onBeforeMount(() => {
       driverNext()
     },
     onOpenFailed: clearPendingAutoOpen,
+    onProxyDetectWarning: showOpenProxyDetectFailGuide,
   })
   cancelCloseListener = listenCloseMessage()
   cancelCloseSyncingDataListener = listenCloseSyncingDataMessage()
@@ -339,31 +358,54 @@ onBeforeUnmount(() => {
 })
 
 async function testAllProxy(silent = false) {
-  if (!check('Profiles_speed_test_proxy'))
+  if (!check('Profiles_speed_test_proxy')) {
     return
+  }
 
   if (!dataList.value?.length) {
     !silent && onlyErrorToast(-1, $t('暂无窗口'))
     return
   }
 
-  const targets = dataList.value.filter(row => row.proxyCategory !== 'noproxy')
+  const targets = dataList.value.filter(row => row.proxyCategory !== 'noproxy' && isProxySpeedTestable(row))
   if (!targets.length) {
     !silent && onlyErrorToast(-1, $t('当前没有已绑定代理 IP 的窗口'))
     return
   }
 
-  if (checkerLoading.value)
+  if (checkerLoading.value) {
     return
+  }
   checkerLoading.value = true
   await runProxySpeedTestForRows(targets, { showConcurrentTaskTopBar: !silent, silent })
   checkerLoading.value = false
 }
 
+/** 打开窗口时的代理检测失败：保留原 warning，并按来源拼一次引导 toast */
+function showOpenProxyDetectFailGuide(dirId: string | number, warningMessages: string[]) {
+  if (warningMessages.some(isLocalNetworkStopOpenMessage))
+    return
+
+  const detectWarning = warningMessages.find(isProxyDetectOpenWarning)
+  if (!detectWarning)
+    return
+
+  const row = dataList.value?.find(item => String(item.dirId) === String(dirId))
+  if (!row)
+    return
+
+  batchTestShowToast({
+    loading: false,
+    checkStatus: ProxyCheckStatus.failure,
+    proxyType: row.buyProxyType,
+    error: detectWarning,
+  })
+}
+
 async function onTestProxy(data: any) {
   const datas: Data[] = [].concat(data)
 
-  const targets = datas.filter(row => row.proxyCategory !== 'noproxy')
+  const targets = datas.filter(row => row.proxyCategory !== 'noproxy' && isProxySpeedTestable(row))
   if (!targets.length) {
     onlyErrorToast(-1, $t('当前没有已绑定代理 IP 的窗口'))
     return
@@ -373,8 +415,9 @@ async function onTestProxy(data: any) {
 
 async function createAutomation(data: Data[] = selectedProfiles.value) {
   const windowIds = data.flatMap(item => item.dirId ? [item.dirId] : [])
-  if (!windowIds.length)
+  if (!windowIds.length) {
     return
+  }
 
   void API.base.userReportAppEventCreate({
     eventName: 'ai_automation',
@@ -640,8 +683,9 @@ async function onMoveToProject(data: any) {
               item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
             })
             invalidateProfilesListCacheForProjectId(formData.projectId)
-            if (props.isProjectProfile)
+            if (props.isProjectProfile) {
               invalidateProfilesListCacheScope()
+            }
           })
       }
       resolve()
@@ -652,16 +696,24 @@ async function onMoveToProject(data: any) {
   return promise
 }
 
-function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }: any) {
+function multipleProxyChange(data: Data | Data[], { proxyMethod }: any) {
   const datas = ([] as Data[]).concat(data)
-  const isMulti = operationType === 'batch'
   const isChoose = proxyMethod === 'choose'
 
-  // 添加代理走双开抽屉（购买 + 手动添加），与创建窗口一致
+  // 勾选 2 个以上走批量抽屉；1 条仍走单窗流程（底部批量栏勾 1 条时 operationType 也是 batch）
   if (!isChoose) {
+    if (datas.length > 1)
+      return openBatchInlineProxyDrawer(datas)
     return openAddProxyBuyAddDrawer(datas)
   }
 
+  if (datas.length > 1)
+    return openBatchChooseProxyDrawer(datas)
+  return openChooseProxyDrawer(datas)
+}
+
+/** 单窗口选择已有代理：预填当前绑定，确认后整表同一 moduleId */
+function openChooseProxyDrawer(datas: Data[]) {
   const { promise, resolve } = Promise.withResolvers<void>()
   const _proxydata = buildProxyData(datas[0]!)
 
@@ -670,13 +722,8 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
     slots: {
       container: () => (
         <div class="h-full flex flex-col">
-          {isMulti && (
-            <div class="px-4 pt-4">
-              <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理 IP 设置，请谨慎操作。')}></RxAlert>
-            </div>
-          )}
           <div class="flex-1 overflow-hidden">
-            <ProxyQuick data={isMulti ? undefined : _proxydata} onConfirm={onConfirm}></ProxyQuick>
+            <ProxyQuick data={_proxydata} onConfirm={onConfirm}></ProxyQuick>
           </div>
         </div>
       ),
@@ -692,12 +739,114 @@ function multipleProxyChange(data: Data | Data[], { operationType, proxyMethod }
   return promise
 }
 
+/** 多窗口选择已有代理：批量勾选 + 关联数量，按下标一一绑定 */
+function openBatchChooseProxyDrawer(datas: Data[]) {
+  const { promise, resolve } = Promise.withResolvers<void>()
+
+  drawerInstance.showDrawer({
+    title: $t('选择代理 IP'),
+    slots: {
+      container: () => (
+        <div class="h-full flex flex-col">
+          <div class="px-4 pt-4">
+            <RxAlert class="min-w-full" type="warn" closable={false} title={$t('此操作将覆盖所有选中窗口的代理 IP 设置，请谨慎操作。')}></RxAlert>
+          </div>
+          <div class="flex-1 overflow-hidden">
+            <ProxyQuick isBatch={true} createCount={datas.length} onConfirm={onConfirm}></ProxyQuick>
+          </div>
+        </div>
+      ),
+    },
+    onHide: resolve,
+  })
+
+  async function onConfirm(proxies: Record<string, any>[]) {
+    const ok = await bindChosenProxyListToProfiles(datas, proxies)
+    if (ok)
+      drawerInstance.hideDrawer()
+  }
+
+  return promise
+}
+
 /** 打开添加代理双开抽屉，并在确认后绑定到目标窗口 */
 async function openAddProxyBuyAddDrawer(datas: Data[]) {
   await proxyBuyAddDrawer.openProxyBuyAddDrawer({
     onBuySuccess: proxy => bindChosenProxyToProfiles(datas, proxy),
     onAddConfirm: formData => bindCustomProxyToProfiles(datas, formData),
   })
+}
+
+/** 多窗口批量添加：解析结果按顺序内联绑到窗口，不写入代理库 */
+function openBatchInlineProxyDrawer(datas: Data[]) {
+  const { promise, resolve } = Promise.withResolvers<void>()
+
+  drawerInstance.showDrawer({
+    title: $t('添加代理 IP'),
+    // 覆盖默认 !w-auto，否则双列解析区会被挤窄
+    pt: {
+      root: {
+        class: 'overflow-hidden rounded-2 border-0.5 max-w-full',
+        style: { width: 'min(1080px, calc(100vw - 24px))' },
+      },
+    },
+    slots: {
+      container: () => (
+        <div class="h-full flex flex-col min-h-0 overflow-hidden">
+          <BatchProxies class="h-full min-h-0 flex" showAdvertise={true} onConfirm={onConfirm} onBuy={onBuy} />
+        </div>
+      ),
+    },
+    onHide: resolve,
+  })
+
+  async function onConfirm(proxies: Record<string, any>[]) {
+    const ok = await bindInlineProxiesToProfiles(datas, proxies)
+    if (ok)
+      drawerInstance.hideDrawer()
+  }
+
+  /** 横幅购买：批量抽屉保持打开，购买弹窗叠在上面 */
+  async function onBuy() {
+    await buyProxyForProfiles(datas)
+  }
+
+  return promise
+}
+
+/**
+ * 按 ids 与 proxyList 下标一一对应绑定已有代理。
+ * 条数不齐不截断、不补齐，交给后端处理；本地只更新有对应代理的窗口行。
+ */
+async function bindChosenProxyListToProfiles(datas: Data[], proxies: Record<string, any> | Record<string, any>[]) {
+  const rows = ([] as Record<string, any>[]).concat(proxies)
+  const expanded = expandChosenProxyRows(rows)
+  const proxyList = toChosenWindowProxyList(rows)
+  const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
+    type: ProfileModifyType.ProxySelect,
+    requestType: ProfileReqType.SelectProxy,
+    ids: datas.map(item => item.id!),
+    proxyList,
+  } as any)
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return false
+
+  datas.forEach((item, index) => {
+    const proxy = expanded[index]
+    const payload = proxyList[index]
+    if (!proxy || !payload)
+      return
+    silentUpdateProxy(item, {
+      ...payload,
+      moduleId: payload.moduleId,
+      proxyMethod: 'choose',
+      proxyCategory: payload.proxyCategory || payload.protocol,
+      // 购买代理与资源代理的本地展示依赖 buyProxyType；合约 proxyList 不含该字段
+      buyProxyType: proxy.proxyType ?? ProxyType.resource,
+    })
+  })
+  return true
 }
 
 /** 选择/购买的代理绑定到窗口 */
@@ -712,10 +861,11 @@ async function bindChosenProxyToProfiles(datas: Data[], formData: any) {
       proxyMethod: 'choose',
       ...restForm,
     },
-  })
+  } as any)
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   const { protocol, proxyCategory, proxyType, isDirect, ...rest } = restForm
   const params = {
@@ -744,10 +894,11 @@ async function bindCustomProxyToProfiles(datas: Data[], formData: Record<string,
       proxyMethod: 'custom',
       ...restForm,
     },
-  })
+  } as any)
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   const { protocol, proxyCategory, proxyType, isDirect, ...rest } = restForm
   const params = {
@@ -764,6 +915,37 @@ async function bindCustomProxyToProfiles(datas: Data[], formData: Record<string,
   })
 }
 
+/**
+ * 按 ids 与 proxyList 下标一一对应内联绑定。
+ * 条数不齐不截断、不补齐，交给后端处理；本地只更新有对应代理的窗口行。
+ */
+async function bindInlineProxiesToProfiles(datas: Data[], proxies: Record<string, any>[]) {
+  const proxyList = toInlineWindowProxyList(proxies)
+  const { code, msg } = await API.window.userMdfWindowDataBatchCreate({
+    type: ProfileModifyType.ProxyAdd,
+    requestType: ProfileReqType.AddProxy,
+    ids: datas.map(item => item.id!),
+    proxyList,
+  } as any)
+  onlyErrorToast(code, msg)
+  if (code !== 0)
+    return false
+
+  datas.forEach((item, index) => {
+    const proxy = proxyList[index]
+    if (!proxy)
+      return
+    silentUpdateProxy(item, {
+      ...proxy,
+      moduleId: 0,
+      proxyMethod: 'custom',
+      proxyCategory: proxy.proxyCategory || proxy.protocol,
+      buyProxyType: ProxyType.resource,
+    })
+  })
+  return true
+}
+
 function multipleProxyDelete(data: Data | Data[]) {
   const datas = ([] as Data[]).concat(data)
   return confirmDeleteProxy(datas)
@@ -773,8 +955,9 @@ function multipleProxyDelete(data: Data | Data[]) {
 async function buyProxyForProfiles(data: Data | Data[]) {
   const datas = ([] as Data[]).concat(data)
   const proxy = await purchaseImmediateOfficialProxy()
-  if (!proxy)
+  if (!proxy) {
     return
+  }
   await bindChosenProxyToProfiles(datas, proxy)
 }
 
@@ -873,8 +1056,9 @@ async function onEditCookies(data: Data | Data[]) {
       } as any)
       drawerInstance.hideDrawer()
       onlyErrorToast(code, msg)
-      if (code !== 0)
+      if (code !== 0) {
         return
+      }
       datas.forEach((item) => {
         Reflect.set(item, 'cookie', cookie)
       })
@@ -1009,8 +1193,9 @@ async function deleteProfile(datas: any, ids: number[]) {
       if (this.checkboxProps.value) {
         const { code, msg } = await API.window.userDelWindowInfoCreate({ ids })
         onlyErrorToast(code, msg)
-        if (code !== 0)
+        if (code !== 0) {
           return reject(msg)
+        }
         invalidateAndRefreshProfilesList()
         globalThis.electronAPI.send('browser:batchRemove', datas.map((item: any) => item.dirId))
       }

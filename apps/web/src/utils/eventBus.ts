@@ -31,6 +31,8 @@ export type MittEvents = {
   showSubscriptionExpiredDialog?: void
   /** 显示续费弹窗 */
   showRenewalDialog?: {
+    /** 时长列表就绪后优先选中的天数 */
+    defaultDays?: number
     paySuccess?: (result: UserPaySettlementCreateData) => void
     payError?: (result: UserPaySettlementCreateData) => void
     afterConfirm?: (result: UserPaySettlementCreateData) => void

@@ -27,6 +27,7 @@ import { useProxyFormDrawer } from '/@/views/agent/hooks/useProxyFormDrawer'
 import { useProxyModuleCreate } from '/@/views/agent/hooks/useProxyModuleCreate'
 import { getRelatedProfileLabels, useColumns } from './columns'
 import { useProviderJump } from './hooks/useProviderJump'
+import { usePendingOpenRoxyIpBuy } from './hooks/useProxyDetectFailGuide'
 import { getAdvancedSearch, getCustomFilters, getSorts, tableOperation, tableRequest } from './operation'
 import { canShowProxyQrcode, fetchWorkspaceKycUnlockedCached, isBuyProxy } from './utils/proxy-download-kyc-gate'
 import { isProxySpeedTestable } from './utils/proxy-speed-testable'
@@ -55,6 +56,9 @@ const { testProxy: checkProxy, batchTestShowToast, concurrentProxyTest } = useCh
 const { showSimpleDialog } = useSimpleDialog()
 const { buyProxy, downloadProxy, renewProxy, upgradeProxy, showProxyDownloadKycBlockModal } = useProxy()
 const { isProviderJump, jumpToProvider } = useProviderJump()
+usePendingOpenRoxyIpBuy(() => {
+  void buyProxy()
+})
 const { check } = usePermission()
 const advancedSearchOptions = getAdvancedSearch()
 const tableRef = useTemplateRef('shoptable')
@@ -85,8 +89,9 @@ const proxyFilter = useProxyFilter({
 const scheduledCheckerProxyStatus = genPollingChecker({
   intervalMs: 5 * 60 * 1000,
   checkOnce: async () => {
-    if (!userConfig.value.autoDetectProxy)
+    if (!userConfig.value.autoDetectProxy) {
       return true
+    }
     await testAllProxy(true)
     return false
   },
@@ -151,12 +156,15 @@ async function operationHandler(operate: any, data: ProxyItem) {
       await download(datas)
       break
     case 'qrcode':
-      if (canShowProxyQrcode(data))
+      if (canShowProxyQrcode(data)) {
         break
-      if (!isBuyProxy(data))
+      }
+      if (!isBuyProxy(data)) {
         break
-      if (!(await fetchWorkspaceKycUnlockedCached()))
+      }
+      if (!(await fetchWorkspaceKycUnlockedCached())) {
         showProxyDownloadKycBlockModal()
+      }
       break
     case 'renew':
       onRenewProxy(datas)
@@ -185,8 +193,9 @@ function editProxy(data: ProxyItem) {
       const isOK = await updateProxyModules({
         proxyList: [formData],
       })
-      if (!isOK)
+      if (!isOK) {
         return false
+      }
       onRefreshTable()
     },
   })
@@ -209,8 +218,9 @@ async function deleteProxy(datas: ProxyItem[]) {
       accept: async () => {
         const { code, msg } = await API.proxy.userDelProxyModuleV2Create({ ids: datas.map(item => item.id!) })
         onlyErrorToast(code, msg)
-        if (code !== 0)
+        if (code !== 0) {
           return
+        }
         onRefreshTable()
         resolve(true)
       },
@@ -266,8 +276,9 @@ function onBuyProxy(props?: UserGetProxyVendorListListData['data'][number]) {
 }
 
 function setNewOrderNo(value?: string) {
-  if (!value)
+  if (!value) {
     return
+  }
   newOrderNo.value = value
   newOrderTimer.value = setTimeout(() => {
     newOrderNo.value = ''
@@ -277,15 +288,17 @@ function setNewOrderNo(value?: string) {
 }
 
 async function testAllProxy(silent = false) {
-  if (!check('Proxy_List_speed_test'))
+  if (!check('Proxy_List_speed_test')) {
     return
+  }
 
   if (!dataList.value?.length) {
     !silent && onlyErrorToast(-1, $t('暂无代理 IP'))
     return
   }
-  if (checkerLoading.value)
+  if (checkerLoading.value) {
     return
+  }
   checkerLoading.value = true
   try {
     await concurrentProxyTest(buildShopProxySpeedTestRun(dataList.value, { operateName: 'test', silent }))
@@ -302,8 +315,9 @@ function moveFailedProxiesToFront() {
   // 必须以表格完整行为准重排：dataList 是测速用的过滤子集，直接拿它 updateDataList 会丢掉未纳入测速的行
   const tableRows = tableRef.value?.getDataList()
   const source = tableRows?.length ? tableRows : (dataList.value as ProxyItem[] | undefined)
-  if (!source?.length)
+  if (!source?.length) {
     return
+  }
 
   const isFailed = (item: ProxyItem) =>
     isProxySpeedTestable(item)
@@ -312,13 +326,16 @@ function moveFailedProxiesToFront() {
   const failed: ProxyItem[] = []
   const others: ProxyItem[] = []
   for (const item of source) {
-    if (isFailed(item))
+    if (isFailed(item)) {
       failed.push(item)
-    else
+    }
+    else {
       others.push(item)
+    }
   }
-  if (!failed.length)
+  if (!failed.length) {
     return
+  }
 
   const reordered = [...failed, ...others]
   tableRef.value?.updateDataList(reordered)
@@ -354,16 +371,18 @@ function buildShopProxySpeedTestRun(datas: ProxyItem[], { operateName, silent }:
 
   function tasksCompleted(results: ConcurrentProxyTestResults, cancelled: boolean) {
     results.forEach((res, i) => {
-      if (res === undefined)
+      if (res === undefined) {
         setOperationLoading(datas[i]!, operateName, false)
+      }
     })
     const validResults = results.filter(Boolean) as ConcurrentProxyValidResult[]
     if (!cancelled && !silent) {
       batchTestShowToast(validResults, { reCheck: () => concurrentProxyTest(buildShopProxySpeedTestRun(datas, { operateName, silent })) })
     }
     const proxyList = validResults.filter((item: any) => item?.proxyType === ProxyType.resource)
-    if (!proxyList.length)
+    if (!proxyList.length) {
       return
+    }
 
     if (silent) {
       API.proxy.userBatchMdfProxyModuleCheckCreate({ proxyList })// 自动检测无日志
@@ -403,8 +422,9 @@ function download(datas: ProxyItem[]) {
 async function openHelp(data: ProxyItem) {
   const { code, data: refundInfo, msg } = await API.proxy.userGetProxyRefundInfoList({ proxyBuyId: data.id! })
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   showModal({
     showHeader: false,
@@ -417,8 +437,9 @@ async function openHelp(data: ProxyItem) {
 }
 
 function onRemark(data: any) {
-  if (!check('Proxy_List_notes'))
+  if (!check('Proxy_List_notes')) {
     return
+  }
 
   showSimpleDialog({
     title: $t('为所选代理 IP 添加备注'),
@@ -436,8 +457,9 @@ function onRemark(data: any) {
     onConfirm: async ({ remark }: Record<string, any>) => {
       const { code, msg } = await API.proxy.userMdfUserBuyProxyRemarkCreate({ id: data.id!, proxyRemark: remark })
       onlyErrorToast(code, msg)
-      if (code !== 0)
+      if (code !== 0) {
         return
+      }
       onRefreshTable()
     },
   })
@@ -515,8 +537,9 @@ async function toggleAutoRenew(data: ProxyItem) {
   const status = data.autoRenew === ProxyAutoRenewalStatus.Enabled ? ProxyAutoRenewalStatus.Disabled : ProxyAutoRenewalStatus.Enabled
   const { code, msg } = await API.proxy.userSetProxyAutoRenewalCreate({ proxyId: data.id, status })
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return false
+  }
   return true
 }
 
@@ -528,8 +551,9 @@ function rowClass(data: ProxyItem) {
 }
 
 function jumpToWhois(ip: string) {
-  if (!ip)
+  if (!ip) {
     return
+  }
   window.open(getOfficialWebsite(`/whoer?ip=${ip}`), '_blank')
 }
 
@@ -542,15 +566,17 @@ function bindProfiles(data: ProxyItem) {
         cacheKey: 'agent-profile-select',
         onClose: () => drawerInstance.hideDrawer(),
         onConfirm: async (profiles: any[]) => {
-          if (!data.id)
+          if (!data.id) {
             return
+          }
           const { code, msg } = await API.proxy.userMdfProxyBindWindowCreate({
             proxyId: data.id,
             windowIds: profiles.map(item => item.id),
           })
           onlyErrorToast(code, msg)
-          if (code === 0)
+          if (code === 0) {
             onRefreshTable()
+          }
         },
       }),
     },

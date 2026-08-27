@@ -11,21 +11,24 @@ export const useCampaignStore = defineStore('campaign', () => {
 
   const seasonalActivity = computed(() => {
     const { type, start_timestamp, end_timestamp } = currentActivity.value
-    const active = start_timestamp <= Date.now() && end_timestamp >= Date.now()
+    const inWindow = start_timestamp <= Date.now() && end_timestamp >= Date.now()
+    // 618 已归档，即使后端仍返回 type=6 也不再当作进行中的季节活动
+    const archived = type === ActivityType.JuneEighteen
+    const active = inWindow && !archived
 
     return {
       active,
-      none: !type || type === ActivityType.None,
+      none: !type || type === ActivityType.None || archived,
       newYear: active && type === ActivityType.NewYear,
       springFestival: active && type === ActivityType.SpringFestival,
       easter: active && type === ActivityType.Easter,
       freedom: active && type === ActivityType.Freedom,
-      juneEighteen: active && type === ActivityType.JuneEighteen,
+      juneEighteen: false,
     }
   })
 
   const maxBonus = computed(() => {
-    return currentActivity.value.recharge_benefits.reduce((max, item) => Math.max(max, item.discount), 0)
+    return currentActivity.value.recharge_benefits?.reduce((max, item) => Math.max(max, item.discount), 0)
   })
 
   /** 充值档位展示文案：区间由相邻档位推算，末档为「及以上」 */

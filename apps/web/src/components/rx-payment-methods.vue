@@ -2,6 +2,7 @@
 import { getImage } from '/@/utils/basic'
 import { PayWay } from '../enums/pay'
 import { $t } from '../locales'
+import { useThemeStore } from '/@/stores/theme'
 
 interface Methods {
   value: PayWay
@@ -15,39 +16,48 @@ const props = defineProps<{
 
 const modelValue = defineModel<PayWay>()
 const loading = defineModel<boolean>('loading', { default: false })
+const { isDarkTheme } = storeToRefs(useThemeStore())
 
 const defaultMethods = [
   {
     label: $t('Roxy 钱包'),
     value: PayWay.Balance,
-    icon: getImage('payments/rx_payment_balance.svg'),
+    iconFile: 'payment_icon_balance.svg',
   },
   {
     label: 'Card',
     value: PayWay.Card,
-    icon: getImage('payments/rx_payment_cards.svg'),
+    iconFile: 'payment_icon_cards.svg',
   },
   {
     label: $t('支付宝'),
     value: PayWay.Alipay,
-    icon: getImage('payments/rx_payment_alipay.svg'),
+    iconFile: 'payment_icon_alipay.svg',
   },
   {
     label: $t('微信支付'),
     value: PayWay.Wechat,
-    icon: getImage('payments/rx_payment_wepay.svg'),
+    iconFile: 'payment_icon_wepay.svg',
   },
   {
     label: 'USDT',
     value: PayWay.USDT,
-    icon: getImage('payments/rx_payment_usdt.svg'),
+    iconFile: 'payment_icon_usdt.svg',
   },
   {
     label: 'PayPal',
     value: PayWay.PayPal,
-    icon: getImage('payments/rx_payment_paypal.svg'),
+    iconFile: 'payment_icon_paypal.svg',
   },
 ]
+
+/** 提现弹窗同样走 light/dark 目录，避免继续引用已删除的 rx_payment_* */
+function resolvePayIcon(file?: string) {
+  if (!file)
+    return ''
+  const theme = isDarkTheme.value ? 'dark' : 'light'
+  return getImage(`payments/${theme}/${file}`)
+}
 
 const paymentMethods = computed<Record<string, any>[]>(() => {
   return props.methods.map(({ value, ...meta }) => {
@@ -55,6 +65,7 @@ const paymentMethods = computed<Record<string, any>[]>(() => {
     return {
       ...defaultMethod,
       ...meta,
+      icon: resolvePayIcon(defaultMethod?.iconFile),
       disabled: props.disabledMethods?.includes(value),
     }
   })

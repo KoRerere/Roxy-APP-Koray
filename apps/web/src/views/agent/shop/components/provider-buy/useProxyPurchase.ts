@@ -2,8 +2,9 @@ import currency from 'currency.js'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleLocale } from '/@/stores/locale'
-import { ProxyUseType } from '/@/enums/proxy'
-import { discountCalculate } from '/@/views/pay/subscribe/util'
+import { ProxyIpType, ProxyUseType } from '/@/enums/proxy'
+import { calcProxyPayAmount } from '/@/views/campaign/new-user/proxy-pricing'
+import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { formatBandwidthPriceList, formatProxyPriceList, getProxyTypePriceForSelectedDuration } from './utils'
 import type { MaybeRefOrGetter, Ref } from 'vue'
 import type { BuyEntryType } from '/@/enums/proxy'
@@ -145,6 +146,8 @@ export function useProxyPurchaseForm(options: {
   getBusinessUseList: (vendorId: string) => Promise<BusinessUseOption[]>
   getProxyTypeList: (sceneId: number, countryCode: string) => Promise<ProxyTypeOption[]>
   countryCache: ProxyPurchaseCountryCache
+  /** 活动入口指定机房/住宅时，列表就绪后优先选中对应类型 */
+  preferredProxyType?: MaybeRefOrGetter<ProxyIpType | string | undefined>
 }) {
   const loading = ref(false)
   const loadingProxyType = ref(false)
@@ -187,11 +190,15 @@ export function useProxyPurchaseForm(options: {
 
   function applyProxyTypeRadios(typeOptions: ProxyTypeOption[]) {
     proxyTypeOptions.value = typeOptions ?? []
-    const first = proxyTypeOptions.value[0]
-    proxyTypeValue.value = first?.id
-    syncSubscriptionMonthsFromProxyType(first)
-    syncQuantityFromProxyType(first)
-    syncProxySpeedFromProxyType(first)
+    const preferred = toValue(options.preferredProxyType)
+    // 入口指定类型且当前国家有该档时选中；否则仍回落到第一项
+    const selected = (preferred
+      ? proxyTypeOptions.value.find(item => item.proxyType === preferred)
+      : undefined) ?? proxyTypeOptions.value[0]
+    proxyTypeValue.value = selected?.id
+    syncSubscriptionMonthsFromProxyType(selected)
+    syncQuantityFromProxyType(selected)
+    syncProxySpeedFromProxyType(selected)
   }
 
   function applyPurchaseCountryList(list: CountryOption[]) {
@@ -352,25 +359,43 @@ export function useProxyPurchasePricing(options: {
     return currency(selectedBandwidthPrice, { precision: 6 }).multiply(options.purchaseMember.value).value
   })
 
-  const originalAmount = computed(() => {
-    const selectedUnitPrice = selectedUnit.value?.proxyPrice ?? 0
-    return currency(selectedUnitPrice, { precision: 6 }).multiply(options.purchaseMember.value).value
+  /** 当前选中类型是否走 30 天新人首条价 */
+  const newUserIpKind = computed(() => {
+    const proxyType = options.proxyTypeOptions.value.find(item => item.id === options.proxyTypeValue.value)?.proxyType
+    if (proxyType === ProxyIpType.Residential)
+      return 'residential' as const
+    if (proxyType === ProxyIpType.Datacenter)
+      return 'datacenter' as const
+    return undefined
+  })
+
+  const newUserIpOfferActive = computed(() => {
+    // 电商设备购买不套用窗口/代理新人活动
+    if (options.labels.value.mode === 'device')
+      return false
+    const kind = newUserIpKind.value
+    if (!kind)
+      return false
+    return useNewUserBenefitStore().isNewUserIpOffer(
+      kind,
+      options.subscriptionMonths.value?.day ?? 0,
+      options.purchaseCountry.value?.value,
+    )
   })
 
   const finalResult = computed(() => {
     const { proxyDiscount = 0 } = options.userPayInfo.value ?? {}
-    const businessUse = options.businessUse.value
-
-    const totalOriginalAmount = currency(originalAmount.value, { precision: 6 }).add(originalBandwidthPrice.value).value
-
-    const amount = businessUse?.isSpecialOffer
-      ? totalOriginalAmount
-      : currency(totalOriginalAmount, { precision: 6 }).multiply(discountCalculate([proxyDiscount])).value
-
-    return {
-      amount,
-      diffAmount: currency(totalOriginalAmount, { precision: 6 }).subtract(amount).value,
-    }
+    const kind = newUserIpKind.value
+    return calcProxyPayAmount({
+      offerActive: newUserIpOfferActive.value,
+      quantity: options.purchaseMember.value,
+      unitPrice: selectedUnit.value?.proxyPrice ?? 0,
+      originalUnitPrice: selectedUnit.value?.originalProxyPrice || selectedUnit.value?.proxyPrice || 0,
+      newUserUnitPrice: kind ? useNewUserBenefitStore().newUserIpUnitPrice(kind) : 0,
+      bandwidthAmount: originalBandwidthPrice.value,
+      proxyDiscount,
+      isSpecialOffer: options.businessUse.value?.isSpecialOffer,
+    })
   })
 
   const details = computed(() => {
@@ -415,7 +440,8 @@ export function useProxyPurchasePricing(options: {
             label: $t('专属折扣'),
             value: `-${proxyDiscount}%`,
             class: '!color-[#FC9D12]',
-            visible: !!proxyDiscount && !businessUse?.isSpecialOffer,
+            // 新人 30 天且只买 1 条：首条不叠专属折扣，整单也没有可展示的专属折扣
+            visible: !!proxyDiscount && !businessUse?.isSpecialOffer && !(newUserIpOfferActive.value && options.purchaseMember.value <= 1),
           },
           {
             label: $t('Roxy 独家特惠'),
@@ -433,6 +459,8 @@ export function useProxyPurchasePricing(options: {
     isCN,
     currentProxyType,
     selectedUnit,
+    newUserIpOfferActive,
+    newUserIpKind,
     finalResult,
     details,
   }

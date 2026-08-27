@@ -67,6 +67,8 @@ export const useUserStore = defineStore(
     const userInfo = ref<UserInfo>({})
     /** 用户付费详情 */
     const userPayInfo = ref<UserPayInfo>({} as UserPayInfo)
+    /** 最近一次拿到 userPayInfo 的本地时刻；存在 store 上不随页面组件卸载/重建而重置 */
+    const payInfoReceivedAt = ref(0)
     const userCards = ref<UserCards>()
 
     const userConfig = ref<UserConfig>({})
@@ -86,6 +88,16 @@ export const useUserStore = defineStore(
     /** 是否为未付费用户 */
     const isNoPayUser = computed(() => {
       return [SubLevelEnum.Free, SubLevelEnum.Expired].includes(userPayInfo.value.subLevel as SubLevelEnum)
+    })
+
+    /** 从未成功充值过钱包时的最低充值金额（美金） */
+    const FIRST_WALLET_RECHARGE_MIN = 5
+    /** 已有成功充值记录时的最低充值金额（美金） */
+    const REPEAT_WALLET_RECHARGE_MIN = 10
+
+    /** Roxy 钱包最低充值金额：isFirstRecharge 为 true 时 5 美金，否则 10 美金 */
+    const walletRechargeMinAmount = computed(() => {
+      return userPayInfo.value.isFirstRecharge ? FIRST_WALLET_RECHARGE_MIN : REPEAT_WALLET_RECHARGE_MIN
     })
 
     /** 用户身份 */
@@ -139,8 +151,9 @@ export const useUserStore = defineStore(
     async function enterWorkspace(workspaceId?: number) {
       const workspaceStore = getWorkspaceStore()
       const resolvedId = workspaceId ?? workspaceStore.currentWorkspace?.id ?? userInfo.value.workspaceId
-      if (!resolvedId)
+      if (!resolvedId) {
         return
+      }
       await workspaceStore.enterWorkspace(resolvedId)
     }
 
@@ -154,8 +167,9 @@ export const useUserStore = defineStore(
 
         setUserInfo(data)
 
-        if (options?.enterWorkspace !== false)
+        if (options?.enterWorkspace !== false) {
           await enterWorkspace(intoWorkspaceId ?? data.workspaceId)
+        }
 
         setTimeout(() => {
           hidePageLoading()
@@ -372,8 +386,9 @@ export const useUserStore = defineStore(
 
     async function setUserConfig(config: UserConfig) {
       const { code } = await API.base.userSetUserConfigCreate(config)
-      if (code !== 0)
+      if (code !== 0) {
         return
+      }
       updateUserConfig()
     }
 
@@ -390,18 +405,21 @@ export const useUserStore = defineStore(
       let lastResult: Awaited<ReturnType<typeof API.pay.userGetUserPayInfoList>> | undefined
 
       for (let attempt = 1; attempt <= PAY_INFO_MAX_ATTEMPTS; attempt++) {
-        if (requestId !== payInfoRequestId)
+        if (requestId !== payInfoRequestId) {
           return lastResult
+        }
 
         try {
           const result = await API.pay.userGetUserPayInfoList()
-          if (requestId !== payInfoRequestId)
+          if (requestId !== payInfoRequestId) {
             return result
+          }
 
           lastResult = result
           const { code, data } = result
           if (code === 0) {
             userPayInfo.value = data
+            payInfoReceivedAt.value = Date.now()
             // 电商模式无窗口套餐/额度语义，跳过订阅到期与升级套餐弹窗
             if (roleStore.isOwner && !isCurrentEcommerceWorkspace()) {
               // 如果用户付费信息过期，则显示弹窗
@@ -437,8 +455,9 @@ export const useUserStore = defineStore(
         catch (error) {
           console.warn(`[UserStore] getUserPayInfo error, attempt=${attempt}/${PAY_INFO_MAX_ATTEMPTS}`, error)
           if (attempt >= PAY_INFO_MAX_ATTEMPTS) {
-            if (requestId === payInfoRequestId)
+            if (requestId === payInfoRequestId) {
               throw error
+            }
             return lastResult
           }
         }
@@ -452,10 +471,12 @@ export const useUserStore = defineStore(
     }
 
     async function getUserCards(force = false) {
-      if (!check('Cost_Center_all'))
+      if (!check('Cost_Center_all')) {
         return
-      if (!force && userCards.value)
+      }
+      if (!force && userCards.value) {
         return userCards.value
+      }
       const { code, data } = await API.pay.userGetBindCardListList({})
       if (code === 0) {
         userCards.value = data.rows
@@ -537,8 +558,9 @@ export const useUserStore = defineStore(
               workspaceId: intoWorkspaceId ?? userInfo.value.workspaceId,
             })
             const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
-            if (workspaceId)
+            if (workspaceId) {
               await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true, force: cached })
+            }
             getUserConfig(true)
             writeInitUserInfoCache()
             endPrepareWorkspace()
@@ -551,8 +573,9 @@ export const useUserStore = defineStore(
               workspaceId: intoWorkspaceId ?? userInfo.value.workspaceId,
             })
             const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
-            if (workspaceId)
+            if (workspaceId) {
               await getWorkspaceStore().prepareWorkspace(workspaceId, { silent: true, force: cached })
+            }
             markBeforeEnterSession()
             getUserConfig(true)
             writeInitUserInfoCache()
@@ -568,8 +591,9 @@ export const useUserStore = defineStore(
             await enterWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId)
             endEnterWorkspace()
             const workspaceId = intoWorkspaceId ?? userInfo.value.workspaceId
-            if (cached && workspaceId)
+            if (cached && workspaceId) {
               refreshWorkspaceContextInBackground(workspaceId)
+            }
           }
 
           getUserConfig(true)
@@ -597,8 +621,9 @@ export const useUserStore = defineStore(
     }
 
     async function getUserContact(force = false) {
-      if (!force && userContact.value)
+      if (!force && userContact.value) {
         return userContact.value
+      }
 
       const { email, phone } = userInfo.value
       userContact.value = { email, phone }
@@ -653,12 +678,14 @@ export const useUserStore = defineStore(
       userInfo,
       userConfig,
       userPayInfo,
+      payInfoReceivedAt,
       userCards,
       password,
       appVersion,
       identityInfo,
       isExpiredUser,
       isNoPayUser,
+      walletRechargeMinAmount,
       lastLoginTime,
       setPassword,
       clearUserInfo,

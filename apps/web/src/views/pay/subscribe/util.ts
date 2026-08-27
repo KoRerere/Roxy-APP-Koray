@@ -33,6 +33,36 @@ export function discountCalculate(discounts: number[]) {
       .multiply(acc).value), 1)
 }
 
+/** 与购买页一致：6 位精度乘折扣系数，避免默认 4 位先舍入再打折 */
+export function applyPriceDiscount(originalAmount: number, discountFactor: number) {
+  return currency(originalAmount, { precision: 6 }).multiply(discountFactor).value
+}
+
+/** 7 天短周期上浮系数：日单价相对月折算贵 30% */
+const SEVEN_DAY_PRICE_FACTOR = 1.3
+
+/**
+ * 由月单价换算所选时长原价。
+ * 7 天 = 月价 × (7/30) × 1.3；其它天数仍为月价 × 天数/30。
+ */
+export function durationAmountFromMonthly(monthlyPrice: number, day = 30, precision = 6) {
+  const amount = currency(monthlyPrice, { precision }).multiply(day).divide(30)
+  return day === 7 ? amount.multiply(SEVEN_DAY_PRICE_FACTOR).value : amount.value
+}
+
+/**
+ * 将「购买月数」换成展示天数。
+ * 7 表示 7 天短周期，不能按 7×30 算成 210 天。
+ */
+export function purchaseMonthsToDays(months: number) {
+  return months === 7 ? 7 : months * 30
+}
+
+/** 展示金额（两位小数）有差额时才视为有折扣，避免 7 天折算精度把原价/实付判成不相等 */
+export function hasVisiblePriceDiscount(original: number, actual: number) {
+  return currency(original).format() !== currency(actual).format()
+}
+
 export function formatTierData(list: Plan[]) {
   const MAX_STEP = 100
   return (list || []).reduce((acc, { minWindows, maxWindows }) => {

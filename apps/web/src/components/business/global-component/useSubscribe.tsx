@@ -321,7 +321,8 @@ export function useSubscribe() {
         },
       },
       data: {
-        onConfirm: async (params: { isAuto: boolean, payType: PayWay, giftType: RoxyGiftsType, orderNo: string, subscriptionMonths: number }) => {
+        defaultDays: options?.defaultDays,
+        onConfirm: async (params: { isAuto: boolean, payType: PayWay, giftType: RoxyGiftsType, orderNo: string, subscriptionDays: number }) => {
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
             ...params,
             orderType: OrderType.Renew,

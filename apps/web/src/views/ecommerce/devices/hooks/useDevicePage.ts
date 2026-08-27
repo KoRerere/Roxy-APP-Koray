@@ -14,6 +14,7 @@ import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { useProxyFormDrawer } from '/@/views/agent/hooks/useProxyFormDrawer'
 import { useProxyModuleCreate } from '/@/views/agent/hooks/useProxyModuleCreate'
 import { useProviderJump } from '/@/views/agent/shop/hooks/useProviderJump'
+import { usePendingOpenRoxyIpBuy } from '/@/views/agent/shop/hooks/useProxyDetectFailGuide'
 import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
 import { useDeviceColumns } from '../device-columns'
 import {
@@ -56,6 +57,9 @@ export function useDevicePage() {
   const { buyProxy, renewProxy } = useProxy()
   const { refreshEcommerceAccountListAfterDeviceChange } = useEcommerceAccountNavigation()
   const { isProviderJump, jumpToProvider } = useProviderJump()
+  usePendingOpenRoxyIpBuy(() => {
+    void buyProxy({ mode: 'device' })
+  })
   const { check } = usePermission()
   const advancedSearchOptions = getDeviceAdvancedSearch()
   const tableRef = useTemplateRef<any>('tableRef')

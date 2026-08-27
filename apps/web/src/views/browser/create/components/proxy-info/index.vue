@@ -5,8 +5,10 @@ import ChoosePanel from './choose-panel.vue'
 import ApiPanel from './api-panel.vue'
 import InputLabel from '/@/components/ry-form/input-label.vue'
 import RxSelectButton from '/@/components/rx-select-button'
+import RxButton from '/@/components/rx-button'
 import { useTableContext } from '../../hooks/useContext'
 import { usePurchaseOfficialProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
+import ProxyBuyBg from '/@/assets/images/browser/proxy-buy-bg.png'
 import type { ProxyInfoItem, ProxyInfoMode } from './types'
 
 defineOptions({ inheritAttrs: false })
@@ -165,17 +167,30 @@ async function openBuyProxy() {
   <div class="w-full flex items-start proxy-info">
     <InputLabel class="shrink-0 max-w-25 !min-w-25 text-right" :label="$t('代理 IP')" :tooltip="$t('代理是使用特定 IP 地址进行网络访问的方式，平台会获取您的 IP 地址来追踪您，强烈建议配置此项！')" />
     <div class="min-w-0 flex-1 flex flex-col gap-4">
-      <div class="flex flex-col items-start gap-4">
-        <span class="guide1 inline-flex rounded-2 overflow-hidden">
-          <AnimationBorder class="overflow-hidden select-none cursor-pointer" :border-radius="8" :gradient="['#3990F8', '#13DD8D']" :animation="false" :deg="94">
-            <div class="flex items-center gap-2 py-2 pa-3 btn" @click="openBuyProxy">
-              <SvgIcon name="base/rx_ic_cart" color="#3598ED" />
-              <div class="text-3.75 font-[DingTalk_JinBuTi] text">
-                {{ $t('购买纯净真人住宅 IP') }}
-              </div>
+      <div class="flex flex-col items-start gap-4 w-full">
+        <div class="guide1 buy-proxy-alert relative w-full min-h-12 pl-3.5 pr-3 py-2.5 rounded-2 flex items-center justify-between gap-4 overflow-hidden select-none">
+          <div class="absolute right-0 top-0 h-full w-[293px] overflow-hidden pointer-events-none">
+            <img :src="ProxyBuyBg" alt="" class="w-full h-full object-cover object-left-top">
+          </div>
+          <!-- 两行文案：标题+特惠徽章 / 适配说明，避免挤成一行后徽章被折到中间 -->
+          <div class="relative z-1 min-w-0 flex-1 flex flex-col justify-center font-[DingTalk_JinBuTi] text-[15px] leading-normal text-[#111213] dark:text-neutral-100 cursor-pointer" @click="openBuyProxy">
+            <div>
+              <span>{{ $t('纯净') }}</span>
+              <span class="text-[#11A3FD]">{{ $t('真人住宅 IP') }}</span>
+              <span class="badge-discount inline-flex items-center justify-center align-middle px-1.5 py-px mx-1 text-3 text-white leading-tight font-[DingTalk_JinBuTi]">
+                {{ $t('特惠') }}
+              </span>
             </div>
-          </AnimationBorder>
-        </span>
+            <div>{{ $t('原生适配 RoxyBrowser，即买即用') }}</div>
+          </div>
+          <RxButton
+            size="xs"
+            icon="base/rx_ic_cart"
+            :label="$t('立即购买')"
+            class="shrink-0"
+            @click.stop="openBuyProxy"
+          />
+        </div>
         <RxSelectButton v-model="mode" :options="modeOptions" size="lg" option-label="label" option-value="value" data-key="value" @change="onModeChange" />
       </div>
 
@@ -192,15 +207,16 @@ async function openBuyProxy() {
 </template>
 
 <style lang="scss" scoped>
-.btn {
-  background: var(--colors-background-bg-overlay);
+.buy-proxy-alert {
+  background:
+    linear-gradient(180deg, rgba(17, 163, 253, 0.2) 0%, rgba(17, 163, 253, 0.08) 100%),
+    var(--colors-background-bg-overlay, #fff);
+  border: 0.5px solid rgba(17, 163, 253, 0.2);
 }
 
-.text {
-  background: linear-gradient(94deg, #3990f8 -1.41%, #13dd8d 99.64%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.badge-discount {
+  background: linear-gradient(138.37deg, #ff8c3a 0%, #ffb73a 66.67%);
+  border-radius: 8px 8px 8px 0;
 }
 
 .panel {

@@ -1,6 +1,14 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) and all AI agents when working with code in this repository.
+
+## 语言规范 (Language Requirement)
+
+**所有 AI Agent 在回答问题、编写实施计划、生成文档、编写注释及与用户交互时，必须统一使用中文。**
+
+## 前端 CSS/CSS 框架规范 (CSS Requirement)
+
+**前端 Vue/HTML 页面及组件在编写样式时，应优先并尽量使用 UnoCSS 工具类类名，避免编写不必要的自定义 CSS/SCSS 样式块。**
 
 ## Project Overview
 

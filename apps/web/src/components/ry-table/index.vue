@@ -75,12 +75,22 @@ export interface Props {
   listCacheShouldRestore?: () => boolean
 }
 
+/** PrimeVue DataTable 上读取 VirtualScroller 的最小面 */
+interface DataTableVirtualScrollerHost {
+  getVirtualScrollerRef?: () => {
+    element?: HTMLElement
+    $el?: HTMLElement
+    scrollTo?: (options?: ScrollToOptions) => void
+  } | null
+}
+
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const listCacheStore = useListCacheStore()
 const [showContextMenu] = useContextMenu()
 const columnCss = useCssModule('ColumnCss_Module')
 const rootElRef = useTemplateRef('rootEl')
+const dataTableRef = useTemplateRef<DataTableVirtualScrollerHost>('dataTable')
 
 let _getConditionPromise: Promise<any> | undefined
 const _firstLoad = ref(false)
@@ -197,6 +207,54 @@ function _resolveListCacheContext() {
   }
 }
 
+/** 虚拟列表滚动容器；实例上没有时再查 DOM */
+function getScrollerEl(): HTMLElement | null {
+  const vs = dataTableRef.value?.getVirtualScrollerRef?.()
+  const fromVs = vs?.element ?? vs?.$el
+  if (fromVs instanceof HTMLElement)
+    return fromVs
+  return rootElRef.value?.querySelector<HTMLElement>('.p-virtualscroller') ?? null
+}
+
+/** 卸载时记下偏移；invalidate 行缓存不会清掉它 */
+function saveScrollOffset() {
+  const ctx = _resolveListCacheContext()
+  if (!ctx)
+    return
+  listCacheStore.setScrollOffset(ctx.namespace, ctx.workspaceId, ctx.scope, getScrollerEl()?.scrollTop ?? 0)
+}
+
+/** 点刷新时丢掉，避免刷新完仍跳回离开前的位置 */
+function clearScrollOffset() {
+  const ctx = _resolveListCacheContext()
+  if (!ctx)
+    return
+  listCacheStore.clearScrollOffset(ctx.namespace, ctx.workspaceId, ctx.scope)
+}
+
+/** spacer 未撑开时 scrollTo 会被钳成 0，等可滚动距离够了再套 */
+async function restoreScrollOffset() {
+  const ctx = _resolveListCacheContext()
+  if (!ctx)
+    return
+  const offset = listCacheStore.peekScrollOffset(ctx.namespace, ctx.workspaceId, ctx.scope)
+  if (!offset)
+    return
+
+  for (let i = 0; i < 16; i++) {
+    await nextTick()
+    const el = getScrollerEl()
+    if (el && el.scrollHeight - el.clientHeight >= offset) {
+      dataTableRef.value?.getVirtualScrollerRef?.()?.scrollTo?.({ top: offset })
+      el.scrollTo({ top: offset })
+      if (el.scrollTop > 0) {
+        listCacheStore.clearScrollOffset(ctx.namespace, ctx.workspaceId, ctx.scope)
+        return
+      }
+    }
+  }
+}
+
 function _hydrateFromCache(entry: ListCacheEntry) {
   _outerParams.value = { ...entry.outerParams }
   paginatorConfig.first = entry.paginator.first
@@ -252,6 +310,18 @@ onBeforeMount(async () => {
     await _request()
   }
   _firstLoad.value = true
+})
+
+onMounted(() => {
+  void restoreScrollOffset()
+})
+
+watch(tableList, () => {
+  void restoreScrollOffset()
+})
+
+onBeforeUnmount(() => {
+  saveScrollOffset()
 })
 
 function fmtColumnProps(column: Record<string, any>) {
@@ -332,7 +402,8 @@ async function _request() {
   const data = response?.data ?? response
   paginatorConfig.totalRecords = data?.total ?? 0
   _dataList.value = data?.rows || []
-  if (props.listCacheKey && (response?.code === 0 || response?.code === undefined))
+  const requestSucceeded = response?.code === 0 || response?.code === undefined
+  if (props.listCacheKey && requestSucceeded)
     _writeListCache()
   if (props.clearSelectionOnRequest)
     _clearSelection()
@@ -413,8 +484,10 @@ function _updateDataList(list: any[]) {
 }
 
 async function _onRefresh(invalidateCache = false) {
-  if (invalidateCache && props.listCacheKey)
+  if (invalidateCache && props.listCacheKey) {
     _invalidateListCache()
+    clearScrollOffset()
+  }
   await props.beforeRefresh?.()
   await _request()
   await props.afterRefresh?.()
@@ -478,7 +551,7 @@ function initBodyrow(options: any) {
       </slot>
     </div>
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
-      <DataTable v-model:context-menu-selection="contextMenuSelected" v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :sort-order="_sorts.sortOrder"
+      <DataTable ref="dataTable" v-model:context-menu-selection="contextMenuSelected" v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :sort-order="_sorts.sortOrder"
                  :sort-field="_sorts.sortField" :pt="{
                    root: ColumnCss_Module.tableroot,
                    table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : 'pb-15'],

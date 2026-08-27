@@ -10,6 +10,8 @@ interface Props {
   status?: ProxyCheckStatus
   isLoading?: boolean
   badgeDesc?: string
+  /** 续费弹窗长续首享文案；列表日常行不传，避免促销标污染资源列表 */
+  offerLabel?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -68,6 +70,7 @@ const data = computed(() => {
     <div class="flex flex-col flex-1 gap-1">
       <div class="flex items-center gap-1.5" :style="{ color: data.color }">
         <span class="text-3 font-500">{{ data.title }}</span>
+        <span v-if="offerLabel" class="long-renew-offer">{{ offerLabel }}</span>
         <span v-if="badgeDesc" class="py-0.5 px-2 rounded-full direct">{{ badgeDesc }}</span>
       </div>
       <div class="flex items-center gap-1.5 tt-tertiary text-3">
@@ -91,5 +94,16 @@ const data = computed(() => {
   font-family: 'DingTalk JinBuTi';
   font-size: 12px;
   background: linear-gradient(90deg, #11ce46 0%, #31e163 100%);
+}
+
+.long-renew-offer {
+  background: linear-gradient(to left, #11cd69, #05b1d7);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'DingTalk JinBuTi';
+  font-size: 12px;
+  line-height: normal;
+  white-space: nowrap;
 }
 </style>

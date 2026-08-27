@@ -10,7 +10,7 @@ import { useConcurrentTaskTopBar } from '/@/components/concurrent-task-top-bar'
 import { format } from 'date-fns'
 import { $t } from '/@/locales'
 import { API } from '/@/api'
-import { ProxyCheckStatus, ProxyExpireStatus, ProxyType, WorkspaceType } from '/@/enums'
+import { BuyEntryType, ProxyCheckStatus, ProxyExpireStatus, ProxyType, WorkspaceType } from '/@/enums'
 import { concurrentControl, createDefaultObject, decryptAESGCM, deepClone, safeParseJSON, strConcat } from '/@/utils'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -23,7 +23,10 @@ import {
   resolveProxyDownloadRows,
 } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
 import { createProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
+import { isProxyDetectSystemError, resolveProxyDetectFailGuide } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
+import ProxyDetectFailAd from '/@/views/agent/shop/components/proxy-detect-fail-ad.vue'
 import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
+import { emitter } from '/@/utils/eventBus'
 import type { ProxyItem } from '/@/views/agent/shop/operation'
 import type { ProxyDetectionParams } from '#roxybrowser/utils/proxyDetection'
 import type { UserBuyProxySettlementCreateData } from '@roxy/backend-api'
@@ -38,6 +41,8 @@ export interface CheckResult {
   checkTime?: string
   timezone?: string
   proxyType?: ProxyType
+  /** IPC / 本地网络等系统异常，不触发失败引导 */
+  systemError?: boolean
 }
 
 interface ProxyCheckParams extends Partial<ProxyDetectionParams> {
@@ -55,8 +60,10 @@ export type ConcurrentProxyTestResults = Array<ConcurrentProxyValidResult | unde
 
 export interface BatchTestShowToastOptions {
   reCheck?: () => any | Promise<any>
-  /** 是否展示「联系技术支持」按钮；单条检测默认仅购买代理展示，批量检测默认展示 */
+  /** @deprecated 引导改由失败 IP 来源自动判断，保留以免旧调用方类型报错 */
   showSupport?: boolean
+  /** 有费用中心权限时打开当前场景购买；默认走官方购买弹窗 */
+  onBuy?: () => void
 }
 
 export type ConcurrentProxyTestNext = (results: ConcurrentProxyTestResults, cancelled: boolean) => void | Promise<void>
@@ -82,8 +89,10 @@ interface DownloadProxyParams {
 }
 
 export function useCheckProxy(): useCheckProxyResult {
+  const router = useRouter()
   const [showToast] = useResponseToast()
-
+  const { buyProxy } = useProxy()
+  const simpleLocale = useSimpleLocale()
   const concurrentTaskTopBar = useConcurrentTaskTopBar()
   const hostUnmounted = ref(false)
   const speedTestAbort = shallowRef<AbortController | null>(null)
@@ -143,6 +152,8 @@ export function useCheckProxy(): useCheckProxyResult {
     catch (error: any) {
       local.error = error
       local.checkStatus = ProxyCheckStatus.failure
+      // 代理连不上走 reject，不是 IPC 宕了；误标 systemError 会导致第三方失败永远不出广告
+      local.systemError = isProxyDetectSystemError(error)
       local.lastIp = ''
       local.lastCity = ''
       local.lastCountry = ''
@@ -157,53 +168,105 @@ export function useCheckProxy(): useCheckProxyResult {
   }
 
   function batchTestShowToast(__results: CheckResult | CheckResult[], options?: BatchTestShowToastOptions) {
-    const results = Array.isArray(__results) ? __results : [__results]
+    const results = (Array.isArray(__results) ? __results : [__results]).filter(Boolean)
+    const guide = resolveProxyDetectFailGuide(results)
+    const toastLife = guide ? { life: 8000 } : undefined
+
     if (results.length === 1) {
       const checkRes = results[0]!
       const shopLabels = createProxyShopLabels(isCurrentEcommerceWorkspace())
       const errMsg = checkRes.proxyType === ProxyType.buy ? checkRes.error : shopLabels.testFailedCheckConfig
-      const showSupport = options?.showSupport ?? checkRes.proxyType === ProxyType.buy
       const [code, msg] = checkRes.checkStatus === ProxyCheckStatus.failure
-        ? [-1, genProxyTestToastDetail(errMsg, {
-            ...options,
-            showSupport,
-          })]
+        ? [-1, genProxyTestToastDetail(errMsg, { ...options, guide })]
         : [0, $t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp, timezone: checkRes.timezone })]
-      showToast(code, msg)
+      showToast(code, msg, toastLife)
     }
     else {
       const success = results.filter(item => item.checkStatus === ProxyCheckStatus.success)
       const error = results.filter(item => item.checkStatus === ProxyCheckStatus.failure)
       const summary = $t('{success} 条成功，{error} 条失败', { success: success.length, error: error.length })
-      showToast(0, genProxyTestToastDetail(summary, options))
+      // 全部失败时走错误 toast（红色图标 +「操作失败」）；只要有一条成功仍用成功态汇总
+      showToast(success.length === 0 ? -1 : 0, genProxyTestToastDetail(summary, { ...options, guide }), toastLife)
     }
   }
 
-  function genProxyTestToastDetail(msg: string, options?: BatchTestShowToastOptions) {
-    const { reCheck, showSupport = false } = options ?? {}
+  /** RoxyIP 失败：客服链接触在文案后；第三方失败：下方紧凑购买条（走 detail，避免 footer 被 PrimeVue 丢掉） */
+  function genProxyTestToastDetail(msg: string, options?: BatchTestShowToastOptions & { guide?: 'ad' | 'support' | null }) {
+    const { reCheck, onBuy, guide } = options ?? {}
+    const isAd = guide === 'ad'
+    const isSupport = guide === 'support'
+    // 主进程失败文案常自带句号，拼「，联系技术支持」前去掉，避免出现「。……，」
+    const displayMsg = guide === 'support' ? msg.replace(/[。.!！?？]+$/u, '') : msg
     return (
-      <div class="flex flex-col gap-2">
-        <div>{msg}</div>
-        <div class="flex gap-2 justify-end">
-          {reCheck && <RxButton text name="base/rx_ic_close" size="xxs" label={$t('重新检测')} onClick={reCheck}></RxButton>}
-          {showSupport && (
-            <RxButton
-              text
-              name="base/rx_ic_reload"
-              size="xxs"
-              label={$t('联系技术支持')}
-              onClick={showLiveChat}
-            >
-            </RxButton>
+      <div class="w-full flex flex-col gap-3">
+        <div class={`flex ${isSupport ? 'flex-col gap-2' : 'items-center'} ${isAd && simpleLocale.isZh ? 'whitespace-nowrap' : ''}`}>
+          <div class={`${isAd ? 'inline-flex' : ''}`}>
+            <span>{displayMsg}</span>
+            {isSupport && (
+              <>
+                <span>，</span>
+                <span
+                  class="cursor-pointer text-[#11A3FD] underline [text-decoration-skip-ink:none] [text-underline-position:from-font]"
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation()
+                    globalThis.showLiveChat?.()
+                  }}
+                >
+                  {$t('联系技术支持')}
+                </span>
+              </>
+            )}
+          </div>
+          {reCheck && (
+            <RxButton class={isAd ? 'ml-1' : 'ml-auto'} text size="xxs" label={$t('重新检测')} onClick={reCheck}></RxButton>
           )}
         </div>
+        {isAd && (
+          <ProxyDetectFailAd
+            onBuy={() => {
+              if (onBuy) {
+                onBuy()
+                return
+              }
+              void buyFromDetectFailAd()
+            }}
+          />
+        )}
       </div>
     )
   }
 
+  /**
+   * toast 广告「立即购买」：关弹窗后必须离开测速失败现场，否则用户以为买完仍停在原页。
+   * 已在列表页时靠 updateShopList 刷新并高亮；电商工作区落到设备列表。
+   */
+  async function buyFromDetectFailAd() {
+    try {
+      const orderInfo = await buyProxy({ entryType: BuyEntryType.Immediate })
+      const isEcommerce = isCurrentEcommerceWorkspace()
+      showToast(0, isEcommerce
+        ? $t('设备已购买成功，正在为您配置中，请稍后。若长时间未加载设备，请刷新页面或联系技术支持。')
+        : $t('代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。'))
+
+      emitter.emit('updateShopList', orderInfo?.orderNo)
+
+      const routeName = isEcommerce ? 'ecommerce-device-list' : 'agent-list'
+      await router.replace({
+        name: routeName,
+        query: routeName === 'agent-list'
+          ? { name: 'shop', orderNo: orderInfo?.orderNo }
+          : { orderNo: orderInfo?.orderNo },
+      })
+    }
+    catch {
+      // 用户关闭购买弹窗时 buyProxy reject，忽略即可
+    }
+  }
+
   async function concurrentProxyTest(run: ConcurrentProxyTestRun) {
-    if (!concurrentTaskTopBar)
+    if (!concurrentTaskTopBar) {
       return
+    }
     const { tasks, tasksCompleted, showConcurrentTaskTopBar = false } = run
 
     if (concurrentProxyTestBusy.value) {
@@ -224,19 +287,22 @@ export function useCheckProxy(): useCheckProxyResult {
       const results = await concurrentControl(tasks, 5, {
         signal: controller.signal,
         onProgress: ({ completed, total }) => {
-          if (!hostUnmounted.value && showConcurrentTaskTopBar)
+          if (!hostUnmounted.value && showConcurrentTaskTopBar) {
             concurrentTaskTopBar.updateProgress({ completed, total })
+          }
         },
       })
 
       await tasksCompleted?.(results, hostUnmounted.value)
     }
     finally {
-      if (showConcurrentTaskTopBar)
+      if (showConcurrentTaskTopBar) {
         concurrentTaskTopBar.close()
+      }
       concurrentProxyTestBusy.value = false
-      if (speedTestAbort.value === controller)
+      if (speedTestAbort.value === controller) {
         speedTestAbort.value = null
+      }
     }
   }
 

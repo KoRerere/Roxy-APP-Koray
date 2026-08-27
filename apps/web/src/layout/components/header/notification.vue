@@ -109,8 +109,9 @@ async function getMessageList(result?: UserGetNotifyListData) {
 }
 
 async function onRead(item: Message | Message[]) {
-  if (!Array.isArray(item) && (item.status === NotifyStatus.read || readSet.value.has(item.id!)))
+  if (!Array.isArray(item) && (item.status === NotifyStatus.read || readSet.value.has(item.id!))) {
     return
+  }
 
   const items = ([] as Message[]).concat(item)
   const ids = items.map(item => item.id!)
@@ -238,7 +239,7 @@ function onHtmlClick(e: MouseEvent) {
   handleRichHtmlLinkClick(e, {
     router,
     onNavigate(url) {
-      const targetWorkspaceId = Number(url.searchParams.get('workspaceId'))
+      const targetWorkspaceId = url.searchParams.get('workspaceId')
       if (targetWorkspaceId) {
         executeSomethingByTargetWorkspace(() => {
           navigateByRichHtmlUrl(router, url)

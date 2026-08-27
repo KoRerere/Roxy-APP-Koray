@@ -59,6 +59,7 @@ export const appUpdater = new class AppUpdater {
     appUpdaterLogger.transports.file.level = 'debug'
     appUpdaterLogger.transports.file.fileName = 'app-updater.log'
     this.#autoUpdater.logger = appUpdaterLogger
+    this.#autoUpdater.autoDownload = isPackaged
 
     setInterval(() => {
       this.init()
@@ -244,6 +245,8 @@ export const appUpdater = new class AppUpdater {
       this.#autoUpdater.disableDifferentialDownload = true
     }
 
+    this.#autoUpdater.autoDownload = isPackaged
+
     if (isDevelopment) {
       this.#autoUpdater.forceDevUpdateConfig = true
       this.#autoUpdater.updateConfigPath = join(import.meta.dirname, '../dev-app-update.yml')
@@ -308,6 +311,12 @@ export const appUpdater = new class AppUpdater {
     })
 
     this.#autoUpdater.on('update-available', (updateInfo) => {
+      if (!isPackaged) {
+        this.isInProgress = false
+        console.log(`Update available (skip download because not packaged):`, updateInfo)
+        return
+      }
+
       this.isInProgress = true
       console.log(`Update available`, updateInfo)
       // 检查一结束 download 就会开始；立刻标成 downloading，避免 checkForUpdates 仍返回上次的 downloaded

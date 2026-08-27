@@ -2,7 +2,7 @@
 import { h } from 'vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
-import FreedomActivity from '/@/views/campaign/june-eighteen/activity-info.vue'
+import FreedomActivity from '/@/views/campaign/new-user/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
@@ -18,7 +18,7 @@ import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 // import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { deepClone } from '/@/utils'
-import { discountCalculate, tierCalculate } from './util'
+import { applyPriceDiscount, discountCalculate, durationAmountFromMonthly, hasVisiblePriceDiscount, tierCalculate } from './util'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import type { Plan } from './type'
@@ -40,6 +40,12 @@ const dataList = ref<Plan[]>()
 const selectedPlan = ref()
 const selectedCount = ref()
 const selectedDuration = ref()
+
+/** 活动入口通过 query 指定默认时长，例如买三送一对应 90 天 */
+const defaultDurationDays = computed(() => {
+  const days = Number(route.query.durationDays)
+  return Number.isFinite(days) && days > 0 ? days : undefined
+})
 
 const upshiftCount = computed(() => {
   if (!rawList.value)
@@ -78,8 +84,8 @@ const finalDiscount = computed(() => {
 })
 
 const finalCalculate = computed(() => {
-  const originalAmount = currency(monthlySubscribePrice.value, { precision: 6 }).multiply(selectedDuration.value?.month ?? 1).value
-  const amount = currency(originalAmount, { precision: 6 }).multiply(finalDiscount.value).value
+  const originalAmount = durationAmountFromMonthly(monthlySubscribePrice.value, selectedDuration.value?.day ?? 30)
+  const amount = applyPriceDiscount(originalAmount, finalDiscount.value)
   const discountAmount = currency(originalAmount, { precision: 6 }).subtract(amount).value
   const amountPerMonth = currency(monthlySubscribePrice.value, { precision: 6 }).multiply(finalDiscount.value).value
   const discountAmountPerMonth = currency(monthlySubscribePrice.value, { precision: 6 }).subtract(amountPerMonth).value
@@ -111,7 +117,7 @@ const details = computed(() => {
   // 处理试用导致显示窗口数量小于 10 的情况
   const profileCount = currency(Math.max(selectedCount.value, 10), { precision: 0, symbol: '' })
   const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
-  const { amountPerMonth, discountAmountPerMonth, upshiftAmountPerMonth } = finalCalculate.value
+  const { originalAmount, amount, discountAmount, upshiftAmountPerMonth } = finalCalculate.value
 
   return [
     {
@@ -137,7 +143,7 @@ const details = computed(() => {
         },
         {
           label: $t('订阅时长'),
-          value: selectedDuration.value?.title,
+          slot: 'duration',
           visible: !isTrial.value,
         },
         {
@@ -173,14 +179,14 @@ const details = computed(() => {
       items: [
         {
           label: $t('套餐原价'),
-          value: currency(monthlySubscribePrice.value).format(),
-          visible: amountPerMonth !== monthlySubscribePrice.value,
+          value: currency(originalAmount).format(),
+          visible: hasVisiblePriceDiscount(originalAmount, amount),
           slot: 'oldprice',
         },
         {
           label: $t('实际价格'),
-          value: currency(amountPerMonth).format(),
-          diffValue: discountAmountPerMonth,
+          value: currency(amount).format(),
+          diffValue: hasVisiblePriceDiscount(originalAmount, amount) ? discountAmount : 0,
           extraValue: upshiftAmountPerMonth,
           slot: 'price',
         },
@@ -252,7 +258,7 @@ async function onSubscribe() {
               profile: selectedCount.value,
             },
             subLevel: selectedPlan.value.subLevel,
-            subscriptionMonths: selectedDuration.value.month,
+            subscriptionDays: selectedDuration.value.day,
             orderType: OrderType.Subscribe,
             purchaseType: PurchaseType.Profile,
             subOrderType: PaySubOrderType.Purchase,
@@ -293,7 +299,7 @@ async function trialSubscribe() {
             <div class="title">
               {{ $t('订阅时长') }}
             </div>
-            <Duration v-model="selectedDuration" :price="monthlySubscribePrice" />
+            <Duration v-model="selectedDuration" :price="monthlySubscribePrice" :default-days="defaultDurationDays" />
           </div>
           <div v-if="isTrial" class="flex items-center justify-between">
             <div class="title">
@@ -315,6 +321,16 @@ async function trialSubscribe() {
           <RxAlert class="!w-full whitespace-pre-wrap" type="info" :content="currentSubscribe" :closable="false" />
           <RxAlert v-if="showAlert" class="!w-full" type="warn" :content="billingLabels.purchaseLessThanCurrent" :closable="false" />
           <Detail :list="details">
+            <template #duration="{ item, classes }">
+              <div class="flex justify-between" :class="classes">
+                <div>{{ item.label }}</div>
+                <div class="flex items-baseline gap-1">
+                  <span>{{ selectedDuration?.title }}</span>
+                  <!-- 新人买赠天数与时长卡片同款青绿渐变 -->
+                  <span v-if="selectedDuration?.giftDays" class="duration-gift">{{ $t('{day} 天', { day: `+ ${selectedDuration.giftDays}` }) }}</span>
+                </div>
+              </div>
+            </template>
             <template #freedom="{ item }">
               <div class="flex justify-between items-center">
                 <div class="tt-secondary text-3.5 leading-5">
@@ -346,7 +362,7 @@ async function trialSubscribe() {
                   {{ item.label }}
                 </div>
                 <div class="details-oldprice">
-                  {{ $t('{value}/月', { value: item.value }) }}
+                  {{ item.value }}
                 </div>
               </div>
             </template>
@@ -359,10 +375,9 @@ async function trialSubscribe() {
                   <div>
                     <div class="details-price">
                       <span>{{ item.value }}</span>
-                      <span class="details-price-unit">{{ $t('/月') }}</span>
                     </div>
                     <div v-if="item.diffValue > 0" class="details-diffprice">
-                      {{ $t('节省 {value}/月', {
+                      {{ $t('立省 {value}', {
                         value:
                           currency(item.diffValue).format(),
                       }) }}
@@ -463,6 +478,17 @@ async function trialSubscribe() {
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.duration-gift {
+  background: linear-gradient(98deg, #0dc9bd 0.26%, #02cf4a 99.74%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'DingTalk JinBuTi', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .terms {

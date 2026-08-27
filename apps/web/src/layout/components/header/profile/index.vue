@@ -181,8 +181,9 @@ const items = computed(() => {
         const result = await globalThis.electronAPI.send('browser:getOpenedBrowser')
         if (result?.length > 0) {
           const isConfirm = await showLogoutConfirm()
-          if (!isConfirm)
+          if (!isConfirm) {
             return
+          }
         }
         showPageLoading()
         // 1) 先同步窗口数据并关闭浏览器(此时 token 仍有效, 主进程会显示同步进度遮罩),
@@ -222,8 +223,9 @@ function openRedeemCode() {
             async (redeemCode: string) => {
               const { code, msg } = await API.pay.userRedeemWindowCodeCreate({ code: redeemCode })
               showToast(code, msg)
-              if (code !== 0)
+              if (code !== 0) {
                 return
+              }
               planSuccess(true)
               hideModal()
             }
@@ -309,7 +311,7 @@ function hideMenu() {
     <RxSvgIcon class="cursor-pointer pointer-events-none" name="base/rx_ic_chevron_down" :size="12" />
   </div>
 
-  <TieredMenu ref="menu" :model="items" popup :pt="{ root: '!border-0.5 max-w-80 min-w-60' }" @hide="hidePreventMask" @show="showPreventMask">
+  <TieredMenu ref="menu" :model="items" popup :pt="{ root: '!border-0.5 !min-w-60 max-w-80' }" @hide="hidePreventMask" @show="showPreventMask">
     <template #start>
       <div class="flex flex-col gap-1 pa-1">
         <BasicInfo />

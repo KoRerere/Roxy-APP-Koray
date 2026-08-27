@@ -24,6 +24,11 @@ import ConsultantModal from '/@/views/tutorial/before-enter/consultant-modal.vue
 // ============ form ========================
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
+
+// ===================
+
+import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
+
 // import FormItem from '/@/views/lab/components/form/item.vue'
 // import { API } from '/@/api'
 // import { getInviteCode } from '/@/api/util'
@@ -454,8 +459,6 @@ const ipItems = [
 
 const ipValues = ref([192, 168, 134, 22])
 
-// ===================
-
 function _open122() {
   router.push({ name: 'before-enter' })
 }
@@ -463,7 +466,9 @@ function _open122() {
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
-    <RxButton severity="success" size="xxs" icon="base/rx_ic_renew2" :label="$t('续费')" />
+    <div>
+      <RxEmojiPicker />
+    </div>
 
     <RxButton :label="$t('before enter')" @click="_open122" />
     <div>

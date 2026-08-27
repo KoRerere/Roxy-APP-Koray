@@ -1,9 +1,11 @@
 import { getProxyFilterGroups } from '/@/views/agent/shop/components/proxy-filter/useProxyFilter'
 import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
+import { canUseLongRenewFirst, getLongRenewDealLabel } from '/@/views/agent/shop/utils/long-renew-first'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyBindStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
 import { usePermission } from '/@/hooks/usePermission'
+import { useUserStore } from '/@/stores/user'
 import { useDeviceColumns } from './device-columns'
 import type { SortOrderNumber } from '/@/utils'
 import type { LocationQuery } from 'vue-router'
@@ -144,6 +146,14 @@ export function getDeviceOperation(data: DeviceItem | DeviceItem[]) {
   } = getDeviceRowState(rows)
 
   const hidden = new Set(DEVICE_HIDDEN_OPERATION_NAMES)
+  // 勾选任意一条可享即可出标，不要求整批都能续费；折扣跟账户最低长续档走，避免写死 7 折
+  const longRenewOff = rows.some(canUseLongRenewFirst)
+    ? Number(useUserStore().userPayInfo.proxyRenewMinDiscount ?? 0) || 0
+    : 0
+  const longRenewDealLabel = getLongRenewDealLabel(longRenewOff)
+  const longRenewDiscountBadge = longRenewOff > 0
+    ? $t('{discount}% Off', { discount: longRenewOff })
+    : ''
 
   const operations = [
     {
@@ -189,6 +199,15 @@ export function getDeviceOperation(data: DeviceItem | DeviceItem[]) {
         name: 'G3',
         showLabel: true,
       },
+      ...(longRenewDealLabel
+        ? {
+            suffixIcon: 'base/fire',
+            suffixIconSize: 14,
+            suffixLabel: longRenewDealLabel,
+            suffixLabelClass: 'text-3 font-[DingTalk_JinBuTi] text-[#f53838] whitespace-nowrap',
+            discountBadge: longRenewDiscountBadge,
+          }
+        : {}),
     },
     // {
     //   name: 'upgrade',

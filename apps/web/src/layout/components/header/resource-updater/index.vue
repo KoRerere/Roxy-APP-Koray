@@ -340,7 +340,7 @@ globalThis.electronAPI.on('app:resource-update', (data) => {
 
 <style lang="scss" module="popup">
 .content {
-  width: 384px;
+  width: 400px;
 
   :global(.header) {
     display: flex;

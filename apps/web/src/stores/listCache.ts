@@ -52,6 +52,8 @@ export const useListCacheStore = defineStore('listCache', () => {
   const entries = ref(new Map<string, ListCacheEntry>())
   /** browser-list 项目详情 scope 的 LRU 顺序（末尾为最近访问） */
   const projectDetailLru = ref(new Map<string, string[]>())
+  /** 与行缓存解耦：invalidate 行数据时保留，供编辑返回后还原虚拟列表偏移 */
+  const scrollOffsets = ref(new Map<string, number>())
 
   function get(namespace: string, workspaceId: string, scope: Record<string, unknown>): ListCacheEntry | null {
     if (!workspaceId)
@@ -139,6 +141,39 @@ export const useListCacheStore = defineStore('listCache', () => {
   function clearAll() {
     entries.value = new Map()
     projectDetailLru.value = new Map()
+    scrollOffsets.value = new Map()
+  }
+
+  /** 离开列表时写入当前虚拟列表偏移；与 rows 是否仍有效无关 */
+  function setScrollOffset(namespace: string, workspaceId: string, scope: Record<string, unknown>, offset: number) {
+    if (!workspaceId)
+      return
+    scrollOffsets.value.set(buildCacheKey(namespace, workspaceId, scope), offset)
+  }
+
+  /** 只读快照；还原成功后再 clear，避免 spacer 未撑开时提前丢掉 */
+  function peekScrollOffset(namespace: string, workspaceId: string, scope: Record<string, unknown>): number | null {
+    if (!workspaceId)
+      return null
+    const key = buildCacheKey(namespace, workspaceId, scope)
+    if (!scrollOffsets.value.has(key))
+      return null
+    return scrollOffsets.value.get(key) ?? 0
+  }
+
+  /** 主动丢弃滚动快照（如表格刷新按钮），不碰行缓存 */
+  function clearScrollOffset(namespace: string, workspaceId: string, scope?: Record<string, unknown>) {
+    if (!workspaceId)
+      return
+    if (scope) {
+      scrollOffsets.value.delete(buildCacheKey(namespace, workspaceId, scope))
+      return
+    }
+    const prefix = `${namespace}:${workspaceId}:`
+    for (const key of [...scrollOffsets.value.keys()]) {
+      if (key.startsWith(prefix))
+        scrollOffsets.value.delete(key)
+    }
   }
 
   return {
@@ -148,6 +183,9 @@ export const useListCacheStore = defineStore('listCache', () => {
     hasValid,
     invalidate,
     clearAll,
+    setScrollOffset,
+    peekScrollOffset,
+    clearScrollOffset,
     buildScopeKey,
     isProjectDetailScope,
   }

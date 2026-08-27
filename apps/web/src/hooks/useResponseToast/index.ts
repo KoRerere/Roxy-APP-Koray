@@ -4,6 +4,8 @@ import type { VNode } from 'vue'
 
 export interface RxToastMessageOptions extends ToastMessageOptions {
   onClick?: () => void
+  /** 紧贴检测结果下方的全宽区域（广告 / 客服引导） */
+  footer?: VNode
 }
 
 // import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'

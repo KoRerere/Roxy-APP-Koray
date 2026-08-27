@@ -46,7 +46,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const permissionStore = usePermissionStore()
   const { check } = usePermission()
   const [_, onlyErrorToast] = useResponseToast()
-
   const currentWorkspace = ref<Workspace>()
   const workspaceList = ref<Workspace[]>([])
   const sharedWorkspaceList = ref<SharedWorkspace>()
@@ -87,8 +86,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   function syncElectronWorkspaceId(workspaceId: number, workspaceType?: number) {
-    if (isMainWindow)
+    if (isMainWindow) {
       globalThis.electronAPI.send('user:setWorkspaceId', workspaceId, workspaceType)
+    }
   }
 
   function runPostWorkspaceEntryEffects(workspace: Workspace) {
@@ -104,12 +104,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
       if (workspace.role === Role.OWNER) {
         if (globalThis.isElectron) {
-          if (getUserStore().userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false)
+          if (getUserStore().userInfo.onboardingTaskStatus?.firstRegisterGuideStatus === false) {
             emitter.emit('showUserGuideDialog')
+          }
         }
         else {
-          if (getUserStore().userInfo.onboardingTaskStatus?.firstWebRegisterGuideStatus === false)
+          if (getUserStore().userInfo.onboardingTaskStatus?.firstWebRegisterGuideStatus === false) {
             emitter.emit('showUserGuideDialog')
+          }
         }
       }
     }, 1200)
@@ -251,16 +253,18 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     })
     const { code, data, msg } = await API.team.userGetTeamPermissionsList({ workspaceId: workspaceId.toString() })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
     endGetPermission({
       permissionCount: data.rows.length,
       code,
     })
 
     // 切换前预拉目标空间权限时 currentWorkspace 仍是旧值，需允许写入
-    if (!options?.pendingSwitch && workspaceId !== currentWorkspace.value?.id)
+    if (!options?.pendingSwitch && workspaceId !== currentWorkspace.value?.id) {
       return
+    }
 
     permissionStore.setPermissions(data.rows)
   }
@@ -284,16 +288,19 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
 
         workspaceEntrySilent.value = options?.silent ?? false
-        if (!workspaceEntrySilent.value)
+        if (!workspaceEntrySilent.value) {
           isMainWindow && showPageLoading()
+        }
 
-        if (!workspaceList.value.length || options?.force)
+        if (!workspaceList.value.length || options?.force) {
           await fetchWorkspaceList()
+        }
 
         const targetWorkspace = workspaceList.value.find(item => item.id === workspaceId)
         const nextWorkspace = targetWorkspace || defaultWorkspace.value
-        if (!nextWorkspace?.id)
+        if (!nextWorkspace?.id) {
           return
+        }
 
         await getPermissionByWorkspace(nextWorkspace.id, { pendingSwitch: true })
         currentWorkspace.value = nextWorkspace
@@ -347,8 +354,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     isMainWindow && showPageLoading()
 
     const targetId = workspaceId ?? currentWorkspace.value?.id
-    if (!targetId)
+    if (!targetId) {
       return
+    }
 
     if (!currentWorkspace.value?.id) {
       await setCurrentWorkspace(targetId)
@@ -384,8 +392,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
    * 切换到默认空间
    */
   function switchDefaultWorkspace() {
-    if (defaultWorkspace.value?.id)
+    if (defaultWorkspace.value?.id) {
       setCurrentWorkspace(defaultWorkspace.value?.id)
+    }
   }
 
   /**
@@ -393,8 +402,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
    * 模式切换后权限集可能变化，需在更新本地 type 前重拉，避免路由跳转时仍用旧权限
    */
   async function switchWorkspaceType(targetType: WorkspaceType) {
-    if (!currentWorkspace.value || currentWorkspace.value.workspaceType === targetType)
+    if (!currentWorkspace.value || currentWorkspace.value.workspaceType === targetType) {
       return
+    }
 
     const workspaceId = currentWorkspace.value.id
     const previousType = currentWorkspace.value.workspaceType
@@ -404,8 +414,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       workspaceType: targetType,
     })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
 
     // 后端按新模式返回权限；先刷新再改 type，保证 watch 跳路由时权限已就绪
     await getPermissionByWorkspace(workspaceId!)
