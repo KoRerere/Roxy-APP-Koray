@@ -33,7 +33,7 @@ import type {
   ToolUseBlock,
 } from '../core/interfaces.ts'
 import { assistantItemsToContent, assistantItemsToMessage } from '../transcript/items.ts'
-import { zodToJsonSchema } from '../tools/schema.ts'
+import { jsonSchemaToZod, zodToJsonSchema } from '../tools/schema.ts'
 import type { ZodType } from 'zod'
 
 const PROVIDER_ID = 'openai-responses'
@@ -366,9 +366,34 @@ function responseError(response: Response): Error {
   return new Error(`OpenAIResponsesProvider: ${code}${response.error?.message ?? 'response failed'}`)
 }
 
+function responseDiagnostics(response: Response): string {
+  let textLength = 0
+  for (const item of response.output) {
+    if (item.type !== 'message') {
+      continue
+    }
+    for (const part of item.content) {
+      if (part.type === 'output_text') {
+        textLength += part.text.length
+      } else if (part.type === 'refusal') {
+        textLength += part.refusal.length
+      }
+    }
+  }
+
+  return [
+    `status=${response.status}`,
+    `outputTokens=${response.usage?.output_tokens ?? 'unknown'}`,
+    `reasoningTokens=${response.usage?.output_tokens_details?.reasoning_tokens ?? 'unknown'}`,
+    `textLength=${textLength}`,
+  ].join(', ')
+}
+
 function incompleteError(response: Response): Error {
   const reason = response.incomplete_details?.reason ?? 'unknown'
-  return new Error(`OpenAIResponsesProvider: incomplete response returned, reason: ${reason}`)
+  return new Error(
+    `OpenAIResponsesProvider: incomplete response returned, reason: ${reason} (${responseDiagnostics(response)})`,
+  )
 }
 
 function mapStopReason(response: Response, blocks: ContentBlock[]): StopReason {
@@ -692,6 +717,7 @@ export class OpenAIResponsesProvider implements IModelProvider {
         input: this.mapMessages(messages),
         max_output_tokens: STRUCTURED_OUTPUT_MAX_TOKENS,
         store: false,
+        ...(this.reasoning ? { reasoning: this.reasoning } : {}),
       }
 
       if (method === 'functionCalling') {
@@ -770,24 +796,44 @@ export class OpenAIResponsesProvider implements IModelProvider {
    * JSON Schema round-trip can change object keywords such as
    * `additionalProperties` into provider-invalid values.
    */
-  withJsonSchemaOutput(schema: JsonSchema, options: { name?: string } = {}): StructuredOutputFn<unknown> {
+  withJsonSchemaOutput(
+    schema: JsonSchema,
+    options: {
+      name?: string
+      method?: 'jsonMode' | 'jsonSchema'
+      temperature?: number
+      maxTokens?: number
+    } = {},
+  ): StructuredOutputFn<unknown> {
     const name = options.name ?? 'extract'
+    const method = options.method ?? 'jsonSchema'
+    const validator = jsonSchemaToZod(schema)
 
     return (async (input: string | Message[], signal?: AbortSignal) => {
       const messages: Message[] = typeof input === 'string' ? [{ role: 'user', content: input }] : input
       const request: ResponseCreateParamsNonStreaming = {
         model: this.model,
         input: this.mapMessages(messages),
-        max_output_tokens: STRUCTURED_OUTPUT_MAX_TOKENS,
+        max_output_tokens: options.maxTokens ?? STRUCTURED_OUTPUT_MAX_TOKENS,
         store: false,
-        text: {
+        ...(this.reasoning ? { reasoning: this.reasoning } : {}),
+      }
+
+      if (method === 'jsonMode') {
+        request.instructions = `Return one valid json object matching this JSON Schema:\n${JSON.stringify(schema)}`
+        request.text = { format: { type: 'json_object' } }
+      } else {
+        request.text = {
           format: {
             type: 'json_schema',
             name,
             schema,
             strict: true,
           },
-        },
+        }
+      }
+      if (options.temperature !== undefined) {
+        request.temperature = options.temperature
       }
 
       this.logRequest('structured', request as unknown as Record<string, unknown>)
@@ -801,6 +847,9 @@ export class OpenAIResponsesProvider implements IModelProvider {
       if (response.status === 'failed') {
         throw responseError(response)
       }
+      if (response.status === 'incomplete') {
+        throw incompleteError(response)
+      }
 
       const raw = responseMessage(response, this.id)
       const content = (raw.content as ContentBlock[])
@@ -808,13 +857,25 @@ export class OpenAIResponsesProvider implements IModelProvider {
         .map((block) => block.text)
         .join('')
       if (!content) {
-        throw new Error('OpenAIResponsesProvider.withJsonSchemaOutput: empty output text')
+        throw new Error(
+          `OpenAIResponsesProvider.withJsonSchemaOutput: empty output text (${responseDiagnostics(response)})`,
+        )
       }
+      let value: unknown
       try {
-        return JSON.parse(content) as unknown
+        value = JSON.parse(content) as unknown
       } catch {
-        throw new Error(`OpenAIResponsesProvider.withJsonSchemaOutput: invalid JSON: ${content}`)
+        throw new Error(
+          `OpenAIResponsesProvider.withJsonSchemaOutput: invalid JSON (${responseDiagnostics(response)}): ${content}`,
+        )
       }
+      const parsed = validator.safeParse(value)
+      if (!parsed.success) {
+        throw new Error(
+          `OpenAIResponsesProvider.withJsonSchemaOutput: output does not match JSON Schema: ${parsed.error.message}`,
+        )
+      }
+      return parsed.data
     }) as StructuredOutputFn<unknown>
   }
 }

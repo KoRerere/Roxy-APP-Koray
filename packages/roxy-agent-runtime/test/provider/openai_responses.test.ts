@@ -841,6 +841,117 @@ describe('OpenAIResponsesProvider API', () => {
     })
   })
 
+  it('uses JSON mode and validates raw JSON Schema output', async () => {
+    // Regression: Sandbox json() sent native json_schema output to a model path
+    // that returned plain text, and accepted structured output without validation.
+    // Fixed by: using Responses JSON mode and validating the parsed value locally.
+    const client = makeClient(() =>
+      makeResponse([
+        {
+          type: 'message',
+          id: 'msg_1',
+          role: 'assistant',
+          status: 'completed',
+          content: [{ type: 'output_text', text: '{"price":12}', annotations: [], logprobs: [] }],
+        },
+      ]),
+    )
+    const provider = new OpenAIResponsesProvider({
+      apiKey: 'key',
+      model: 'm',
+      reasoning: { effort: 'none' },
+      _client: client,
+    })
+    const schema = { type: 'object', properties: { price: { type: 'number' } }, required: ['price'] }
+
+    await expect(
+      provider.withJsonSchemaOutput(schema, {
+        name: 'json',
+        method: 'jsonMode',
+        temperature: 0.2,
+        maxTokens: 77,
+      })('return json'),
+    ).resolves.toEqual({ price: 12 })
+
+    const body = client.responses.create.mock.calls[0]?.[0] as ResponseCreateParams
+    expect(body).toMatchObject({
+      instructions: expect.stringContaining(JSON.stringify(schema)),
+      max_output_tokens: 77,
+      reasoning: { effort: 'none' },
+      temperature: 0.2,
+    })
+    expect(body.text?.format).toEqual({ type: 'json_object' })
+  })
+
+  it('reports an incomplete Responses result before parsing partial JSON', async () => {
+    // Regression: a Responses response truncated at max_output_tokens was
+    // reported as invalid JSON, hiding the actual provider termination reason.
+    // Fixed by: handling the Responses incomplete status before extraction.
+    const client = makeClient(() =>
+      makeResponse(
+        [
+          {
+            type: 'message',
+            id: 'msg_1',
+            role: 'assistant',
+            status: 'incomplete',
+            content: [{ type: 'output_text', text: '{"items":[{"name":"partial"', annotations: [], logprobs: [] }],
+          },
+        ],
+        { status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } },
+      ),
+    )
+    const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
+
+    await expect(
+      provider.withJsonSchemaOutput({ type: 'object', properties: {} }, { method: 'jsonMode' })('return json'),
+    ).rejects.toThrow(
+      /incomplete response returned, reason: max_output_tokens.*status=incomplete.*outputTokens=7.*reasoningTokens=3.*textLength=27/,
+    )
+  })
+
+  it('reports Responses metadata when completed output is invalid JSON', async () => {
+    const client = makeClient(() =>
+      makeResponse([
+        {
+          type: 'message',
+          id: 'msg_1',
+          role: 'assistant',
+          status: 'completed',
+          content: [{ type: 'output_text', text: '{"items":[', annotations: [], logprobs: [] }],
+        },
+      ]),
+    )
+    const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
+
+    await expect(
+      provider.withJsonSchemaOutput({ type: 'object', properties: {} }, { method: 'jsonMode' })('return json'),
+    ).rejects.toThrow(/invalid JSON.*status=completed.*outputTokens=7.*reasoningTokens=3.*textLength=10/)
+  })
+
+  it('rejects JSON mode output that does not match the raw JSON Schema', async () => {
+    // Regression: valid JSON with the wrong shape was returned as a successful
+    // Sandbox json() result because only JSON.parse was performed.
+    // Fixed by: validating raw-schema output before returning it.
+    const client = makeClient(() =>
+      makeResponse([
+        {
+          type: 'message',
+          id: 'msg_1',
+          role: 'assistant',
+          status: 'completed',
+          content: [{ type: 'output_text', text: '{"price":"12"}', annotations: [], logprobs: [] }],
+        },
+      ]),
+    )
+    const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
+    const schema = { type: 'object', properties: { price: { type: 'number' } }, required: ['price'] }
+
+    await expect(provider.withJsonSchemaOutput(schema, { method: 'jsonMode' })('return json')).rejects.toThrow(
+      /does not match JSON Schema/,
+    )
+  })
+
   it('supports function calling and JSON mode structured output', async () => {
     // Regression: the provider exposed the shared StructuredOutputOptions but
     // initially covered only one Responses extraction strategy.

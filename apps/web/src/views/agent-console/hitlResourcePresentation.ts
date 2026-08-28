@@ -66,10 +66,18 @@ function readStringIds(value: unknown): string[] {
 
 function readWindowIds(action: HitlActionRequest): string[] {
   if (Array.isArray(action.args)) {
-    return readStringIds(action.args)
+    return uniqueStrings(action.args.flatMap((item) => {
+      if (isRecord(item)) {
+        return readStringIds(item.dirIds)
+      }
+      return typeof item === 'string' ? [item] : []
+    }))
   }
 
   const args = isRecord(action.args) ? action.args : {}
+  if (Array.isArray(args.scripts)) {
+    return uniqueStrings(args.scripts.flatMap(item => isRecord(item) ? readStringIds(item.dirIds) : []))
+  }
   return readStringIds(args.dirIds)
 }
 
@@ -79,8 +87,32 @@ function readResourceIds(action: HitlActionRequest): string[] {
 }
 
 function readScriptPath(action: HitlActionRequest): string {
+  if (Array.isArray(action.args)) {
+    return action.args
+      .map(item => isRecord(item) ? asString(item.scriptPath) : '')
+      .filter(Boolean)
+      .join(', ')
+  }
   const args = isRecord(action.args) ? action.args : {}
+  if (Array.isArray(args.scripts)) {
+    return args.scripts
+      .map(item => isRecord(item) ? asString(item.scriptPath) : '')
+      .filter(Boolean)
+      .join(', ')
+  }
   return asString(args.scriptPath)
+}
+
+function readScriptPaths(action: HitlActionRequest): string[] {
+  if (Array.isArray(action.args)) {
+    return uniqueStrings(action.args.flatMap(item => isRecord(item) ? [asString(item.scriptPath)] : []))
+  }
+  const args = isRecord(action.args) ? action.args : {}
+  if (Array.isArray(args.scripts)) {
+    return uniqueStrings(args.scripts.flatMap(item => isRecord(item) ? [asString(item.scriptPath)] : []))
+  }
+  const scriptPath = readScriptPath(action)
+  return scriptPath ? [scriptPath] : []
 }
 
 function pathBasename(value: string): string {
@@ -234,7 +266,7 @@ export async function resolveHitlActionTitles(
   const platformAccountIds = uniqueStrings(actions.flatMap(action =>
     originalToolName(action.name) === 'roxy_platform_account_delete' ? readResourceIds(action) : []))
   const scriptPaths = uniqueStrings(actions.flatMap(action =>
-    originalToolName(action.name) === 'roxy_script_run' ? [readScriptPath(action)] : []))
+    originalToolName(action.name) === 'roxy_script_run' ? readScriptPaths(action) : []))
 
   const [windowNames, proxyNames, platformAccountNames, scriptNameEntries] = await Promise.all([
     loadWindowNames(windowIds, options.workspaceName),
@@ -263,8 +295,8 @@ export async function resolveHitlActionTitles(
     }
     if (toolName === 'roxy_script_run') {
       const windows = displayNames(readWindowIds(action), windowNames)
-      const scriptPath = readScriptPath(action)
-      const scriptName = scriptNames.get(scriptPath) || scriptPath
+      const scriptPaths = readScriptPaths(action)
+      const scriptName = scriptPaths.map(scriptPath => scriptNames.get(scriptPath) || scriptPath).join(', ')
       if (windows && scriptName) {
         return $t('在窗口 {windows} 中运行脚本 {script}', { windows, script: scriptName })
       }

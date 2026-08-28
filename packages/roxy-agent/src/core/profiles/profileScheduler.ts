@@ -107,6 +107,9 @@ export function isWindowTargetTool(toolName: string): boolean {
 
 /** 从工具入参中抽取 dirId（兼容单个 dirId 与 dirIds 数组两种形状） */
 export function extractDirIds(input: unknown): string[] {
+  if (Array.isArray(input)) {
+    return input.flatMap(item => extractDirIds(item))
+  }
   if (!input || typeof input !== 'object') {
     return []
   }
@@ -122,6 +125,9 @@ export function extractDirIds(input: unknown): string[] {
         dirIds.push(value)
       }
     }
+  }
+  if (Array.isArray(record.scripts)) {
+    dirIds.push(...record.scripts.flatMap(item => extractDirIds(item)))
   }
   return dirIds
 }

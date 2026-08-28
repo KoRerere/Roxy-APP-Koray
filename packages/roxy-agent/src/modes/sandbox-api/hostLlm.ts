@@ -73,15 +73,21 @@ export function buildLlmTransport(runId: string): LlmTransport {
     async ask(req: AskRequest): Promise<unknown> {
       const { model, headers } = await getRuntimeModel({ turnId: runId })
       const provider = new OpenAIResponsesProvider({
-        model,
+        model: req.options?.model ?? model,
         apiKey: aiAgentToken,
         baseURL: aiAgentResponsesUrl,
         defaultHeaders: headers,
+        reasoning: { effort: 'none' },
       })
 
-      // 带 schema：通过 Responses API 的强制工具调用返回结构化 JSON。
+      // 带 schema：使用 Responses API 的 JSON mode，并在 provider 内本地校验 schema。
       if (req.schema) {
-        const extract = provider.withJsonSchemaOutput(req.schema, { name: 'json' })
+        const extract = provider.withJsonSchemaOutput(req.schema, {
+          name: 'json',
+          method: 'jsonMode',
+          ...(req.options?.temperature !== undefined ? { temperature: req.options.temperature } : {}),
+          ...(req.options?.maxTokens !== undefined ? { maxTokens: req.options.maxTokens } : {}),
+        })
         return await invokeWithTimeout(
           signal => extract(req.prompt, signal),
           req.options?.signal,

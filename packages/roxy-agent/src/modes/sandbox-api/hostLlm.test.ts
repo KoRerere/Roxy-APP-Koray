@@ -5,6 +5,13 @@ const getRuntimeModel = vi.fn()
 const providerInvoke = vi.fn()
 const providerWithStructuredOutput = vi.fn()
 const providerWithJsonSchemaOutput = vi.fn()
+const providerOptions: unknown[] = []
+
+function assertReasoningDisabled(options: unknown): void {
+  const value = options as { model?: unknown, reasoning?: unknown }
+  assert.equal(value.model, 'custom-model')
+  assert.deepEqual(value.reasoning, { effort: 'none' })
+}
 
 vi.mock('@/runtime/provider', () => ({ getRuntimeModel }))
 vi.mock('roxy-agent-runtime', async (importOriginal) => {
@@ -12,6 +19,10 @@ vi.mock('roxy-agent-runtime', async (importOriginal) => {
   return {
     ...actual,
     OpenAIResponsesProvider: class {
+      constructor(options: unknown) {
+        providerOptions.push(options)
+      }
+
       invoke = providerInvoke
       withStructuredOutput = providerWithStructuredOutput
       withJsonSchemaOutput = providerWithJsonSchemaOutput
@@ -24,6 +35,7 @@ beforeEach(() => {
   providerInvoke.mockReset()
   providerWithStructuredOutput.mockReset()
   providerWithJsonSchemaOutput.mockReset()
+  providerOptions.length = 0
   getRuntimeModel.mockResolvedValue({ model: 'deepseek-v4-flash', headers: {} })
 })
 
@@ -68,6 +80,7 @@ it('returns only visible text blocks for plain ask responses', async () => {
     maxTokens: 20,
     temperature: 0.2,
   })
+  assertReasoningDisabled(providerOptions[0])
 })
 
 it('rejects plain ask responses that contain thinking without text', async () => {
@@ -111,8 +124,15 @@ it('returns JSON-schema output through Responses structured output without tool 
   const result = await buildLlmTransport('run-json').ask({
     prompt: 'extract price',
     schema,
+    options: { temperature: 0.2, maxTokens: 77, model: 'custom-model' },
   })
   assert.deepEqual(result, { price: 12 })
   assert.deepEqual(providerWithJsonSchemaOutput.mock.calls[0][0], schema)
-  assert.equal(providerWithJsonSchemaOutput.mock.calls[0][1].name, 'json')
+  assert.deepEqual(providerWithJsonSchemaOutput.mock.calls[0][1], {
+    name: 'json',
+    method: 'jsonMode',
+    temperature: 0.2,
+    maxTokens: 77,
+  })
+  assertReasoningDisabled(providerOptions[0])
 })

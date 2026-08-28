@@ -1,17 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { formatBatchRunResults, formatRunFailure, formatRunLog, runScriptInputSchema } from './roxy_script_run'
+import { formatBatchRunGroups, formatBatchRunResults, formatRunFailure, formatRunLog, runScriptInputSchema } from './roxy_script_run'
 
 describe('roxy_script_run input schema', () => {
-  it('requires dirIds and rejects the removed single-window dirId field', () => {
+  it('accepts an array of independent script runs', () => {
     expect(runScriptInputSchema.safeParse({
       scriptPath: 'official:test',
       dirIds: ['dir-1', 'dir-2'],
-    }).success).toBe(true)
-
-    expect(runScriptInputSchema.safeParse({
-      scriptPath: 'official:test',
-      dirId: 'dir-1',
     }).success).toBe(false)
+
+    expect(runScriptInputSchema.safeParse({ scripts: [{
+      scriptPath: 'official:test',
+      dirIds: ['dir-1', 'dir-2'],
+    }, {
+      scriptPath: 'official:other',
+      dirIds: ['dir-3'],
+      params: { keyword: 'different' },
+    }] }).success).toBe(true)
   })
 })
 
@@ -76,5 +80,16 @@ describe('roxy_script_run batch formatting', () => {
     expect(result.indexOf('Window `dir-1`')).toBeLessThan(result.indexOf('Window `dir-2`'))
     expect(result).toContain('first result')
     expect(result).toContain('second result')
+  })
+
+  it('formats independent script groups in one result', () => {
+    const result = formatBatchRunGroups([
+      { scriptName: 'official:first', results: [{ dirId: 'dir-1', runId: 'run-1', status: 'success', content: 'first' }] },
+      { scriptName: 'official:second', results: [{ dirId: 'dir-2', runId: 'run-2', status: 'failed', content: 'second' }] },
+    ])
+
+    expect(result).toContain('Script `official:first`')
+    expect(result).toContain('Script `official:second`')
+    expect(result).toContain('- status: `partial_failure`')
   })
 })

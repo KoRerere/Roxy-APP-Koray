@@ -23,6 +23,13 @@ describe('extractDirIds', () => {
     assert.deepEqual(extractDirIds({ dirIds: ['a', '', 1] }), ['a'])
     assert.deepEqual(extractDirIds(undefined), [])
   })
+
+  it('reads dirIds from batched script run items', () => {
+    assert.deepEqual(extractDirIds({ scripts: [
+      { scriptPath: 'official:a', dirIds: ['a'] },
+      { scriptPath: 'official:b', dirIds: ['b', 'c'] },
+    ] }), ['a', 'b', 'c'])
+  })
 })
 
 describe('isWindowTargetTool', () => {
@@ -183,8 +190,7 @@ describe('profile scheduler plugin', () => {
       toolUseId: 'close-call',
       callIndex: 0,
     }
-    await expect(closeMiddleware.before({ dirId: 'profile-closed' }, ctx))
-      .resolves.toEqual({ dirId: 'profile-closed' })
+    await expect(closeMiddleware.before({ dirId: 'profile-closed' }, ctx)).resolves.toEqual({ dirId: 'profile-closed' })
     await closeMiddleware.after({ toolUseId: 'close-call', content: 'closed', isError: false }, ctx)
 
     expect(closed).toEqual(['profile-closed'])

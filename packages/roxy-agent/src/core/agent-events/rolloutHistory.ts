@@ -243,6 +243,18 @@ function parseToolArguments(value: unknown): unknown {
   }
 }
 
+function scriptInputRecords(input: unknown): Record<string, unknown>[] {
+  const parsed = parseToolArguments(input)
+  if (Array.isArray(parsed)) {
+    return parsed.map(asRecord).filter(record => Object.keys(record).length > 0)
+  }
+  const record = asRecord(parsed)
+  if (Array.isArray(record.scripts)) {
+    return record.scripts.map(asRecord).filter(item => Object.keys(item).length > 0)
+  }
+  return Object.keys(record).length > 0 ? [record] : []
+}
+
 function markdownValue(line: string, prefix: string): string | undefined {
   if (!line.startsWith(prefix)) {
     return undefined
@@ -270,10 +282,10 @@ function markdownFence(line: string): { marker: string, length: number } | undef
 }
 
 function scriptLogReferences(content: unknown, input: unknown): ScriptLogReference[] {
-  const inputRecord = asRecord(parseToolArguments(input))
-  const dirIds = Array.isArray(inputRecord.dirIds)
-    ? inputRecord.dirIds.filter((value): value is string => typeof value === 'string' && value.length > 0)
-    : []
+  const dirIds = scriptInputRecords(input).flatMap(record =>
+    Array.isArray(record.dirIds)
+      ? record.dirIds.filter((value): value is string => typeof value === 'string' && value.length > 0)
+      : [])
   if (typeof content !== 'string') {
     return dirIds.map(dirId => ({ dirId }))
   }
@@ -397,8 +409,10 @@ function scriptOutputEvents(
   input: unknown,
   content: unknown,
 ): AgentRunEvent[] {
-  const inputRecord = asRecord(parseToolArguments(input))
-  const scriptName = typeof inputRecord.scriptPath === 'string' ? inputRecord.scriptPath : undefined
+  const scriptNames = scriptInputRecords(input)
+    .map(record => typeof record.scriptPath === 'string' ? record.scriptPath : '')
+    .filter(Boolean)
+  const scriptName = scriptNames.length === 1 ? scriptNames[0] : scriptNames.length > 1 ? scriptNames.join(', ') : undefined
 
   return scriptLogReferences(content, input).flatMap((reference): AgentRunEvent[] => {
     const baseData = {
@@ -600,10 +614,17 @@ function assistantItemEvents(item: unknown, context: RolloutEventBuildContext): 
       context.toolNames.set(toolId, toolName)
       context.toolInputs.set(toolId, record.arguments)
     }
-    const toolInput = asRecord(parseToolArguments(record.arguments))
-    const target = toolName === 'roxy_script_run' && typeof toolInput.scriptPath === 'string'
-      ? toolInput.scriptPath
-      : undefined
+    const toolInput = parseToolArguments(record.arguments)
+    const scriptTargets = toolName === 'roxy_script_run'
+      ? scriptInputRecords(toolInput)
+          .map(item => typeof item.scriptPath === 'string' ? item.scriptPath : '')
+          .filter(Boolean)
+      : []
+    const target = scriptTargets.length === 1
+      ? scriptTargets[0]
+      : scriptTargets.length > 1
+        ? `${scriptTargets.length} scripts`
+        : undefined
     const events: AgentRunEvent[] = [
       {
         type: 'tool_started',

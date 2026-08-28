@@ -83,7 +83,7 @@ describe('runtime script tool registration', () => {
 
     const handler = registry.resolve('roxy_script_run')?.handler
     expect(handler).toBeDefined()
-    const result = await handler!({ scriptPath: 'official:test', dirIds: ['dir-2'] }, {
+    const result = await handler!({ scripts: [{ scriptPath: 'official:test', dirIds: ['dir-2'] }] }, {
       agentId: 'worker-1',
       traceId: 'trace-1',
       toolUseId: 'tool-1',
@@ -105,8 +105,7 @@ describe('runtime script tool registration', () => {
     })
 
     const result = await registry.resolve('roxy_script_run')!.handler({
-      scriptPath: 'official:test',
-      dirIds: ['dir-3'],
+      scripts: [{ scriptPath: 'official:test', dirIds: ['dir-3'] }],
     }, {
       agentId: 'worker-1',
       traceId: 'trace-1',

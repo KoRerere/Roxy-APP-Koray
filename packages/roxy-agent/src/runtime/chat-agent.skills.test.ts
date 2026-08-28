@@ -229,7 +229,7 @@ describe('runtime chat agent Skills wiring', () => {
     expect(definition?.hitl.needsApproval(writeStdin!.descriptor, { session_id: 1 })).toBe(false)
     expect(definition?.hitl.needsApproval(scriptDescribe!.descriptor, { scriptPath: 'official:demo' })).toBe(false)
     expect(
-      definition?.hitl.needsApproval(scriptRun!.descriptor, { scriptPath: 'official:demo', dirIds: ['dir-1'] }),
+      definition?.hitl.needsApproval(scriptRun!.descriptor, { scripts: [{ scriptPath: 'official:demo', dirIds: ['dir-1'] }] }),
     ).toBe(false)
 
     await instance.destroy()

@@ -23,7 +23,7 @@ import { startSandboxScriptRun } from '@/services/sandboxService'
 import { isAbsoluteLikePath, isHttpScriptUrl, resolveExecutableScriptSource } from './script_source'
 import { parseScriptTemplateReference, resolveScriptTemplate } from './script_template_source'
 
-export const runScriptInputSchema = z.strictObject({
+const runScriptItemSchema = z.strictObject({
   scriptPath: z.string()
     .refine(value => value.trim().length > 0, 'scriptPath must not be blank')
     .describe('Canonical official:<id> or user:<id> script template reference, official script slug, or absolute local script path'),
@@ -37,7 +37,15 @@ export const runScriptInputSchema = z.strictObject({
   params: z.unknown().optional().describe('Script Run Parameters'),
 })
 
-type RunScriptParam = z.infer<typeof runScriptInputSchema>
+/** 一次工具调用可提交多个脚本配置，每个配置可使用不同窗口和参数。 */
+export const runScriptInputSchema = z.strictObject({
+  scripts: z.array(runScriptItemSchema)
+    .min(1, 'scripts must contain at least one script run')
+    .describe('Independent script run specifications. All items run in parallel.'),
+})
+
+type RunScriptParam = z.infer<typeof runScriptItemSchema>
+type RunScriptInput = z.infer<typeof runScriptInputSchema>
 
 export interface ScriptRunResult {
   dirId: string
@@ -94,7 +102,8 @@ interface ScriptExecutionContext {
 }
 
 const roxy_script_run_DESCRIPTION = [
-  'Run an automation script.',
+  'Run one or more automation scripts in parallel.',
+  'Pass a scripts array of run specifications. Each item has its own scriptPath, dirIds, params, and debug values.',
   'The scriptPath can be an official:<id> or user:<id> script template reference from an @script token, an official script slug, or an absolute local file path.',
   'Canonical template references resolve only within their namespace. Bare numeric ids are invalid. Remote scripts are downloaded from the OSS URL returned by the backend and must pass SHA-512 verification before execution.',
   'The script runs in a session-scoped VM inside the persistent roxy-agent Sandbox Host process with Chromium or Firefox access over BROWSER_URL and BROWSER_TYPE.',
@@ -602,7 +611,7 @@ export function createRunScriptTool(options: RunScriptToolOptions = {}) {
     description: roxy_script_run_DESCRIPTION,
     schema: runScriptInputSchema,
     invoke: async (
-      input: RunScriptParam,
+      input: RunScriptInput,
       _config: any,
     ): Promise<string> => {
       const abortSignal: AbortSignal | undefined = _config?.signal
@@ -611,112 +620,144 @@ export function createRunScriptTool(options: RunScriptToolOptions = {}) {
         return runScriptMessage.aborted
       }
 
-      const runSpec = input
-      const requestedScriptPath = runSpec.scriptPath.trim()
-
-      const dirIds = [...new Set(runSpec.dirIds.map(dirId => dirId.trim()).filter(Boolean))]
-      if (dirIds.length === 0) {
-        return runScriptMessage.missingTarget(requestedScriptPath)
-      }
-
-      // 解析脚本入参 params：接受 object 或 JSON string。string 解析失败时返回错误，不静默吞掉。
-      let explicitOptions: unknown
-      if (runSpec.params === undefined || runSpec.params === null) {
-        explicitOptions = undefined
-      }
-      else if (typeof runSpec.params === 'string') {
-        const trimmed = runSpec.params.trim()
-        if (!trimmed) {
-          explicitOptions = undefined
-        }
-        else {
-          try {
-            explicitOptions = JSON.parse(trimmed)
-          }
-          catch (err: any) {
-            return runScriptMessage.optionsParseFailed(String(err?.message ?? err))
-          }
-        }
-      }
-      else {
-        explicitOptions = runSpec.params
-      }
-
-      let resolved: ResolvedScript
-      try {
-        resolved = await resolveProvidedScriptPath(runSpec.scriptPath, abortSignal)
-      }
-      catch (err: any) {
-        return runScriptMessage.resolveFailed(requestedScriptPath, String(err?.message ?? err))
-      }
-
-      const { scriptPath, assetSlug, scriptSha512 } = resolved
-      const displayName = resolved.displayName ?? requestedScriptPath
-      const resolvedOptions = mergeScriptParams(resolved.defaultParams, explicitOptions)
-      const missingRequiredParams = resolved.paramsSchema
-        ? findMissingRequiredScriptParams(resolved.paramsSchema, resolvedOptions)
-        : []
-      if (missingRequiredParams.length > 0) {
-        return runScriptMessage.missingRequiredParams(displayName, missingRequiredParams)
-      }
-
-      const profile = runSpec.debug ? 'debug' : (options.defaultProfile || 'release')
       const writer: ((event: AgentRunEvent) => void) | undefined = (_config as any)?.writer
       const taskMonitorTaskId: string | undefined = options.taskMonitorTaskId
         ?? (_config as any)?.configurable?.taskMonitorTaskId
         ?? (_config as any)?.taskMonitorTaskId
 
-      try {
-        const runInputs = dirIds.map(dirId => ({
-          runId: createRunId(),
-          dirId,
-        }))
-        const settled = await Promise.allSettled(runInputs.map(({ runId, dirId }) => runScriptInWindow({
-          runId,
-          dirId,
-          scriptPath,
-          scriptSha512,
-          assetSlug,
-          displayName,
-          profile,
-          resolvedOptions,
-          sourceKind: resolved.sourceKind,
-          editable: resolved.editable,
-          originalScriptPath: runSpec.scriptPath,
-          debug: Boolean(runSpec.debug),
-          abortSignal,
-          writer,
-          toolId: (_config as any)?.toolCall?.id,
-          taskMonitorTaskId,
-          executionId: options.executionId,
-          options,
-          fileCollector: options.fileCollector,
-        })))
-        const results = settled.map((entry, index): ScriptRunResult => {
-          if (entry.status === 'fulfilled') {
-            return entry.value
-          }
-          const message = entry.reason instanceof Error ? entry.reason.message : String(entry.reason)
-          const status: ScriptExecutionStatus = abortSignal?.aborted ? 'interrupted' : 'start_failed'
-          return {
-            dirId: runInputs[index]!.dirId,
-            runId: runInputs[index]!.runId,
-            status,
-            content: status === 'interrupted'
-              ? runScriptMessage.interrupted(displayName)
-              : runScriptMessage.startFailed(displayName, message),
-          }
-        })
+      const groups = await Promise.all(input.scripts.map(runSpec => runScriptSpec(runSpec, {
+        abortSignal,
+        profile: runSpec.debug ? 'debug' : (options.defaultProfile || 'release'),
+        writer,
+        toolId: (_config as any)?.toolCall?.id,
+        taskMonitorTaskId,
+        options,
+      })))
 
-        if (results.length === 1) {
-          return results[0]!.content
+      if (groups.length === 1) {
+        const group = groups[0]!
+        if (group.error) {
+          return group.error
         }
-        return formatBatchRunResults(displayName, results)
+        if (group.results.length === 1) {
+          return group.results[0]!.content
+        }
+        return formatBatchRunResults(group.scriptName, group.results)
       }
-      finally {
-        await resolved?.cleanup?.()
-      }
+      return formatBatchRunGroups(groups)
     },
+  }
+}
+
+export interface ScriptRunGroup {
+  scriptName: string
+  results: ScriptRunResult[]
+  error?: string
+}
+
+interface RunScriptSpecContext {
+  abortSignal?: AbortSignal
+  profile: 'debug' | 'release'
+  writer?: (event: AgentRunEvent) => void
+  toolId?: string
+  taskMonitorTaskId?: string
+  options: RunScriptToolOptions
+}
+
+function parseRunScriptOptions(value: unknown): { value?: unknown, error?: string } {
+  if (value === undefined || value === null) {
+    return {}
+  }
+  if (typeof value !== 'string') {
+    return { value }
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return {}
+  }
+  try {
+    return { value: JSON.parse(trimmed) }
+  }
+  catch (error: any) {
+    return { error: runScriptMessage.optionsParseFailed(String(error?.message ?? error)) }
+  }
+}
+
+async function runScriptSpec(runSpec: RunScriptParam, context: RunScriptSpecContext): Promise<ScriptRunGroup> {
+  const requestedScriptPath = runSpec.scriptPath.trim()
+  const dirIds = [...new Set(runSpec.dirIds.map(dirId => dirId.trim()).filter(Boolean))]
+  if (dirIds.length === 0) {
+    return { scriptName: requestedScriptPath || 'script', results: [], error: runScriptMessage.missingTarget(requestedScriptPath) }
+  }
+
+  const parsedOptions = parseRunScriptOptions(runSpec.params)
+  if (parsedOptions.error) {
+    return { scriptName: requestedScriptPath || 'script', results: [], error: parsedOptions.error }
+  }
+
+  let resolved: ResolvedScript
+  try {
+    resolved = await resolveProvidedScriptPath(runSpec.scriptPath, context.abortSignal)
+  }
+  catch (error: any) {
+    return {
+      scriptName: requestedScriptPath || 'script',
+      results: [],
+      error: runScriptMessage.resolveFailed(requestedScriptPath, String(error?.message ?? error)),
+    }
+  }
+
+  try {
+    const displayName = resolved.displayName ?? requestedScriptPath
+    const resolvedOptions = mergeScriptParams(resolved.defaultParams, parsedOptions.value)
+    const missingRequiredParams = resolved.paramsSchema
+      ? findMissingRequiredScriptParams(resolved.paramsSchema, resolvedOptions)
+      : []
+    if (missingRequiredParams.length > 0) {
+      return { scriptName: displayName, results: [], error: runScriptMessage.missingRequiredParams(displayName, missingRequiredParams) }
+    }
+
+    const runInputs = dirIds.map(dirId => ({ runId: createRunId(), dirId }))
+    const settled = await Promise.allSettled(runInputs.map(({ runId, dirId }) => runScriptInWindow({
+      runId,
+      dirId,
+      scriptPath: resolved.scriptPath,
+      scriptSha512: resolved.scriptSha512,
+      assetSlug: resolved.assetSlug,
+      displayName,
+      profile: context.profile,
+      resolvedOptions,
+      sourceKind: resolved.sourceKind,
+      editable: resolved.editable,
+      originalScriptPath: runSpec.scriptPath,
+      debug: Boolean(runSpec.debug),
+      abortSignal: context.abortSignal,
+      writer: context.writer,
+      toolId: context.toolId,
+      taskMonitorTaskId: context.taskMonitorTaskId,
+      executionId: context.options.executionId,
+      options: context.options,
+      fileCollector: context.options.fileCollector,
+    })))
+    const results = settled.map((entry, index): ScriptRunResult => {
+      if (entry.status === 'fulfilled') {
+        return entry.value
+      }
+      const message = entry.reason instanceof Error ? entry.reason.message : String(entry.reason)
+      const status: ScriptExecutionStatus = context.abortSignal?.aborted ? 'interrupted' : 'start_failed'
+      return {
+        dirId: runInputs[index]!.dirId,
+        runId: runInputs[index]!.runId,
+        status,
+        content: status === 'interrupted'
+          ? runScriptMessage.interrupted(displayName)
+          : runScriptMessage.startFailed(displayName, message),
+      }
+    })
+    return { scriptName: displayName, results }
+  }
+  finally {
+    await resolved.cleanup?.()
   }
 }
 
@@ -917,12 +958,51 @@ export function formatBatchRunResults(scriptName: string, results: ScriptRunResu
     `- failed: ${failedCount}`,
     `- interrupted: ${interruptedCount}`,
     '',
-    ...results.flatMap((result) => [
+    ...results.flatMap(result => [
       `### Window \`${result.dirId}\``,
       `- runId: \`${result.runId}\``,
       `- status: \`${result.status}\``,
       '',
       result.content,
+      '',
+    ]),
+  ].join('\n').trim()
+}
+
+export function formatBatchRunGroups(groups: ScriptRunGroup[]): string {
+  const successful = groups.flatMap(group => group.results).filter(result => result.status === 'success').length
+  const failed = groups.flatMap(group => group.results).filter(result => result.status !== 'success' && result.status !== 'interrupted').length
+  const interrupted = groups.flatMap(group => group.results).filter(result => result.status === 'interrupted').length
+  const errors = groups.filter(group => group.error).length
+  const total = groups.reduce((count, group) => count + Math.max(group.results.length, group.error ? 1 : 0), 0)
+  const overallStatus = interrupted > 0
+    ? 'interrupted'
+    : failed + errors === 0
+      ? 'success'
+      : successful > 0
+        ? 'partial_failure'
+        : 'failed'
+
+  return [
+    '## Batch script result',
+    '',
+    `- status: \`${overallStatus}\``,
+    `- total: ${total}`,
+    `- success: ${successful}`,
+    `- failed: ${failed + errors}`,
+    `- interrupted: ${interrupted}`,
+    '',
+    ...groups.flatMap(group => [
+      `### Script \`${group.scriptName}\``,
+      ...(group.error
+        ? [group.error]
+        : group.results.map(result => [
+            `### Window \`${result.dirId}\``,
+            `- runId: \`${result.runId}\``,
+            `- status: \`${result.status}\``,
+            '',
+            result.content,
+          ].join('\n'))),
       '',
     ]),
   ].join('\n').trim()

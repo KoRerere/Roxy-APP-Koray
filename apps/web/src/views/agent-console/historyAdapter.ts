@@ -881,10 +881,13 @@ function handleToolCall(context: ProcessBuildContext, data: Record<string, unkno
   }
 
   if (toolName === 'roxy_script_run') {
-    const input = asRecord(data.input ?? data.args)
-    const dirIds = Array.isArray(input.dirIds)
-      ? [...new Set(input.dirIds.map(asString).filter(Boolean))]
-      : []
+    const rawInput = data.input ?? data.args
+    const rawRecord = asRecord(rawInput)
+    const inputs = Array.isArray(rawRecord.scripts)
+      ? rawRecord.scripts.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object' && !Array.isArray(item)))
+      : [rawRecord]
+    const dirIds = [...new Set(inputs.flatMap(input =>
+      Array.isArray(input.dirIds) ? input.dirIds.map(asString).filter(Boolean) : []))]
     if (dirIds.length > 0) {
       for (const dirId of dirIds) {
         getOrCreateScriptLog(

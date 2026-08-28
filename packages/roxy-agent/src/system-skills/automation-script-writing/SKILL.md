@@ -122,7 +122,7 @@ When the user provides an official script slug or an existing local script path,
 2. Call `roxy_script_describe({ scriptPath })`.
 3. Use the returned `metadata` to understand intent and the returned `paramsSchema` to build `params`.
 4. Choose the correct browser `dirIds`; do not create a new browser unless the user asked for that.
-5. Call `roxy_script_run({ scriptPath, dirIds, params, debug })`. The same script and params run in every listed window and results are returned together.
+5. Call `roxy_script_run({ scripts: [{ scriptPath, dirIds, params, debug }] })`. Each array item is an independent run specification; items run in parallel, while one item's `dirIds` still runs the same script and params in every listed window.
 
 Both tools accept the same `scriptPath` forms:
 

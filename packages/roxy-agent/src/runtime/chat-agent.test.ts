@@ -392,8 +392,12 @@ describe('runtime chat agent tree configuration', () => {
   })
 
   it('uses the native batch script tool for the same work across windows', () => {
+    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('two or more browser profiles/windows')
+    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Only serialize or queue the work when the user explicitly asks')
+    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('run all profile executions in parallel by default')
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('call `roxy_script_run` once')
-    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('all authorized profile ids in `dirIds`')
+    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('{ scripts: [{ scriptPath, dirIds, params, debug }, ...] }')
+    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain("all authorized profile ids in that item's `dirIds`")
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('do not create one subagent or tool call per window')
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('genuinely independent workstreams')
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Continue with other independent work')

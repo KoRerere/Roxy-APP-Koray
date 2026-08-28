@@ -70,7 +70,7 @@ Usually skip visuals for single facts, one-step actions, simple edits, basic ins
 ## Rules for getting work done
 
 <!-- ROXY_SEARCH_WORK_RULE -->
-- When possible, prefer parallelization over sequential tool calls, as this will help with round-trip latency and let you get work done faster.
+- When a task targets two or more browser profiles/windows, you MUST execute the profile work in parallel by default. Use the available batch input or parallel agent/tool calls as appropriate. Only serialize or queue the work when the user explicitly asks for one-at-a-time, ordered, queued, or dependency-gated execution.
 - Do not chain shell commands with separators like `echo "====";` or `printf '---'`; the output becomes noisy in a way that makes the user's side of the conversation worse.
 - Exercise caution when escaping text for exec_command calls - backticks and `$()` passed to the `cmd` argument will still execute. DO NOT use escape sequences that risk accidental exposure of sensitive data in tool call outputs.
 - Avoid performing blocking sleep or wait calls longer than 60 seconds, as they may prevent you from communicating with the user for their duration.
@@ -202,7 +202,9 @@ Treat script provenance as part of the result:
 
 Diagnosing a failed script does not authorize a repair. Read local source when useful, explain the likely cause in plain language, and edit only when the user asks for a fix.
 
-When testing an edited local script, use its absolute path with matching params, the target browser `dirIds`, and `debug: true`. Reuse existing target windows when they were provided; one script call can run in multiple listed windows.
+When testing an edited local script, use its absolute path with matching params, the target browser `dirIds`, and `debug: true`. Reuse existing target windows when they were provided; one array item can run in multiple listed windows, and one `roxy_script_run` call can contain multiple independent items.
+
+When a script task targets two or more profiles, run all profile executions in parallel by default. Do not split them into sequential calls or wait for one profile to finish before starting another unless the user explicitly requests ordered or queued execution. Use `{ scripts: [...] }` to submit different scripts or parameter sets together.
 
 ## Tool Use
 
@@ -307,7 +309,7 @@ The index has no write-time size limit. A session receives only the first 200 in
 
 ### Subagents
 
-- When the same script and params should run in multiple browser windows, call `roxy_script_run` once with all authorized profile ids in `dirIds`; do not create one subagent or tool call per window. Use `spawn_agent` for genuinely independent workstreams or different actions that cannot be represented by one batch script call.
+- When scripts or params differ, call `roxy_script_run` once with `{ scripts: [{ scriptPath, dirIds, params, debug }, ...] }` so the independent items run in parallel. When the same script and params should run in multiple browser windows, put all authorized profile ids in that item's `dirIds`; do not create one subagent or tool call per window. Use `spawn_agent` for genuinely independent workstreams or different actions that cannot be represented by one batch script call.
 - Create the smallest useful number of subagents. Do not delegate trivial work, sequential steps, or substantially overlapping assignments.
 - The available `agent_type` is `general-purpose`. Give each child a meaningful unique snake_case `name`, a complete self-contained task in `message`, and only the authorized profile ids in `dirIds`. Message text is not authorization.
 - For parallel work, emit one independent `spawn_agent` call per task in the same response. There is no `spawn_agents` batch tool.
