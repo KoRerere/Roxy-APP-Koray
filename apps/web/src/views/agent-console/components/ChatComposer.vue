@@ -3,7 +3,6 @@ import type { ComponentPublicInstance } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import type { AgentAttachment, AgentFolderSelection, AgentHitlChoiceControl, AgentHitlChoiceOption, AgentHitlControlValue, AgentHitlRequest, AgentHitlSubmitPayload, AgentHitlTextControl, AgentPathSelection, AgentQueuedPrompt, AgentTodoProgress } from '../types'
 import type { AgentComposerItem } from './chat-composer/types'
-import AgentTodoPill from './AgentTodoPill.vue'
 import AgentTooltip from './AgentTooltip.vue'
 import ComposerToolbar from './ComposerToolbar.vue'
 import PromptQueue from './PromptQueue.vue'
@@ -69,6 +68,7 @@ const inputTokenValue = ref('')
 const inputUrlProtocol = ref<'http://' | 'https://'>('https://')
 const inputTokenComposing = ref(false)
 const inputTokenTextareaMultiline = ref(false)
+const inputTokenTextareaManuallyResized = ref(false)
 const missingPromptWarning = ref('')
 const inputTokenPopoverStyle = reactive({
   left: '0px',
@@ -87,7 +87,7 @@ interface ClarificationDisplayOption extends AgentHitlChoiceOption {
   description?: string
 }
 const INPUT_TOKEN_TEXTAREA_MIN_HEIGHT = 30
-const INPUT_TOKEN_TEXTAREA_MAX_HEIGHT = 52
+const INPUT_TOKEN_TEXTAREA_MULTILINE_HEIGHT = 52
 
 const {
   allMentionItemsSelected,
@@ -130,8 +130,11 @@ const {
 })
 
 const hasAttachmentUploading = computed(() => props.pendingAttachments.some(attachment => attachment.uploadStatus === 'uploading'))
+const areAttachmentsReady = computed(() => props.pendingAttachments.every((attachment) => {
+  return attachment.uploadStatus === 'uploaded'
+}))
 const composerCanSubmit = computed(() => {
-  return !hasAttachmentUploading.value && (canSubmit.value || props.pendingAttachments.length > 0)
+  return areAttachmentsReady.value && (canSubmit.value || props.pendingAttachments.length > 0)
 })
 const hasPromptContent = computed(() => Boolean(model.value.trim()))
 const hasComposerPayload = computed(() => hasPromptContent.value || props.pendingAttachments.length > 0)
@@ -141,6 +144,7 @@ let inputTokenPopoverFrame = 0
 let inputTokenActionsAnimationFrame = 0
 let inputTokenGlobalListenersBound = false
 let inputTokenPopoverResizeObserver: ResizeObserver | undefined
+let stopInputTokenTextareaResize: (() => void) | undefined
 let clarificationDescriptionFrame = 0
 let clarificationDescriptionResizeObserver: ResizeObserver | undefined
 const clarificationDescriptionEls = new Map<string, HTMLElement>()
@@ -188,6 +192,10 @@ function isImageAttachment(attachment: AgentAttachment) {
 function getAttachmentTypeLabel(attachment: AgentAttachment) {
   if (attachment.uploadStatus === 'uploading') {
     return $t('上传中')
+  }
+
+  if (attachment.uploadStatus === 'error') {
+    return $t('上传失败')
   }
 
   if (attachment.kind === 'folder') {
@@ -404,23 +412,121 @@ function scheduleInputTokenPopoverSync() {
 function syncInputTokenTextareaHeight() {
   if (inputEditor.kind !== 'textarea') {
     inputTokenTextareaMultiline.value = false
+    inputTokenTextareaManuallyResized.value = false
     return
   }
 
   const inputEl = inputTokenInputRef.value
-  if (!(inputEl instanceof HTMLTextAreaElement))
+  if (!(inputEl instanceof HTMLTextAreaElement)) 
     return
 
+  if (inputTokenTextareaManuallyResized.value) {
+    inputEl.style.overflowY = 'auto'
+    scheduleInputTokenPopoverSync()
+    return
+  }
+
+  if (inputTokenTextareaMultiline.value) {
+    inputEl.style.height = `${INPUT_TOKEN_TEXTAREA_MULTILINE_HEIGHT}px`
+    inputEl.style.overflowY = 'auto'
+    scheduleInputTokenPopoverSync()
+    return
+  }
+
+  const previousActionsRect = inputTokenActionsRef.value?.getBoundingClientRect()
   inputEl.style.height = `${INPUT_TOKEN_TEXTAREA_MIN_HEIGHT}px`
-  const nextHeight = Math.min(
-    Math.max(INPUT_TOKEN_TEXTAREA_MIN_HEIGHT, inputEl.scrollHeight),
-    INPUT_TOKEN_TEXTAREA_MAX_HEIGHT,
-  )
   const hasMultilineContent = inputEl.scrollHeight > INPUT_TOKEN_TEXTAREA_MIN_HEIGHT + 2
-  inputEl.style.height = `${nextHeight}px`
-  inputEl.style.overflowY = inputEl.scrollHeight > INPUT_TOKEN_TEXTAREA_MAX_HEIGHT ? 'auto' : 'hidden'
-  inputTokenTextareaMultiline.value ||= hasMultilineContent
+  if (hasMultilineContent) {
+    inputTokenTextareaMultiline.value = true
+    inputEl.style.height = `${INPUT_TOKEN_TEXTAREA_MULTILINE_HEIGHT}px`
+    inputEl.style.overflowY = 'auto'
+  }
+  else {
+    inputEl.style.overflowY = 'hidden'
+  }
   scheduleInputTokenPopoverSync()
+
+  if (hasMultilineContent && previousActionsRect) {
+    void nextTick(() => {
+      if (inputTokenTextareaMultiline.value !== hasMultilineContent) {
+        return
+      }
+
+      syncInputTokenPopoverPosition()
+      const nextActionsRect = inputTokenActionsRef.value?.getBoundingClientRect()
+      if (nextActionsRect) {
+        runInputTokenActionsMoveAnimation(previousActionsRect, nextActionsRect)
+      }
+    })
+  }
+}
+
+function handleInputTokenTextareaResizeStart(event: PointerEvent) {
+  if (event.button !== 0) {
+    return
+  }
+
+  const inputEl = inputTokenInputRef.value
+  if (!(inputEl instanceof HTMLTextAreaElement)) {
+    return
+  }
+
+  event.preventDefault()
+  stopInputTokenTextareaResize?.()
+  inputEl.focus()
+
+  if (inputTokenActionsAnimationFrame) {
+    window.cancelAnimationFrame(inputTokenActionsAnimationFrame)
+    inputTokenActionsAnimationFrame = 0
+  }
+  inputTokenActionsRef.value?.classList.remove('input-token-popover__actions--moving')
+
+  const pointerId = event.pointerId
+  const startY = event.clientY
+  const startHeight = inputEl.getBoundingClientRect().height
+  const maxHeight = Math.max(
+    INPUT_TOKEN_TEXTAREA_MIN_HEIGHT,
+    Math.min(window.innerHeight * 0.4, 320),
+  )
+  const previousUserSelect = document.body.style.userSelect
+
+  document.body.style.userSelect = 'none'
+
+  const handlePointerMove = (moveEvent: PointerEvent) => {
+    if (moveEvent.pointerId !== pointerId) {
+      return
+    }
+
+    const nextHeight = Math.min(
+      maxHeight,
+      Math.max(
+        INPUT_TOKEN_TEXTAREA_MIN_HEIGHT,
+        startHeight + startY - moveEvent.clientY,
+      ),
+    )
+    const nextMultiline = nextHeight > INPUT_TOKEN_TEXTAREA_MIN_HEIGHT
+
+    inputTokenTextareaManuallyResized.value = true
+    inputEl.style.height = `${nextHeight}px`
+    inputTokenTextareaMultiline.value = nextMultiline
+    scheduleInputTokenPopoverSync()
+  }
+  const stopResize = (endEvent?: PointerEvent) => {
+    if (endEvent && endEvent.pointerId !== pointerId) {
+      return
+    }
+
+    window.removeEventListener('pointermove', handlePointerMove)
+    window.removeEventListener('pointerup', stopResize)
+    window.removeEventListener('pointercancel', stopResize)
+    document.body.style.userSelect = previousUserSelect
+    stopInputTokenTextareaResize = undefined
+  }
+
+  stopInputTokenTextareaResize = stopResize
+  window.addEventListener('pointermove', handlePointerMove)
+  window.addEventListener('pointerup', stopResize)
+  window.addEventListener('pointercancel', stopResize)
 }
 
 function runInputTokenActionsMoveAnimation(previousRect: DOMRect, nextRect: DOMRect) {
@@ -970,6 +1076,8 @@ watch(
     if (!open) {
       inputTokenComposing.value = false
       inputTokenTextareaMultiline.value = false
+      inputTokenTextareaManuallyResized.value = false
+      stopInputTokenTextareaResize?.()
       unbindInputTokenGlobalListeners()
       inputTokenPopoverResizeObserver?.disconnect()
       inputTokenPopoverResizeObserver = undefined
@@ -977,6 +1085,8 @@ watch(
     }
 
     inputTokenComposing.value = false
+    inputTokenTextareaMultiline.value = inputEditor.kind === 'textarea'
+    inputTokenTextareaManuallyResized.value = false
     if (inputEditor.kind === 'url') {
       const parts = splitUrlValue(value)
       inputUrlProtocol.value = parts.protocol
@@ -1005,23 +1115,6 @@ watch(inputTokenValue, async () => {
   await nextTick()
   syncInputTokenTextareaHeight()
 })
-
-watch(inputTokenTextareaMultiline, async (isMultiline) => {
-  if (!inputEditor.open || inputEditor.kind !== 'textarea' || !isMultiline) {
-    return
-  }
-
-  const previousRect = inputTokenActionsRef.value?.getBoundingClientRect()
-  await nextTick()
-  syncInputTokenTextareaHeight()
-
-  const nextRect = inputTokenActionsRef.value?.getBoundingClientRect()
-  if (!previousRect || !nextRect) {
-    return
-  }
-
-  runInputTokenActionsMoveAnimation(previousRect, nextRect)
-}, { flush: 'pre' })
 
 watch(model, (value) => {
   if (!missingPromptWarning.value) {
@@ -1054,6 +1147,7 @@ onBeforeUnmount(() => {
     window.cancelAnimationFrame(inputTokenActionsAnimationFrame)
 
   unbindInputTokenGlobalListeners()
+  stopInputTokenTextareaResize?.()
   inputTokenPopoverResizeObserver?.disconnect()
   clarificationDescriptionResizeObserver?.disconnect()
   stopObservingUrlFavicons()
@@ -1089,10 +1183,6 @@ defineExpose({
     }"
     :style="composerStyle"
   >
-    <div v-if="todoProgress && !hitlRequest" class="thinking-strip">
-      <AgentTodoPill :progress="todoProgress" />
-    </div>
-
     <PromptQueue
       v-if="!isPromptField && !hitlRequest"
       :prompts="queuedPrompts ?? []"
@@ -1277,7 +1367,6 @@ defineExpose({
               class="attachment-chip__remove"
               type="button"
               :aria-label="$t('移除附件')"
-              :disabled="attachment.uploadStatus === 'uploading'"
               @click.stop="emit('removeAttachment', attachment.fileId)"
             >
               <SvgIcon name="roxy-agent/rx-ic-close2" size="14" color="currentColor" />
@@ -1308,14 +1397,16 @@ defineExpose({
         <AgentTooltip :content="$t('停止')" placement="top" :disabled="!showStopButton">
           <button
             class="send-button"
-            :class="{ thinking: showStopButton }"
+            :class="{ thinking: showStopButton, loading: hasAttachmentUploading }"
             type="button"
-            :aria-label="showStopButton ? $t('停止') : 'Send'"
+            :aria-busy="hasAttachmentUploading || undefined"
+            :aria-label="showStopButton ? $t('停止') : hasAttachmentUploading ? $t('上传中') : 'Send'"
             :disabled="!showStopButton && !composerCanSubmit"
             :title="showStopButton ? undefined : 'Send'"
             @click="handleSendButtonClick"
           >
             <span v-if="showStopButton" class="send-button__pause" aria-hidden="true" />
+            <span v-else-if="hasAttachmentUploading" class="send-button__spinner" aria-hidden="true" />
             <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M7.33332 12.6667V4.49221C6.95089 4.8352 6.52102 5.29457 6.10806 5.7702C5.68411 6.2585 5.29087 6.74911 5.00259 7.11851C4.8588 7.30277 4.7416 7.45619 4.6608 7.56317C4.62041 7.61665 4.58874 7.65864 4.5677 7.68687C4.55723 7.70092 4.54948 7.71173 4.54426 7.71877C4.54165 7.72229 4.53964 7.72491 4.5384 7.72658L4.5371 7.72854L4.49348 7.78127C4.26672 8.03171 3.88276 8.07497 3.60481 7.87046C3.30842 7.65219 3.24476 7.23462 3.46288 6.93817H3.46353V6.93752L3.46418 6.93687C3.46462 6.93627 3.46539 6.93527 3.46614 6.93427C3.46772 6.93213 3.46979 6.92901 3.47265 6.92515C3.47863 6.91708 3.48737 6.90518 3.49869 6.88999C3.52129 6.85967 3.5542 6.81558 3.59635 6.75979C3.68076 6.64802 3.80239 6.48884 3.95116 6.2982C4.24817 5.91761 4.65733 5.40815 5.10155 4.8965C5.54288 4.3882 6.03209 3.86267 6.48892 3.459C6.71652 3.2579 6.9516 3.07257 7.18098 2.93427C7.39214 2.80697 7.68257 2.66669 7.99999 2.66669C8.31741 2.66669 8.60786 2.80698 8.819 2.93427C9.04838 3.07257 9.28347 3.25791 9.51106 3.459C9.96789 3.86266 10.4571 4.38821 10.8984 4.8965C11.3427 5.40815 11.7518 5.91762 12.0488 6.2982C12.1976 6.48884 12.3192 6.64803 12.4036 6.75979C12.4458 6.81558 12.4787 6.85967 12.5013 6.88999C12.5126 6.90517 12.5214 6.91708 12.5273 6.92515C12.5302 6.92901 12.5323 6.93213 12.5338 6.93427C12.5346 6.93528 12.5354 6.93627 12.5358 6.93687L12.5364 6.93752V6.93817H12.5371C12.7552 7.23462 12.6916 7.65218 12.3952 7.87046C12.0987 8.08858 11.6812 8.02492 11.4629 7.72854L11.4616 7.72658C11.4603 7.72491 11.4583 7.7223 11.4557 7.71877C11.4505 7.71173 11.4428 7.70092 11.4323 7.68687C11.4112 7.65864 11.3796 7.61665 11.3392 7.56317C11.2584 7.45619 11.1412 7.30277 10.9974 7.11851C10.7091 6.74911 10.3159 6.2585 9.89192 5.7702C9.47896 5.29458 9.04909 4.8352 8.66666 4.49221V12.6667C8.66666 13.0349 8.36818 13.3334 7.99999 13.3334C7.6318 13.3334 7.33332 13.0349 7.33332 12.6667Z" fill="white" />
             </svg>
@@ -1377,6 +1468,11 @@ defineExpose({
             }"
           >
             <span v-if="inputEditor.kind === 'url'" class="input-token-popover__protocol">{{ inputUrlProtocol }}</span>
+            <div
+              v-if="inputEditor.kind === 'textarea'"
+              class="input-token-popover__resize-handle"
+              @pointerdown.stop="handleInputTokenTextareaResizeStart"
+            />
             <textarea
               v-if="inputEditor.kind === 'textarea'"
               ref="inputTokenInputRef"
@@ -2310,12 +2406,43 @@ defineExpose({
 }
 
 .input-token-popover__input--textarea {
+  position: relative;
   height: auto;
   align-items: stretch;
 }
 
 .input-token-popover__row--textarea-multiline .input-token-popover__input {
   width: 100%;
+}
+
+.input-token-popover__input--textarea textarea {
+  max-height: min(40vh, 320px);
+}
+
+.input-token-popover__resize-handle {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+
+  &::after {
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    width: 32px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--color-border-secondary);
+    content: '';
+    transform: translateX(-50%);
+  }
 }
 
 .input-token-popover__input input,
@@ -2480,5 +2607,20 @@ defineExpose({
   height: 12px;
   border-radius: 3px;
   background: currentColor;
+}
+
+.send-button__spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: attachment-upload-spin 0.8s linear infinite;
+}
+
+@keyframes attachment-upload-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

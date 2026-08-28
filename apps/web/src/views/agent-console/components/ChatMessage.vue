@@ -6,6 +6,8 @@ import AgentProcessTimeline from './AgentProcessTimeline.vue'
 import AgentStatusMessage from './AgentStatusMessage.vue'
 import MarkdownContent from './MarkdownContent.vue'
 
+type MessageAttachment = NonNullable<AgentMessage['attachments']>[number]
+
 const props = defineProps<{
   message: AgentMessage
 }>()
@@ -16,6 +18,12 @@ const emit = defineEmits<{
 
 const agentStore = useAgentStore()
 const copyContent = computed(() => getCopyContent())
+const previewAttachment = ref<MessageAttachment | null>(null)
+const previewDialogRef = ref<HTMLElement | null>(null)
+const previewScale = ref(1)
+const previewUrl = computed(() => previewAttachment.value ? getAttachmentPreview(previewAttachment.value) : '')
+const previewDownloadUrl = computed(() => previewAttachment.value ? getAttachmentDownloadUrl(previewAttachment.value) : '')
+const previewZoomLabel = computed(() => `${Math.round(previewScale.value * 100)}%`)
 
 function getCopyContent() {
   if (props.message.role === 'user')
@@ -102,7 +110,7 @@ function resolveAttachmentUrl(url?: string) {
   return url
 }
 
-function getAttachmentPreview(attachment: NonNullable<AgentMessage['attachments']>[number]) {
+function getAttachmentPreview(attachment: MessageAttachment) {
   return resolveAttachmentUrl(attachment.preview)
     || resolveAttachmentUrl(attachment.url)
     || resolveAttachmentUrl(attachment.localUrl)
@@ -110,11 +118,23 @@ function getAttachmentPreview(attachment: NonNullable<AgentMessage['attachments'
     || resolveAttachmentUrl(attachment.remoteUrl)
 }
 
+function getAttachmentDownloadUrl(attachment: MessageAttachment) {
+  if (!agentStore.serverUrl || !attachment.fileId) {
+    return getAttachmentPreview(attachment)
+  }
+
+  const params = new URLSearchParams({
+    download: '1',
+    filename: attachment.fileName,
+  })
+  return `${agentStore.serverUrl}/api/files/${encodeURIComponent(attachment.fileId)}?${params}`
+}
+
 function isImageFileName(fileName: string) {
   return /\.(?:png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(fileName)
 }
 
-function isImageAttachment(attachment: NonNullable<AgentMessage['attachments']>[number]) {
+function isImageAttachment(attachment: MessageAttachment) {
   return attachment.kind === 'file'
     && (attachment.mimeType.startsWith('image/') || isImageFileName(attachment.fileName))
     && Boolean(getAttachmentPreview(attachment))
@@ -125,9 +145,60 @@ function getFileExtension(fileName: string) {
   return ext && ext !== fileName ? ext.toUpperCase() : $t('文件')
 }
 
-function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachments']>[number]) {
+function getAttachmentTypeLabel(attachment: MessageAttachment) {
   return attachment.kind === 'folder' ? 'Folder' : getFileExtension(attachment.fileName)
 }
+
+function openImagePreview(attachment: MessageAttachment) {
+  if (!isImageAttachment(attachment)) {
+    return
+  }
+
+  previewAttachment.value = attachment
+  previewScale.value = 1
+  nextTick(() => previewDialogRef.value?.focus())
+}
+
+function closeImagePreview() {
+  previewAttachment.value = null
+  previewScale.value = 1
+}
+
+function updatePreviewScale(delta: number) {
+  previewScale.value = Math.min(3, Math.max(0.5, Number((previewScale.value + delta).toFixed(2))))
+}
+
+function resetPreviewScale() {
+  previewScale.value = 1
+}
+
+function handlePreviewWheel(event: WheelEvent) {
+  updatePreviewScale(event.deltaY < 0 ? 0.1 : -0.1)
+}
+
+function handlePreviewKeydown(event: KeyboardEvent) {
+  if (!previewAttachment.value) {
+    return
+  }
+
+  if (event.key === 'Escape') {
+    closeImagePreview()
+    return
+  }
+
+  if (event.key === '+' || event.key === '=') {
+    updatePreviewScale(0.25)
+  }
+  else if (event.key === '-') {
+    updatePreviewScale(-0.25)
+  }
+  else if (event.key === '0') {
+    resetPreviewScale()
+  }
+}
+
+onMounted(() => document.addEventListener('keydown', handlePreviewKeydown))
+onUnmounted(() => document.removeEventListener('keydown', handlePreviewKeydown))
 </script>
 
 <template>
@@ -145,6 +216,37 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
         :data="message.errorData"
       />
 
+      <div v-if="message.role === 'user' && message.attachments?.length" class="message-attachments">
+        <article v-for="attachment in message.attachments" :key="attachment.fileId" class="message-attachment">
+          <button
+            v-if="isImageAttachment(attachment)"
+            type="button"
+            class="message-attachment__card message-attachment__card--previewable"
+            :aria-label="$t('预览')"
+            @click="openImagePreview(attachment)"
+          >
+            <span class="message-attachment__preview">
+              <img :src="getAttachmentPreview(attachment)" :alt="attachment.fileName">
+            </span>
+            <span class="message-attachment__meta">
+              <span class="message-attachment__name">{{ attachment.fileName }}</span>
+              <span class="message-attachment__type">{{ getAttachmentTypeLabel(attachment) }}</span>
+            </span>
+          </button>
+
+          <div v-else class="message-attachment__card">
+            <span class="message-attachment__preview">
+              <SvgIcon v-if="attachment.kind === 'folder'" name="base/rx_ic_folder" size="20" color="var(--color-text-disabled)" />
+              <SvgIcon v-else name="base/rx_ic_doc_article" size="20" color="var(--color-text-disabled)" />
+            </span>
+            <span class="message-attachment__meta">
+              <span class="message-attachment__name">{{ attachment.fileName }}</span>
+              <span class="message-attachment__type">{{ getAttachmentTypeLabel(attachment) }}</span>
+            </span>
+          </div>
+        </article>
+      </div>
+
       <div
         v-if="message.content && !(message.role === 'assistant' && (message.status === 'thinking' || shouldShowErrorStatus() || hasFinalAnswer(message.process)))"
         class="message-bubble"
@@ -157,26 +259,57 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
         />
       </div>
 
-      <div v-if="message.role === 'user' && message.attachments?.length" class="message-attachments">
-        <article v-for="attachment in message.attachments" :key="attachment.fileId" class="message-attachment">
-          <div class="message-attachment__preview">
-            <img v-if="isImageAttachment(attachment)" :src="getAttachmentPreview(attachment)" :alt="attachment.fileName">
-            <SvgIcon v-else-if="attachment.kind === 'folder'" name="base/rx_ic_folder" size="20" color="var(--color-text-disabled)" />
-            <SvgIcon v-else name="base/rx_ic_doc_article" size="20" color="var(--color-text-disabled)" />
-          </div>
-          <div class="message-attachment__meta">
-            <span class="message-attachment__name">{{ attachment.fileName }}</span>
-            <span class="message-attachment__type">{{ getAttachmentTypeLabel(attachment) }}</span>
-          </div>
-        </article>
-      </div>
-
       <div v-if="shouldShowActions()" class="message-actions">
         <span>{{ message.createdAt }}</span>
         <AgentCopyControl v-if="shouldShowCopyButton()" :text="copyContent" />
       </div>
     </div>
   </article>
+
+  <Teleport to="body">
+    <div
+      v-if="previewAttachment"
+      ref="previewDialogRef"
+      class="attachment-image-preview"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="previewAttachment.fileName"
+      tabindex="-1"
+      @click="closeImagePreview"
+      @wheel.prevent="handlePreviewWheel"
+    >
+      <div class="attachment-image-preview__actions" @click.stop>
+        <a :href="previewDownloadUrl" :download="previewAttachment.fileName" :aria-label="$t('下载')">
+          <SvgIcon name="base/rx_ic_download" size="20" color="currentColor" />
+        </a>
+        <button type="button" :aria-label="$t('关闭')" @click="closeImagePreview">
+          <SvgIcon name="roxy-agent/rx-ic-close" size="20" color="currentColor" />
+        </button>
+      </div>
+
+      <div class="attachment-image-preview__stage">
+        <img
+          :src="previewUrl"
+          :alt="previewAttachment.fileName"
+          :style="{ transform: `scale(${previewScale})` }"
+          @click.stop
+          @dblclick.stop="resetPreviewScale"
+        >
+      </div>
+
+      <div class="attachment-image-preview__zoom" @click.stop>
+        <button type="button" aria-label="-" :disabled="previewScale <= 0.5" @click="updatePreviewScale(-0.25)">
+          <SvgIcon name="base/rx_ic_minus" size="18" color="currentColor" />
+        </button>
+        <button type="button" :aria-label="$t('重置')" class="attachment-image-preview__zoom-label" @click="resetPreviewScale">
+          {{ previewZoomLabel }}
+        </button>
+        <button type="button" aria-label="+" :disabled="previewScale >= 3" @click="updatePreviewScale(0.25)">
+          <span aria-hidden="true">+</span>
+        </button>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <style lang="scss" scoped>
@@ -268,6 +401,11 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
   display: flex;
   width: 160px;
   max-width: 100%;
+}
+
+.message-attachment__card {
+  display: flex;
+  width: 100%;
   align-items: center;
   gap: 8px;
   padding: 8px;
@@ -275,6 +413,29 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
   border-radius: 8px;
   background: var(--color-bg-primary);
   box-sizing: border-box;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.message-attachment__card {
+  appearance: none;
+}
+
+.message-attachment__card--previewable {
+  cursor: zoom-in;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--color-border-primary);
+    box-shadow: 0 4px 12px rgb(24 24 27 / 8%);
+    outline: none;
+    transform: translateY(-1px);
+  }
 }
 
 .message-attachment__preview {
@@ -318,5 +479,128 @@ function getAttachmentTypeLabel(attachment: NonNullable<AgentMessage['attachment
 
 .message-attachment__type {
   color: var(--color-text-disabled);
+}
+
+.attachment-image-preview {
+  position: fixed;
+  z-index: 2200;
+  inset: 0;
+  display: grid;
+  overflow: hidden;
+  padding: 72px 48px 88px;
+  background: rgb(9 9 11 / 82%);
+  backdrop-filter: blur(2px);
+  box-sizing: border-box;
+  place-items: center;
+}
+
+.attachment-image-preview__stage {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 24px 64px rgb(0 0 0 / 35%);
+    object-fit: contain;
+    transition: transform 0.18s ease;
+    user-select: none;
+  }
+}
+
+.attachment-image-preview__actions {
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  gap: 10px;
+
+  button,
+  a {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #18181b;
+    background: rgb(255 255 255 / 94%);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 16%);
+    cursor: pointer;
+    place-items: center;
+
+    &:hover,
+    &:focus-visible {
+      background: #fff;
+      outline: 2px solid rgb(255 255 255 / 50%);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.attachment-image-preview__zoom {
+  position: absolute;
+  z-index: 1;
+  bottom: 18px;
+  left: 50%;
+  display: flex;
+  height: 44px;
+  align-items: center;
+  padding: 4px;
+  border-radius: 24px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 22%);
+  transform: translateX(-50%);
+
+  button {
+    display: grid;
+    min-width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 18px;
+    color: #18181b;
+    background: transparent;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    place-items: center;
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: #f4f4f5;
+      outline: none;
+    }
+
+    &:disabled {
+      color: #a1a1aa;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.attachment-image-preview__zoom .attachment-image-preview__zoom-label {
+  min-width: 64px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .attachment-image-preview {
+    padding: 64px 16px 80px;
+  }
+
+  .message-attachment {
+    width: 176px;
+  }
 }
 </style>

@@ -5,6 +5,7 @@ import { copyText } from '/@/utils/basic'
 import AgentCopyNotification from './AgentCopyNotification.vue'
 import ChatMessage from './ChatMessage.vue'
 import { getSelectionMarkdown } from '../utils/markdownSelection'
+import { FrameTaskScheduler } from '../scrollFrameScheduler'
 
 const props = defineProps<{
   activeConversationId?: string
@@ -44,7 +45,6 @@ const innerRef = ref<HTMLElement | null>(null)
 const showScrollToBottom = ref(false)
 const selectionMenuRef = ref<HTMLElement | null>(null)
 const selectionMenu = ref<SelectionMenuState | null>(null)
-let scrollFrame = 0
 let selectionFrame = 0
 let shouldAutoScroll = true
 let userPausedAutoScroll = false
@@ -54,6 +54,7 @@ let programmaticScrollUntil = 0
 let touchStartY = 0
 let resizeObserver: ResizeObserver | null = null
 let historyLoadAnchor: HistoryLoadAnchor | null = null
+const scrollScheduler = new FrameTaskScheduler(window)
 
 const SCROLL_BOTTOM_THRESHOLD = 96
 const SCROLL_BOTTOM_RESUME_THRESHOLD = 4
@@ -249,16 +250,17 @@ function scrollToBottom(behavior: ScrollBehavior = 'auto') {
   })
 
   if (behavior === 'auto')
-    updateScrollButton()
+    showScrollToBottom.value = false
 }
 
 function scheduleScrollToBottom() {
-  cancelAnimationFrame(scrollFrame)
-  void nextTick(() => {
-    scrollFrame = requestAnimationFrame(() => {
+  scrollScheduler.schedule(() => {
+    if (shouldAutoScroll) {
       scrollToBottom()
-      scrollFrame = 0
-    })
+    }
+    else {
+      updateScrollButton()
+    }
   })
 }
 
@@ -315,7 +317,7 @@ function handleScroll() {
 function pauseAutoScroll() {
   userPausedAutoScroll = true
   shouldAutoScroll = false
-  cancelAnimationFrame(scrollFrame)
+  scrollScheduler.cancel()
 }
 
 function handleWheel(event: WheelEvent) {
@@ -349,12 +351,7 @@ function handleScrollToBottomClick() {
 }
 
 function handleListResize() {
-  if (shouldAutoScroll) {
-    scheduleScrollToBottom()
-    return
-  }
-
-  requestAnimationFrame(updateScrollButton)
+  scheduleScrollToBottom()
 }
 
 watch(() => props.activeConversationId, (conversationId) => {
@@ -397,15 +394,7 @@ watch(
 )
 
 watch(scrollSignature, () => {
-  const shouldFollow = shouldAutoScroll
-
-  if (shouldFollow) {
-    scrollToBottom()
-    scheduleScrollToBottom()
-  }
-  else {
-    requestAnimationFrame(updateScrollButton)
-  }
+  scheduleScrollToBottom()
 }, { flush: 'post' })
 
 onMounted(() => {
@@ -415,7 +404,6 @@ onMounted(() => {
 
   userPausedAutoScroll = false
   shouldAutoScroll = true
-  scrollToBottom()
   scheduleScrollToBottom()
 
   if (listRef.value) {
@@ -430,7 +418,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', handleDocumentPointerDown, true)
   document.removeEventListener('keydown', handleDocumentKeydown)
   window.removeEventListener('resize', handleViewportChange)
-  cancelAnimationFrame(scrollFrame)
+  scrollScheduler.cancel()
   cancelAnimationFrame(selectionFrame)
   resizeObserver?.disconnect()
 })

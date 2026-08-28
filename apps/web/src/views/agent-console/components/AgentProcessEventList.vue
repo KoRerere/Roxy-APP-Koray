@@ -35,7 +35,6 @@ const props = withDefaults(defineProps<{
 
 const MAX_VISIBLE_GROUP_ITEMS = 10
 const GROUP_SCROLL_MAX_HEIGHT = `${MAX_VISIBLE_GROUP_ITEMS * 20 + (MAX_VISIBLE_GROUP_ITEMS - 1) * 12}px`
-const THINKING_SCROLL_MAX_HEIGHT = `${MAX_VISIBLE_GROUP_ITEMS * 20}px`
 const expandedById = ref<Record<string, boolean>>({})
 const scrollStates = ref<Record<string, { canScrollUp: boolean, canScrollDown: boolean }>>({})
 const scrollElements = new Map<string, HTMLElement>()
@@ -46,10 +45,6 @@ let resizeObserver: ResizeObserver | undefined
 
 function itemKey(item: ProcessRenderItem): string {
   return item.type === 'group' || item.type === 'script_logs' ? item.id : item.event.id
-}
-
-function thinkingScrollId(event: AgentThinkingProcessEvent): string {
-  return `thinking:${event.id}`
 }
 
 function scriptLogGroupScrollId(item: ProcessScriptLogGroupItem): string {
@@ -360,7 +355,11 @@ onBeforeUnmount(() => {
   <div class="agent-event-list" :class="{ 'agent-event-list--compact': compact }">
     <template v-for="item in items" :key="itemKey(item)">
       <div v-if="item.type === 'content'" class="process-content">
-        <MarkdownContent :content="item.event.content" variant="answer" />
+        <MarkdownContent
+          :content="item.event.content"
+          :streaming="running && shouldHighlight(item)"
+          variant="answer"
+        />
       </div>
 
       <template v-else-if="item.type === 'event'">
@@ -368,27 +367,7 @@ onBeforeUnmount(() => {
           <button class="event-trigger" type="button" @click="toggleEvent(item.event)">
             <SvgIcon name="roxy-agent/rx-ic-thinking" size="16" />
             <span :class="{ 'process-running-text': shouldHighlight(item) }">{{ (item.event as AgentThinkingProcessEvent).title }}</span>
-            <SvgIcon name="base/rx_ic_chevron_down" size="12" :class="{ collapsed: !isExpanded(item.event) }" />
           </button>
-          <AgentCollapse :expanded="isExpanded(item.event)">
-            <div class="event-detail-content">
-              <div
-                :ref="element => setScrollElement(thinkingScrollId(item.event as AgentThinkingProcessEvent), element as HTMLElement | null)"
-                class="thinking-detail-scroll"
-                :class="{
-                  'scroll-mask--top': scrollState(thinkingScrollId(item.event as AgentThinkingProcessEvent)).canScrollUp,
-                  'scroll-mask--bottom': scrollState(thinkingScrollId(item.event as AgentThinkingProcessEvent)).canScrollDown,
-                }"
-                :style="{ '--thinking-max-height': THINKING_SCROLL_MAX_HEIGHT }"
-                @scroll.passive="syncScrollState(thinkingScrollId(item.event as AgentThinkingProcessEvent))"
-              >
-                <div class="quoted-text">
-                  <div class="quote-line" />
-                  <p>{{ (item.event as AgentThinkingProcessEvent).content }}</p>
-                </div>
-              </div>
-            </div>
-          </AgentCollapse>
         </div>
 
         <div v-else-if="item.event.type === 'tool_call'" class="inline-event">
@@ -530,27 +509,7 @@ onBeforeUnmount(() => {
                   <button class="event-trigger" type="button" @click="toggleEvent(event)">
                     <SvgIcon name="roxy-agent/rx-ic-thinking" size="16" />
                     <span>{{ (event as AgentThinkingProcessEvent).title }}</span>
-                    <SvgIcon name="base/rx_ic_chevron_down" size="12" :class="{ collapsed: !isExpanded(event) }" />
                   </button>
-                  <AgentCollapse :expanded="isExpanded(event)">
-                    <div class="event-detail-content">
-                      <div
-                        :ref="element => setScrollElement(thinkingScrollId(event as AgentThinkingProcessEvent), element as HTMLElement | null)"
-                        class="thinking-detail-scroll"
-                        :class="{
-                          'scroll-mask--top': scrollState(thinkingScrollId(event as AgentThinkingProcessEvent)).canScrollUp,
-                          'scroll-mask--bottom': scrollState(thinkingScrollId(event as AgentThinkingProcessEvent)).canScrollDown,
-                        }"
-                        :style="{ '--thinking-max-height': THINKING_SCROLL_MAX_HEIGHT }"
-                        @scroll.passive="syncScrollState(thinkingScrollId(event as AgentThinkingProcessEvent))"
-                      >
-                        <div class="quoted-text">
-                          <div class="quote-line" />
-                          <p>{{ (event as AgentThinkingProcessEvent).content }}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </AgentCollapse>
                 </div>
 
                 <div v-else-if="event.type === 'tool_call'" class="inline-event">
@@ -714,46 +673,6 @@ onBeforeUnmount(() => {
   color: var(--color-text-disabled, #a3a3a3);
 }
 
-.quoted-text {
-  position: relative;
-  display: flex;
-  gap: 8px;
-  padding-left: 20px;
-  color: var(--color-text-quaternary, #737373);
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.thinking-detail-scroll {
-  max-height: var(--thinking-max-height);
-  overflow-y: auto;
-  scrollbar-gutter: stable;
-  --mask-top: #000;
-  --mask-bottom: #000;
-  mask-image: linear-gradient(to bottom, var(--mask-top) 0, #000 20px, #000 calc(100% - 24px), var(--mask-bottom) 100%);
-}
-
-.thinking-detail-scroll.scroll-mask--top {
-  --mask-top: transparent;
-}
-
-.thinking-detail-scroll.scroll-mask--bottom {
-  --mask-bottom: transparent;
-}
-
-.quoted-text p {
-  min-width: 0;
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.quote-line {
-  width: 1px;
-  flex: 0 0 1px;
-  background: var(--color-border-secondary);
-}
-
 .script-log-panel--single {
   width: calc(100% - 20px);
   max-width: 100%;
@@ -792,10 +711,6 @@ onBeforeUnmount(() => {
 .event-group-body {
   min-height: 0;
   padding-right: 8px;
-  padding-left: 0;
-}
-
-.event-group-items .quoted-text {
   padding-left: 0;
 }
 

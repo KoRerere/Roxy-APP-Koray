@@ -6,6 +6,7 @@ import MyTemplateCardSkeleton from '../components/skeleton/MyTemplateCardSkeleto
 import CreateTemplateDialog from '../components/dialog/CreateTemplateDialog.vue'
 import { useCreateTaskDialog } from '../composables/useCreateTaskDialog'
 import { useCustomTemplateDialog } from '../composables/useCustomTemplateDialog'
+import { useDelayedLoading } from '../composables/useDelayedLoading'
 import { useTemplateTaskExecution } from '../composables/useTemplateTaskExecution'
 import {
   buildCustomTemplateRequest,
@@ -49,7 +50,8 @@ const { openCustomTemplateDialog } = useCustomTemplateDialog()
 const { executeTemplateTask } = useTemplateTaskExecution(prompt)
 const templates = ref<MyTemplateItem[]>([])
 const total = ref(0)
-const loading = ref(false)
+const loading = ref(true)
+const showLoadingSkeleton = useDelayedLoading(loading)
 const loadError = ref(false)
 const creatingTaskId = ref<number>()
 const openingTemplateId = ref<number>()
@@ -390,7 +392,15 @@ onMounted(() => {
       <h1>{{ $t('我的模板') }}</h1>
 
       <div class="my-templates-toolbar">
-        <Skeleton v-if="loading" width="96px" height="20px" border-radius="4px" />
+        <template v-if="loading">
+          <Skeleton
+            class="my-templates-toolbar__count-skeleton"
+            :class="{ 'is-hidden': !showLoadingSkeleton }"
+            width="96px"
+            height="20px"
+            border-radius="4px"
+          />
+        </template>
         <span v-else>{{ $t('共 {count} 个模板', { count: total }) }}</span>
         <div class="my-templates-toolbar__actions">
           <button class="my-templates-custom-button" type="button" @click="openCustomTemplateDialog">
@@ -404,9 +414,11 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="loading" class="my-templates-grid">
-        <MyTemplateCardSkeleton :count="6" />
-      </div>
+      <template v-if="loading">
+        <div v-if="showLoadingSkeleton" class="my-templates-grid">
+          <MyTemplateCardSkeleton :count="6" />
+        </div>
+      </template>
 
       <div v-else-if="loadError" class="my-templates-state">
         <SvgIcon name="roxy-agent/rx-ic-templates" size="32" />
@@ -469,6 +481,10 @@ onMounted(() => {
   color: var(--color-text-primary);
   font-size: 14px;
   line-height: 20px;
+}
+
+.my-templates-toolbar__count-skeleton.is-hidden {
+  visibility: hidden;
 }
 
 .my-templates-toolbar__actions {

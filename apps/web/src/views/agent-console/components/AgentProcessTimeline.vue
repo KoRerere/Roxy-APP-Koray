@@ -23,6 +23,7 @@ const rootBlocks = computed(() => splitProcessEventBlocks(rootEvents.value, 'roo
 const lastRootBlockId = computed(() => rootBlocks.value.at(-1)?.id)
 const answer = computed(() => props.process.events.find(event => event.type === 'final_answer'))
 const files = computed(() => props.process.events.filter((event): event is AgentFileProcessEvent => event.type === 'agent_file').flatMap(event => event.files.filter(file => !/\.log$/i.test(file.fileName))))
+const answerStreaming = computed(() => props.messageStatus === 'thinking' || props.messageStatus === 'streaming')
 const showWaitingPlaceholder = computed(() => {
   const running = props.messageStatus === 'thinking' || props.messageStatus === 'streaming'
   const hasVisibleRootEvent = rootEvents.value.some((event) => {
@@ -123,7 +124,12 @@ onBeforeUnmount(() => {
       </AgentCollapse>
     </div>
 
-    <MarkdownContent v-if="answer?.type === 'final_answer'" :content="answer.content" variant="answer" />
+    <MarkdownContent
+      v-if="answer?.type === 'final_answer'"
+      :content="answer.content"
+      :streaming="answerStreaming"
+      variant="answer"
+    />
 
     <div v-if="files.length" class="agent-file-list">
       <article v-for="file in files" :key="file.fileId" class="agent-file-card">

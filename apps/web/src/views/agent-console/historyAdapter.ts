@@ -22,10 +22,11 @@ import type {
 import type { AgentConsoleConversationDetailDTO, AgentConsoleConversationDTO, AgentConsoleConversationMessageDTO } from './api'
 import type { AgentConversationRunEventDTO } from '@roxy/shared/channel'
 import type { AgentErrorData } from './utils/agent-error'
+import { toRaw } from 'vue'
 import { getMemoryToolPresentation } from './memoryToolPresentation'
 import { isAgentCancelledError, resolveAgentError } from './utils/agent-error'
 
-interface ProcessBuildContext {
+export interface ProcessBuildContext {
   conversationId: string
   runId: string
   currentConversationId?: string
@@ -41,6 +42,23 @@ interface ProcessBuildContext {
   endStatus?: 'completed' | 'failed' | 'cancelled'
   errorMessage?: string
   errorData?: AgentErrorData | string
+}
+
+export interface ProcessBuildCheckpoint {
+  context: ProcessBuildContext
+  eventCount: number
+  lastEvent?: AgentConversationRunEventDTO
+  lastSequence?: number
+  replayUnsafe: boolean
+}
+
+export interface ProcessBuildResult {
+  content: string
+  completedAt: string
+  process: AgentConversationProcess
+  status: AgentMessage['status']
+  errorData?: AgentErrorData | string
+  checkpoint: ProcessBuildCheckpoint
 }
 
 function lifecycleProcessStatus(status: AgentLifecycleProcessEvent['lifecycleStatus']): AgentProcessEventStatus {
@@ -1115,12 +1133,8 @@ function visibleRunEvents(events: AgentConversationRunEventDTO[]): AgentConversa
   return sorted.filter(item => !rolledBackSequences.has(item.sequence))
 }
 
-export function buildProcessFromEvents(
-  messageId: string,
-  events: AgentConversationRunEventDTO[],
-  options: { finalize?: boolean } = {},
-): { content: string, completedAt: string, process: AgentConversationProcess, status: AgentMessage['status'], errorData?: AgentErrorData | string } {
-  const context: ProcessBuildContext = {
+function createProcessBuildContext(messageId: string, events: AgentConversationRunEventDTO[]): ProcessBuildContext {
+  return {
     conversationId: events[0]?.conversationId ?? messageId,
     runId: events[0]?.runId ?? messageId,
     rootEvents: [],
@@ -1129,169 +1143,249 @@ export function buildProcessFromEvents(
     agentByPath: new Map(),
     hitlByApprovalId: new Map(),
   }
+}
 
-  for (const item of visibleRunEvents(events)) {
-    const event = item.event
-    const rawData = event.data
-    const data = asRecord(rawData)
-    context.currentConversationId = item.conversationId
-    context.currentRunId = item.runId
-    updateTimestamps(context, item.timestamp)
-    const agentPath = agentPathFromData(data)
-    const scope = eventScope(context, data)
-    markAgentLifecycleRevision(context, agentPath, data, item.sequence)
+function applyProcessRunEvent(context: ProcessBuildContext, item: AgentConversationRunEventDTO): void {
+  const event = item.event
+  const rawData = event.data
+  const data = asRecord(rawData)
+  context.currentConversationId = item.conversationId
+  context.currentRunId = item.runId
+  updateTimestamps(context, item.timestamp)
+  const agentPath = agentPathFromData(data)
+  const scope = eventScope(context, data)
+  markAgentLifecycleRevision(context, agentPath, data, item.sequence)
 
-    switch (event.type) {
-      case 'agent_lifecycle':
-        updateAgentLifecycle(context, data)
-        break
+  switch (event.type) {
+    case 'agent_lifecycle':
+      updateAgentLifecycle(context, data)
+      break
 
-      case 'run_retrying': {
-        const retryId = asString(data.retryId) || `sequence-${item.sequence}`
-        settleRetry(context, scope, 'success')
-        const targetEvents = agentEventsFor(context, data)
-        getOrCreateRetry(
-          context,
-          targetEvents,
-          scope,
-          `retry:${scope}:${retryId}`,
-          `retry-${scope}-${retryId}`,
-          data,
-        ).timestamp = formatTime(item.timestamp)
-        break
-      }
+    case 'run_retrying': {
+      const retryId = asString(data.retryId) || `sequence-${item.sequence}`
+      settleRetry(context, scope, 'success')
+      const targetEvents = agentEventsFor(context, data)
+      getOrCreateRetry(
+        context,
+        targetEvents,
+        scope,
+        `retry:${scope}:${retryId}`,
+        `retry-${scope}-${retryId}`,
+        data,
+      ).timestamp = formatTime(item.timestamp)
+      break
+    }
 
-      case 'thinking_delta': {
-        settleRetry(context, scope, 'success')
-        const thinkingId = asString(data.id) || asString(data.thinkingId) || 'main'
-        const targetEvents = agentEventsFor(context, data)
-        const key = `${scope}:thinking:${thinkingId}`
-        const thinking = getOrCreateThinking(targetEvents, context.eventByKey, key, scopedEventId(context, data, 'thinking', thinkingId))
-        thinking.durationStartedAt ??= item.timestamp
-        thinking.content += asString(data.text)
-        break
-      }
+    case 'thinking_delta': {
+      settleRetry(context, scope, 'success')
+      const thinkingId = asString(data.id) || asString(data.thinkingId) || 'main'
+      const targetEvents = agentEventsFor(context, data)
+      const key = `${scope}:thinking:${thinkingId}`
+      const thinking = getOrCreateThinking(targetEvents, context.eventByKey, key, scopedEventId(context, data, 'thinking', thinkingId))
+      thinking.durationStartedAt ??= item.timestamp
+      thinking.content += asString(data.text)
+      break
+    }
 
-      case 'thinking_completed':
-        markThinkingComplete(context, asString(data.id) || asString(data.thinkingId), scope, data, item.timestamp)
-        break
+    case 'thinking_completed':
+      markThinkingComplete(context, asString(data.id) || asString(data.thinkingId), scope, data, item.timestamp)
+      break
 
-      case 'content_delta': {
-        settleRetry(context, scope, 'success')
-        const contentId = asString(data.id) || asString(data.contentId) || `content-${context.eventByKey.size}`
-        if (data.phase === 'synthesis' && agentPath === '/root') {
-          appendFinalAnswer(context, asString(data.text))
-          break
-        }
-
-        const targetEvents = agentEventsFor(context, data)
-        const key = `${scope}:content:${contentId}:${asString(data.phase)}`
-        const content = getOrCreateContent(targetEvents, context.eventByKey, key, scopedEventId(context, data, 'content', contentId), agentPath !== '/root')
-        content.content += asString(data.text)
+    case 'content_delta': {
+      settleRetry(context, scope, 'success')
+      const contentId = asString(data.id) || asString(data.contentId) || `content-${context.eventByKey.size}`
+      if (data.phase === 'synthesis' && agentPath === '/root') {
+        appendFinalAnswer(context, asString(data.text))
         break
       }
 
-      case 'tool_started':
-        settleRetry(context, scope, 'success')
-        handleToolCall(context, {
-          ...data,
-          args: data.input,
-          agentPath,
-        })
-        break
+      const targetEvents = agentEventsFor(context, data)
+      const key = `${scope}:content:${contentId}:${asString(data.phase)}`
+      const content = getOrCreateContent(targetEvents, context.eventByKey, key, scopedEventId(context, data, 'content', contentId), agentPath !== '/root')
+      content.content += asString(data.text)
+      break
+    }
 
-      case 'tool_finished':
-        handleToolResult(context, {
-          ...data,
-          result: data.output,
-          et: data.durationMs,
-          agentPath,
-        })
-        break
+    case 'tool_started':
+      settleRetry(context, scope, 'success')
+      handleToolCall(context, {
+        ...data,
+        args: data.input,
+        agentPath,
+      })
+      break
 
-      case 'approval_requested': {
-        const approvalId = asString(data.approvalId) || asString(data.interruptsId) || `sequence-${item.sequence}`
-        const targetEvents = agentEventsFor(context, data)
-        const hitl = getOrCreateHitl(context, targetEvents, scope, approvalId, data)
-        hitl.timestamp = formatTime(item.timestamp)
-        break
+    case 'tool_finished':
+      handleToolResult(context, {
+        ...data,
+        result: data.output,
+        et: data.durationMs,
+        agentPath,
+      })
+      break
+
+    case 'approval_requested': {
+      const approvalId = asString(data.approvalId) || asString(data.interruptsId) || `sequence-${item.sequence}`
+      const targetEvents = agentEventsFor(context, data)
+      const hitl = getOrCreateHitl(context, targetEvents, scope, approvalId, data)
+      hitl.timestamp = formatTime(item.timestamp)
+      break
+    }
+
+    case 'approval_resolved':
+      resolveHitl(context, data, item.timestamp)
+      break
+
+    case 'run_completed':
+      settleRetry(context, `${context.conversationId}:${context.runId}:/root`, 'success')
+      if (asString(data.finalAnswer)) {
+        completeFinalAnswer(context, asString(data.finalAnswer))
       }
+      context.endStatus = 'completed'
+      break
 
-      case 'approval_resolved':
-        resolveHitl(context, data, item.timestamp)
-        break
-
-      case 'run_completed':
-        settleRetry(context, `${context.conversationId}:${context.runId}:/root`, 'success')
-        if (asString(data.finalAnswer)) {
-          completeFinalAnswer(context, asString(data.finalAnswer))
-        }
-        context.endStatus = 'completed'
-        break
-
-      case 'run_failed': {
-        settleRetry(context, scope, 'failed')
-        const errorData = data
-        if (isAgentCancelledError(errorData)) {
-          context.endStatus = 'cancelled'
-          break
-        }
-
-        context.endStatus = 'failed'
-        const resolved = resolveAgentError(errorData)
-        context.errorData = typeof errorData.code === 'string'
-          ? errorData
-          : {
-              ...(resolved.code ? { code: resolved.code } : {}),
-              message: asString(errorData.message),
-              retryable: resolved.retryable,
-              ...(resolved.requestId ? { requestId: resolved.requestId } : {}),
-            }
-        context.errorMessage = resolved.message
-        break
-      }
-
-      case 'run_cancelled':
-        settleRetry(context, scope, 'success')
+    case 'run_failed': {
+      settleRetry(context, scope, 'failed')
+      const errorData = data
+      if (isAgentCancelledError(errorData)) {
         context.endStatus = 'cancelled'
         break
+      }
 
-      case 'script_output':
-        appendScriptLog(context, data)
-        break
+      context.endStatus = 'failed'
+      const resolved = resolveAgentError(errorData)
+      context.errorData = typeof errorData.code === 'string'
+        ? errorData
+        : {
+            ...(resolved.code ? { code: resolved.code } : {}),
+            message: asString(errorData.message),
+            retryable: resolved.retryable,
+            ...(resolved.requestId ? { requestId: resolved.requestId } : {}),
+          }
+      context.errorMessage = resolved.message
+      break
+    }
 
-      case 'artifact_created':
-        appendAgentFile(context, { ...data, op: data.operation })
-        break
+    case 'run_cancelled':
+      settleRetry(context, scope, 'success')
+      context.endStatus = 'cancelled'
+      break
 
-      case 'context_compacted': {
-        const compactedCount = asNumber(data.compactedCount) ?? 0
-        const completed = data.status !== 'started'
-        const targetEvents = agentEventsFor(context, data)
-        const existing = targetEvents.find(event => event.type === 'context_compacted' && event.status === 'running')
-        if (existing?.type === 'context_compacted') {
-          existing.title = completed ? $t('上下文已自动压缩') : $t('正在自动压缩上下文')
-          existing.status = completed ? 'success' : 'running'
-          existing.compactedCount = compactedCount
-          existing.summary = asString(data.summary) || undefined
-          existing.timestamp = formatTime(item.timestamp)
-          break
-        }
-        const event: AgentContextCompactedProcessEvent = {
-          id: `context-compacted-${scope}-${item.sequence}`,
-          type: 'context_compacted',
-          title: completed ? $t('上下文已自动压缩') : $t('正在自动压缩上下文'),
-          compactedCount,
-          summary: asString(data.summary) || undefined,
-          status: completed ? 'success' : 'running',
-          timestamp: formatTime(item.timestamp),
-        }
-        targetEvents.push(event)
+    case 'script_output':
+      appendScriptLog(context, data)
+      break
+
+    case 'artifact_created':
+      appendAgentFile(context, { ...data, op: data.operation })
+      break
+
+    case 'context_compacted': {
+      const compactedCount = asNumber(data.compactedCount) ?? 0
+      const completed = data.status !== 'started'
+      const targetEvents = agentEventsFor(context, data)
+      const existing = targetEvents.find(event => event.type === 'context_compacted' && event.status === 'running')
+      if (existing?.type === 'context_compacted') {
+        existing.title = completed ? $t('上下文已自动压缩') : $t('正在自动压缩上下文')
+        existing.status = completed ? 'success' : 'running'
+        existing.compactedCount = compactedCount
+        existing.summary = asString(data.summary) || undefined
+        existing.timestamp = formatTime(item.timestamp)
         break
       }
+      const compactedEvent: AgentContextCompactedProcessEvent = {
+        id: `context-compacted-${scope}-${item.sequence}`,
+        type: 'context_compacted',
+        title: completed ? $t('上下文已自动压缩') : $t('正在自动压缩上下文'),
+        compactedCount,
+        summary: asString(data.summary) || undefined,
+        status: completed ? 'success' : 'running',
+        timestamp: formatTime(item.timestamp),
+      }
+      targetEvents.push(compactedEvent)
+      break
     }
   }
+}
 
+function pairProcessEventBindings(
+  sourceEvents: AgentProcessEvent[],
+  boundEvents: AgentProcessEvent[],
+  bindings: Map<AgentProcessEvent, AgentProcessEvent>,
+): void {
+  const claimed = new Set<number>()
+  for (let sourceIndex = 0; sourceIndex < sourceEvents.length; sourceIndex++) {
+    const source = sourceEvents[sourceIndex]
+    let boundIndex = sourceIndex
+    let bound = boundEvents[boundIndex]
+    if (!bound || bound.id !== source.id || bound.type !== source.type || claimed.has(boundIndex)) {
+      boundIndex = boundEvents.findIndex((candidate, index) => (
+        !claimed.has(index) && candidate.id === source.id && candidate.type === source.type
+      ))
+      bound = boundIndex >= 0 ? boundEvents[boundIndex] : undefined
+    }
+    if (!bound) {
+      continue
+    }
+
+    claimed.add(boundIndex)
+    bindings.set(toRaw(source), bound)
+    if (source.type === 'agent_lifecycle' && bound.type === 'agent_lifecycle') {
+      pairProcessEventBindings(source.events, bound.events, bindings)
+      pairProcessEventBindings(source.children, bound.children, bindings)
+    }
+  }
+}
+
+function rebindProcessBuildContext(context: ProcessBuildContext, process: AgentConversationProcess): void {
+  const bindings = new Map<AgentProcessEvent, AgentProcessEvent>()
+  pairProcessEventBindings(context.rootEvents, process.events, bindings)
+  const boundEvent = <T extends AgentProcessEvent>(event: T): T => (
+    bindings.get(toRaw(event)) as T | undefined
+  ) ?? event
+
+  for (const [key, event] of context.eventByKey) {
+    context.eventByKey.set(key, boundEvent(event))
+  }
+  for (const [key, event] of context.activeRetriesByScope) {
+    context.activeRetriesByScope.set(key, boundEvent(event) as AgentRetryProcessEvent)
+  }
+  for (const [key, event] of context.agentByPath) {
+    context.agentByPath.set(key, boundEvent(event) as AgentLifecycleProcessEvent)
+  }
+  for (const [key, event] of context.hitlByApprovalId) {
+    context.hitlByApprovalId.set(key, boundEvent(event) as AgentHitlProcessEvent)
+  }
+  if (context.finalAnswer) {
+    context.finalAnswer = boundEvent(context.finalAnswer) as AgentFinalAnswerProcessEvent
+  }
+  context.rootEvents = process.events
+}
+
+function createProcessBuildCheckpoint(
+  context: ProcessBuildContext,
+  events: AgentConversationRunEventDTO[],
+): ProcessBuildCheckpoint {
+  let lastSequence: number | undefined
+  for (const item of events) {
+    lastSequence = lastSequence === undefined ? item.sequence : Math.max(lastSequence, item.sequence)
+  }
+  return {
+    context,
+    eventCount: events.length,
+    lastEvent: events.at(-1),
+    lastSequence,
+    replayUnsafe: events.some(item => item.event.type === 'run_retrying'),
+  }
+}
+
+function materializeProcessBuildResult(
+  messageId: string,
+  events: AgentConversationRunEventDTO[],
+  checkpoint: ProcessBuildCheckpoint,
+  options: { finalize?: boolean },
+  existingProcess?: AgentConversationProcess,
+): ProcessBuildResult {
+  const context = checkpoint.context
   if (!context.finalAnswer?.content.trim() && context.errorMessage) {
     appendFinalAnswer(context, context.errorMessage)
   }
@@ -1310,30 +1404,100 @@ export function buildProcessFromEvents(
   context.rootEvents = mergeSpawnAgentLifecycleGroups(context.rootEvents).events
 
   const finalAnswer = context.finalAnswer?.content || ''
-  const durationMs = context.firstTimestamp !== undefined && context.lastTimestamp !== undefined
-    ? Math.max(0, context.lastTimestamp - context.firstTimestamp)
+  const serverStartedAt = context.firstTimestamp
+  const existingStartedAt = existingProcess?.durationStartedAt
+  const durationStartedAt = serverStartedAt === undefined
+    ? existingStartedAt
+    : (existingStartedAt === undefined ? serverStartedAt : Math.min(serverStartedAt, existingStartedAt))
+  const durationMs = durationStartedAt !== undefined && context.lastTimestamp !== undefined
+    ? Math.max(0, context.lastTimestamp - durationStartedAt)
     : undefined
   const completedAt = terminal ? formatTime(context.lastTimestamp) : ''
+  const process = existingProcess ?? {
+    id: `history-process-${messageId}`,
+    events: context.rootEvents,
+  }
+  process.id = `history-process-${messageId}`
+  process.revision = events.at(-1)?.sequence ?? checkpoint.lastSequence ?? 0
+  process.completed = completed
+  process.durationLabel = durationMs !== undefined ? formatDuration(durationMs) : undefined
+  process.durationState = terminal ? undefined : 'thinking'
+  process.durationStartedAt = durationStartedAt
+  process.durationEndedAt = terminal ? context.lastTimestamp : undefined
+  process.collapsed = completed
+  process.events = context.rootEvents
 
   return {
     content: finalAnswer,
     completedAt,
-    process: {
-      id: `history-process-${messageId}`,
-      revision: events.at(-1)?.sequence ?? 0,
-      completed,
-      durationLabel: durationMs !== undefined ? formatDuration(durationMs) : undefined,
-      durationState: terminal ? undefined : 'thinking',
-      durationStartedAt: context.firstTimestamp,
-      durationEndedAt: terminal ? context.lastTimestamp : undefined,
-      collapsed: completed,
-      events: context.rootEvents,
-    },
+    process,
     status: failed ? 'error' : (terminal ? 'done' : 'streaming'),
     errorData: context.errorData,
+    checkpoint,
   }
 }
 
+function requiresVisibleEventReplay(item: AgentConversationRunEventDTO): boolean {
+  if (item.event.type === 'run_retrying') {
+    return true
+  }
+  if (item.event.type === 'run_failed') {
+    return item.event.data.code === 'network_interrupted'
+  }
+  return item.event.type === 'run_cancelled' && item.event.data.reason !== 'user'
+}
+
+export function updateProcessFromCheckpoint(
+  messageId: string,
+  process: AgentConversationProcess,
+  events: AgentConversationRunEventDTO[],
+  checkpoint: ProcessBuildCheckpoint,
+  options: { finalize?: boolean } = { finalize: false },
+): ProcessBuildResult | undefined {
+  if (checkpoint.replayUnsafe || events.length <= checkpoint.eventCount) {
+    return undefined
+  }
+  if (checkpoint.eventCount > 0 && events[checkpoint.eventCount - 1] !== checkpoint.lastEvent) {
+    return undefined
+  }
+
+  const suffix = events.slice(checkpoint.eventCount)
+  if (suffix.some(requiresVisibleEventReplay)) {
+    return undefined
+  }
+
+  let previousSequence = checkpoint.lastSequence
+  for (const item of suffix) {
+    if (previousSequence !== undefined && item.sequence <= previousSequence) {
+      return undefined
+    }
+    previousSequence = item.sequence
+  }
+
+  rebindProcessBuildContext(checkpoint.context, process)
+  for (const item of suffix) {
+    applyProcessRunEvent(checkpoint.context, item)
+  }
+
+  checkpoint.eventCount = events.length
+  checkpoint.lastEvent = events.at(-1)
+  checkpoint.lastSequence = previousSequence
+  return materializeProcessBuildResult(messageId, events, checkpoint, options, process)
+}
+
+export function buildProcessFromEvents(
+  messageId: string,
+  events: AgentConversationRunEventDTO[],
+  options: { finalize?: boolean } = {},
+): ProcessBuildResult {
+  const context = createProcessBuildContext(messageId, events)
+  for (const item of visibleRunEvents(events)) {
+    applyProcessRunEvent(context, item)
+  }
+
+  const checkpoint = createProcessBuildCheckpoint(context, events)
+  return materializeProcessBuildResult(messageId, events, checkpoint, options)
+}
 function mapAssistantMessage(conversationId: string, message: AgentConsoleConversationMessageDTO, index: number): AgentMessage {
   const messageId = message.id || `${conversationId}-assistant-${index}`
   const rawContent = message.content ?? ''

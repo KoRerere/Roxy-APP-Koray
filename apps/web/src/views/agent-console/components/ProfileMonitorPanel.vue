@@ -40,7 +40,7 @@ const emit = defineEmits<{
           <h2>{{ $t('窗口监控') }}</h2>
         </div>
         <button class="monitor-action" type="button" :title="$t('关闭窗口监控')" :aria-label="$t('关闭窗口监控')" @click="emit('close')">
-          <SvgIcon name="roxy-agent/rx-ic-close" size="20" color="var(--color-text-primary)" />
+          <SvgIcon name="base/rx_ic_chevron_right" size="20" color="var(--color-text-primary)" />
         </button>
       </header>
 

@@ -136,7 +136,7 @@ onBeforeUnmount(() => {
               :content="item.title"
               :disabled="!titleOverflowed"
               content-class="template-store-card__title-tooltip"
-              placement="top-start"
+              placement="top"
               trigger-class="template-store-card__title-trigger"
             >
               <h2 ref="titleRef">{{ item.title }}</h2>

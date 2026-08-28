@@ -13,10 +13,12 @@ import { appendConversationRunEvent, appendConversationRunPresentationEvents, ap
 import { createHitlRequestFromAgentEvent, createLegacyResumeDecisions } from '../hitlAdapter'
 import { resolveHitlActionTitles } from '../hitlResourcePresentation'
 import { buildProcessFromEvents, formatDuration, formatTime, mapHistoryConversation, mapHistoryMessages } from '../historyAdapter'
+import { IncrementalProcessUpdater } from '../incrementalProcess'
 import { resolveScriptRunPresentationEvents } from '../scriptRunPresentation'
 import { createIdleAwareStreamTextEventBufferScheduler, StreamTextEventBuffer } from '../streamTextEventBuffer'
 import { createQueuedPrompt, reorderQueuedPrompt as movePromptInQueue, removeQueuedPrompt as removePromptFromQueue } from '../prompt-queue'
 import { collectLocalPathAttachments } from '../local-path-context'
+import { reconcilePendingAttachments } from '../attachment-reconciliation'
 import {
   AI_BATCH_CREATE_PROMPT_QUERY_KEY,
   AI_BATCH_CREATE_TEMPLATE_SLUG,
@@ -386,7 +388,7 @@ function createLocalAttachment(file: File): AgentAttachment {
     size: file.size,
     preview: shouldPreview ? URL.createObjectURL(file) : undefined,
     localFile: file,
-    uploadStatus: 'pending',
+    uploadStatus: 'uploading',
   }
 }
 
@@ -400,7 +402,7 @@ function createLocalFolderAttachment(folder: AgentFolderSelection): AgentAttachm
     size: files.reduce((total, file) => total + file.size, 0),
     localFiles: files.length > 0 ? files : undefined,
     localPath: folder.path,
-    uploadStatus: 'pending',
+    uploadStatus: folder.path ? 'uploaded' : 'uploading',
   }
 }
 
@@ -415,7 +417,7 @@ function createLocalPathAttachment(selection: AgentPathSelection): AgentAttachme
     mimeType,
     localPath: selection.path,
     preview: shouldPreview ? localPathToMediaUrl(selection.path) : undefined,
-    uploadStatus: 'pending',
+    uploadStatus: 'uploaded',
   }
 }
 
@@ -505,6 +507,7 @@ export function useAgentConsole() {
   }>()
   const releasedRunEvents = new Map<string, AgentConversationRunEventDTO[]>()
   const presentationEventQueues = new Map<string, AgentConversationRunEventDTO[]>()
+  const processUpdatersByRunId = new Map<string, IncrementalProcessUpdater>()
   const drainingPresentationRuns = new Set<string>()
   let assistantRefreshTimer: number | undefined
 
@@ -513,6 +516,7 @@ export function useAgentConsole() {
       window.clearTimeout(assistantRefreshTimer)
     }
     queuedAssistantRefreshes.clear()
+    processUpdatersByRunId.clear()
   })
 
   let aiBatchCreatePromptRequestId = 0
@@ -1367,8 +1371,26 @@ export function useAgentConsole() {
     }
 
     const presentationEvents = releasedRunEvents.get(runId) ?? stream.events
-    const parsed = buildProcessFromEvents(assistantMessageId, presentationEvents, { finalize })
     const message = getAssistantMessage(conversationId, runId, assistantMessageId)
+    const updater = processUpdatersByRunId.get(runId)
+
+    const incremental = !finalize && message?.process
+      ? updater?.update(assistantMessageId, message.process, presentationEvents)
+      : false
+    if (incremental) {
+      message.content = incremental.content
+      message.errorData = incremental.errorData
+      message.status = incremental.status === 'error' ? 'error' : 'streaming'
+      return {
+        ...incremental,
+        status: message.status,
+      }
+    }
+
+    const parsed = buildProcessFromEvents(assistantMessageId, presentationEvents, { finalize })
+    const nextUpdater = updater ?? new IncrementalProcessUpdater()
+    nextUpdater.reset(presentationEvents, parsed.checkpoint)
+    processUpdatersByRunId.set(runId, nextUpdater)
 
     if (message) {
       const frontendStartedAt = message.process?.durationStartedAt
@@ -1483,6 +1505,7 @@ export function useAgentConsole() {
     const { conversationId, runId, assistantMessageId } = item
     const pending = pendingRunPayloads.get(runId)
     const messages = consoleState.messagesByConversationId[conversationId] ||= []
+    const receivedAttachments = eventAttachments(item)
     const next: AgentMessage = {
       id: item.event.data.messageId,
       conversationId,
@@ -1490,7 +1513,9 @@ export function useAgentConsole() {
       role: 'user',
       author: 'You',
       content: item.event.data.content,
-      attachments: pending?.attachments ?? eventAttachments(item),
+      attachments: pending?.attachments.length
+        ? reconcilePendingAttachments(pending.attachments, receivedAttachments)
+        : receivedAttachments,
       createdAt: formatTime(item.event.data.createdAt || item.timestamp),
       status: 'done',
     }
@@ -1572,6 +1597,9 @@ export function useAgentConsole() {
     const runIds = new Set<string>()
     const terminalRunIds = new Set<string>()
     for (const item of presentationItems) {
+      if (item.startSequence !== undefined) {
+        processUpdatersByRunId.delete(item.runId)
+      }
       const presentationEvents = releasedRunEvents.get(item.runId) ?? []
       appendConversationRunPresentationEvents(presentationEvents, [item])
       releasedRunEvents.set(item.runId, presentationEvents)
@@ -1590,6 +1618,7 @@ export function useAgentConsole() {
     for (const runId of terminalRunIds) {
       releasedRunEvents.delete(runId)
       presentationEventQueues.delete(runId)
+      processUpdatersByRunId.delete(runId)
     }
   }
 
@@ -1854,6 +1883,7 @@ export function useAgentConsole() {
     bufferedRunEvents.delete(runId)
     queuedAssistantRefreshes.delete(runId)
     releasedRunEvents.delete(runId)
+    processUpdatersByRunId.delete(runId)
     finalizeCancelledRunMessage(run.conversationId, runId)
     setRunStatus(consoleState, runId, 'cancelled')
     schedulePromptQueueDrain(run.conversationId)
@@ -1927,6 +1957,7 @@ export function useAgentConsole() {
         if (stream.conversationId === conversationId) {
           presentationEventQueues.delete(stream.runId)
           releasedRunEvents.delete(stream.runId)
+          processUpdatersByRunId.delete(stream.runId)
         }
       }
       removeConversation(consoleState, conversationId)
@@ -2017,13 +2048,11 @@ export function useAgentConsole() {
     }
 
     const conversationId = activeConversationId.value
-    if (!conversationId) {
-      homePendingAttachments.value = [...homePendingAttachments.value, ...nextAttachments]
-      return
+    const target = getPendingAttachmentTarget(conversationId)
+    target.push(...nextAttachments)
+    for (const attachment of target.slice(-nextAttachments.length)) {
+      startPendingAttachmentUpload(conversationId, target, attachment)
     }
-
-    consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
-    consoleState.draftsByConversationId[conversationId].attachments.push(...nextAttachments)
   }
 
   function addPendingFolder(folder: AgentFolderSelection) {
@@ -2033,13 +2062,9 @@ export function useAgentConsole() {
 
     const nextAttachment = createLocalFolderAttachment(folder)
     const conversationId = activeConversationId.value
-    if (!conversationId) {
-      homePendingAttachments.value = [...homePendingAttachments.value, nextAttachment]
-      return
-    }
-
-    consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
-    consoleState.draftsByConversationId[conversationId].attachments.push(nextAttachment)
+    const target = getPendingAttachmentTarget(conversationId)
+    target.push(nextAttachment)
+    startPendingAttachmentUpload(conversationId, target, target[target.length - 1])
   }
 
   function addPendingPathAttachment(selection: AgentPathSelection) {
@@ -2052,6 +2077,30 @@ export function useAgentConsole() {
 
     consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
     consoleState.draftsByConversationId[conversationId].attachments.push(nextAttachment)
+  }
+
+  function getPendingAttachmentTarget(conversationId?: string) {
+    if (!conversationId) {
+      return homePendingAttachments.value
+    }
+
+    consoleState.draftsByConversationId[conversationId] ||= createEmptyDraft(conversationId)
+    return consoleState.draftsByConversationId[conversationId].attachments
+  }
+
+  function startPendingAttachmentUpload(
+    conversationId: string | undefined,
+    sourceAttachments: AgentAttachment[],
+    attachment: AgentAttachment | undefined,
+  ) {
+    if (!attachment || attachment.uploadStatus === 'uploaded') {
+      return
+    }
+
+    void uploadPendingAttachmentsForConversation(conversationId, sourceAttachments, [attachment]).catch((error) => {
+      console.error('[agent-console] Failed to upload attachment:', error)
+      onlyErrorToast(-1, error instanceof Error ? error.message : $t('文件上传失败'))
+    })
   }
 
   function removePendingAttachment(fileId: string) {
@@ -2093,29 +2142,34 @@ export function useAgentConsole() {
     }
   }
 
-  async function uploadPendingAttachmentsForConversation(conversationId: string, sourceAttachments: AgentAttachment[]) {
-    const attachments = sourceAttachments.slice()
+  async function uploadPendingAttachmentsForConversation(
+    conversationId: string | undefined,
+    sourceAttachments: AgentAttachment[],
+    attachments = sourceAttachments.slice(),
+  ) {
     const uploadedAttachments: AgentAttachment[] = []
 
     for (const attachment of attachments) {
+      if (!sourceAttachments.includes(attachment)) {
+        continue
+      }
+
       if (attachment.localPath) {
-        uploadedAttachments.push({
-          ...attachment,
-          localFiles: undefined,
-          uploadStatus: 'uploaded',
-        })
+        attachment.uploadStatus = 'uploaded'
+        uploadedAttachments.push(attachment)
         continue
       }
 
       if (attachment.kind === 'folder' && attachment.localFiles?.length) {
-        const latest = sourceAttachments.find(item => item.fileId === attachment.fileId)
-        if (latest) {
-          latest.uploadStatus = 'uploading'
-        }
+        attachment.uploadStatus = 'uploading'
 
         try {
           const uploadedFiles: AgentAttachment[] = []
           for (const file of attachment.localFiles) {
+            if (!sourceAttachments.includes(attachment)) {
+              return uploadedAttachments
+            }
+
             const base64 = await agentApi.fileToBase64(file)
             const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath
             const uploaded = await agentApi.uploadFile(base64, file.type || 'application/octet-stream', relativePath || file.name, conversationId)
@@ -2133,29 +2187,29 @@ export function useAgentConsole() {
             })
           }
 
-          uploadedAttachments.push({
-            ...attachment,
+          if (!sourceAttachments.includes(attachment)) {
+            continue
+          }
+
+          Object.assign(attachment, {
             localFiles: undefined,
+            uploadedFiles,
             uploadStatus: 'uploaded',
           })
+          uploadedAttachments.push(attachment)
           uploadedAttachments.push(...uploadedFiles)
-
-          const latestIndex = sourceAttachments.findIndex(item => item.fileId === attachment.fileId)
-          if (latestIndex >= 0) {
-            sourceAttachments[latestIndex] = {
-              ...attachment,
-              localFiles: undefined,
-              uploadStatus: 'uploaded',
-            }
-          }
         }
         catch (error) {
-          const failed = sourceAttachments.find(item => item.fileId === attachment.fileId)
-          if (failed) {
-            failed.uploadStatus = 'error'
+          if (sourceAttachments.includes(attachment)) {
+            attachment.uploadStatus = 'error'
           }
           throw error
         }
+        continue
+      }
+
+      if (attachment.kind === 'folder') {
+        uploadedAttachments.push(attachment, ...(attachment.uploadedFiles ?? []))
         continue
       }
 
@@ -2164,10 +2218,7 @@ export function useAgentConsole() {
         continue
       }
 
-      const latest = sourceAttachments.find(item => item.fileId === attachment.fileId)
-      if (latest) {
-        latest.uploadStatus = 'uploading'
-      }
+      attachment.uploadStatus = 'uploading'
 
       try {
         const base64 = await agentApi.fileToBase64(attachment.localFile)
@@ -2186,18 +2237,17 @@ export function useAgentConsole() {
           localFile: undefined,
           uploadStatus: 'uploaded',
         }
-        uploadedAttachments.push(uploadedAttachment)
-        revokeAttachments([attachment])
-
-        const latestIndex = sourceAttachments.findIndex(item => item.fileId === attachment.fileId)
-        if (latestIndex >= 0) {
-          sourceAttachments[latestIndex] = uploadedAttachment
+        if (!sourceAttachments.includes(attachment)) {
+          continue
         }
+
+        revokeAttachments([attachment])
+        Object.assign(attachment, uploadedAttachment)
+        uploadedAttachments.push(attachment)
       }
       catch (error) {
-        const failed = sourceAttachments.find(item => item.fileId === attachment.fileId)
-        if (failed) {
-          failed.uploadStatus = 'error'
+        if (sourceAttachments.includes(attachment)) {
+          attachment.uploadStatus = 'error'
         }
         throw error
       }
@@ -2211,7 +2261,10 @@ export function useAgentConsole() {
     let conversationId = options.conversationId ?? activeConversationId.value
     const content = (options.content ?? prompt.value).trim()
     const sourceAttachments = options.attachments ?? (options.content === undefined ? pendingAttachments.value : [])
-    if ((!content && sourceAttachments.length === 0) || sourceAttachments.some(attachment => attachment.uploadStatus === 'uploading')) {
+    if (
+      (!content && sourceAttachments.length === 0)
+      || sourceAttachments.some(attachment => attachment.uploadStatus !== 'uploaded')
+    ) {
       return false
     }
 

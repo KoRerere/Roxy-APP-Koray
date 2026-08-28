@@ -227,6 +227,21 @@ export function appendConversationRunPresentationEvents(
   events: AgentConversationRunEventDTO[],
   items: AgentConversationRunEventDTO[],
 ): void {
+  const lastSequence = events.at(-1)?.sequence ?? 0
+  let appendSequence = lastSequence
+  const canAppend = items.every((item) => {
+    const startSequence = item.startSequence ?? item.sequence
+    if (compactedBlockKey(item) || startSequence <= appendSequence) {
+      return false
+    }
+    appendSequence = item.sequence
+    return true
+  })
+  if (canAppend) {
+    events.push(...items)
+    return
+  }
+
   const sequenceRanges = new Set(events.map((item) => {
     return `${item.startSequence ?? item.sequence}:${item.sequence}`
   }))

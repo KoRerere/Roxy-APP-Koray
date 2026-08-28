@@ -101,6 +101,40 @@ describe('profileMonitorHub', () => {
     expect(profileMonitorHub.getProfileSnapshot().data.profiles).toEqual([])
   })
 
+  it('keeps a task-owned profile while its browser connection is still launching', () => {
+    // Regression: connection polling returned an empty list during a cold browser launch and
+    // removed the task-owned profile, making the profile monitor close and reopen a moment later.
+    // Fixed by: only pruning connection-backed idle profiles; task ownership controls running profiles.
+    profileMonitorHub.startTask({
+      taskId: 'task-1',
+      title: 'Launch browser',
+      sourceType: 'chat',
+      conversationId: 'conv-1',
+      runId: 'run-1',
+    })
+    profileMonitorHub.attachBrowser({
+      taskId: 'task-1',
+      browserId: 'browser-1',
+      dirId: 'dir-1',
+      label: 'dir-1',
+    })
+
+    profileMonitorHub.syncConnections([])
+
+    expect(profileMonitorHub.getProfileSnapshot().data.profiles).toMatchObject([
+      {
+        dirId: 'dir-1',
+        status: 'running',
+        owner: { taskId: 'task-1' },
+      },
+    ])
+
+    profileMonitorHub.finishTask('task-1')
+    profileMonitorHub.syncConnections([])
+
+    expect(profileMonitorHub.getProfileSnapshot().data.profiles).toEqual([])
+  })
+
   it('removes a completed browser while retaining other active browsers', () => {
     profileMonitorHub.startTask({
       taskId: 'task-1',

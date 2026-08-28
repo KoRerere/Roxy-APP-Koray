@@ -30,6 +30,7 @@ import TaskScheduleDialog from '../components/dialog/TaskScheduleDialog.vue'
 import OverflowTooltip from '../components/OverflowTooltip.vue'
 import { useAgentConsoleApi } from '../api'
 import { useAgentChannelState } from '../composables/useAgentChannel'
+import { useDelayedLoading } from '../composables/useDelayedLoading'
 import { useTemplateTaskExecution } from '../composables/useTemplateTaskExecution'
 import { mapMyTemplateItem, readUserTemplatePage } from '../my-templates'
 import {
@@ -109,6 +110,7 @@ const windows = ref<TaskWindowOption[]>([])
 const activityWindows = ref<TaskWindowOption[]>([])
 const total = ref(0)
 const loading = ref(false)
+const showTaskLoadingSkeleton = useDelayedLoading(loading)
 const loadError = ref(false)
 const activityPageFirst = ref(0)
 const activityPageSize = ref(ACTIVITY_DEFAULT_PAGE_SIZE)
@@ -122,6 +124,7 @@ const activityLogs = computed(() => agentChannel.taskLogs.value.slice(
   activityPageFirst.value + activityPageSize.value,
 ))
 const activityLoading = computed(() => !agentChannel.taskLogsReady.value && !agentChannel.lastError.value)
+const showActivityLoadingSkeleton = useDelayedLoading(activityLoading)
 const activityLoadError = computed(() => !agentChannel.taskLogsReady.value && Boolean(agentChannel.lastError.value))
 const startingTaskIds = ref(new Set<number>())
 const stoppingLogIds = ref(new Set<string>())
@@ -1181,7 +1184,15 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="activeTab === 'tasks'" class="task-list-toolbar">
-        <Skeleton v-if="loading && !tasks.length" width="96px" height="20px" border-radius="4px" />
+        <template v-if="loading && !tasks.length">
+          <Skeleton
+            class="task-list-toolbar__count-skeleton"
+            :class="{ 'is-hidden': !showTaskLoadingSkeleton }"
+            width="96px"
+            height="20px"
+            border-radius="4px"
+          />
+        </template>
         <p v-else>
           {{ $t('共 {count} 个任务', { count: total }) }}
         </p>
@@ -1197,7 +1208,9 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="activeTab === 'tasks'" class="task-view">
-        <TaskTableSkeleton v-if="loading && !tasks.length" variant="tasks" :rows="5" />
+        <template v-if="loading && !tasks.length">
+          <TaskTableSkeleton v-if="showTaskLoadingSkeleton" variant="tasks" :rows="5" />
+        </template>
 
         <div v-else-if="loadError && !tasks.length" class="task-state">
           <SvgIcon name="roxy-agent/rx-ic-task-manager" size="32" />
@@ -1367,11 +1380,13 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <TaskTableSkeleton
-        v-else-if="activityLoading"
-        variant="activity"
-        :rows="ACTIVITY_DEFAULT_PAGE_SIZE"
-      />
+      <template v-else-if="activityLoading">
+        <TaskTableSkeleton
+          v-if="showActivityLoadingSkeleton"
+          variant="activity"
+          :rows="ACTIVITY_DEFAULT_PAGE_SIZE"
+        />
+      </template>
 
       <div v-else-if="activityLoadError" class="task-state">
         <SvgIcon name="roxy-agent/rx-ic-task-manager" size="32" />
@@ -1606,6 +1621,10 @@ h1 {
     font-size: 14px;
     line-height: 20px;
   }
+}
+
+.task-list-toolbar__count-skeleton.is-hidden {
+  visibility: hidden;
 }
 
 .new-task-button,

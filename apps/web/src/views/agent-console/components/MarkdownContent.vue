@@ -14,14 +14,17 @@ import {
 import { registerAgentMarkdownTableCopyElement } from './markdown/AgentMarkdownTableCopyElement'
 import { registerAgentMarkdownTokenElement } from './markdown/AgentMarkdownTokenElement'
 import { observeUrlFavicons } from '../utils/urlFavicon'
+import { resolveMarkdownRenderContent } from '../markdownRenderStrategy'
 import '../styles/markdown.scss'
 
 const props = withDefaults(defineProps<{
   content: string
   preserveLineBreaks?: boolean
+  streaming?: boolean
   variant?: 'default' | 'answer'
 }>(), {
   preserveLineBreaks: false,
+  streaming: false,
   variant: 'default',
 })
 
@@ -33,25 +36,35 @@ const [, onlyErrorToast] = useResponseToast()
 const workspaceStore = useWorkspaceStore()
 const markdownRef = ref<HTMLElement | null>(null)
 let stopObservingUrlFavicons = () => {}
-const html = computed(() => renderMarkdown(props.content, {
-  labelVersion: agentProfileLabelVersion.value,
-  preserveLineBreaks: props.preserveLineBreaks,
-}))
+const renderedContent = computed(() => resolveMarkdownRenderContent(
+  props.content,
+  props.streaming,
+  content => renderMarkdown(content, {
+    labelVersion: agentProfileLabelVersion.value,
+    preserveLineBreaks: props.preserveLineBreaks,
+  }),
+))
 
-onMounted(() => {
-  stopObservingUrlFavicons = observeUrlFavicons(markdownRef.value)
-})
+watch(markdownRef, (element) => {
+  stopObservingUrlFavicons()
+  stopObservingUrlFavicons = observeUrlFavicons(element)
+}, { flush: 'post' })
 
 onBeforeUnmount(() => {
   stopObservingUrlFavicons()
 })
 
 watch(
-  () => props.content,
-  async (content) => {
-    const missingIds = getUncachedAgentProfileIds(getAgentProfileIdsFromPrompt(content))
-    if (!missingIds.length)
+  () => [props.content, props.streaming] as const,
+  async ([content, streaming]) => {
+    if (streaming) {
       return
+    }
+
+    const missingIds = getUncachedAgentProfileIds(getAgentProfileIdsFromPrompt(content))
+    if (!missingIds.length) {
+      return
+    }
 
     try {
       const options = await fetchTaskWindowOptionsByDirIds(
@@ -103,10 +116,30 @@ function isNodeError(error: unknown): error is { code?: string } {
 
 <template>
   <div
+    v-if="renderedContent.kind === 'text'"
     ref="markdownRef"
     class="agent-markdown"
     :class="{ 'agent-markdown--answer': variant === 'answer' }"
     @click="handleMarkdownClick"
-    v-html="html"
+  >
+    <p class="agent-markdown__streaming-text">
+      {{ renderedContent.content }}
+    </p>
+  </div>
+  <div
+    v-else
+    ref="markdownRef"
+    class="agent-markdown"
+    :class="{ 'agent-markdown--answer': variant === 'answer' }"
+    @click="handleMarkdownClick"
+    v-html="renderedContent.content"
   />
 </template>
+
+<style scoped>
+.agent-markdown__streaming-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+</style>

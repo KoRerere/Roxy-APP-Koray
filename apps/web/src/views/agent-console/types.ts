@@ -113,6 +113,7 @@ export interface AgentAttachment {
   preview?: string
   localFile?: File
   localFiles?: File[]
+  uploadedFiles?: AgentAttachment[]
   localPath?: string
   uploadStatus?: AgentAttachmentUploadStatus
 }

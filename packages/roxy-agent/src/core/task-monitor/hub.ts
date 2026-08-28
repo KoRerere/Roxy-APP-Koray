@@ -529,8 +529,8 @@ export class ProfileMonitorHub {
   }>): void {
     const now = Date.now()
     const openDirIds = new Set(connections.map(connection => connection.dirId))
-    for (const dirId of this.openProfiles.keys()) {
-      if (!openDirIds.has(dirId)) this.openProfiles.delete(dirId)
+    for (const [dirId, profile] of this.openProfiles) {
+      if (!openDirIds.has(dirId) && !profile.owner) this.openProfiles.delete(dirId)
     }
     for (const connection of connections) {
       const existing = this.openProfiles.get(connection.dirId)

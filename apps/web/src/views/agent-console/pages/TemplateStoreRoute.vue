@@ -8,6 +8,7 @@ import CustomTemplateBanner from '../components/CustomTemplateBanner.vue'
 import CreateTemplateDialog from '../components/dialog/CreateTemplateDialog.vue'
 import { useCreateTaskDialog } from '../composables/useCreateTaskDialog'
 import { useCustomTemplateDialog } from '../composables/useCustomTemplateDialog'
+import { useDelayedLoading } from '../composables/useDelayedLoading'
 import { useTemplateTaskExecution } from '../composables/useTemplateTaskExecution'
 import {
   buildCustomTemplateRequest,
@@ -66,6 +67,8 @@ const catalogLoading = ref(!cachedLabelCatalog)
 const templatesLoading = ref(true)
 const catalogError = ref(false)
 const templatesError = ref(false)
+const isPageLoading = computed(() => catalogLoading.value || templatesLoading.value)
+const showLoadingSkeleton = useDelayedLoading(isPageLoading)
 const isCustomBannerHidden = ref(false)
 let hasLabelCatalog = Boolean(cachedLabelCatalog)
 let templateRequestSequence = 0
@@ -439,10 +442,12 @@ onMounted(() => {
         <h1>{{ $t('模板商城') }}</h1>
 
         <template v-if="catalogLoading">
-          <TemplateFilterSkeleton />
-          <div class="template-store-grid">
-            <TemplateStoreCardSkeleton :count="6" />
-          </div>
+          <template v-if="showLoadingSkeleton">
+            <TemplateFilterSkeleton />
+            <div class="template-store-grid">
+              <TemplateStoreCardSkeleton :count="6" />
+            </div>
+          </template>
         </template>
 
         <div v-else-if="catalogError" class="template-store-state">
@@ -480,9 +485,11 @@ onMounted(() => {
             </section>
           </div>
 
-          <div v-if="templatesLoading" class="template-store-grid">
-            <TemplateStoreCardSkeleton :count="filteringSkeletonCount" />
-          </div>
+          <template v-if="templatesLoading">
+            <div v-if="showLoadingSkeleton" class="template-store-grid">
+              <TemplateStoreCardSkeleton :count="filteringSkeletonCount" />
+            </div>
+          </template>
 
           <div v-else-if="templatesError" class="template-store-state template-store-state--compact">
             <SvgIcon name="roxy-agent/rx-ic-templates" size="32" />
