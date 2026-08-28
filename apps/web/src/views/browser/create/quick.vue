@@ -202,7 +202,7 @@ async function onSaveAndRun() {
 .quick-create-editor {
   width: min(1140px, 92vw);
   height: min(820px, 88vh);
-  border-radius: var(--radius-2xl, 16px);
+  border-radius: var(--radius-2xl, 8px);
 }
 
 .foot-separator {

@@ -167,6 +167,15 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
+      "skeleton": {
+        "bg": "#ebf1f5",
+        "bg-overlay": "#ebf1f5"
+      },
+      "scrollbar": {
+        "bg": "{primitives.netural.50}",
+        "border": "{colors.border.border-inactive}",
+        "indicator": "{primitives.netural.200}"
+      },
       "progress": {
         "bg": "{primitives.netural.200}",
         "success": "{primitives.green.500}",
@@ -178,27 +187,6 @@
       },
       "collapse": {
         "bg": "{primitives.netural.100}"
-      },
-      "skeleton": {
-        "bg": "#ebf1f5",
-        "bg-overlay": "#ebf1f5"
-      },
-      "scrollbar": {
-        "bg": "{primitives.netural.50}",
-        "border": "{colors.border.border-inactive}",
-        "indicator": "{primitives.netural.200}"
-      },
-      "tag": {
-        "bg2": "#e2e9ee",
-        "bg": "{primitives.netural.100}",
-        "bg-hover": "{primitives.netural.200}",
-        "text": "{colors.text.text-secondary}",
-        "text-hover": "{colors.text.text-secondary-hover}",
-        "icon": "{colors.icon.icon-secondary}",
-        "icon-hover": "{colors.icon.icon-secondary-hover}",
-        "border": "{colors.border.border-subtle}",
-        "border-hover": "{colors.border.border-subtle-hover}",
-        "bg-strong": "{component.tag.bg}"
       },
       "button": {
         "primary": {
@@ -242,6 +230,18 @@
           "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
+      "tag": {
+        "bg2": "#e2e9ee",
+        "bg": "{primitives.netural.100}",
+        "bg-hover": "{primitives.netural.200}",
+        "text": "{colors.text.text-secondary}",
+        "text-hover": "{colors.text.text-secondary-hover}",
+        "icon": "{colors.icon.icon-secondary}",
+        "icon-hover": "{colors.icon.icon-secondary-hover}",
+        "border": "{colors.border.border-subtle}",
+        "border-hover": "{colors.border.border-subtle-hover}",
+        "bg-strong": "{component.tag.bg}"
+      },
       "table": {
         "bg-button-hover": "#d3dde4",
         "bg-header": "{primitives.netural.50}",
@@ -275,6 +275,12 @@
         "text-secondary": "{primitives.netural.200}",
         "divider": "{primitives.netural.600}"
       },
+      "Countdown": {
+        "gradient-1": "#ebf7ff",
+        "gradient-2": "#cdedfe",
+        "bg-1": "#cdedfe",
+        "bg-2": "#f0f9ff"
+      },
       "rainbow": {
         "Yellow": "#ffdd19",
         "Indigo": "#0064d6",
@@ -286,7 +292,6 @@
         "Netural": "{primitives.netural.300}"
       }
     },
-    "bg": "#ffffff",
     "pattern": {
       "resources": {
         "bg-card-inactive": "{colors.background.bg-block}",
@@ -294,14 +299,9 @@
         "bg-card-active": "{colors.background.bg-page}",
         "border-card-active": "{colors.border.border-inactive}"
       },
-      "tour": {
-        "tips": {
-          "bg": "{component.tooltip.bg}",
-          "border": "{component.tooltip.bg}"
-        },
-        "mask": {
-          "bg": "{colors.alpha.alpha-black-40}"
-        }
+      "empty": {
+        "bg-start": "rgba(17, 163, 253, 0.4000)",
+        "bg-end": "rgba(17, 163, 253, 0.0000)"
       },
       "tutorial": {
         "banner": {
@@ -320,9 +320,14 @@
           "bg-play": "#efbff6"
         }
       },
-      "empty": {
-        "bg-start": "rgba(17, 163, 253, 0.4000)",
-        "bg-end": "rgba(17, 163, 253, 0.0000)"
+      "tour": {
+        "tips": {
+          "bg": "{component.tooltip.bg}",
+          "border": "{component.tooltip.bg}"
+        },
+        "mask": {
+          "bg": "{colors.alpha.alpha-black-40}"
+        }
       },
       "editor": {
         "key": "#005cc5",
@@ -384,8 +389,8 @@
           "icon-hover": "{primitives.netural.25}"
         },
         "btn": {
-          "bg-hover": "{primitives.netural.700}",
           "bg": "{primitives.netural.800}",
+          "bg-hover": "{primitives.netural.700}",
           "border": "{primitives.netural.600}",
           "border-hover": "{primitives.netural.500}",
           "text": "{primitives.netural.25}",
@@ -533,7 +538,7 @@
         "top-bg-gradient-02": "#87d1fc"
       }
     },
-    "bg-start": "#ffffff",
+    "bg": "#ffffff",
     "campaign": {
       "netflix": {
         "bg-announcement": "#000000",
@@ -550,6 +555,10 @@
         "text-giftcard-note": "#8b628d",
         "border-giftcard-select": "#b617da"
       },
+      "New-user": {
+        "border-gradient-1": "#03c1d9",
+        "border-gradient-2": "#57da48"
+      },
       "mayFreedom": {
         "bg-gradient-1": "#4096ff",
         "bg-gradient-1-hover": "#1f84ff",
@@ -557,14 +566,7 @@
         "bg-gradient-2-hover": "#01a795"
       }
     },
-    "sc-green": "#1dc94d",
-    "sc-green-shallow": "#e9fceb",
-    "sc-blue": "#11a3fd",
-    "sc-blue-shallow": "#def3ff",
-    "sc-red": "#f53838",
-    "sc-red-shallow": "#fcc5c5",
-    "sc-yellow": "#fc9d12",
-    "sc-yellow-shallow": "#fff4e1"
+    "bg-start": "#ffffff"
   },
   "dark": {
     "colors": {
@@ -734,6 +736,15 @@
         "text-active": "{primitives.netural.0}",
         "icon-active": "{primitives.netural.0}"
       },
+      "skeleton": {
+        "bg-overlay": "#363d45",
+        "bg": "{primitives.netural.800}"
+      },
+      "scrollbar": {
+        "bg": "{primitives.netural.800}",
+        "border": "{colors.border.border-subtle}",
+        "indicator": "{primitives.netural.600}"
+      },
       "progress": {
         "bg": "{primitives.netural.700}",
         "success": "{primitives.green.400}",
@@ -745,27 +756,6 @@
       },
       "collapse": {
         "bg": "{primitives.netural.800}"
-      },
-      "skeleton": {
-        "bg-overlay": "#363d45",
-        "bg": "{primitives.netural.800}"
-      },
-      "scrollbar": {
-        "bg": "{primitives.netural.800}",
-        "border": "{colors.border.border-subtle}",
-        "indicator": "{primitives.netural.600}"
-      },
-      "tag": {
-        "bg2": "#36404a",
-        "bg": "{colors.background.bg-action}",
-        "bg-hover": "{colors.background.bg-action-hover}",
-        "text": "{colors.text.text-secondary}",
-        "text-hover": "{colors.text.text-secondary-hover}",
-        "icon": "{colors.icon.icon-secondary}",
-        "icon-hover": "{colors.icon.icon-secondary-hover}",
-        "border": "{colors.border.border-subtle}",
-        "border-hover": "{colors.border.border-subtle-hover}",
-        "bg-strong": "{primitives.netural.700}"
       },
       "button": {
         "primary": {
@@ -809,6 +799,18 @@
           "icon-inactive": "{colors.icon.icon-inactive}"
         }
       },
+      "tag": {
+        "bg2": "#36404a",
+        "bg": "{colors.background.bg-action}",
+        "bg-hover": "{colors.background.bg-action-hover}",
+        "text": "{colors.text.text-secondary}",
+        "text-hover": "{colors.text.text-secondary-hover}",
+        "icon": "{colors.icon.icon-secondary}",
+        "icon-hover": "{colors.icon.icon-secondary-hover}",
+        "border": "{colors.border.border-subtle}",
+        "border-hover": "{colors.border.border-subtle-hover}",
+        "bg-strong": "{primitives.netural.700}"
+      },
       "table": {
         "bg-header": "{primitives.netural.800}",
         "border-header": "{colors.border.border-subtle}",
@@ -842,6 +844,12 @@
         "text-secondary": "{primitives.netural.200}",
         "divider": "{primitives.netural.600}"
       },
+      "Countdown": {
+        "gradient-1": "#013450",
+        "gradient-2": "#011d32",
+        "bg-1": "#013450",
+        "bg-2": "#011d32"
+      },
       "rainbow": {
         "Yellow": "#ffdd19",
         "Indigo": "#0064d6",
@@ -853,7 +861,6 @@
         "Netural": "{primitives.netural.600}"
       }
     },
-    "bg": "#ffffff",
     "pattern": {
       "resources": {
         "bg-card-inactive": "{colors.background.bg-page}",
@@ -861,14 +868,9 @@
         "bg-card-active": "{colors.background.bg-block}",
         "border-card-active": "{colors.border.border-inactive}"
       },
-      "tour": {
-        "tips": {
-          "bg": "{colors.background.bg-brand}",
-          "border": "{colors.border.border-brand}"
-        },
-        "mask": {
-          "bg": "rgba(36, 38, 41, 0.9000)"
-        }
+      "empty": {
+        "bg-start": "rgba(17, 163, 253, 0.8000)",
+        "bg-end": "rgba(17, 163, 253, 0.0000)"
       },
       "tutorial": {
         "banner": {
@@ -887,9 +889,14 @@
           "bg-play": "#cb4fe7"
         }
       },
-      "empty": {
-        "bg-start": "rgba(17, 163, 253, 0.8000)",
-        "bg-end": "rgba(17, 163, 253, 0.0000)"
+      "tour": {
+        "tips": {
+          "bg": "{colors.background.bg-brand}",
+          "border": "{colors.border.border-brand}"
+        },
+        "mask": {
+          "bg": "rgba(36, 38, 41, 0.9000)"
+        }
       },
       "editor": {
         "key": "#79c0ff",
@@ -951,8 +958,8 @@
           "icon-hover": "{primitives.netural.25}"
         },
         "btn": {
-          "bg-hover": "{primitives.netural.700}",
           "bg": "{primitives.netural.800}",
+          "bg-hover": "{primitives.netural.700}",
           "border": "{primitives.netural.600}",
           "border-hover": "{primitives.netural.500}",
           "text": "{primitives.netural.25}",
@@ -1100,7 +1107,7 @@
         "top-bg-gradient-02": "#022652"
       }
     },
-    "bg-start": "#ffffff",
+    "bg": "#ffffff",
     "campaign": {
       "netflix": {
         "text-announcement": "#ffffff",
@@ -1117,6 +1124,10 @@
         "text-giftcard-note": "#cbaacc",
         "border-giftcard-select": "#e469ff"
       },
+      "New-user": {
+        "border-gradient-1": "#028b9c",
+        "border-gradient-2": "#2c9d20"
+      },
       "mayFreedom": {
         "bg-gradient-1": "#4096ff",
         "bg-gradient-1-hover": "#1f84ff",
@@ -1124,13 +1135,6 @@
         "bg-gradient-2-hover": "#01a795"
       }
     },
-    "sc-green": "#1dc94d",
-    "sc-green-shallow": "rgba(29, 201, 77, 0.4000)",
-    "sc-blue": "#11a3fd",
-    "sc-blue-shallow": "rgba(17, 163, 253, 0.4000)",
-    "sc-red": "#f53838",
-    "sc-red-shallow": "rgba(245, 56, 56, 0.4000)",
-    "sc-yellow": "#fc9d12",
-    "sc-yellow-shallow": "rgba(252, 157, 18, 0.4000)"
+    "bg-start": "#ffffff"
   }
 }

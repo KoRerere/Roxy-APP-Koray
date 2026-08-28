@@ -1,10 +1,106 @@
 import type { FirefoxLaunchOptions } from './types'
 import { Buffer } from 'node:buffer'
 import { spawn } from 'node:child_process'
+import { readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { BiDiClient } from './bidi-client'
 import { FirefoxBrowser } from './browser'
 
 export type { FirefoxLaunchOptions }
+
+/** stdout 中 Marionette 实际监听端口的官方日志格式 */
+const MARIONETTE_PORT_LOG_RE = /Marionette\s+INFO\s+Listening on port\s+(\d+)/
+/** prefs.js 中 Marionette 就绪后写入的实际端口 */
+const MARIONETTE_PORT_PREF_RE = /user_pref\(\s*"marionette\.port"\s*,\s*(\d+)\s*\)/
+
+/**
+ * 将原始端口字符串解析为已分配端口。
+ * 0 表示仍在请求系统分配，不能当作可连接端口。
+ */
+function parseAllocatedPort(raw: string | undefined): number | undefined {
+  if (!raw)
+    return undefined
+  const port = Number.parseInt(raw, 10)
+  if (!Number.isFinite(port) || port <= 0)
+    return undefined
+  return port
+}
+
+/** 从 Firefox stdout 解析 Marionette 实际监听端口 */
+function parseMarionettePortFromLog(output: string): number | undefined {
+  return parseAllocatedPort(output.match(MARIONETTE_PORT_LOG_RE)?.[1])
+}
+
+/** 从 prefs.js 内容解析 Marionette 实际监听端口 */
+function parseMarionettePortFromPrefs(content: string): number | undefined {
+  return parseAllocatedPort(content.match(MARIONETTE_PORT_PREF_RE)?.[1])
+}
+
+/** 解析 Firefox profile 目录：优先显式 userDataDir，否则从 -profile 参数取 */
+function resolveFirefoxProfileDir(options: { userDataDir?: string, args?: string[] }): string | undefined {
+  if (options.userDataDir)
+    return options.userDataDir
+  const args = options.args ?? []
+  const flagIndex = args.findIndex(arg => arg === '-profile' || arg === '--profile')
+  if (flagIndex !== -1)
+    return args[flagIndex + 1]
+  const inline = args.find(arg => arg.startsWith('-profile=') || arg.startsWith('--profile='))
+  return inline?.slice(inline.indexOf('=') + 1)
+}
+
+/**
+ * 启动前清掉上次写入的 marionette.port。
+ * 不清的话，prefs.js 在本次实例写回新端口前仍持有旧值，会被误当成当前端口。
+ */
+async function clearStaleMarionettePortPref(profileDir: string | undefined): Promise<void> {
+  if (!profileDir)
+    return
+  const prefsPath = join(profileDir, 'prefs.js')
+  try {
+    const content = await readFile(prefsPath, 'utf8')
+    const cleaned = content
+      .split('\n')
+      .filter(line => !line.includes('"marionette.port"'))
+      .join('\n')
+    if (cleaned !== content)
+      await writeFile(prefsPath, cleaned, 'utf8')
+  }
+  catch {
+    // 全新 profile 尚无 prefs.js，无需处理
+  }
+}
+
+/** 读取 prefs.js 中已分配的 Marionette 端口 */
+async function readMarionettePortFromPrefs(profileDir: string | undefined): Promise<number | undefined> {
+  if (!profileDir)
+    return undefined
+  try {
+    const content = await readFile(join(profileDir, 'prefs.js'), 'utf8')
+    return parseMarionettePortFromPrefs(content)
+  }
+  catch {
+    return undefined
+  }
+}
+
+/** stdout 未解析到时轮询 prefs.js：官方会在 Marionette 就绪后把实际端口写进该文件 */
+async function waitForMarionettePortFromPrefs(
+  profileDir: string | undefined,
+  timeoutMs: number,
+): Promise<number | undefined> {
+  if (!profileDir)
+    return undefined
+  const deadline = Date.now() + timeoutMs
+  while (true) {
+    const port = await readMarionettePortFromPrefs(profileDir)
+    if (port !== undefined)
+      return port
+    if (Date.now() >= deadline)
+      return undefined
+    await sleep(150)
+  }
+}
 
 /**
  * 启动 Firefox 浏览器
@@ -24,6 +120,8 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
     throw new Error($t('Firefox 内核路径未指定'))
   }
 
+  const profileDir = resolveFirefoxProfileDir(options)
+
   if (relaunch) {
     spawn(executablePath, args, {
       detached: false,
@@ -31,6 +129,9 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
     })
     return
   }
+
+  // 必须在 spawn 前清掉上次端口，否则轮询 prefs.js 可能读到上一实例的残留值
+  await clearStaleMarionettePortPref(profileDir)
 
   // 启动 Firefox 进程，参数原样传递
   const firefoxProcess = spawn(executablePath, args, {
@@ -40,7 +141,7 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
 
   console.debug('firefoxProcess pid', firefoxProcess?.pid)
 
-  // 暂存 Marionette 端口（通过 stdout 解析，早于 BiDi URL 打印；若未能解析则兜底用 BiDi 端口 - 1）
+  // 暂存 Marionette 端口（官方发现方式：stdout「Listening on port」）
   let marionettePort: number | undefined
 
   // 等待获取 WebSocket URL
@@ -56,11 +157,10 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
       const output = data.toString()
       console.debug('[firefox stdout]', output)
 
-      // 解析 Marionette 端口，格式示例（来自 stdout）：
-      // "1779936938036    Marionette      INFO    Listening on port 2828"
-      const marionetteMatch = output.match(/Marionette\s+INFO\s+Listening on port\s+(\d+)/)
-      if (marionetteMatch && !marionettePort) {
-        marionettePort = Number.parseInt(marionetteMatch[1], 10)
+      // 官方发现方式：stdout "Marionette INFO Listening on port <port>"
+      const parsedMarionettePort = parseMarionettePortFromLog(output)
+      if (parsedMarionettePort && !marionettePort) {
+        marionettePort = parsedMarionettePort
         console.log('Extracted marionettePort from stdout:', marionettePort)
       }
     })
@@ -94,7 +194,7 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
 
   // Firefox 在打印 "WebDriver BiDi listening on ..." 时，WebSocket 服务器可能尚未完全
   // bind 完毕，立即连接会触发竞态失败。等待 300ms 让系统完成端口监听。
-  await new Promise(resolve => setTimeout(resolve, 300))
+  await sleep(300)
 
   try {
     // 创建 BiDi 客户端
@@ -120,9 +220,28 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
       console.warn('Failed to extract port from WebSocket URL:', error)
     }
 
-    // Marionette 端口：优先取 stderr 解析值，兜底用 BiDi 端口 - 1（本项目 Firefox 构建约定）
-    const resolvedMarionettePort = marionettePort ?? (actualPort !== undefined ? actualPort - 1 : undefined)
-    console.log('Resolved marionettePort:', resolvedMarionettePort)
+    // stdout 未解析到时读 prefs.js（官方第二来源）；不用 BiDi 端口推算，二者无绑定关系
+    let marionettePortSource: 'stdout' | 'prefs.js' | 'stdout-late' | undefined
+    let resolvedMarionettePort = marionettePort
+    if (resolvedMarionettePort !== undefined) {
+      marionettePortSource = 'stdout'
+    }
+    else {
+      resolvedMarionettePort = await waitForMarionettePortFromPrefs(profileDir, 2_000)
+      if (resolvedMarionettePort !== undefined)
+        marionettePortSource = 'prefs.js'
+    }
+    // prefs 轮询期间 stdout 仍可能迟到，再读一次内存里的解析结果
+    if (resolvedMarionettePort === undefined && marionettePort !== undefined) {
+      resolvedMarionettePort = marionettePort
+      marionettePortSource = 'stdout-late'
+    }
+    if (resolvedMarionettePort !== undefined) {
+      console.log(`Resolved marionettePort from ${marionettePortSource}:`, resolvedMarionettePort)
+    }
+    else {
+      console.warn('Marionette port not found in stdout or prefs.js')
+    }
 
     // 创建并返回 FirefoxBrowser 实例
     return new FirefoxBrowser(
@@ -150,8 +269,12 @@ export async function launch(options: FirefoxLaunchOptions): Promise<FirefoxBrow
 /**
  * 连接到已存在的 Firefox 浏览器
  */
-export async function connect(options: { browserWSEndpoint: string, sessionId?: string }): Promise<FirefoxBrowser> {
-  const { browserWSEndpoint, sessionId } = options
+export async function connect(options: {
+  browserWSEndpoint: string
+  sessionId?: string
+  userDataDir?: string
+}): Promise<FirefoxBrowser> {
+  const { browserWSEndpoint, sessionId, userDataDir } = options
 
   try {
     // 创建 BiDi 客户端
@@ -181,6 +304,10 @@ export async function connect(options: { browserWSEndpoint: string, sessionId?: 
       console.warn('Failed to extract port from WebSocket URL:', error)
     }
 
+    // 已运行实例的实际端口已写在 prefs.js，不能从 BiDi 端口推算
+    const marionettePort = await readMarionettePortFromPrefs(userDataDir)
+    console.log('Resolved marionettePort from prefs.js:', marionettePort)
+
     // 创建并返回 FirefoxBrowser 实例（没有进程对象）
     return new FirefoxBrowser(
       bidiClient,
@@ -189,6 +316,7 @@ export async function connect(options: { browserWSEndpoint: string, sessionId?: 
       actualSessionId,
       capabilities,
       actualPort,
+      marionettePort,
     )
   }
   catch (error) {

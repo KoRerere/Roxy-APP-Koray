@@ -75,13 +75,26 @@ const amount = ref(min.value)
 const rechargeAmount = computed(() => amount.value ?? min.value)
 const lockMessage = computed(() => lockModal.value ? $t('正在处理支付，请勿关闭。') : '')
 
+/** 括号内只拼实际存在的费率项，避免出现 0%+$0.00 */
+function formatFeeDetail(feeRate: number, feeFixed: number) {
+  const parts: string[] = []
+  if (feeRate > 0)
+    parts.push(`${feeRate}%`)
+  if (feeFixed > 0)
+    parts.push(currency(feeFixed).format())
+  return parts.join('+')
+}
+
 const playInfo = computed(() => {
   const data = playInfoList.value?.find(item => item.payType === selectedPayway.value)
+  const fee = data?.fee ?? 0
+  const feeRate = data?.feeRate ?? 0
+  const feeFixed = data?.feeFixed ?? 0
 
   return {
     total: data?.total ?? 0,
-    fee: data?.fee ?? 0,
-    feeRate: data?.feeRate ?? 0,
+    fee,
+    feeDetail: formatFeeDetail(feeRate, feeFixed),
     activityTotalRecharge: getActivityTotalRecharge(rechargeAmount.value),
   }
 })
@@ -204,9 +217,9 @@ function close(isCancel: boolean) {
                 <span v-if="playInfo.activityTotalRecharge > rechargeAmount" class="tt-brand font-600">({{ $t('到账 {amount}', { amount: currency(playInfo.activityTotalRecharge).format() }) }})</span>
               </template>
             </I18nT>
-            <div v-if="playInfo.feeRate > 0" class="flex gap-1 items-center text-3.5">
-              <div>{{ $t('收取 {feeRate}% 的手续: {fee}', { feeRate: playInfo.feeRate, fee: currency(playInfo.fee).format() }) }}</div>
-              <div v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeRate}% 的手续费。', { feeRate: playInfo.feeRate }) }" class="flex items-center">
+            <div v-if="playInfo.fee > 0" class="flex gap-1 items-center text-3.5">
+              <div>{{ $t('手续费（{feeDetail}）：{fee}', { feeDetail: playInfo.feeDetail, fee: currency(playInfo.fee).format() }) }}</div>
+              <div v-if="selectedPayway === PayWay.Card" v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeDetail} 的手续费。', { feeDetail: playInfo.feeDetail }) }" class="flex items-center">
                 <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
               </div>
             </div>

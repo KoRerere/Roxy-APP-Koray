@@ -141,7 +141,7 @@ function onBuy(kind: BenefitOfferKind) {
             class="flex items-center gap-5 py-4 px-5 rounded-3 item"
             @click="onBuy(offer.kind)"
           >
-            <div class="relative w-32">
+            <div class="relative w-32 lang-en:w-28">
               <span class="tag lang-en:text-3 lang-en:left-50px lang-ru:text-3 lang-ru:left-42px" :class="offer.tagClass">{{ offer.tag }}</span>
               <span :class="offer.priceClass">{{ offer.price }}</span>
             </div>
@@ -152,7 +152,7 @@ function onBuy(kind: BenefitOfferKind) {
               <div class="tt-primary text-4.5 font-600 leading-6.5 whitespace-nowrap">
                 {{ offer.title }}
               </div>
-              <div class="tt-tertiary lang-zh:text-3.5 text-3.3 font-500 leading-5">
+              <div class="tt-tertiary lang-zh:text-3.5 text-3 font-500 leading-5">
                 {{ offer.desc }}
               </div>
             </div>

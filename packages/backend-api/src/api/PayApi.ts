@@ -11,6 +11,8 @@
  */
 
 import {
+  QueryOrderStatusListData,
+  QueryOrderStatusListParams,
   UserAutoRenewUpgradeListData,
   UserAutoRenewUpgradeListParams,
   UserBindCardCreateData,
@@ -904,6 +906,26 @@ export class PayApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name QueryOrderStatusList
+   * @summary 查询订单状态（非鉴权）
+   * @request GET:/app_statistics/query_order_status
+   * @response `200` `QueryOrderStatusListData`
+   */
+  queryOrderStatusList = (
+    query: QueryOrderStatusListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<QueryOrderStatusListData, any>({
+      path: `/app_statistics/query_order_status`,
+      method: "GET",
+      query: query,
       format: "json",
       ...params,
     });

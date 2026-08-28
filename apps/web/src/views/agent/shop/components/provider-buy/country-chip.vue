@@ -66,7 +66,7 @@ const benefitTooltip = computed(() => {
 </script>
 
 <template>
-  <div v-tooltip.top="{ value: benefitTooltip, disabled: !benefitTooltip }" class="w-38 h-10 relative flex items-center justify-center gap-1.5 leading-none cursor-pointer select-none" :class="[styles.radio, active && styles.active, hasNewUserBenefit && styles.newUser]" @click="emit('select', option)">
+  <div v-tooltip.top="{ value: benefitTooltip, disabled: !benefitTooltip, showDelay: 400 }" class="w-38 h-10 relative flex items-center justify-center gap-1.5 leading-none cursor-pointer select-none" :class="[styles.radio, active && styles.active, hasNewUserBenefit && styles.newUser]" @click="emit('select', option)">
     <div v-if="option.isNew"
          class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white"
     >
@@ -107,7 +107,7 @@ const benefitTooltip = computed(() => {
     }
   }
 
-  /* 新人专享：用 1px 青→绿渐变环替换灰描边；选中时仍走该环，避免品牌色 3px 把活动边盖掉 */
+  /* 新人专享：未选中时用 1px 青→绿渐变环替换灰描边；选中后与普通项同一套品牌描边 */
   &.newUser {
     box-shadow: none;
 
@@ -120,7 +120,13 @@ const benefitTooltip = computed(() => {
       /* 外圆角 8px、3px 页面底色边，内环贴齐内容盒 */
       border-radius: 5px;
       padding: 1px;
-      background: linear-gradient(87deg, #03c1d9 0%, #57da48 107.49%);
+      // --campaign-New-user-border-gradient-1: #028b9c;
+      // --campaign-New-user-border-gradient-2: #2c9d20;
+      background: linear-gradient(
+        87deg,
+        var(--campaign-New-user-border-gradient-1) 0%,
+        var(--campaign-New-user-border-gradient-2) 107.49%
+      );
       -webkit-mask:
         linear-gradient(#fff 0 0) content-box,
         linear-gradient(#fff 0 0);
@@ -131,8 +137,8 @@ const benefitTooltip = computed(() => {
       mask-composite: exclude;
     }
 
-    &.active {
-      border-color: var(--colors-background-bg-page);
+    &.active::after {
+      display: none;
     }
   }
 }

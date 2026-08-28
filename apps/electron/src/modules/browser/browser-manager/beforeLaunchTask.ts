@@ -303,7 +303,11 @@ export class BeforeLaunchTask {
   async reconnectBrowser() {
     if (this.wsEndpoint) {
       try {
-        this.browser = await connectBrowser({ coreType: this.browserItem.coreType, browserWSEndpoint: this.wsEndpoint })
+        this.browser = await connectBrowser({
+          coreType: this.browserItem.coreType,
+          browserWSEndpoint: this.wsEndpoint,
+          userDataDir: this.browserItem.isFirefox ? this.browserItem.userDataDir : undefined,
+        })
         console.log('Reconnected to browser successfully')
         return true
       }
@@ -367,8 +371,9 @@ export class BeforeLaunchTask {
   /**
    * 生成 Firefox 启动命令行参数：
    *  ```
-   *  RoxyFirefox -profile <data-dir> --remote-debugging-port=0 [user-args] [urls...]
+   *  RoxyFirefox -profile <data-dir> --marionette --remote-debugging-port=0 [user-args] [urls...]
    *  ```
+   * Marionette 端口不在 CLI 指定，由 user.js 的 marionette.port=0 交给系统分配。
    */
   private async genFirefoxLaunchCLIArgs(): Promise<string[]> {
     const {
@@ -824,6 +829,9 @@ export class BeforeLaunchTask {
         '// Roxy Browser managed preferences',
         // 保持后台 Firefox profile 可响应 BiDi 合成点击，并避免后台渲染/计时器节流影响自动化。
         ...firefoxBackgroundAutomationPrefs,
+        // marionette.port=0：由系统原子分配空闲端口，避免多实例争用默认 2828；
+        // 实际端口在 Marionette 就绪后写入 prefs.js，并打印到 stdout。
+        'user_pref("marionette.port", 0);',
         // page=1：启动时显示主页（对应设置 → 主页 → 主页和新窗口 = "Firefox 主页（默认）"）
         // 不使用 page=3，避免 session 恢复与 CLI URL 重复开 tab
         // 'user_pref("browser.startup.page", 1);',

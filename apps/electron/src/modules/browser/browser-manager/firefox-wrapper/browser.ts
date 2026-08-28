@@ -29,7 +29,7 @@ export class FirefoxBrowser extends EventEmitter {
   private sessionId?: string
   private capabilities?: BiDiCapabilities
   actualPort?: number
-  /** Marionette 协议端口（供 Selenium/GeckoDriver 使用） */
+  /** Marionette 协议端口（供 Selenium/GeckoDriver 使用），来自 stdout 或 prefs.js */
   marionettePort?: number
 
   /**

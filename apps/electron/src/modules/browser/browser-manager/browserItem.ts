@@ -188,8 +188,9 @@ export class BrowserItem {
 
   /** 在已打开的浏览器中打开 URL（兼容 Firefox BiDi 重连） */
   async openUrls(urls: string[]) {
-    if (!this.#browser)
+    if (!this.#browser) {
       return
+    }
     if (this.afterLaunchTask) {
       await this.afterLaunchTask.openUrls(urls)
       return
@@ -239,6 +240,8 @@ export class BrowserItem {
       //   browserType: 'chrome',
       //   headless: this.beforeLaunchTask.launchArgs.some(arg => arg.startsWith('--headless')),
       // })
+
+      console.log('BrowserItem launchInfo', this.launchInfo)
     }
   }
 

@@ -6333,14 +6333,14 @@ export interface UserGetTransferWorkspaceListListData {
     workspaceId?: number;
     /** 是否为自己空间（判断发邮箱依据），true：自己的，false：别人的 */
     isWorkspace?: boolean;
-    /** 窗口任务编号,只有类型为2才有值 */
-    windowTransferNo?: string;
     /** 空间编号 */
     workspaceNo?: string;
     /** 空间名称 */
     workspaceName?: string;
     /** 空间图标 */
     workspacePicture?: string;
+    /** 工作空间图片URL */
+    workspacePictureUrl?: string;
     /** 窗口数量是否充足  true:充足, flase: 超出 */
     isWindowCountEnough?: boolean;
     /** 类型：1：自己的空间 ，2：已转移的空间   0 ：默认没有 */
@@ -10154,39 +10154,41 @@ export interface UserGetWorkspaceListListData {
   data: {
     rows: {
       /** ID */
-      id: string;
+      id?: number;
       /** 创建人ID */
-      userId: number;
+      userId?: number;
       /** 工作空间名称 */
-      workspaceName: string;
+      workspaceName?: string;
       /** 总窗口数量 */
-      totalWindowCount: number;
+      totalWindowCount?: number;
       /** 总成员数量 */
-      totalMemberCount: number;
+      totalMemberCount?: number;
       /** 工作空间图片 */
-      workspacePicture: string;
+      workspacePicture?: string;
+      /** 工作空间图片URL */
+      workspacePictureUrl?: string;
       /** 是否默认工作空间，1：是 0：不是，默认不是 */
-      workspaceDefault: number;
+      workspaceDefault?: number;
       /** 工作空间状态，1：启用 0：停用 */
-      workspaceStatus: number;
+      workspaceStatus?: number;
       /** 创建时间 */
-      createTime: string;
+      createTime?: string;
       /** 修改时间 */
-      updateTime: string;
+      updateTime?: string;
       /** 权限 */
-      role: number;
+      role?: number;
       /** 总窗口数量 */
-      maxWindowCount: number;
+      maxWindowCount?: number;
       /** 窗口使用数量 */
-      useWindowCount: number;
+      useWindowCount?: number;
       /** 窗口编号 */
-      workspaceNo: number;
-      email: string;
+      workspaceNo?: number;
+      email?: string;
       /** 0私有 1 公共的 */
-      workspaceType: number;
+      workspaceType?: number;
       /** 团队成员数量 */
-      useMemberCount: number;
-      phone: string;
+      useMemberCount?: number;
+      phone?: string;
     }[];
   };
   msg: string;
@@ -10197,8 +10199,9 @@ export interface UserAddWorkspaceInfoCreatePayload {
   workspaceName: string;
   /** 0 普通空间，2电商专用 */
   workspaceType: number;
+  workspacePicture?: string;
   /** 工作空间图片 */
-  workspacePicture: string;
+  workspacePictureUrl?: string;
 }
 
 export interface UserAddWorkspaceInfoCreateData {
@@ -10214,10 +10217,9 @@ export interface UserMdfWorkspaceInfoCreatePayload {
   id: number;
   /** 工作空间名称 */
   workspaceName: string;
+  workspacePicture?: string;
   /** 工作空间图片 */
-  workspacePicture: string;
-  /** 可创建最大的窗口数量 */
-  maxWindowCount: number;
+  workspacePictureUrl?: string;
 }
 
 export interface UserMdfWorkspaceInfoCreateData {
@@ -10260,16 +10262,18 @@ export interface UserGetPublicWorkspaceListListData {
   code: number;
   data: {
     rows: {
-      id: number;
-      workspaceName: string;
-      workspaceNo: string;
-      workspaceType: number;
-      workspacePicture: string;
-      workspaceDefault: number;
-      workspaceStatus: number;
-      createTime: string;
-      updateTime: string;
-      role: number;
+      id?: number;
+      workspaceName?: string;
+      workspaceNo?: string;
+      workspaceType?: number;
+      workspacePicture?: string;
+      /** 工作空间图片URL */
+      workspacePictureUrl?: string;
+      workspaceDefault?: number;
+      workspaceStatus?: number;
+      createTime?: string;
+      updateTime?: string;
+      role?: number;
     }[];
   };
   msg: string;
@@ -11319,12 +11323,20 @@ export interface UserGetPayChannelFeesListParams {
 export interface UserGetPayChannelFeesListData {
   code: number;
   data: {
-    category: string;
-    fee: number;
-    feeRate: number;
-    isShow: boolean;
+    /** 支付方式标识（Wechat / Alipay / Card / fpx_my ...） */
     payType: string;
+    /** 币种分类（CNY / USD / MYR / Crypto ...） */
+    category: string;
+    /** 比例手续费（百分比）：0=0%，3=3%，3.5=3.5% */
+    feeRate: number;
+    /** 固定手续费（美元）：如 1.0 表示 +$1 */
+    feeFixed: number;
+    /** 本次手续费合计（美元）= 充值金额 × feeRate% + feeFixed */
+    fee: number;
+    /** 用户实付总额（美元）= 充值金额 + fee */
     total: number;
+    /** 是否展示：false=下架 / 超限额 / 网关不支持 */
+    isShow: boolean;
   }[];
   msg: string;
 }
@@ -11372,6 +11384,18 @@ export interface UserPermanentWindowSettlementCreateData {
     /** 是否即时到账：true = 扣款成功已直接加窗口 */
     immediate: boolean;
   };
+}
+
+export interface QueryOrderStatusListParams {
+  /** @example "178783649528588837" */
+  orderNo?: string;
+}
+
+export interface QueryOrderStatusListData {
+  code: number;
+  /** //支付状态 TRADE_SUCCESS: 支付成功,TRADE_CLOSED：交易关闭,WAIT_BUYER_PAY：待支付,TRADE_FAIL：自动扣款失败 */
+  data: string;
+  msg: string;
 }
 
 export interface CheckIpDownloadLimitListData {

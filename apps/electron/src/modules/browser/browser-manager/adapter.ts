@@ -94,7 +94,8 @@ export interface IBrowser extends EventEmitter {
   actualPort?: number
 
   /**
-   * Marionette 协议端口（仅 Firefox，供 Selenium/GeckoDriver 使用）
+   * Marionette 协议端口（仅 Firefox，供 Selenium/GeckoDriver 使用）。
+   * 来自 stdout「Listening on port」或启动后 prefs.js 的 marionette.port，不是从 BiDi 端口推算。
    */
   marionettePort?: number
 
@@ -248,7 +249,7 @@ export class BrowserAdapterFactory {
   /**
    * 连接到已存在的浏览器
    */
-  static async connect(options: { coreType: CoreType, browserWSEndpoint: string }): Promise<IBrowser> {
+  static async connect(options: { coreType: CoreType, browserWSEndpoint: string, userDataDir?: string }): Promise<IBrowser> {
     if (options.coreType === CoreType.Chrome) {
       const chromeWrapper = await import('./chrome-wrapper')
       return chromeWrapper.connect(options) as unknown as IBrowser
@@ -276,7 +277,7 @@ export async function launchBrowser(
  * 便捷函数：自动检测浏览器类型并连接
  */
 export async function connectBrowser(
-  options: { coreType: CoreType, browserWSEndpoint: string },
+  options: { coreType: CoreType, browserWSEndpoint: string, userDataDir?: string },
 ): Promise<IBrowser> {
   return BrowserAdapterFactory.connect(options)
 }
