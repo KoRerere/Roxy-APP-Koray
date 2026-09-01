@@ -7,8 +7,8 @@ export interface StoreType {
   browserCacheRootDir: string
   /** 默认浏览器 dirId */
   defaultBrowserDirId: string
-  /** 默认浏览器 workspaceId */
-  defaultBrowserWorkspaceId?: number
+  /** 默认浏览器 workspaceId（后端已改为字符串长 ID，兼容旧数字） */
+  defaultBrowserWorkspaceId?: string | number
   /**
    * 软件关闭时
    * - pop: 弹出提示

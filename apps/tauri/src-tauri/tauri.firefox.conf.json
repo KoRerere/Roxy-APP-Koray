@@ -1,7 +1,7 @@
 {
   "productName": "RoxyFirefox",
   "mainBinaryName": "RoxyFirefox",
-  "identifier": "com.roxybrowserdev.browser.launcher.firefox",
+  "identifier": "com.roxybrowser.browser.launcher.firefox",
   "build": {
     "frontendDist": "empty-dist"
   },
@@ -44,5 +44,5 @@
       "../../electron/resources/firefox/icon.icns"
     ]
   },
-  "version": "1.0.20"
+  "version": "1.0.9"
 }

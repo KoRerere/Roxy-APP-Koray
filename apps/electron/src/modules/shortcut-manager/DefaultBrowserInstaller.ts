@@ -129,16 +129,16 @@ function resolveShortcutNames(execName: string, fallback: string) {
 }
 
 /** 设为默认浏览器时写入 store，供 Tauri launcher 读取 config.json */
-function persistDefaultBrowserSelection(dirId: string, workspaceId: number) {
+function persistDefaultBrowserSelection(dirId: string, workspaceId: string | number) {
   store.defaultBrowserDirId = dirId
-  store.defaultBrowserWorkspaceId = workspaceId
+  store.defaultBrowserWorkspaceId = String(workspaceId)
 }
 
 const defaultBrowserBinDir = join(appConfig.sessionDir, 'default-browser-bin')
 
 interface InstallAndRegisterOptions {
   dirId: string
-  workspaceId: number
+  workspaceId: string | number
   execName: string
   /** 是否设为默认浏览器 */
   isSetAsDefaultBrowser?: boolean

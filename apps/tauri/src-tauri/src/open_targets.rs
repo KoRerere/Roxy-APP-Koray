@@ -12,7 +12,8 @@ struct OpenQueue {
     ensure_window: bool,
     /// 本次启动携带的临时覆盖参数（只用于下一次 drain_batch，不会“锁死”主进程）
     override_dir_id: Option<String>,
-    override_workspace_id: Option<i64>,
+    /// 本次启动覆盖的 workspaceId（字符串长 ID）
+    override_workspace_id: Option<String>,
 }
 
 /// macOS 作为默认浏览器 / Finder “打开方式” 启动时，系统会把 URL / 文件作为“打开资源”事件传入；
@@ -55,13 +56,14 @@ pub fn mark_ensure_window(app: &tauri::AppHandle) {
     logging::info("mark_ensure_window: true");
 }
 
-pub fn set_overrides(app: &tauri::AppHandle, dir_id: Option<String>, workspace_id: Option<i64>) {
+/// 写入本次启动的 dir/workspace 覆盖值，只对下一次转发批次生效。
+pub fn set_overrides(app: &tauri::AppHandle, dir_id: Option<String>, workspace_id: Option<String>) {
     if dir_id.is_none() && workspace_id.is_none() {
         return;
     }
     let dir_log = dir_id.clone().unwrap_or_else(|| "<none>".to_string());
     let ws_log = workspace_id
-        .map(|v| v.to_string())
+        .clone()
         .unwrap_or_else(|| "<none>".to_string());
     if let Ok(mut g) = app.state::<OpenTargetsState>().0.lock() {
         if dir_id.is_some() {
@@ -77,7 +79,7 @@ pub fn set_overrides(app: &tauri::AppHandle, dir_id: Option<String>, workspace_i
     ));
 }
 
-pub fn drain_batch(app: &tauri::AppHandle) -> (bool, Vec<String>, Option<String>, Option<i64>) {
+pub fn drain_batch(app: &tauri::AppHandle) -> (bool, Vec<String>, Option<String>, Option<String>) {
     app.state::<OpenTargetsState>()
         .0
         .lock()

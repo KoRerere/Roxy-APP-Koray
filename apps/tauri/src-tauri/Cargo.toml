@@ -1,6 +1,6 @@
 [package]
 name = "tauri"
-version = "1.0.20"
+version = "1.0.9"
 description = "A RoxyBrowser Launcher"
 authors = ["roxybrowser"]
 edition = "2021"

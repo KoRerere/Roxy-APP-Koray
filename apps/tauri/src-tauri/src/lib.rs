@@ -124,7 +124,7 @@ pub fn run() {
 
         // 临时覆盖：本次启动如果携带 dir/workspace，则仅对这次转发生效（不锁死主进程）
         let dir_id = args::argv_get_value(&argv, "--dir-id");
-        let workspace_id = args::argv_get_i64(&argv, "--workspace-id");
+        let workspace_id = args::argv_get_value(&argv, "--workspace-id");
         open_targets::set_overrides(app, dir_id, workspace_id);
 
         // 需求：每次启动都只依据磁盘 config.json（不再使用/存储任何 CLI 覆盖），并且如果没有 URL/文件参数则拉起默认窗口
@@ -183,7 +183,7 @@ pub fn run() {
 
             // 临时覆盖：本次启动如果携带 dir/workspace，则仅对这次转发生效（不锁死主进程）
             let dir_id = args::argv_get_value(&argv_all, "--dir-id");
-            let workspace_id = args::argv_get_i64(&argv_all, "--workspace-id");
+            let workspace_id = args::argv_get_value(&argv_all, "--workspace-id");
             open_targets::set_overrides(&app.handle(), dir_id, workspace_id);
 
             let argv_targets = args::collect_open_targets_from_args(argv_all.into_iter().skip(1));

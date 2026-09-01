@@ -30,10 +30,6 @@ pub fn argv_get_value(argv: &[String], key: &str) -> Option<String> {
     None
 }
 
-pub fn argv_get_i64(argv: &[String], key: &str) -> Option<i64> {
-    argv_get_value(argv, key).and_then(|s| s.parse::<i64>().ok())
-}
-
 fn strip_wrapping_quotes(s: &str) -> &str {
     let s = s.trim();
     if s.len() >= 2 {

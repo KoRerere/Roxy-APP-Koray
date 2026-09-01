@@ -4,7 +4,7 @@ use std::time::Duration;
 use tungstenite::{client, Message, WebSocket};
 use tungstenite::client::IntoClientRequest;
 
-use crate::config::load_roxy_config_from_disk;
+use crate::config::{is_blank_id, load_roxy_config_from_disk};
 use crate::logging;
 use crate::open_targets;
 use crate::paths;
@@ -200,11 +200,13 @@ fn linux_launch_via_desktop_exec(url: &str) -> Result<(), String> {
         .map_err(|e| format!("desktop exec fallback: spawn failed: {e}"))
 }
 
-fn wake_electron_via_protocol(dir_id: &str, workspace_id: i64) -> Result<(), String> {
-    // dirId 为 hex，workspaceId 为数字，直接拼接足够可靠
+fn wake_electron_via_protocol(dir_id: &str, workspace_id: &str) -> Result<(), String> {
+    // dirId / workspaceId 均为字符串长 ID，query 需编码以免特殊字符截断
     let mut last_err: Option<String> = None;
+    let dir = url_encode_component(dir_id);
+    let workspace = url_encode_component(workspace_id);
     for scheme in app_protocol_candidates() {
-        let url = format!("{scheme}://open-browser-failed?dirId={dir_id}&workspaceId={workspace_id}");
+        let url = format!("{scheme}://open-browser-failed?dirId={dir}&workspaceId={workspace}");
         logging::info(&format!("wake-electron: try openUrl {}", url));
         match os_open_url(&url) {
             Ok(_) => {
@@ -237,15 +239,17 @@ fn url_encode_component(s: &str) -> String {
 
 fn wake_electron_via_protocol_with_url(
     dir_id: &str,
-    workspace_id: i64,
+    workspace_id: &str,
     target_url: &str,
 ) -> Result<(), String> {
     // 复用 open-browser-failed 路由，增加可选 url 参数，兼容旧 Electron
+    let dir = url_encode_component(dir_id);
+    let workspace = url_encode_component(workspace_id);
     let enc = url_encode_component(target_url);
     let mut last_err: Option<String> = None;
     for scheme in app_protocol_candidates() {
         let url = format!(
-            "{scheme}://open-browser-failed?dirId={dir_id}&workspaceId={workspace_id}&url={enc}"
+            "{scheme}://open-browser-failed?dirId={dir}&workspaceId={workspace}&url={enc}"
         );
         logging::info(&format!("wake-electron: try openUrl {}", url));
         match os_open_url(&url) {
@@ -360,7 +364,7 @@ fn ws_wait_for_type(ws: &mut Ws, ty: &str, max_wait: Duration) -> Result<serde_j
 fn forward_open_targets_to_electron_ws(
     ws: &mut Ws,
     dir_id: &str,
-    workspace_id: i64,
+    workspace_id: &str,
     ensure_window: bool,
     targets: Vec<String>,
 ) -> Result<(), String> {
@@ -481,13 +485,14 @@ pub fn start_forwarder(app: tauri::AppHandle) {
                     .or(cfg.default_browser_dir_id.clone())
                     .unwrap_or_default();
                 let workspace_id = override_workspace_id
-                    .or(cfg.current_workspace)
-                    .or(cfg.default_browser_workspace_id)
-                    .unwrap_or(0);
+                    .clone()
+                    .or(cfg.current_workspace.clone())
+                    .or(cfg.default_browser_workspace_id.clone())
+                    .unwrap_or_default();
                 let port = cfg.app_ws_port.unwrap_or(0);
                 let token = cfg.app_ws_token.unwrap_or_default();
 
-                if dir_id.is_empty() || workspace_id == 0 || port == 0 || token.is_empty() {
+                if dir_id.is_empty() || is_blank_id(&workspace_id) || port == 0 || token.is_empty() {
                     logging::error(
                         "forwarder: config missing fields (dirId/workspaceId/appWsPort/appWsToken), will retry",
                     );
@@ -505,9 +510,7 @@ pub fn start_forwarder(app: tauri::AppHandle) {
                     dir_id,
                     workspace_id,
                     override_dir_id.as_deref().unwrap_or("<none>"),
-                    override_workspace_id
-                        .map(|v| v.to_string())
-                        .unwrap_or_else(|| "<none>".to_string())
+                    override_workspace_id.as_deref().unwrap_or("<none>")
                 ));
 
                 let ws_url = format!("ws://127.0.0.1:{port}?token={token}");
@@ -546,9 +549,9 @@ pub fn start_forwarder(app: tauri::AppHandle) {
                                         || s.starts_with("file://")
                                 });
                                 let r = if let Some(u) = first_target {
-                                    wake_electron_via_protocol_with_url(&dir_id, workspace_id, u)
+                                    wake_electron_via_protocol_with_url(&dir_id, &workspace_id, u)
                                 } else {
-                                    wake_electron_via_protocol(&dir_id, workspace_id)
+                                    wake_electron_via_protocol(&dir_id, &workspace_id)
                                 };
                                 if let Err(e) = r {
                                     logging::error(&format!("wake-electron failed: {e}"));
@@ -573,7 +576,7 @@ pub fn start_forwarder(app: tauri::AppHandle) {
                     match forward_open_targets_to_electron_ws(
                         sock,
                         &dir_id,
-                        workspace_id,
+                        &workspace_id,
                         ensure_window,
                         targets.clone(),
                     ) {

@@ -169,7 +169,7 @@ async function handleMessage(ws: WebSocket, message: any) {
 }
 
 /** 打开浏览器窗口 */
-export async function openBrowserWindow(dirId: string, workspaceId: number, urls: string[] = [], sendMessage = (_: any) => { }) {
+export async function openBrowserWindow(dirId: string, workspaceId: string | number, urls: string[] = [], sendMessage = (_: any) => { }) {
   try {
     console.debug('browser:open-window', dirId, workspaceId)
     // API 类型定义与后端字段可能不同步：这里按现有后端接口实参传递，必要时用 any 兜底

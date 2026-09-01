@@ -111,7 +111,7 @@ async function launchBrowser() {
   } = roxyConfig.value
 
   const dirId = currentDirId || defaultBrowserDirId
-  const workspaceId = (typeof currentWorkspace === 'number' ? currentWorkspace : undefined) ?? defaultBrowserWorkspaceId
+  const workspaceId = currentWorkspace || defaultBrowserWorkspaceId
 
   async function launchAPP() {
     const searchParams = new URLSearchParams({

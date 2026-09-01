@@ -19,7 +19,8 @@ export interface WebSocketMessageMap {
   'browser:open-window': {
     type: 'browser:open-window'
     dirId: string
-    workspaceId: number
+    /** 工作空间 ID（字符串长 ID） */
+    workspaceId: string
     success: boolean
     message: string
   }
@@ -37,12 +38,14 @@ export interface RoxyConfig {
   apiKey: string
   apiPort: number
   defaultBrowserDirId: string
-  defaultBrowserWorkspaceId: number
+  /** 默认浏览器 workspaceId（字符串长 ID） */
+  defaultBrowserWorkspaceId: string
   /**
    * 由启动参数注入的“当前启动目标”，优先级高于默认值
    */
   currentDirId?: string
-  currentWorkspace?: number
+  /** 本次启动覆盖的 workspaceId（字符串长 ID） */
+  currentWorkspace?: string
   appWsPort: number
   appWsToken: string
 }
