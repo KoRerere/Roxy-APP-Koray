@@ -1858,6 +1858,7 @@
   "手动清除缓存": "Manual Cache Clear",
   "手机号": "Phone Number",
   "手机端 Roxy AI Agent，随心远程驾驭客户端": "Control the client through Roxy's AI Agent via your mobile phone",
+  "手续费（{feeDetail}）：{fee}": "Fee ({feeDetail}): {fee}",
   "打开": "Open",
   "打开「Telegram」→搜索 {BotFather}": "Open Telegram → Search {BotFather}",
   "打开工作台": "Open Dashboard",
@@ -2056,8 +2057,6 @@
   "支持格式: JSON、Netscape、Name=Value\nName=Value 格式行首必须指定 domain=...; 字段值，否则无效": "Supported formats: JSON, Netscape, Name=Value\nName=Value format must specify the domain=...; field value at the beginning of the line, otherwise it is invalid",
   "支持粘贴/拖入代理信息文件和账号信息文件": "Supports pasting or dragging in proxy information files and account information files",
   "收到，已连接 4 个窗口": "Got it, connected 4 profiles",
-  "手续费（{feeDetail}）：{fee}": "Fee ({feeDetail}): {fee}",
-  "收取 {feeRate}% 的手续: {fee}": "A fee of {feeRate}% will be charged: {fee}",
   "收藏": "Favorite",
   "收起": "Hide",
   "放电时长（秒）": "Discharge Time (seconds)",
@@ -2751,7 +2750,6 @@
   "由专家定制脚本、Skill 和模板，并支持多窗口协同执行": "Expert-built scripts, Skills, and templates with coordinated execution across multiple profiles",
   "由于早期版本的权限残留，导致每次更新都会弹出 Mac 密码窗口。\n建议您现在完成最后一次授权以修复此问题，此后的升级将不再需要重复输入密码。": "Due to permission residual from earlier versions, you are prompted for your Mac password during every update.\nWe recommend completing this final authorization now to fix the issue. Future updates will no longer require your password.",
   "由于银行处理成本，该支付渠道需加收 {feeDetail} 的手续费。": "Due to bank processing costs, this payment method incurs an additional {feeDetail} processing fee.",
-  "由于银行处理成本，该支付渠道需加收 {feeRate}% 的手续费。": "Due to bank processing costs, this payment method incurs an additional {feeRate}% processing fee.",
   "由谷歌运营的知名在线病毒检测平台，被全球安全专家广泛信赖。": "A renowned online virus detection platform operated by Google, widely trusted by security experts globally.",
   "申请提现": "Request Withdrawal",
   "申请提现时间": "Withdrawal Request Time",
@@ -3943,5 +3941,6 @@
   "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)",
   "（可选）": "(Optional)",
   "（脚本日志文件不存在）": "(Script log file does not exist)",
-  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount"
+  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount",
+  "当前设置的 API 端口 {port} 已被占用，请先解决本地端口占用问题后再打开，或联系团队管理员修改端口": "The configured API port {port} is already in use. Resolve the local port conflict and try again, or contact your team administrator to change the port."
 }

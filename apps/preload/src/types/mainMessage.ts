@@ -68,9 +68,9 @@ export type OpenBrowserFailureType = 'not_login' | 'no_permission' | 'window_not
 
 export type BrowserCacheRootDirFallbackReason = 'parent_missing' | 'mkdir_failed'
 
-export type EnsureBrowserCacheRootDirResult =
-  | { ok: true, path: string }
-  | { ok: false, reason: BrowserCacheRootDirFallbackReason, error?: unknown }
+export type EnsureBrowserCacheRootDirResult
+  = | { ok: true, path: string }
+    | { ok: false, reason: BrowserCacheRootDirFallbackReason, error?: unknown }
 
 export interface BrowserCacheRootDirFallbackPayload {
   previousPath: string
@@ -79,12 +79,10 @@ export interface BrowserCacheRootDirFallbackPayload {
 }
 
 /** MCP 错误类型 */
-export type McpFailureType =
-  /** 脚本完整性校验失败，修复后仍不通过 */
-  'script_repair_failed'
-  /** Agent 更新资源仍在下载中 */
+export type McpFailureType = 'script_repair_failed'
   | 'agent_update_in_progress'
-  /** 未知错误 */
+  | 'openapi_port_occupied'
+  | 'openapi_server_failed'
   | 'unknown_error'
 
 export interface MainMessage {

@@ -13,6 +13,8 @@ export function getMcpErrorMessage(type: McpFailureType): string {
   const messageMap: Record<McpFailureType, string> = {
     script_repair_failed: $t('Roxy AI Agent 文件修复失败，请重启应用后重试'),
     agent_update_in_progress: $t('AI Agent 更新资源下载中，请稍后再试'),
+    openapi_port_occupied: $t('端口已被占用'),
+    openapi_server_failed: $t('Roxy Agent 启动失败'),
     unknown_error: $t('服务异常，请稍后重试'),
   }
 

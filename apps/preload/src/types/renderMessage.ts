@@ -197,8 +197,12 @@ export interface RenderMessage {
   'app:downloadLocalFile': (payload: { filePath: string, fileName?: string }) => Promise<LocalFileActionResult>
   /** 取消卸载 */
   'app:uninstall-cancelled': () => Promise<void>
-  /** openapi 端口或开关变的时候，需要重启服务 */
-  'app:restartAPIServer': () => void
+  /** openapi 端口或开关变的时候，需要重启服务并返回结果 */
+  'app:restartAPIServer': () => Promise<{
+    success: boolean
+    reason?: 'disabled' | 'port_occupied' | 'error'
+    port?: number
+  }>
   /** 安装并更新 */
   'app:quitAndInstall': (info: Partial<ResourceUpdateMessage>) => any
   /** 获取所有可用的内核列表 */

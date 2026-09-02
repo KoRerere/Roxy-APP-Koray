@@ -3,6 +3,7 @@ import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { globalShortcut } from 'electron'
 import { closeMcpWindow, createMcpWindow, getMcpWindow, mcpManager, restartMcpForAgentUpdate } from '/@/modules/mcp'
 import { isMcpError } from '/@/modules/mcp/errors'
+import { openAPIServer } from '/@/modules/openapi'
 import { agentUpdater } from '/@/modules/updater/agentUpdater'
 
 interface McpResponse<T = any> {
@@ -45,6 +46,24 @@ export function setupMcpIpc(ipcMain: IPCMainInstance) {
   /** 打开mcp */
   ipcMain.on('mcp:open', async (_event, payload?: { route?: string }): Promise<McpResponse> => {
     console.log('Opening MCP')
+
+    try {
+      const openAPIResult = await openAPIServer.ensureStarted()
+      if (!openAPIResult.success) {
+        return {
+          success: false,
+          type: openAPIResult.reason === 'port_occupied' ? 'openapi_port_occupied' : 'openapi_server_failed',
+          details: openAPIResult.port ? { port: openAPIResult.port } : undefined,
+        }
+      }
+    }
+    catch (error) {
+      return {
+        success: false,
+        type: 'openapi_server_failed',
+        message: error instanceof Error ? error.message : String(error),
+      }
+    }
 
     // 窗口已打开，直接聚焦到前台
     const existingWin = getMcpWindow()

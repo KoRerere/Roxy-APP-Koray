@@ -51,7 +51,10 @@ const updateApiKeys = useDebounceFn(async () => {
       const { apiKey: originalApiKey, open: originalOpen, port: originalPort } = original.value
 
       if (originalApiKey !== apiKey || originalOpen !== open || originalPort !== port) {
-        globalThis.electronAPI.send('app:restartAPIServer')
+        const restartResult = await globalThis.electronAPI.send('app:restartAPIServer')
+        if (!restartResult?.success && restartResult?.reason === 'port_occupied') {
+          hasOccupy.value = true
+        }
       }
       original.value = { ...apiConfig.value }
     }
@@ -424,8 +427,9 @@ async function getApiKeys() {
 
 async function checkMcpUser() {
   const { code, data } = await API.base.userGetLlmInfoList()
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
   isLLM.value = data.available
 }
 

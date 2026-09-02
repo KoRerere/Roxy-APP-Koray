@@ -1,13 +1,20 @@
 import type { Server } from 'node:http'
-import type { AddressInfo } from 'node:net'
 import express from 'express'
-import { getPortPromise } from 'portfinder'
 import { API } from '/@/api'
 import { store } from '/@/modules/store'
 import { setupMiddlewares } from './middlewares/'
 import { setupRoutes } from './routes/'
+import { listenOnPort } from './server'
 
-export const openAPIServer = new class OpenAPIServer {
+export type OpenAPIServerStartReason = 'disabled' | 'port_occupied' | 'error'
+
+export interface OpenAPIServerStartResult {
+  success: boolean
+  reason?: OpenAPIServerStartReason
+  port?: number
+}
+
+export class OpenAPIServer {
   #server: Server | null = null
 
   constructor(private app = express()) {
@@ -19,7 +26,7 @@ export const openAPIServer = new class OpenAPIServer {
     // this.printRoutes()
   }
 
-  async start() {
+  async start(): Promise<OpenAPIServerStartResult> {
     console.log('Starting OpenAPI server...')
     const { code, data, msg } = await API.base.userGetUserApiList()
     console.log('userGetUserApiList:', code, data, msg)
@@ -28,50 +35,65 @@ export const openAPIServer = new class OpenAPIServer {
         await this.stop()
 
         try {
-          const port = await getPortPromise({ port: data.port })
-          const actualPort = await this.listen(port)
+          const actualPort = await this.listen(data.port)
           store.apiPort = actualPort
           store.apiKey = data.apiKey
           console.log(`OpenAPI server is running on ${actualPort}`)
-
-          if (actualPort !== data.port) {
-            console.warn(`OpenAPI port ${data.port} is occupied, switched to ${actualPort}`)
-            const result = await API.base.userSetUserApiCreate({ ...data, port: actualPort })
-            if (result.code !== 0) {
-              console.error('OpenAPI server failed to save fallback port:', result.msg)
-            }
-          }
+          return { success: true, port: actualPort }
         }
         catch (error) {
           console.error('OpenAPI server start error:', error)
           store.apiPort = -1
+          const reason = error instanceof Error && 'code' in error && error.code === 'EADDRINUSE'
+            ? 'port_occupied'
+            : 'error'
+          return { success: false, reason, port: data.port }
         }
       }
       else {
         store.apiPort = -1
         console.log('OpenAPI server is not open')
+        return { success: false, reason: 'disabled', port: data.port }
       }
     }
     else {
       console.log('OpenAPI server failed to start:', msg)
+      store.apiPort = -1
+      return { success: false, reason: 'error' }
     }
+
+    return { success: false, reason: 'error' }
+  }
+
+  async ensureStarted(): Promise<OpenAPIServerStartResult> {
+    const { code, data, msg } = await API.base.userGetUserApiList()
+    if (code !== 0) {
+      console.log('OpenAPI server health check failed:', msg)
+      store.apiPort = -1
+      return { success: false, reason: 'error' }
+    }
+
+    if (!data.open) {
+      store.apiPort = -1
+      return { success: false, reason: 'disabled', port: data.port }
+    }
+
+    if (this.#server?.listening && store.apiPort === data.port) {
+      store.apiKey = data.apiKey
+      return { success: true, port: data.port }
+    }
+
+    return this.start()
   }
 
   private async listen(port: number) {
-    return new Promise<number>((resolve, reject) => {
-      const server = this.app.listen(port, '0.0.0.0')
+    return listenOnPort(this.app, port, (server) => {
       this.#server = server
-
-      server.once('error', (error) => {
-        if (this.#server === server)
-          this.#server = null
-        reject(error)
-      })
-
-      server.once('listening', () => {
-        const address = server.address()
-        resolve(typeof address === 'object' && address ? (address as AddressInfo).port : port)
-      })
+    }).catch((error) => {
+      if (this.#server) {
+        this.#server = null
+      }
+      throw error
     })
   }
 
@@ -125,4 +147,6 @@ export const openAPIServer = new class OpenAPIServer {
 
     console.log('Registered routes:', routes)
   }
-}()
+}
+
+export const openAPIServer = new OpenAPIServer()
