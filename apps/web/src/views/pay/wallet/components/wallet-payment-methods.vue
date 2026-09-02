@@ -30,12 +30,6 @@ interface AvailableMethods {
   [key: string]: any
 }
 
-/** 3 列 × 4 行；超出时最后一格留给「更多」所以默认只露出 11 个 */
-const GRID_COLUMNS = 3
-const MAX_COLLAPSED_ROWS = 4
-const COLLAPSED_SLOTS = GRID_COLUMNS * MAX_COLLAPSED_ROWS
-const COLLAPSED_ITEM_COUNT = COLLAPSED_SLOTS - 1
-
 const { rechargeAmount, methods, disabledMethods = [], addFundsAndPay = false, category = PAYWAY_ALL_CATEGORY, onConfirm } = defineProps<{
   rechargeAmount: number
   methods: Methods[]
@@ -45,6 +39,15 @@ const { rechargeAmount, methods, disabledMethods = [], addFundsAndPay = false, c
   category?: string
   onConfirm: (params?: any) => any | Promise<any>
 }>()
+const emit = defineEmits<{
+  /** 其它支付方式面板是否展开，父级据此显示分类下拉 */
+  otherPayOpen: [open: boolean]
+}>()
+/** 3 列 × 4 行；超出时最后一格留给「更多」所以默认只露出 11 个 */
+const GRID_COLUMNS = 3
+const MAX_COLLAPSED_ROWS = 4
+const COLLAPSED_SLOTS = GRID_COLUMNS * MAX_COLLAPSED_ROWS
+const COLLAPSED_ITEM_COUNT = COLLAPSED_SLOTS - 1
 
 const $rechargeModal = inject<{ preventModalClose: (value?: boolean) => void }>('$rechargeModal')
 
@@ -55,8 +58,9 @@ const confirm = useConfirm()
 
 /** 浅色稿深描边、深色稿白描边；无 dark 资源时沿用浅色 */
 function resolvePayImage(method?: { image?: string, imageDark?: string }) {
-  if (isDarkTheme.value && method?.imageDark)
+  if (isDarkTheme.value && method?.imageDark) {
     return method.imageDark
+  }
   return method?.image ?? ''
 }
 
@@ -77,11 +81,6 @@ function redirectPayCopy(method: string) {
 }
 
 const selectedPayway = defineModel<PayWay>()
-
-const emit = defineEmits<{
-  /** 其它支付方式面板是否展开，父级据此显示分类下拉 */
-  otherPayOpen: [open: boolean]
-}>()
 
 const cardList = ref()
 const activeCard = ref()
@@ -111,7 +110,7 @@ const defaultMethods = [
     ...themedPayIcon('payment_icon_balance.svg'),
   },
   {
-    label: 'Card',
+    label: $t('银行卡'),
     value: [PayWay.Card],
     ...themedPayIcon('payment_icon_cards.svg'),
   },
@@ -202,10 +201,10 @@ const defaultMethods = [
     ...redirectPayCopy('Pix'),
   },
   {
-    label: "Touch 'n Go",
+    label: 'Touch \'n Go',
     value: [PayWay.TouchngoMy],
     ...themedPayIcon('payment_icon_touchngo.svg'),
-    ...redirectPayCopy("Touch 'n Go"),
+    ...redirectPayCopy('Touch \'n Go'),
   },
   {
     label: 'DuitNow',
@@ -273,29 +272,31 @@ const expandedMethods = ref(false)
 
 const availableMethods = computed(() => {
   return methods.reduce((acc, { value: payway, discount, ...meta }) => {
-    if (acc.some(item => item.value.includes(payway)))
+    if (acc.some(item => item.value.includes(payway))) {
       return acc
+    }
 
     const found = defaultMethods.find(item => item.value.includes(payway))
-
-    acc.push({
-      label: found?.label ?? '',
-      value: found?.value ?? [],
-      image: resolvePayImage(found),
-      discount,
-      ...meta,
-      disabled: disabledMethods.includes(payway),
-      getValue: found?.getValue,
-    })
-
+    if (found) {
+      acc.push({
+        label: found?.label ?? '',
+        value: found?.value ?? [],
+        image: resolvePayImage(found),
+        discount,
+        ...meta,
+        disabled: disabledMethods.includes(payway),
+        getValue: found?.getValue,
+      })
+    }
     return acc
   }, [] as AvailableMethods[])
 })
 
 /** 按当前下拉分类过滤；All 展示全部 isShow 渠道 */
 const filteredMethods = computed(() => {
-  if (!category || category === PAYWAY_ALL_CATEGORY)
+  if (!category || category === PAYWAY_ALL_CATEGORY) {
     return availableMethods.value
+  }
   return availableMethods.value.filter(item => item.category === category)
 })
 
@@ -304,15 +305,17 @@ const showMoreButton = computed(() => {
 })
 
 const visibleMethods = computed(() => {
-  if (!showMoreButton.value)
+  if (!showMoreButton.value) {
     return filteredMethods.value
+  }
   return filteredMethods.value.slice(0, COLLAPSED_ITEM_COUNT)
 })
 
 const chooseMethod = computed(() => {
   const method = defaultMethods.find(item => item.value.includes(selectedPayway.value!))
-  if (!method)
+  if (!method) {
     return method
+  }
   return { ...method, image: resolvePayImage(method) }
 })
 
@@ -342,8 +345,9 @@ async function getCardList() {
 async function getCryptoCoins() {
   const { code, data, msg } = await API.pay.userGetStablecoinInfoList()
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   const coinOptions = Object.entries(data).map(([coin, chain]) => ({ label: coin, value: coin, chain })).reverse()
   const chainOptions = coinOptions[0]?.chain || []
@@ -392,8 +396,9 @@ function deleteCard(cardId: number) {
     accept: async () => {
       const { code, msg } = await API.pay.userUnbindCardCreate({ cardId })
       showToast(code, msg)
-      if (code !== 0)
+      if (code !== 0) {
         return
+      }
       getCardList()
     },
   })
@@ -406,8 +411,9 @@ function handleCardClick(card: any) {
 }
 
 function handleClick(item: typeof availableMethods.value[number]) {
-  if (item.disabled)
+  if (item.disabled) {
     return
+  }
 
   selectedPayway.value = item.getValue?.() || item.value[0]
   activeCard.value = undefined
@@ -421,10 +427,12 @@ function expandCurrentCategory() {
 /** 分类内没有当前选中渠道时，落到该分类第一个可用项 */
 function syncPaywayToFiltered() {
   const list = filteredMethods.value
-  if (!list.length)
+  if (!list.length) {
     return
-  if (list.some(item => item.value.includes(selectedPayway.value!)))
+  }
+  if (list.some(item => item.value.includes(selectedPayway.value!))) {
     return
+  }
   const next = list.find(item => !item.disabled) ?? list[0]
   handleClick(next)
 }
