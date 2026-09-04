@@ -148,6 +148,17 @@ function normalizeArgName(arg: string) {
   return arg.split('=')[0].toLowerCase()
 }
 
+/** 判断 before-input-event 上报的修饰键，兼容 macOS 的 Command 命名。 */
+function hasModifier(input: Input, modifier: 'control' | 'alt' | 'shift' | 'meta') {
+  const modifiers = input.modifiers ?? []
+  const aliases = modifier === 'control'
+    ? ['control', 'ctrl']
+    : modifier === 'meta'
+      ? ['meta', 'command', 'cmd']
+      : [modifier]
+  return aliases.some(alias => modifiers.includes(alias))
+}
+
 /**
  * 忽略命令行传入的调试参数，防止 `RoxyBrowser.exe --inspect` 这类方式
  * 绕过开发者工具限制。必须在主进程最早期调用。
@@ -203,12 +214,12 @@ function isDevToolsShortcut(input: Input) {
   }
 
   // Ctrl+Shift+I / J / C
-  if (input.control && input.shift && (['i', 'j', 'c'].includes(key) || ['KeyI', 'KeyJ', 'KeyC'].includes(code))) {
+  if (hasModifier(input, 'control') && hasModifier(input, 'shift') && (['i', 'j', 'c'].includes(key) || ['KeyI', 'KeyJ', 'KeyC'].includes(code))) {
     return true
   }
 
   // macOS：Command+Option+I / J / C，以及 Command+Option+U（查看源代码）
-  if (input.meta && input.alt && (['i', 'j', 'c', 'u'].includes(key) || ['KeyI', 'KeyJ', 'KeyC', 'KeyU'].includes(code))) {
+  if (hasModifier(input, 'meta') && hasModifier(input, 'alt') && (['i', 'j', 'c', 'u'].includes(key) || ['KeyI', 'KeyJ', 'KeyC', 'KeyU'].includes(code))) {
     return true
   }
 
@@ -218,9 +229,9 @@ function isDevToolsShortcut(input: Input) {
 /** 是否为隐藏解锁连击键：Ctrl/Cmd + Alt + Shift + D */
 function isUnlockComboKey(input: Input) {
   return input.type === 'keyDown'
-    && (input.control || input.meta)
-    && input.alt
-    && input.shift
+    && (hasModifier(input, 'control') || hasModifier(input, 'meta'))
+    && hasModifier(input, 'alt')
+    && hasModifier(input, 'shift')
     && (input.key?.toLowerCase?.() === 'd' || input.code === 'KeyD')
 }
 
