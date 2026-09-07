@@ -3,6 +3,13 @@ import { sanitizeId } from '@roxy/shared/agent-paths'
 import fs from 'node:fs'
 import path from 'node:path'
 
+export type RoxyRolloutEvent = RolloutEvent | {
+  type: 'roxy_window_used'
+  dirId: string
+  turnId: string
+  ts: number
+}
+
 /** Roxy-owned append-only rollout store used by runtime-backed conversations. */
 export class RoxyRolloutStore implements ISessionStore {
   constructor(
@@ -18,21 +25,33 @@ export class RoxyRolloutStore implements ISessionStore {
   }
 
   async append(sessionId: SessionId, event: RolloutEvent): Promise<void> {
+    this.appendEvent(sessionId, withTimestamp(event))
+  }
+
+  recordWindowUsed(sessionId: SessionId, turnId: string, dirId: string): void {
+    this.appendEvent(sessionId, { type: 'roxy_window_used', dirId, turnId, ts: Date.now() })
+  }
+
+  private appendEvent(sessionId: SessionId, event: RoxyRolloutEvent): void {
     const filePath = this.filePath(sessionId)
     fs.mkdirSync(path.dirname(filePath), { recursive: true })
-    fs.appendFileSync(filePath, `${JSON.stringify(withTimestamp(event))}\n`, 'utf8')
+    fs.appendFileSync(filePath, `${JSON.stringify(event)}\n`, 'utf8')
   }
 
   async read(sessionId: SessionId): Promise<RolloutEvent[]> {
+    return (await this.readEvents(sessionId)).filter((event): event is RolloutEvent => event.type !== 'roxy_window_used')
+  }
+
+  async readEvents(sessionId: SessionId): Promise<RoxyRolloutEvent[]> {
     const filePath = this.filePath(sessionId)
     if (!fs.existsSync(filePath)) {
       return []
     }
     const lines = fs.readFileSync(filePath, 'utf8').split('\n').filter(Boolean)
-    const events: RolloutEvent[] = []
+    const events: RoxyRolloutEvent[] = []
     for (const line of lines) {
       try {
-        events.push(JSON.parse(line) as RolloutEvent)
+        events.push(JSON.parse(line) as RoxyRolloutEvent)
       } catch {
         // A truncated final line must not make an otherwise valid conversation unusable.
         break

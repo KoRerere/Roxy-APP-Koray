@@ -89,12 +89,12 @@ The companion prompt should describe the immediate task and expose only the inpu
 Supported Composer input tokens include:
 
 ```text
-[input:Keyword]()
+[input:Keyword](browser automation)
 [input:Report date](今天日期)
 [url:Target site](https://example.com)
 ```
 
-- `[input:Label](default)` creates a text input. Leave the target empty when the user must provide it.
+- `[input:Label](default)` creates a text input. Every input must have a non-empty value before saving. Use values supplied by the user or confirmed task context; ask for missing values rather than inventing them. Users can change these values when using the template.
 - `[url:Label](default)` creates a URL input.
 - Use the exact default `今天日期` when an input should resolve to the user's local date when the template opens.
 - Avoid `]` inside labels and `)` inside token values because they terminate the serialized token.
@@ -112,7 +112,7 @@ Generalize the companion prompt for later runs:
 Example companion prompt:
 
 ```text
-Research [input:Competitor name]() at [url:Website](). Compare positioning, pricing, and customer evidence in the browser windows selected by the user, then produce a sourced Markdown report.
+Research [input:Competitor name](Example Company) at [url:Website](https://example.com). Compare positioning, pricing, and customer evidence in the browser windows selected by the user, then produce a sourced Markdown report.
 ```
 
 ## Bundled Scripts

@@ -124,7 +124,8 @@ describe('runtime chat agent tree configuration', () => {
     const childPrompt = createGeneralPurposeSystemPrompt()
 
     expect(rootPrompt).toContain('call `roxy_task_report` after all operational tools finish')
-    expect(rootPrompt).toContain('the profile references in the user message are the admission set')
+    expect(rootPrompt).toContain('Default to the current turn')
+    expect(rootPrompt).toContain('regenerate a report')
     expect(rootPrompt).toContain('status=unused')
     expect(rootPrompt).toContain('taskName must use the user\'s system language')
     expect(rootPrompt).toContain('key, a brief user-facing name, and a concise primitive value')

@@ -103,6 +103,46 @@ describe('runtime chat agent Skills wiring', () => {
     await rm(testRoot, { recursive: true, force: true })
   })
 
+  it('restores report windows after rebuilding the agent for a follow-up turn', async () => {
+    listRuntimeSkillManifestsMock.mockResolvedValue([])
+    runtimeCreateMock.mockResolvedValue(fakeAgent())
+    const { createRuntimeChatAgent } = await import('./chat-agent')
+    const { mcpManager } = await import('@/core/mcp/mcpManager')
+    const first = await createRuntimeChatAgent({
+      conversationId: 'conversation-1',
+      executionId: 'run-1',
+      turnId: 'turn-1',
+      reportAllowedDirIds: ['used', 'selected-only'],
+    })
+    first.createInput('执行任务')
+    vi.mocked(mcpManager.createProfileBinding).mock.calls[0]![0].onBrowserLaunched?.('used')
+    await first.destroy()
+
+    const next = await createRuntimeChatAgent({
+      conversationId: 'conversation-1',
+      executionId: 'run-2',
+      turnId: 'turn-2',
+      reportAllowedDirIds: [],
+    })
+    next.createInput('重新生成任务报告')
+    const definition = runtimeCreateMock.mock.calls[1]![0] as AgentDefinition
+    const report = definition.tools.resolve('roxy_task_report')!
+    const context: ToolContext = { agentId: 'root', traceId: 'test', signal: new AbortController().signal }
+    const result = await report.handler({
+      taskName: '重新生成',
+      params: [],
+      windows: [{ dirId: 'used', success: true, failureReason: '' }],
+    }, context)
+
+    expect(result.isError).toBe(false)
+    expect((await report.handler({
+      taskName: '重新生成',
+      params: [],
+      windows: [{ dirId: 'selected-only', success: false, status: 'unused', failureReason: '' }],
+    }, context)).isError).toBe(true)
+    await next.destroy()
+  })
+
   it('passes local Skill manifests into the root AgentRuntime definition', async () => {
     // Regression: createRuntimeChatAgent never passed SkillManifest data into
     // AgentRuntime.create, so runtime skill catalog prompt rendering always saw

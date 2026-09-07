@@ -1,7 +1,7 @@
 import type { ToolContext } from 'roxy-agent-runtime'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -129,7 +129,13 @@ describe('roxy_save_user_template', () => {
     expect(mocks.uploadSkill).not.toHaveBeenCalled()
   })
 
-  it('rejects a companion prompt that embeds a browser-window selection', async () => {
+  it.each([
+    ['在 [@profile:0]() 窗口执行任务。', 'browser-window selection'],
+    ['在 [@profile:1](01a8e607e20e9b53fdaed89aaa890886) 窗口执行任务。', 'browser-window selection'],
+    ['搜索 [input:关键词]()。', 'non-empty values: 关键词'],
+    ['访问 [url:网址](   )。', 'non-empty values: 网址'],
+    ['补充 [textarea:备注](\n)。', 'non-empty values: 备注'],
+  ])('rejects invalid companion prompt before upload: %s', async (prompt, message) => {
     const { createSaveUserTemplateTool } = await import('./save-user-template')
     const tool = createSaveUserTemplateTool({ workspaceDir })
 
@@ -137,12 +143,13 @@ describe('roxy_save_user_template', () => {
       skillPath: 'batch-nurture',
       name: '批量养号',
       description: '重复执行养号任务',
-      prompt: '在 [@profile:0]() 窗口执行任务。',
+      prompt,
     }, context)
 
     expect(result.isError).toBe(true)
-    expect(result.content).toContain('browser-window selection')
+    expect(result.content).toContain(message)
     expect(mocks.uploadSkill).not.toHaveBeenCalled()
+    expect(mocks.create).not.toHaveBeenCalled()
   })
 
   it('rejects the complete prompt when its target URL is unfilled', async () => {

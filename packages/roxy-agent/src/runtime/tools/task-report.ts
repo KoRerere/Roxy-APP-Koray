@@ -13,26 +13,23 @@ const TASK_REPORT_ACCEPTED_MARKDOWN = '## Task report result\n\n- status: accept
 function formatWindowCoverageError(
   reportedDirIds: readonly string[],
   admittedDirIds: readonly string[],
-  usedDirIds: readonly string[],
   unusedDirIds: readonly string[],
   usedAsUnusedDirIds: readonly string[],
 ): string {
-  const reported = new Set(reportedDirIds)
   const admitted = new Set(admittedDirIds)
-  const missingUsed = usedDirIds.filter(dirId => !reported.has(dirId))
   const outsideScope = reportedDirIds.filter(dirId => !admitted.has(dirId))
 
   return [
     '## Task report validation failed',
     '',
-    'The report was not accepted. Include one success or failure result for every window that was started, and omit other windows or mark them as unused.',
+    'The report was not accepted. Use windows actually started in this conversation, or current profile references marked as unused if never started.',
     '',
-    ...(missingUsed.length > 0 ? [`- Missing started windows: ${missingUsed.join(', ')}`] : []),
-    ...(admittedDirIds.length === 0 ? ['- No non-empty profile id was found in the user message; do not call roxy_task_report.'] : []),
-    ...(outsideScope.length > 0 ? [`- Windows outside the message scope: ${outsideScope.join(', ')}`] : []),
+    ...(admittedDirIds.length === 0 ? ['- No used or currently referenced windows are available; do not call roxy_task_report.'] : []),
+    ...(outsideScope.length > 0 ? [`- Windows outside the report scope: ${outsideScope.join(', ')}`] : []),
     ...(unusedDirIds.length > 0 ? [`- Unused windows must be omitted or use status=unused: ${unusedDirIds.join(', ')}`] : []),
     ...(usedAsUnusedDirIds.length > 0 ? [`- Started windows cannot use status=unused: ${usedAsUnusedDirIds.join(', ')}`] : []),
     '',
+    'Report the current turn by default; follow the requested scope when the user asks to regenerate or summarize earlier work.',
     'For started windows, set success=true with an empty failureReason, or success=false with a concise failureReason.',
   ].join('\n')
 }
@@ -44,16 +41,17 @@ export function createTaskReportTool(options: { windowTracker?: TaskReportWindow
     description: [
       'Record the final structured result of a browser execution task.',
       'Call this alone after all operational tools finish when a per-window outcome report is useful.',
+      'Default to the current turn: include every window used by the main agent, subagents, or batch scripts in this turn exactly once, including failed outcomes.',
+      'When the user asks to regenerate a report or summarize earlier work, use the requested task and window scope from this conversation instead.',
+      'Historical windows are available for these requests; do not add unrelated earlier windows to an ordinary current-turn report.',
+      'Base outcomes on the execution evidence for the work being reported; do not relaunch windows or repeat operations just to generate a report.',
       'Use the user\'s system language for taskName and keep it short.',
       'For each parameter, provide a concise key, a brief user-facing name, and a primitive value.',
       'Keep parameter keys and values concise and within the schema limits.',
-      'Use only dirIds parsed from the user profile references; those references are the report admission set.',
-      'If the user message contains no non-empty profile id (including [@profile:0]()), do not call this tool because no window id is admissible.',
-      'Include every admitted window successfully started by the main agent, a subagent, or a batch script exactly once; those are the used windows.',
-      'A referenced window that was never started may be omitted; if included, use exactly success=false, status=unused, and failureReason="".',
-      'Do not invent ids, report windows outside the user profile references, or treat a merely selected window as a success or failure.',
+      'Use only dirIds actually started in this conversation, plus current user profile references for optional unused entries.',
+      'A currently referenced window that was never started in this conversation may be omitted; if included, use exactly success=false, status=unused, and failureReason="".',
+      'Do not invent ids or treat a merely selected window as a success or failure. Skip the tool if no eligible window exists.',
       'A started window must omit status and use success=true with failureReason="", or success=false with a concise non-empty failureReason.',
-      'Example: admission [A,B,C,D] with only A started => [{dirId:"A",success:true,failureReason:""}] or append B/C/D as success=false,status=unused,failureReason="".',
     ].join(' '),
     inputSchema: TaskReportInputSchema,
     source: 'builtin',
@@ -64,22 +62,19 @@ export function createTaskReportTool(options: { windowTracker?: TaskReportWindow
       const tracker = options.windowTracker
         ?? (ctx.metadata?.taskReportWindowTracker as TaskReportWindowTracker | undefined)
       if (tracker) {
-        const admittedDirIds = tracker.admittedSnapshot()
         const usedDirIds = tracker.snapshot()
+        const admittedDirIds = [...new Set([...tracker.admittedSnapshot(), ...usedDirIds])]
         const reportWindows = (input as { windows: Array<{ dirId: string, status?: 'unused' }> }).windows
         const reportDirIds = reportWindows.map(window => window.dirId)
         const admitted = new Set(admittedDirIds)
         const used = new Set(usedDirIds)
-        const reported = new Set(reportDirIds)
         const unusedDirIds = reportWindows
           .filter(window => !used.has(window.dirId) && window.status !== 'unused')
           .map(window => window.dirId)
         const usedAsUnusedDirIds = reportWindows
           .filter(window => used.has(window.dirId) && window.status === 'unused')
           .map(window => window.dirId)
-        const invalid = usedDirIds.some(dirId => !reported.has(dirId))
-          || reportDirIds.some(dirId => !admitted.has(dirId))
-          || usedDirIds.some(dirId => !admitted.has(dirId))
+        const invalid = reportDirIds.some(dirId => !admitted.has(dirId))
           || unusedDirIds.length > 0
           || usedAsUnusedDirIds.length > 0
         if (invalid) {
@@ -87,7 +82,6 @@ export function createTaskReportTool(options: { windowTracker?: TaskReportWindow
             content: formatWindowCoverageError(
               reportDirIds,
               admittedDirIds,
-              usedDirIds,
               unusedDirIds,
               usedAsUnusedDirIds,
             ),

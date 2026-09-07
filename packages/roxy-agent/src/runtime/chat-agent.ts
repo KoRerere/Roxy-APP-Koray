@@ -61,6 +61,7 @@ import {
   createTemplateTools,
   registerRuntimeScriptTools,
 } from './tools'
+import { readTaskReportUsedWindows } from './tools/task-report-history'
 import { createTaskReportWindowTracker } from './tools/task-report-window-tracker'
 
 interface RuntimeTool { descriptor: ToolDescriptor, handler: ToolHandler }
@@ -130,7 +131,6 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
     artifactRoots: [agentPaths.sessionBrowserDir(options.conversationId)],
     displayRoot: workspaceDir,
   })
-  const taskReportWindowTracker = createTaskReportWindowTracker()
   // Full access is the existing UI mode. Otherwise the frontend approval gate
   // follows the standard ToolAnnotations policy for every registered tool.
   const commandPermissions = new CommandPermissions({
@@ -152,6 +152,10 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
     }
 
     const existingRollout = await rollout.read(options.conversationId)
+    const taskReportWindowTracker = createTaskReportWindowTracker({
+      usedDirIds: await readTaskReportUsedWindows(rollout, options.conversationId),
+      onWindowUsed: dirId => rollout.recordWindowUsed(options.conversationId, options.turnId, dirId),
+    })
     try {
       await ensureMemoryIndex(agentPaths.memoryIndexFile)
       if (shouldLoadMemoryIndex(existingRollout)) {

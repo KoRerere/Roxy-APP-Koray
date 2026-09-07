@@ -222,6 +222,7 @@ export function createSaveUserTemplateTool(options: SaveUserTemplateToolOptions)
       'Upload a generated Skill package and save it as a reusable user template.',
       'The companion prompt is stored separately for the Agent Console Composer and must remain independent of browser windows.',
       'Do not include profile Composer tokens or concrete dirIds; the user selects windows when using the template.',
+      'Every input, textarea, and URL Composer parameter must have a non-empty value before saving.',
       'Only call this after the Skill directory and companion prompt have been validated.',
     ].join(' '),
     inputSchema: saveUserTemplateInputSchema,

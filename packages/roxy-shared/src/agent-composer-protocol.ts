@@ -38,6 +38,25 @@ export function extractAgentProfileDirIds(prompt: string): string[] {
   return Array.from(new Set(ids))
 }
 
+/** 检查模板保存时禁止的窗口选择和未填写的 Composer 参数。 */
+export function inspectAgentComposerTemplateInputs(prompt: string): {
+  hasProfileSelection: boolean
+  missingInputLabels: string[]
+} {
+  const missingInputLabels = new Set<string>()
+  const pattern = /\[(?:input|textarea|url):([^\]]+)\](?:\(([^)]*)\))?/g
+  for (const match of prompt.matchAll(pattern)) {
+    if (!match[2]?.trim()) {
+      missingInputLabels.add(match[1])
+    }
+  }
+
+  return {
+    hasProfileSelection: prompt.includes('[@profile:'),
+    missingInputLabels: Array.from(missingInputLabels),
+  }
+}
+
 /**
  * Validate the small Composer token subset persisted with Skill templates.
  * This is deliberately syntactic: the editor remains the owner of rendering.
@@ -47,8 +66,15 @@ export function validateAgentComposerTemplatePrompt(
 ): AgentComposerPromptValidationResult {
   const value = prompt.trim()
   const issues: string[] = []
+  const inputs = inspectAgentComposerTemplateInputs(value)
   if (!value) {
     issues.push('Composer prompt must not be empty.')
+  }
+  if (inputs.hasProfileSelection) {
+    issues.push('Composer prompt must not contain browser-window selection tokens; select windows when using the template.')
+  }
+  if (inputs.missingInputLabels.length) {
+    issues.push(`Composer prompt parameters must have non-empty values: ${inputs.missingInputLabels.join(', ')}.`)
   }
 
   if (/\{\{[^}]+}}/.test(value)) {
@@ -67,15 +93,10 @@ export function validateAgentComposerTemplatePrompt(
     issues.push('Composer prompt must not retain a local filesystem path.')
   }
 
-  const marker = /\[(?:input|url|@profile):/g
+  const marker = /\[(?:input|textarea|url):/g
   for (const match of value.matchAll(marker)) {
     const fragment = value.slice(match.index)
-    if (fragment.startsWith('[@profile:')) {
-      issues.push('Composer prompt must not contain browser-window selection tokens; select windows when using the template.')
-      continue
-    }
-
-    if (!/^\[(?:input|url):[^\]\r\n]+\]\([^\)\r\n]*\)|^\[@profile:0]\(\)/.test(fragment)) {
+    if (!/^\[(?:input|url):[^\]\r\n]+\]\([^\r\n)]*\)|^\[textarea:[^\]\r\n]+\]\([^)]*\)/.test(fragment)) {
       issues.push('Composer prompt contains an unsupported or malformed Composer token.')
       break
     }

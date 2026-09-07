@@ -27,7 +27,7 @@ export const TaskReportParameterSchema = z.strictObject({
 })
 
 export const TaskReportWindowSchema = z.strictObject({
-  dirId: z.string().trim().min(1).max(256).describe('Browser directory id from the user profile references.'),
+  dirId: z.string().trim().min(1).max(256).describe('Browser directory id used in this conversation, or a current user profile reference for an unused entry.'),
   success: z.boolean().describe('Whether the started browser window completed the requested work.'),
   status: z.literal('unused').optional().describe('Use exactly for an admitted window that was never started; pair with success=false and failureReason="".'),
   failureReason: z.string().max(2_000).describe('Empty when success=true or status=unused; concise and non-empty when a started window failed.'),

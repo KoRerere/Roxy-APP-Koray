@@ -36,6 +36,20 @@ afterAll(() => {
 })
 
 describe('rollout history projector', () => {
+  it('ignores host window usage records when projecting chat messages', () => {
+    const conversationId = 'conversation-report-window-usage'
+    writeRollout(conversationId, [
+      { type: 'user_input', message: { role: 'user', content: '执行任务' }, ts: 1 },
+      { type: 'roxy_window_used', dirId: 'profile-1', turnId: 'turn-1', ts: 2 },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 3 },
+    ])
+
+    const messages = projectMessagesFromRollout(conversationId)
+    assert.equal(messages.filter(message => message.role === 'user').length, 1)
+    assert.ok(!JSON.stringify(messages).includes('roxy_window_used'))
+    assert.ok(!JSON.stringify(messages).includes('profile-1'))
+  })
+
   it('restores attachment cards from visible user-input metadata after reload', () => {
     const conversationId = 'conversation-attachment-history'
     const attachments = [{
