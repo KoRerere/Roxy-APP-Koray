@@ -46,3 +46,29 @@ it('rejects stale protocol versions and malformed terminal messages', () => {
     result: { status: 'unknown' },
   }))
 })
+
+it('validates sandbox phase events and optional event-loop heartbeat diagnostics', () => {
+  const message = parseSandboxHostToAgentMessage({
+    type: 'run.phase',
+    protocolVersion: SANDBOX_HOST_PROTOCOL_VERSION,
+    generation: 'generation-1',
+    runId: 'run-1',
+    phase: 'playwright_connect_start',
+    timestamp: 123,
+  })
+  assert.equal(message.type, 'run.phase')
+  assert.equal(message.phase, 'playwright_connect_start')
+
+  const heartbeat = parseSandboxHostToAgentMessage({
+    type: 'host.heartbeat',
+    protocolVersion: SANDBOX_HOST_PROTOCOL_VERSION,
+    generation: 'generation-1',
+    pid: 1234,
+    timestamp: 123,
+    activeRuns: 1,
+    memory: { rss: 1, heapUsed: 1, external: 1 },
+    eventLoopDelayMs: 42,
+  })
+  assert.equal(heartbeat.type, 'host.heartbeat')
+  assert.equal(heartbeat.eventLoopDelayMs, 42)
+})

@@ -13,11 +13,12 @@ const reload = () => {
       <CustomEmpty icon="rx_illustration_compass.svg" :title="$t('连接异常')">
         <template #desc>
           <div class="error-help">
-            <div class="mb-2">{{ $t('Roxy浏览器的响应时间过长。') }}</div>
+            <div class="mb-2">{{ $t('当前线路无法连接到服务器。') }}</div>
             <div>{{ $t('请尝试以下方法：') }}</div>
-            <div>{{ $t('1.检查网络连接状态') }}</div>
-            <div>{{ $t('2.同步当前系统时间') }}</div>
-            <div class="cursor-pointer error-link" @click="$showLiveChat">{{ $t('3.联系技术支持') }}</div>
+            <div>{{ $t('1.检查网络连接是否正常') }}</div>
+            <div>{{ $t('2.点击系统托盘图标，手动切换线路后再刷新') }}</div>
+            <div>{{ $t('3.同步当前系统时间') }}</div>
+            <div class="cursor-pointer error-link" @click="$showLiveChat">{{ $t('4.联系技术支持') }}</div>
           </div>
         </template>
         <template #extra>

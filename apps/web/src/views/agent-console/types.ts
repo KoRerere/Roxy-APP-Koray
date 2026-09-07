@@ -1,5 +1,6 @@
 import type { SvgNames } from '/@/components/rx-icon'
 import type { RouteLocationRaw } from 'vue-router'
+import type { TaskReportInput } from '@roxy/shared'
 import type {
   AgentClarificationQuestion,
   AgentConversationRunEventDTO,
@@ -40,6 +41,7 @@ export type AgentTaskEventStage = AgentTaskMonitorEventStage
 export type AgentProcessEventType
   = | 'thinking'
     | 'tool_call'
+    | 'task_report'
     | 'agent_lifecycle'
     | 'skill_load'
     | 'content'
@@ -160,6 +162,21 @@ export interface AgentToolCallProcessEvent extends AgentProcessBaseEvent {
   durationMs?: number
 }
 
+export interface AgentTaskReportProcessEvent extends AgentProcessBaseEvent {
+  type: 'task_report'
+  sourceReportId: string
+  report: TaskReportInput
+  superseded?: boolean
+}
+
+export interface AgentTaskReportSaveRequest {
+  conversationId: string
+  sourceReportId: string
+  report: TaskReportInput
+  resolve: () => void
+  reject: (reason?: unknown) => void
+}
+
 export interface AgentLifecycleProcessEvent extends AgentProcessBaseEvent {
   type: 'agent_lifecycle'
   renderRevision?: number
@@ -257,6 +274,7 @@ export interface AgentFileProcessEvent extends AgentProcessBaseEvent {
 export type AgentProcessEvent
   = | AgentThinkingProcessEvent
     | AgentToolCallProcessEvent
+    | AgentTaskReportProcessEvent
     | AgentLifecycleProcessEvent
     | AgentSkillLoadProcessEvent
     | AgentContentProcessEvent

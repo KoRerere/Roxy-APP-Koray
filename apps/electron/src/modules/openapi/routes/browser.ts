@@ -1,17 +1,149 @@
-import { genRandomFingerprint } from '@roxy/shared'
+import { genRandomFingerprint, isChromiumCoreUnsupported } from '@roxy/shared'
 import { screen } from 'electron'
 import express from 'express'
 import { API } from '/@/api'
-import { openAPICommonHeaders } from '/@/constants/common'
+import { osConfig } from '/@/constants'
+import { isMac, isProd, openAPICommonHeaders } from '/@/constants/common'
 import { browserManager, coreManager } from '/@/modules/browser'
+import { browserAutomationControlManager } from '/@/modules/browser/automation-control'
 import { registerChunkLayoutReflowShortcut, setChunkLayoutSnapshot } from '/@/modules/browser/browser-manager/chunkLayoutReflow'
-import { accountMapping, browserListMapping, browserListMappingV2, browserListMappingV3, mapping2List } from '/@/modules/openapi/routes/mapping/'
+import { ipcSender } from '/@/modules/ipc/sender'
+import { store } from '/@/modules/store'
+import { accountMapping, browserListMapping, browserListMappingV2, browserListMappingV3, browserTemplateMapping, mapping2List, mapping2Object } from '/@/modules/openapi/routes/mapping/'
 import { mappingKeys } from '/@/modules/openapi/routes/util'
-import { getErrorMessage, getLocalFonts, getMacAddress } from '/@/utils'
+import { getErrorMessage, getLocalFonts, getMacAddress, safeParseJSON } from '/@/utils'
 import { buildChunkLaunchParamsByDirId, computeWindowGridLayouts, sortDisplaysSpatial } from '/@/utils/windowGridLayout'
+import { writeCodexBootstrapConfig } from '../codexBootstrapConfig'
+import { createWorkspaceCredentialsService } from '../workspaceCredentials'
+import { createWorkspaceSelectionService } from '../workspaceSelection'
+import { workspaceSwitchBridge } from '../workspaceSwitchBridgeInstance'
 import { getDefaultBrowserCreateParams } from './constants/'
 
 const router = express.Router()
+
+function getRequestApiKey(req: express.Request) {
+  const apiKey = req.header('token')?.trim()
+  if (!apiKey) {
+    throw new Error('token is required')
+  }
+  return apiKey
+}
+
+const workspaceCredentials = createWorkspaceCredentialsService({
+  listWorkspaces: async (apiKey) => {
+    // APIKey 作用域接口只返回当前绑定空间；切换校验必须使用登录用户的完整空间列表。
+    console.log('[workspace-select] list workspaces:start', {
+      apiKeySuffix: apiKey ? apiKey.slice(-4) : '',
+      storeWorkspaceId: store.workspaceId,
+    })
+    const result = await API.limit.userGetWorkspaceListList()
+    console.log('[workspace-select] list workspaces:result', {
+      code: result.code,
+      msg: result.msg,
+      workspaceIds: result.data?.rows?.map(item => item.id),
+      storeWorkspaceId: store.workspaceId,
+    })
+    return {
+      ...result,
+      data: {
+        total: result.data?.total ?? 0,
+        rows: result.data?.rows ?? [],
+      },
+    }
+  },
+  getWorkspaceApiKey: async (workspaceId) => {
+    console.log('[workspace-select] get target api key:start', {
+      workspaceId,
+      storeWorkspaceId: store.workspaceId,
+    })
+    const result = await API.base.userGetUserApiList({ headers: { workspaceId } })
+    console.log('[workspace-select] get target api key:result', {
+      workspaceId,
+      code: result.code,
+      msg: result.msg,
+      hasApiKey: Boolean(result.data?.apiKey),
+      storeWorkspaceId: store.workspaceId,
+    })
+    return result
+  },
+})
+
+const workspaceSelection = createWorkspaceSelectionService({
+  getActiveWorkspaceId: () => store.workspaceId,
+  getOpenedBrowserCount: () => new Set([
+    ...browserManager.openedBrowserMap.keys(),
+    ...browserManager.openingBrowserMap.keys(),
+  ]).size,
+  hasWorkspace: (apiKey, workspaceId) => workspaceCredentials.hasWorkspace(apiKey, workspaceId),
+  getCredentials: (apiKey, workspaceId) => workspaceCredentials.select(apiKey, workspaceId),
+  requestFrontendSwitch: workspaceId => workspaceSwitchBridge.request(workspaceId),
+})
+
+router.post('/automation/acquire', async (req, res) => {
+  const { dirId, executionId, label } = req.body ?? {}
+  if (typeof dirId !== 'string' || !dirId.trim()) {
+    return res.error('dirId is required')
+  }
+  if (typeof executionId !== 'string' || !executionId.trim()) {
+    return res.error('executionId is required')
+  }
+  if (label !== undefined && (typeof label !== 'string' || !label.trim())) {
+    return res.error('label must be a non-empty string')
+  }
+  if (typeof label === 'string' && [...label.trim()].length > 16) {
+    return res.error('label must not exceed 16 characters')
+  }
+
+  try {
+    res.success(await browserAutomationControlManager.acquire({ dirId, executionId, label }))
+  }
+  catch (error) {
+    res.error(getErrorMessage(error))
+  }
+})
+
+router.post('/automation/sync', async (req, res) => {
+  const { dirId, executionId, targetId, label } = req.body ?? {}
+  if (typeof dirId !== 'string' || !dirId.trim()) {
+    return res.error('dirId is required')
+  }
+  if (typeof executionId !== 'string' || !executionId.trim()) {
+    return res.error('executionId is required')
+  }
+  if (typeof targetId !== 'string' || !targetId.trim()) {
+    return res.error('targetId is required')
+  }
+  if (label !== undefined && (typeof label !== 'string' || !label.trim())) {
+    return res.error('label must be a non-empty string')
+  }
+  if (typeof label === 'string' && [...label.trim()].length > 16) {
+    return res.error('label must not exceed 16 characters')
+  }
+
+  try {
+    res.success(await browserAutomationControlManager.sync({ dirId, executionId, targetId, label }))
+  }
+  catch (error) {
+    res.error(getErrorMessage(error))
+  }
+})
+
+router.post('/automation/release', async (req, res) => {
+  const { dirId, executionId } = req.body ?? {}
+  if (typeof dirId !== 'string' || !dirId.trim()) {
+    return res.error('dirId is required')
+  }
+  if (typeof executionId !== 'string' || !executionId.trim()) {
+    return res.error('executionId is required')
+  }
+
+  try {
+    res.success(await browserAutomationControlManager.release({ dirId, executionId }))
+  }
+  catch (error) {
+    res.error(getErrorMessage(error))
+  }
+})
 
 // sourceType 后端用于区分来源的字段
 
@@ -29,6 +161,19 @@ interface AgentOpenRuntimeStatus {
 }
 
 const agentOpenRuntimeStatusMap = new Map<string, AgentOpenRuntimeStatus>()
+
+function isUnsupportedCoreForRequest(req: express.Request, winInfo: Record<string, any>) {
+  return isChromiumCoreUnsupported(
+    isMac ? 'mac' : undefined,
+    req.header('osversion') ?? osConfig.osVersion,
+    winInfo.coreType,
+    winInfo.coreVersion,
+  )
+}
+
+function getUnsupportedCoreError(coreVersion: unknown) {
+  return $t('当前系统不支持使用{version}内核', { version: String(coreVersion ?? '') })
+}
 
 function setAgentOpenRuntimeStatus(status: Omit<AgentOpenRuntimeStatus, 'updatedAt'>) {
   const nextStatus = {
@@ -133,8 +278,9 @@ async function handleAgentOpenStatus(req: express.Request, res: express.Response
 }
 
 function normalizeOpenArgs(args: unknown, headless: boolean) {
-  if (!Array.isArray(args))
-    throw new Error('args is not array')
+  if (!Array.isArray(args)) {
+    throw new TypeError('args is not array')
+  }
 
   const nextArgs = [...args]
   if (headless && !nextArgs.includes('--headless=new')) {
@@ -193,7 +339,7 @@ type AgentLaunchCoreCheckResult
     }
     | { ok: false, status: 'core_error', error: string }
 
-async function prepareAgentLaunchCore(winInfo: any): Promise<AgentLaunchCoreCheckResult> {
+async function prepareAgentLaunchCore(winInfo: any, req?: express.Request): Promise<AgentLaunchCoreCheckResult> {
   let coreType = winInfo.coreType
   let coreVersion = winInfo.coreVersion
   let coreManagerUtils = coreManager.getCoreManager(coreType)
@@ -238,6 +384,14 @@ async function prepareAgentLaunchCore(winInfo: any): Promise<AgentLaunchCoreChec
     coreManagerUtils = coreManager.getCoreManager(coreType)
     winInfo.coreType = coreType
     winInfo.coreVersion = coreVersion
+  }
+
+  if (req && isUnsupportedCoreForRequest(req, { coreType, coreVersion })) {
+    return {
+      ok: false,
+      status: 'core_error' as const,
+      error: getUnsupportedCoreError(coreVersion),
+    }
   }
 
   const availableCore = coreManagerUtils.getAvailableCore(coreVersion)
@@ -341,6 +495,97 @@ async function launchAgentWindowAfterCoreDownload(
   }
 }
 
+function parseTemplateContent(content: unknown) {
+  if (content && typeof content === 'object' && !Array.isArray(content)) {
+    return content
+  }
+  if (typeof content !== 'string' || !content) {
+    return {}
+  }
+  return safeParseJSON(content, () => ({})) ?? {}
+}
+
+// 下一期开放新增 / 修改模板时恢复：写入后端时再压回字符串
+// function stringifyTemplateContent(content: unknown): string | undefined {
+//   if (typeof content === 'string') {
+//     return content
+//   }
+//   if (content == null) {
+//     return undefined
+//   }
+//   return JSON.stringify(content)
+// }
+
+/** OpenAPI 对外用短值（label），后端存储真实 URL */
+const CHECK_CHANNEL_MAP: Record<string, string> = {
+  'IPRust.io': 'http://iprust.io/ip.json',
+  'IP-API': 'http://pro.ip-api.com/json?key=c1ulk9X5j8NKqTV',
+  'IP123.in': 'http://ip123.in/ip.json',
+  IPinfo: 'http://ipinfo.io',
+  IP2Location: 'http://api.ip2location.io/?key=C67DFE07AF4B75B505BE2B4B5A757900',
+}
+
+/** 按 label 或完整 URL 匹配渠道；大小写不同时再兜底一次 */
+function findCheckChannel(current: string) {
+  const value = CHECK_CHANNEL_MAP[current]
+  if (value) {
+    return { label: current, value }
+  }
+  const byValue = Object.entries(CHECK_CHANNEL_MAP).find(([, url]) => url === current)
+  if (byValue) {
+    return { label: byValue[0], value: byValue[1] }
+  }
+  const lower = current.toLowerCase()
+  const byLabel = Object.entries(CHECK_CHANNEL_MAP).find(([label]) => label.toLowerCase() === lower)
+  if (byLabel) {
+    return { label: byLabel[0], value: byLabel[1] }
+  }
+}
+
+/** 只改 content.checkChannel，未命中映射时保持原值以免丢掉自定义渠道 */
+function mapTemplateCheckChannel(
+  content: Record<string, any>,
+  to: 'label' | 'value',
+) {
+  const current = content.checkChannel
+  if (typeof current !== 'string' || !current) {
+    return content
+  }
+  const matched = findCheckChannel(current)
+  if (!matched) {
+    return content
+  }
+  return {
+    ...content,
+    checkChannel: to === 'label' ? matched.label : matched.value,
+  }
+}
+
+// 下一期开放新增 / 修改模板时恢复：把 OpenAPI 的 proxyInfo / fingerInfo 摊平给后端
+// function flattenOpenApiCreateParams(content: Record<string, any>) {
+//   const { proxyInfo, fingerInfo, workspaceId: _workspaceId, ...rest } = content
+//   return {
+//     ...rest,
+//     ...(proxyInfo && typeof proxyInfo === 'object' && !Array.isArray(proxyInfo) ? proxyInfo : {}),
+//     ...(fingerInfo && typeof fingerInfo === 'object' && !Array.isArray(fingerInfo) ? fingerInfo : {}),
+//   }
+// }
+
+/** 先转扁平 checkChannel，再嵌套成创建窗口同款结构 */
+function prepareTemplateContentForRead(content: unknown) {
+  const flat = mapTemplateCheckChannel(parseTemplateContent(content), 'label')
+  return mapping2Object(flat, browserTemplateMapping)
+}
+
+// 下一期开放新增 / 修改模板时恢复
+// function prepareTemplateContentForWrite(content: unknown) {
+//   if (content == null) {
+//     return undefined
+//   }
+//   const flat = flattenOpenApiCreateParams(parseTemplateContent(content))
+//   return stringifyTemplateContent(mapTemplateCheckChannel(flat, 'value'))
+// }
+
 /** 获取账号列表 */
 router.get('/account', async (req, res) => {
   const { workspaceId, accountId: id, ...rest } = req.query as Record<string, any>
@@ -388,6 +633,77 @@ router.get('/workspace', async (req, res) => {
   }
 })
 
+/** 切换 API 调用方使用的空间，并返回目标空间最新的 OpenAPI 配置 */
+router.post('/workspace/select', async (req, res) => {
+  const { workspaceId, force } = req.body ?? {}
+  console.log('[workspace-select] request', {
+    workspaceId,
+    force,
+    storeWorkspaceId: store.workspaceId,
+    openedBrowserCount: new Set([
+      ...browserManager.openedBrowserMap.keys(),
+      ...browserManager.openingBrowserMap.keys(),
+    ]).size,
+  })
+  if (workspaceId === undefined || workspaceId === null || workspaceId === '') {
+    return res.error('workspaceId is required')
+  }
+  if (force !== undefined && typeof force !== 'boolean') {
+    return res.error('force must be a boolean')
+  }
+
+  try {
+    const result = await workspaceSelection.select(getRequestApiKey(req), workspaceId, { force })
+    if (result.switched) {
+      if (!result.credentials.port || result.credentials.port < 0) {
+        throw new Error('OpenAPI server port is unavailable')
+      }
+      const written = await writeCodexBootstrapConfig({
+        apiKey: result.credentials.apiKey,
+        workspaceId,
+        apiHost: `http://127.0.0.1:${result.credentials.port}`,
+      }, { isProduction: isProd })
+      if (!written) {
+        throw new Error('failed to persist workspace API credentials')
+      }
+    }
+    console.log('[workspace-select] selection complete', {
+      workspaceId,
+      switched: result.switched,
+      storeWorkspaceId: store.workspaceId,
+      hasApiKey: Boolean(result.credentials?.apiKey),
+    })
+    if (result.switched) {
+      res.once('finish', () => {
+        void ipcSender.user.workspaceSelectCompleted({
+          requestId: result.requestId,
+          workspaceId,
+        })
+      })
+    }
+    res.success(result.credentials)
+  }
+  catch (error) {
+    console.error('[workspace-select] selection failed', {
+      workspaceId,
+      storeWorkspaceId: store.workspaceId,
+      error: getErrorMessage(error),
+    })
+    res.error(getErrorMessage(error))
+  }
+})
+
+/** 获取当前 APIKey 对应的 active 空间详情 */
+router.get('/workspace/active', async (req, res) => {
+  try {
+    // 以当前 APIKey 对应空间的最新配置为准，避免切换重启尚未完成时返回旧的本地端口。
+    res.success(await workspaceCredentials.getActive(getRequestApiKey(req)))
+  }
+  catch (error) {
+    res.error(getErrorMessage(error))
+  }
+})
+
 /* 创建窗口 */
 router.post('/create', async (req, res) => {
   const { proxyInfo = {}, windowPlatformList = [], fingerInfo = {}, workspaceId, coreType, coreVersion } = req.body || {}
@@ -396,6 +712,10 @@ router.post('/create', async (req, res) => {
   const coreResult = await coreManager.resolveCoreParams(coreType, coreVersion, { fillDefaults: true })
   if (!coreResult.ok) {
     return res.error(coreResult.error)
+  }
+
+  if (isUnsupportedCoreForRequest(req, coreResult)) {
+    return res.error(getUnsupportedCoreError(coreResult.coreVersion))
   }
 
   const _platformUrlIds = windowPlatformList.map(item => item.id).filter(Boolean)
@@ -450,7 +770,11 @@ router.post('/create', async (req, res) => {
 
 // 修改窗口
 router.post('/mdf', async (req, res) => {
-  const { proxyInfo = {}, windowPlatformList = [], fingerInfo = {}, workspaceId } = req.body || {}
+  const { proxyInfo = {}, windowPlatformList = [], fingerInfo = {}, workspaceId, coreType, coreVersion } = req.body || {}
+
+  if (isUnsupportedCoreForRequest(req, { coreType, coreVersion })) {
+    return res.error(getUnsupportedCoreError(coreVersion))
+  }
 
   const _platformUrlIds = windowPlatformList.map(item => item.id).filter(Boolean)
   const _windowPlatformList = windowPlatformList.filter(item => !item.id)
@@ -575,6 +899,96 @@ router.post('/delete', async (req, res) => {
   }
 })
 
+/** 获取窗口模板列表 */
+router.get('/template', async (req, res) => {
+  const { workspaceId } = req.query as Record<string, any>
+  try {
+    const result = await API.window.userGetWindowTemplateListList({
+      headers: { workspaceId, ...openAPICommonHeaders },
+    })
+    if (result.code === 0 && Array.isArray(result.data)) {
+      res.json({
+        ...result,
+        data: result.data.filter(item => item.id).map(item => ({
+          ...item,
+          content: prepareTemplateContentForRead(item.content),
+        })),
+      })
+      return
+    }
+    res.json(result)
+  }
+  catch (error) {
+    res.error(error)
+  }
+})
+
+// 下一期开放：新增窗口模板
+// router.post('/template', async (req, res) => {
+//   const { workspaceId, templateName, content } = req.body || {}
+//   if (!templateName) {
+//     return res.error('templateName is required')
+//   }
+//
+//   try {
+//     const result = await API.window.userAddWindowTemplateInfoCreate({
+//       templateName,
+//       content: prepareTemplateContentForWrite(content),
+//     }, {
+//       headers: { workspaceId, ...openAPICommonHeaders },
+//     })
+//     res.json(result)
+//   }
+//   catch (error) {
+//     res.error(error)
+//   }
+// })
+//
+// 下一期开放：修改窗口模板
+// router.post('/template/mdf', async (req, res) => {
+//   const { workspaceId, id, templateName, content } = req.body || {}
+//   if (!id) {
+//     return res.error('id is required')
+//   }
+//   if (!templateName) {
+//     return res.error('templateName is required')
+//   }
+//
+//   try {
+//     const result = await API.window.userMdfWindowTemplateInfoCreate({
+//       id: Number(id),
+//       templateName,
+//       content: prepareTemplateContentForWrite(content),
+//     }, {
+//       headers: { workspaceId, ...openAPICommonHeaders },
+//     })
+//     res.json(result)
+//   }
+//   catch (error) {
+//     res.error(error)
+//   }
+// })
+//
+// 下一期开放：删除窗口模板
+// router.post('/template/delete', async (req, res) => {
+//   const { workspaceId, id } = req.body || {}
+//   if (!id) {
+//     return res.error('id is required')
+//   }
+//
+//   try {
+//     const result = await API.window.userDeleteWindowTemplateInfoCreate({
+//       id: Number(id),
+//     }, {
+//       headers: { workspaceId, ...openAPICommonHeaders },
+//     })
+//     res.json(result)
+//   }
+//   catch (error) {
+//     res.error(error)
+//   }
+// })
+
 /** 打开浏览器窗口 */
 router.post('/open', async (req, res) => {
   const { dirId, workspaceId, args = [], forceOpen = false, headless = false } = req.body
@@ -614,6 +1028,9 @@ router.post('/open', async (req, res) => {
       const winInfo = result.data.rows[0]
       if (!winInfo) {
         return res.error('window not found')
+      }
+      if (isUnsupportedCoreForRequest(req, winInfo)) {
+        return res.error(getUnsupportedCoreError(winInfo.coreVersion))
       }
       winInfo.startupParam = [winInfo.startupParam, ...args].filter(Boolean).join(';')
       try {
@@ -725,7 +1142,7 @@ router.post('/agent/open', async (req, res) => {
         }
       }
 
-      const coreCheck = await prepareAgentLaunchCore(winInfo)
+      const coreCheck = await prepareAgentLaunchCore(winInfo, req)
       if (!coreCheck.ok) {
         if (coreCheck.status === 'core_downloading') {
           const downloadingStatus = setAgentOpenRuntimeStatus({

@@ -5,14 +5,23 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, beforeEach, it, vi } from 'vitest'
 
-const { profilesOpen, profilesConnectionInfo, RoxyBrowserClient } = vi.hoisted(() => ({
+const { profilesOpen, profilesConnectionInfo, transportRequest, RoxyBrowserClient } = vi.hoisted(() => ({
   profilesOpen: vi.fn(),
   profilesConnectionInfo: vi.fn(),
+  transportRequest: vi.fn(),
+  // 生产代码通过 `new` 构造 RoxyBrowserClient，因此测试桩需要保留构造函数形态。
+  // eslint-disable-next-line prefer-arrow-callback
   RoxyBrowserClient: vi.fn().mockImplementation(function () {
     return {
       profiles: {
         open: profilesOpen,
         connectionInfo: profilesConnectionInfo,
+      },
+      api: {
+        transport: {
+          workspaceId: 42,
+          request: transportRequest,
+        },
       },
     }
   }),
@@ -87,6 +96,7 @@ beforeEach(() => {
   reserve.mockReset()
   profilesOpen.mockReset()
   profilesConnectionInfo.mockReset()
+  transportRequest.mockReset()
   publishTaskMonitorBrowserAttached.mockReset()
   publishTaskMonitorBrowserEvent.mockReset()
   publishTaskMonitorBrowserFinished.mockReset()
@@ -109,6 +119,7 @@ it('opens Chromium after reserving a Host slot and sends a structured run payloa
 
   try {
     const { startSandboxScriptRun } = await import('./sandboxService')
+    const launched: string[] = []
     const run = await startSandboxScriptRun({
       scriptPath: '/tmp/script.ts',
       dirId: 'profile-1',
@@ -116,6 +127,7 @@ it('opens Chromium after reserving a Host slot and sends a structured run payloa
       outputDir: temp.outputDir,
       logFilePath: temp.logFilePath,
       permissionsFile: temp.permissionsFile,
+      onBrowserLaunched: dirId => launched.push(dirId),
     })
 
     assert.equal(reserve.mock.calls.length, 1)
@@ -131,6 +143,7 @@ it('opens Chromium after reserving a Host slot and sends a structured run payloa
     assert.equal(RoxyBrowserClient.mock.calls[0]?.[0].workspaceId, 42)
     assert.deepEqual(profilesConnectionInfo.mock.calls, [[['profile-1']]])
     assert.deepEqual(profilesOpen.mock.calls, [['profile-1', { forceOpen: true }]])
+    assert.deepEqual(launched, ['profile-1'])
 
     host.resolve({ status: 'done', exitCode: 0, artifactPaths: [], storageChanges: [] })
     assert.equal((await run.finished).status, 'done')
@@ -138,6 +151,66 @@ it('opens Chromium after reserving a Host slot and sends a structured run payloa
   finally {
     await fsPromises.rm(temp.root, { recursive: true, force: true })
   }
+})
+
+it('opens all target windows through agent/open and waits for core download and launch', async () => {
+  transportRequest
+    .mockResolvedValueOnce({
+      code: 0,
+      data: {
+        rows: [
+          { dirId: 'profile-1', success: true, status: 'opened', launchInfo: { ws: 'ws://127.0.0.1/devtools/browser/one' } },
+          { dirId: 'profile-2', success: true, status: 'core_downloading' },
+        ],
+      },
+      msg: '',
+    })
+    .mockResolvedValueOnce({
+      code: 0,
+      data: [
+        { dirId: 'profile-1', success: true, status: 'opened', ws: 'ws://127.0.0.1/devtools/browser/one' },
+        { dirId: 'profile-2', success: true, status: 'launching' },
+      ],
+      msg: '',
+    })
+    .mockResolvedValueOnce({
+      code: 0,
+      data: [
+        { dirId: 'profile-1', success: true, status: 'opened', ws: 'ws://127.0.0.1/devtools/browser/one' },
+        { dirId: 'profile-2', success: true, status: 'opened', launchInfo: { ws: 'ws://127.0.0.1/devtools/browser/two' } },
+      ],
+      msg: '',
+    })
+
+  const { openBrowsersForDirIds } = await import('./sandboxService')
+  const launched: string[] = []
+  const connections = await openBrowsersForDirIds(['profile-1', 'profile-2'], {
+    layout: 'grid',
+    onBrowserLaunched: dirId => launched.push(dirId),
+  })
+
+  assert.deepEqual([...connections.entries()], [
+    ['profile-1', { ws: 'ws://127.0.0.1/devtools/browser/one', browserType: 'chromium' }],
+    ['profile-2', { ws: 'ws://127.0.0.1/devtools/browser/two', browserType: 'chromium' }],
+  ])
+  assert.deepEqual(launched, ['profile-1', 'profile-2'])
+  assert.deepEqual(transportRequest.mock.calls.map(([request]) => request), [
+    {
+      method: 'POST',
+      path: '/browser/agent/open',
+      params: { workspaceId: 42, dirIds: ['profile-1', 'profile-2'], forceOpen: false, layout: 'grid' },
+    },
+    {
+      method: 'GET',
+      path: '/browser/agent/open_status',
+      params: { dirIds: ['profile-1', 'profile-2'] },
+    },
+    {
+      method: 'GET',
+      path: '/browser/agent/open_status',
+      params: { dirIds: ['profile-1', 'profile-2'] },
+    },
+  ])
 })
 
 it('preserves return values, artifacts and categorized storage outputs', async () => {

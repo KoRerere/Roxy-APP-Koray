@@ -4,8 +4,6 @@ import { useRouteContext } from '/@/composables/useRouteContext'
 /** 代理 IP 商城/设备管理共用弹窗文案：普通模式用「代理 IP」，电商模式用「设备」 */
 export interface ProxyShopLabels {
   entity: string
-  autoRenewExpireDesc: string
-  autoRenewImmediateAlert: (hour: number) => string
   helpProblemDescription: string
   helpProblemDescriptionMaintenance: string
   helpReplaceTitle: string
@@ -49,7 +47,6 @@ export interface ProxyShopLabels {
 
 interface ProxyShopLabelsBase {
   entity: string
-  autoRenewExpireDesc: string
   helpProblemDescription: string
   helpProblemDescriptionMaintenance: string
   helpReplaceTitle: string
@@ -72,7 +69,6 @@ interface ProxyShopLabelsBase {
 
 const PROXY_SHOP_LABELS: ProxyShopLabelsBase = {
   entity: $t('代理 IP'),
-  autoRenewExpireDesc: $t('开启自动续费后，系统会在代理 IP 到期时自动尝试从 {bold} 扣费。', { bold: '{bold}' }),
   helpProblemDescription: $t('我们检测到您购买的代理 IP 存在问题，以下是一些推荐的解决方案。'),
   helpProblemDescriptionMaintenance: $t('当前 IP 所属线路正在维护，暂时无法正常连接。技术团队正在加紧处理，请于维护结束后重新检测。由此给您带来的不便，我们深表歉意，感谢您的理解与支持。'),
   helpReplaceTitle: $t('更换新代理 IP'),
@@ -95,7 +91,6 @@ const PROXY_SHOP_LABELS: ProxyShopLabelsBase = {
 
 const DEVICE_SHOP_LABELS: ProxyShopLabelsBase = {
   entity: $t('设备'),
-  autoRenewExpireDesc: $t('开启自动续费后，系统会在设备到期时自动尝试从 {bold} 扣费。', { bold: '{bold}' }),
   helpProblemDescription: $t('我们检测到您购买的设备存在问题，以下是一些推荐的解决方案。'),
   helpProblemDescriptionMaintenance: $t('当前设备所属线路正在维护，暂时无法正常连接。技术团队正在加紧处理，请于维护结束后重新检测。由此给您带来的不便，我们深表歉意，感谢您的理解与支持。'),
   helpReplaceTitle: $t('更换新设备'),
@@ -135,9 +130,6 @@ export function createProxyShopLabels(isEcommerce: boolean): ProxyShopLabels {
     testFailedCheckConfig: isEcommerce
       ? $t('设备检测失败，请检查设备配置')
       : $t('代理 IP 检测失败，请检查代理 IP 配置'),
-    autoRenewImmediateAlert: hour => isEcommerce
-      ? $t('距离到期时间不足 {hour} 小时的设备，开启后将立即执行续费。\n到期前 {hour} 小时无法修改自动续费开关。', { hour })
-      : $t('距离到期时间不足 {hour} 小时的代理 IP，开启后将立即执行续费。\n到期前 {hour} 小时无法修改自动续费开关。', { hour }),
   }
 }
 

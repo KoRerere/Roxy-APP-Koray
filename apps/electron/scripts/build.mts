@@ -2,7 +2,7 @@ import type { Configuration } from 'electron-builder'
 import type { CopySyncOptions } from 'node:fs'
 import { rebuild } from '@electron/rebuild'
 import { build, Platform } from 'electron-builder'
-import { chmodSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { exit, platform } from 'node:process'
 import { notarizeMac } from './notarize-mac.mts'
@@ -80,8 +80,9 @@ function canvasPlatformBinaries(): NonNullable<Configuration['extraResources']> 
     linux: ['linux-x64-gnu', 'linux-x64-musl', 'linux-arm64-gnu', 'linux-arm64-musl', 'linux-arm-gnueabihf'],
   }
   const platforms = matrix[platform] ?? []
-  if (platforms.length === 0)
+  if (platforms.length === 0) {
     return []
+  }
   // 解析 @napi-rs/canvas 实际安装版本，拼出 .pnpm store 目录名
   const canvasPkgPath = path.join(workDir, 'node_modules/@napi-rs/canvas/package.json')
   const canvasVersion = JSON.parse(readFileSync(canvasPkgPath, 'utf-8')).version as string
@@ -272,6 +273,7 @@ const options: Configuration = {
     // Skia 走 OS 文件 API，绕过 Electron asar 虚拟 FS，必须解包到 app.asar.unpacked
     'resources/firefox',
     'resources/chrome',
+    'resources/automation-control-extension',
   ],
   extraMetadata: {
     version,
@@ -283,6 +285,18 @@ const options: Configuration = {
     buildResources: 'buildResources',
   },
   extraResources,
+  afterPack: async (context) => {
+    const extensionManifest = path.join(
+      context.packager.getResourcesDir(context.appOutDir),
+      'app.asar.unpacked',
+      'resources',
+      'automation-control-extension',
+      'manifest.json',
+    )
+    if (!existsSync(extensionManifest)) {
+      throw new Error(`自动化控制扩展未被解包到安装包: ${extensionManifest}`)
+    }
+  },
   files: [
     'dist',
     'resources',

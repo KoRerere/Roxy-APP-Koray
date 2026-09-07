@@ -26,7 +26,7 @@ import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
 import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
-import { isLocalNetworkStopOpenMessage, isProxyDetectOpenWarning } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
+import { isLocalNetworkStopOpenMessage, isProxyDetectOpenWarning, isRoxyIpProxyType } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { ClearType, CoreType, ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -44,7 +44,7 @@ import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { emitter, useEmitterEvent } from '/@/utils/eventBus'
 import { useDrawer } from '/@/hooks/useDrawer'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
-import { PROXY_BUY_ADD_DRAWER_KEY, expandChosenProxyRows, toChosenWindowProxyList, toInlineWindowProxyList, useProfileProxy, useProfileProxySpeedTest, useProxyBuyAddDrawer, usePurchaseOfficialProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
+import { expandChosenProxyRows, PROXY_BUY_ADD_DRAWER_KEY, toChosenWindowProxyList, toInlineWindowProxyList, useProfileProxy, useProfileProxySpeedTest, useProxyBuyAddDrawer, usePurchaseOfficialProxy } from '/@/views/browser/list/profiles/hooks/useProfileProxy'
 import { useCookie } from '/@/views/browser/list/profiles/hooks/useCookie'
 import { useTrack } from '/@/views/browser/list/profiles/hooks/useOperationTrack'
 import { useProfileOpenState } from '/@/views/browser/list/profiles/hooks/useProfileOpenState'
@@ -383,22 +383,28 @@ async function testAllProxy(silent = false) {
 
 /** 打开窗口时的代理检测失败：保留原 warning，并按来源拼一次引导 toast */
 function showOpenProxyDetectFailGuide(dirId: string | number, warningMessages: string[]) {
-  if (warningMessages.some(isLocalNetworkStopOpenMessage))
+  if (warningMessages.some(isLocalNetworkStopOpenMessage)) {
     return
+  }
 
   const detectWarning = warningMessages.find(isProxyDetectOpenWarning)
-  if (!detectWarning)
+  if (!detectWarning) {
     return
+  }
 
   const row = dataList.value?.find(item => String(item.dirId) === String(dirId))
-  if (!row)
+  if (!row) {
     return
+  }
 
+  // 打开窗口失败不走 testProxy，行上 lastCountry 还在；有则给购买弹窗匹配国家
+  const lastCountry = typeof row.lastCountry === 'string' ? row.lastCountry.trim() : ''
   batchTestShowToast({
     loading: false,
     checkStatus: ProxyCheckStatus.failure,
     proxyType: row.buyProxyType,
     error: detectWarning,
+    ...(lastCountry ? { lastCountry } : {}),
   })
 }
 
@@ -702,13 +708,15 @@ function multipleProxyChange(data: Data | Data[], { proxyMethod }: any) {
 
   // 勾选 2 个以上走批量抽屉；1 条仍走单窗流程（底部批量栏勾 1 条时 operationType 也是 batch）
   if (!isChoose) {
-    if (datas.length > 1)
+    if (datas.length > 1) {
       return openBatchInlineProxyDrawer(datas)
+    }
     return openAddProxyBuyAddDrawer(datas)
   }
 
-  if (datas.length > 1)
+  if (datas.length > 1) {
     return openBatchChooseProxyDrawer(datas)
+  }
   return openChooseProxyDrawer(datas)
 }
 
@@ -762,8 +770,9 @@ function openBatchChooseProxyDrawer(datas: Data[]) {
 
   async function onConfirm(proxies: Record<string, any>[]) {
     const ok = await bindChosenProxyListToProfiles(datas, proxies)
-    if (ok)
+    if (ok) {
       drawerInstance.hideDrawer()
+    }
   }
 
   return promise
@@ -802,8 +811,9 @@ function openBatchInlineProxyDrawer(datas: Data[]) {
 
   async function onConfirm(proxies: Record<string, any>[]) {
     const ok = await bindInlineProxiesToProfiles(datas, proxies)
-    if (ok)
+    if (ok) {
       drawerInstance.hideDrawer()
+    }
   }
 
   /** 横幅购买：批量抽屉保持打开，购买弹窗叠在上面 */
@@ -829,14 +839,16 @@ async function bindChosenProxyListToProfiles(datas: Data[], proxies: Record<stri
     proxyList,
   } as any)
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return false
+  }
 
   datas.forEach((item, index) => {
     const proxy = expanded[index]
     const payload = proxyList[index]
-    if (!proxy || !payload)
+    if (!proxy || !payload) {
       return
+    }
     silentUpdateProxy(item, {
       ...payload,
       moduleId: payload.moduleId,
@@ -928,13 +940,15 @@ async function bindInlineProxiesToProfiles(datas: Data[], proxies: Record<string
     proxyList,
   } as any)
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return false
+  }
 
   datas.forEach((item, index) => {
     const proxy = proxyList[index]
-    if (!proxy)
+    if (!proxy) {
       return
+    }
     silentUpdateProxy(item, {
       ...proxy,
       moduleId: 0,

@@ -11,6 +11,7 @@ export type RuntimeScriptToolOptions = Pick<RunScriptToolOptions, 'ephemeral' | 
   allowedDirId?: string
   /** Bind script execution to multiple browser profiles (used by general-purpose agents). */
   allowedDirIds?: readonly string[]
+  onBrowserLaunched?: (dirId: string) => void
 }
 
 interface ScriptTool<TSchema extends z.ZodType> {
@@ -57,6 +58,7 @@ export function runtimeScriptRunOptions(options: RuntimeScriptToolOptions): RunS
     fileCollector: options.fileCollector,
     taskMonitorTaskId: options.taskMonitorTaskId,
     executionId: options.executionId,
+    onBrowserLaunched: options.onBrowserLaunched,
   }
 }
 

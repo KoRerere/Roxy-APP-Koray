@@ -26,6 +26,18 @@ describe('core interfaces (contract)', () => {
     expect(desc.annotations?.destructiveHint).toBe(true)
   })
 
+  it('ToolDescriptor supports successful direct turn completion', () => {
+    const desc: ToolDescriptor = {
+      name: 'task_report',
+      description: 'save report',
+      inputSchema: testToolInputSchema,
+      source: 'builtin',
+      returnDirect: true,
+    }
+
+    expect(desc.returnDirect).toBe(true)
+  })
+
   it('HitlMode covers strict / delegate / full', () => {
     const modes: HitlMode[] = ['strict', 'delegate', 'full']
     expect(modes).toHaveLength(3)

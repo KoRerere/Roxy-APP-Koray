@@ -88,6 +88,7 @@ const bonusList = computed(() => {
       id: 2,
       icon: 'referral-program/rx_illustration_discount',
       title: $t('他们得到'),
+      tooltip: $t('连续 {months} 个月未产生消费，身份折扣自动失效。', { months: 3 }),
       class: 'flex-1/4 give',
       items: [
         {
@@ -112,8 +113,9 @@ watch(activeMenu, () => {
 
 watch(() => promotionInfo.promotionLinkList, (list) => {
   const matched = list?.find(item => item.linkType === activeMenu.value.linkType)
-  if (matched)
+  if (matched) {
     activeMenu.value = matched
+  }
 }, { deep: true })
 
 onMounted(() => {
@@ -143,8 +145,9 @@ async function showNewInfo() {
 }
 
 function _focusReward() {
-  if (getLocalStorageDriverStatus('referralProgram'))
+  if (getLocalStorageDriverStatus('referralProgram')) {
     return
+  }
 
   genDriver({
     steps: [
@@ -232,7 +235,6 @@ function openEditPromotionCodeModal() {
 
 function openCommunity() {
   const list = communityQrcodeList.value
-  console.log('🚀 ~ openCommunity ~ list:', list)
   showModal({
     showHeader: false,
     modal: true,
@@ -280,22 +282,17 @@ function openCommunity() {
                 {{ item.value }}
               </div>
               <RxButton size="lg" :label="$t('复制')" icon="base/rx_ic_copy" @click="copyReferral(item.value, item.trackName)" />
-              <RxButton
-                v-if="item.editable"
-                v-tooltip.top="$t('编辑')"
-                size="md"
-                severity="secondary"
-                outlined
-                icon="base/rx_ic_edit"
-                @click="openEditPromotionCodeModal"
-              />
+              <RxButton v-if="item.editable" v-tooltip.top="$t('编辑')" size="md" severity="secondary" outlined icon="base/rx_ic_edit" @click="openEditPromotionCodeModal" />
             </div>
           </div>
         </div>
         <div class="w-full flex gap-2.5 bonus">
           <div v-for="item in bonusList" :key="item.id" class="w-full flex flex-col gap-2" :class="item.class">
-            <div class="bonus-title">
+            <div class="flex items-center gap-1 bonus-title">
               {{ item.title }}:
+              <span v-if="item.tooltip" v-tooltip.top="item.tooltip" class="inline-flex ">
+                <SvgIcon class="pointer-events-none" name="base/rx_ic_info" color="var(--colors-icon-icon-tertiary)" />
+              </span>
             </div>
             <div class="relative flex-1 h-22 flex gap-5 py-3 px-4 rounded-md bonus-content">
               <SvgIcon class="absolute right-0 top-0" :name="(item.icon as any)" size="88" />

@@ -7,6 +7,7 @@ import { isReservedOfficialTemplateSlug } from '../../my-templates'
 import { pickLocalized } from '../../template-store'
 import { useSimpleLocale } from '/@/stores/locale'
 import AgentButton from '../form/AgentButton.vue'
+import MarkdownContent from '../MarkdownContent.vue'
 import './agent-dialog.scss'
 
 interface UploadScriptDialogData {
@@ -292,7 +293,12 @@ watch(source, () => {
         <section v-if="parsed" class="upload-script-dialog__result">
           <div>
             <span>{{ $t('脚本描述') }}</span>
-            <p>{{ parsedDescription || $t('暂无描述') }}</p>
+            <MarkdownContent
+              v-if="parsedDescription"
+              class="upload-script-dialog__description"
+              :content="parsedDescription"
+            />
+            <p v-else>{{ $t('暂无描述') }}</p>
           </div>
           <div>
             <span>{{ $t('脚本参数') }}</span>
@@ -354,6 +360,33 @@ watch(source, () => {
   p {
     margin: 4px 0 0;
     color: var(--color-text-tertiary);
+  }
+}
+
+.upload-script-dialog__description {
+  margin-top: 4px;
+  color: var(--color-text-tertiary);
+  line-height: 20px;
+  overflow-wrap: anywhere;
+
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4),
+  :deep(h5),
+  :deep(h6) {
+    margin: 8px 0 4px;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  :deep(> :first-child) {
+    margin-top: 0;
+  }
+
+  :deep(> :last-child) {
+    margin-bottom: 0;
   }
 }
 

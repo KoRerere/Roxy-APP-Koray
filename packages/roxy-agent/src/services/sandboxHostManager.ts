@@ -1,4 +1,4 @@
-import type { SandboxAgentCommand, SandboxHostRunResult, SandboxHostToAgentMessage, SandboxRunPayload } from '@/core/sandbox/host-protocol'
+import type { SandboxAgentCommand, SandboxHostRunResult, SandboxHostToAgentMessage, SandboxRunPayload, SandboxRunPhase } from '@/core/sandbox/host-protocol'
 import type { LlmTransport } from '@/modes/sandbox-api/llm'
 import type { ChildProcess } from 'node:child_process'
 import { fork } from 'node:child_process'
@@ -13,7 +13,7 @@ function numberEnv(name: string, fallback: number, min = 1): number {
 }
 
 const HOST_START_TIMEOUT_MS = numberEnv('SANDBOX_HOST_START_TIMEOUT_MS', 15_000)
-const HEARTBEAT_TIMEOUT_MS = numberEnv('SANDBOX_HOST_HEARTBEAT_TIMEOUT_MS', 10_000)
+const HEARTBEAT_TIMEOUT_MS = numberEnv('SANDBOX_HOST_HEARTBEAT_TIMEOUT_MS', 60_000)
 const ABORT_GRACE_MS = numberEnv('SANDBOX_HOST_ABORT_GRACE_MS', 5_000)
 const IDLE_TIMEOUT_MS = numberEnv('SANDBOX_HOST_IDLE_TIMEOUT_MS', 60_000)
 const MAX_RUNS = numberEnv('SANDBOX_HOST_MAX_RUNS', 100)
@@ -24,6 +24,7 @@ type LlmTransportFactory = (runId: string) => LlmTransport
 
 export interface SandboxHostRunHandlers {
   onLog?: (event: { level: string, message: string, runId: string }) => void
+  onPhase?: (event: { phase: SandboxRunPhase, timestamp: number, runId: string }) => void
 }
 
 export interface SandboxHostRunHandle {
@@ -52,6 +53,8 @@ interface HostState {
   lastSeen: number
   completedRuns: number
   recycleReason?: 'max-runs' | 'rss'
+  lastHeartbeat?: { timestamp: number, activeRuns: number, eventLoopDelayMs?: number, rss: number, heapUsed: number, external: number }
+  lastHeartbeatDebugAt?: number
   finalized: boolean
   resolveReady: () => void
   rejectReady: (error: Error) => void
@@ -74,6 +77,10 @@ interface PendingRun {
   abortTimer?: NodeJS.Timeout
   llmAbortController: AbortController
   llmTransport: LlmTransport
+  lastPhase?: { phase: SandboxRunPhase, timestamp: number }
+  lastLog?: string
+  reservedAt: number
+  startedAt?: number
 }
 
 function abortError(): Error {
@@ -138,6 +145,7 @@ export class SandboxHostManager {
     }
     if (this.activeSlots < this.maxConcurrency) {
       this.acquireSlot()
+      console.debug(`[sandboxHostManager] reservation granted activeSlots=${this.activeSlots}/${this.maxConcurrency}`)
       return Promise.resolve(this.createReservation(signal))
     }
 
@@ -154,6 +162,7 @@ export class SandboxHostManager {
         signal.addEventListener('abort', entry.onAbort, { once: true })
       }
       this.queue.push(entry)
+      console.debug(`[sandboxHostManager] reservation queued activeSlots=${this.activeSlots}/${this.maxConcurrency} queueLength=${this.queue.length}`)
     })
   }
 
@@ -242,6 +251,7 @@ export class SandboxHostManager {
         continue
       }
       this.acquireSlot()
+      console.debug(`[sandboxHostManager] reservation dequeued activeSlots=${this.activeSlots}/${this.maxConcurrency} queueLength=${this.queue.length}`)
       entry.resolve(this.createReservation(entry.signal))
     }
   }
@@ -264,7 +274,10 @@ export class SandboxHostManager {
     if (signal?.aborted) {
       throw abortError()
     }
+    const reservedAt = Date.now()
+    console.debug(`[sandboxHostManager] run=${runId} waiting for Host`)
     const host = await this.ensureHost()
+    console.debug(`[sandboxHostManager] run=${runId} Host ready waitMs=${Date.now() - reservedAt} generation=${host.generation}`)
     if (signal?.aborted) {
       throw abortError()
     }
@@ -295,6 +308,7 @@ export class SandboxHostManager {
       signal,
       llmAbortController: new AbortController(),
       llmTransport: this.createLlmTransport(runId),
+      reservedAt,
     }
     this.pendingRuns.set(runId, pending)
     if (signal) {
@@ -308,6 +322,7 @@ export class SandboxHostManager {
     }
     try {
       this.send(host, { type: 'run.start', runId, payload })
+      console.debug(`[sandboxHostManager] run=${runId} run.start sent generation=${host.generation}`)
     }
     catch (error) {
       this.finalizeHost(host, error instanceof Error ? error : new Error(String(error)))
@@ -412,8 +427,24 @@ export class SandboxHostManager {
         host.resolveReady()
         break
       case 'host.heartbeat':
+        host.lastHeartbeat = {
+          timestamp: message.timestamp,
+          activeRuns: message.activeRuns,
+          eventLoopDelayMs: message.eventLoopDelayMs,
+          rss: message.memory.rss,
+          heapUsed: message.memory.heapUsed,
+          external: message.memory.external,
+        }
         if (message.memory.rss >= MAX_RSS_BYTES) {
           host.recycleReason = 'rss'
+        }
+        if (message.activeRuns > 0 && (
+          host.lastHeartbeatDebugAt === undefined
+          || message.timestamp - host.lastHeartbeatDebugAt >= 5_000
+          || (message.eventLoopDelayMs ?? 0) >= 1_000
+        )) {
+          host.lastHeartbeatDebugAt = message.timestamp
+          console.debug(`[sandboxHostManager] heartbeat generation=${host.generation} activeRuns=${message.activeRuns} activeSlots=${this.activeSlots}/${this.maxConcurrency} queueLength=${this.queue.length} eventLoopDelayMs=${message.eventLoopDelayMs ?? 'unknown'} rssMb=${(message.memory.rss / 1024 / 1024).toFixed(1)} heapUsedMb=${(message.memory.heapUsed / 1024 / 1024).toFixed(1)} externalMb=${(message.memory.external / 1024 / 1024).toFixed(1)}`)
         }
         break
       case 'run.started': {
@@ -422,13 +453,25 @@ export class SandboxHostManager {
           return
         }
         pending.started = true
+        pending.startedAt = Date.now()
         pending.resolveStarted()
+        console.debug(`[sandboxHostManager] run=${message.runId} started waitMs=${Date.now() - pending.reservedAt} generation=${host.generation}`)
         break
       }
       case 'run.log': {
         const pending = this.pendingRuns.get(message.runId)
         if (pending?.generation === host.generation) {
+          pending.lastLog = message.message.slice(-500)
           pending.handlers.onLog?.({ level: message.level, message: message.message, runId: message.runId })
+        }
+        break
+      }
+      case 'run.phase': {
+        const pending = this.pendingRuns.get(message.runId)
+        if (pending?.generation === host.generation) {
+          pending.lastPhase = { phase: message.phase, timestamp: message.timestamp }
+          console.debug(`[sandboxHostManager] run phase generation=${host.generation} runId=${message.runId} phase=${message.phase} phaseAgeMs=${Math.max(0, Date.now() - message.timestamp)}`)
+          pending.handlers.onPhase?.({ phase: message.phase, timestamp: message.timestamp, runId: message.runId })
         }
         break
       }
@@ -457,6 +500,8 @@ export class SandboxHostManager {
       return
     }
     let response: SandboxAgentCommand
+    const startedAt = Date.now()
+    console.debug(`[sandboxHostManager] run=${message.runId} LLM request=${message.requestId} started`)
     try {
       const value = await pending.llmTransport.ask({
         prompt: message.request.prompt,
@@ -476,6 +521,7 @@ export class SandboxHostManager {
         error: error instanceof Error ? error.message : String(error),
       }
     }
+    console.debug(`[sandboxHostManager] run=${message.runId} LLM request=${message.requestId} finished durationMs=${Date.now() - startedAt} ok=${response.type === 'rpc.llm.response' && response.ok}`)
 
     if (this.pendingRuns.get(message.runId) !== pending || this.host !== host || host.finalized) {
       return
@@ -502,6 +548,7 @@ export class SandboxHostManager {
       pending.signal.removeEventListener('abort', pending.onAbort)
     }
     pending.resolveFinished(result)
+    console.debug(`[sandboxHostManager] run=${runId} finished status=${result.status} durationMs=${Date.now() - (pending.startedAt ?? pending.reservedAt)} totalWaitMs=${(pending.startedAt ?? Date.now()) - pending.reservedAt}`)
     pending.release()
     host.completedRuns++
     if (host.completedRuns >= MAX_RUNS) {
@@ -554,7 +601,16 @@ export class SandboxHostManager {
     if (Date.now() - host.lastSeen <= HEARTBEAT_TIMEOUT_MS) {
       return
     }
-    console.error(`[sandboxHostManager] heartbeat timed out generation=${host.generation}`)
+    const heartbeat = host.lastHeartbeat
+    const runDiagnostics = Array.from(this.pendingRuns.values())
+      .filter(pending => pending.generation === host.generation)
+      .map((pending) => {
+        const phase = pending.lastPhase
+        const phaseAge = phase ? Math.max(0, Date.now() - phase.timestamp) : undefined
+        return `runId=${pending.runId} started=${pending.started} phase=${phase?.phase ?? 'unknown'} phaseAgeMs=${phaseAge ?? 'unknown'} lastLog=${JSON.stringify(pending.lastLog ?? '')}`
+      })
+      .join(' | ')
+    console.error(`[sandboxHostManager] heartbeat timed out generation=${host.generation} lastSeenAgeMs=${Date.now() - host.lastSeen} activeRuns=${this.pendingRuns.size} heartbeat=${heartbeat ? JSON.stringify(heartbeat) : 'none'} ${runDiagnostics}`)
     host.child.kill('SIGTERM')
     setTimeout(() => host.child.kill('SIGKILL'), 1_000).unref()
     this.finalizeHost(host, new Error('Sandbox Host heartbeat timed out'))

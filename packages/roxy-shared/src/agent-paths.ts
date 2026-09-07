@@ -75,6 +75,7 @@ export interface AgentPaths {
    */
   readonly stateDir: string
   readonly settingsFile: string
+  readonly codexOauthConfigFile: string
   readonly mcpServersFile: string
   readonly mcpStateFile: string
   readonly mcpAuthDir: string
@@ -193,6 +194,7 @@ export function createAgentPaths(home: string = resolveAgentHome()): AgentPaths 
 
     stateDir: pathJoin('state'),
     settingsFile: pathJoin('state', 'settings.json'),
+    codexOauthConfigFile: pathJoin('state', 'codex-oauth.json'),
     mcpServersFile: pathJoin('state', 'mcp', 'servers.json'),
     mcpStateFile: pathJoin('state', 'mcp', 'state.json'),
     mcpAuthDir: pathJoin('state', 'mcp', 'auth'),

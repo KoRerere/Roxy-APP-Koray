@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
-import { format } from 'date-fns'
+// import { format } from 'date-fns'
 import { API } from '/@/api'
 
 import { AutoRenewalPayStatus } from '/@/enums/pay'
@@ -49,7 +49,7 @@ useEmitterEvent('updateAutoRenewList', () => {
 <template>
   <div class="flex flex-col gap-3">
     <div class="title">
-      {{ $t('自动续订服务') }}
+      {{ $t('自动续费服务') }}
     </div>
     <RxAlert v-if="hasUnpaid" class="w-full" type="warn">
       <template #title>
@@ -60,10 +60,12 @@ useEmitterEvent('updateAutoRenewList', () => {
         </i18n-t>
       </template>
     </RxAlert>
-    <div class="flex-1 overflow-hidden rounded-xl list">
-      <RyTable ref="autorenew" class="autorenew-table" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false" :show-table-header="false" :paginator="false">
+    <div class="flex-1 overflow-hidden rounded-xl min-h-70 list">
+      <RyTable ref="autorenew" class="autorenew-table" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false" :show-table-header="false"
+               :paginator="false"
+      >
         <template #table-empty>
-          <CustomEmpty icon="rx_illustration_coin.svg" :desc="$t('您目前没有将服务设置为自动续订')" />
+          <CustomEmpty icon="rx_illustration_coin.svg" :desc="$t('您目前没有将服务设置为自动续费')" />
         </template>
         <template #details="{ data }">
           <div class="flex items-center gap-1">
@@ -112,14 +114,14 @@ useEmitterEvent('updateAutoRenewList', () => {
 
 <style lang="scss" scoped>
 .autorenew-table {
-  // border-bottom: 1px solid var(--colors-border-border-inactive, #E2E9EE);
-  --datatable-header-cell-background: #fff;
+  --datatable-header-cell-background: var(--colors-background-bg-block, #f7f8fa);
   --datatable-header-cell-border-color: var(--colors-border-border-inactive, #e2e9ee);
 
   :deep(.table-wrapper) {
     border-top: none;
   }
 }
+
 .title {
   color: var(--colors-text-text-primary);
   font-size: 16px;

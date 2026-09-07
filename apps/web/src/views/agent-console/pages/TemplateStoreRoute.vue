@@ -153,8 +153,12 @@ async function fetchTemplates() {
   templatesError.value = false
 
   try {
+    const query = {
+      ...(activeLabelIds.value.length ? { labelIds: activeLabelIds.value } : {}),
+      prioritizeTopped: false,
+    }
     const response = await agentApi.templates.listOfficialTemplates(
-      activeLabelIds.value.length ? { labelIds: activeLabelIds.value } : {},
+      query,
       { paramsSerializer: serializeTemplateQuery },
     )
     const rows = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))

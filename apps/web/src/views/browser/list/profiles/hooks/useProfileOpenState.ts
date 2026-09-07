@@ -84,12 +84,15 @@ export function clearProfileOpenMessage(
 
 /** 判断 Web 端消息是否处于活跃打开流程中，避免 winMap 同步误删 */
 function isProfileOpenMessageInProgress(message?: ProfileOpenMessage) {
-  if (!message)
+  if (!message) {
     return false
-  if (message.pending || message.uploading)
+  }
+  if (message.pending || message.uploading) {
     return true
-  if (message.code === 0 && message.data?.percent != null && message.data.percent < 100)
+  }
+  if (message.code === 0 && message.data?.percent != null && message.data.percent < 100) {
     return true
+  }
   return false
 }
 
@@ -130,24 +133,28 @@ export function useProfileOpenState() {
     const winMap = windowManager.winMap.value
 
     winMap.forEach((win, dirId) => {
-      if (win && !win.closed)
+      if (win && !win.closed) {
         setProfileOpenMessage(openMessage, String(dirId), createOpenSuccessMessage(String(dirId)))
+      }
     })
 
     for (const dirId of Object.keys(openMessage)) {
       const win = winMap.get(dirId)
-      if (win && !win.closed)
+      if (win && !win.closed) {
         continue
-      if (isProfileOpenMessageInProgress(openMessage[dirId]))
+      }
+      if (isProfileOpenMessageInProgress(openMessage[dirId])) {
         continue
+      }
       clearProfileOpenMessage(openMessage, dirId)
     }
   }
 
   /** 注册 Web 端窗口管理器监听，在页面 onBeforeMount 调用 */
   function listenWebWindowManager() {
-    if (globalThis.isElectron)
+    if (globalThis.isElectron) {
       return () => {}
+    }
 
     return watch(windowManager.winMap, syncWebWindowOpenState, { immediate: true })
   }
@@ -168,16 +175,18 @@ export function useProfileOpenState() {
     onProxyDetectWarning?: (dirId: string | number, warningMessages: string[]) => void
   }) {
     return globalThis.electronAPI.on('browser:launch-process-message', (event) => {
-      if (event.code === 1 && event.message.includes('ERR101'))
+      if (event.code === 1 && event.message.includes('ERR101')) {
         showDiskSpaceModal()
+      }
 
       const dirId = typeof event.data === 'object' && event.data?.dirId != null
         ? event.data.dirId
         : typeof event.data === 'string' || typeof event.data === 'number'
           ? event.data
           : null
-      if (dirId == null)
+      if (dirId == null) {
         return
+      }
 
       Reflect.set(openMessage, String(dirId), event as ProfileOpenMessage)
       if (event.code !== 0) {
@@ -188,8 +197,9 @@ export function useProfileOpenState() {
         sendFirstOpenRecord()
         options?.onOpenSuccess?.(dirId)
         const warningMessages = event.data.warningMessages?.filter(Boolean) ?? []
-        if (warningMessages.length)
+        if (warningMessages.length) {
           options?.onProxyDetectWarning?.(dirId, warningMessages)
+        }
       }
     })
   }
@@ -285,8 +295,9 @@ export function useProfileOpenState() {
     }
     const datas = ([] as Data[]).concat(data).filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!)
 
-    if (!datas.length)
+    if (!datas.length) {
       return
+    }
 
     datas.forEach((item, index) => {
       setProfileOpenMessage(openMessage, item.dirId!, {
@@ -325,8 +336,9 @@ export function useProfileOpenState() {
   }
 
   async function getNotUsedProfiles(datas: Data[]) {
-    if (!datas.some((item: any) => Reflect.has(openMessage, item.dirId)))
+    if (!datas.some((item: any) => Reflect.has(openMessage, item.dirId))) {
       return datas
+    }
     const result = await globalThis.electronAPI.send('browser:isProcessExists', datas.map((item: any) => item.dirId))
     return datas.filter((_, index) => !result[index])
   }

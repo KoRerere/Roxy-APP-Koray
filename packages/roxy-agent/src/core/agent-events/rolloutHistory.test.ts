@@ -120,6 +120,50 @@ describe('rollout history projector', () => {
     }])
   })
 
+  it('replays a task report tool input and its accepted result', () => {
+    const conversationId = 'conversation-task-report-history'
+    const report = {
+      taskName: '批量养号',
+      params: [{
+        key: 'browseDuration',
+        name: '每个窗口的浏览时长',
+        value: 15,
+      }],
+      windows: [{ dirId: 'profile-1', success: true, failureReason: '' }],
+    }
+    writeRollout(conversationId, [
+      { type: 'user_input', message: { role: 'user', content: '执行养号任务' }, ts: 1000 },
+      {
+        type: 'assistant_turn',
+        items: [{
+          type: 'tool_call',
+          id: 'report-1',
+          callId: 'report-1',
+          name: 'roxy_task_report',
+          arguments: report,
+          toolKind: 'function',
+        }],
+        stopReason: 'tool_use',
+        ts: 2000,
+      },
+      {
+        type: 'tool_result',
+        result: { tool_use_id: 'report-1', content: '## Task report result\n\n- status: accepted', is_error: false },
+        ts: 2100,
+      },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 2200 },
+    ])
+
+    const events = projectMessagesFromRollout(conversationId)[1]?.events ?? []
+    const started = events.find(item => item.event.type === 'tool_started')?.event
+    const finished = events.find(item => item.event.type === 'tool_finished')?.event
+
+    assert.ok(started?.type === 'tool_started')
+    assert.deepEqual(started.data.input, report)
+    assert.ok(finished?.type === 'tool_finished')
+    assert.equal(finished.data.status, 'success')
+  })
+
   it('restores complete script output embedded in the tool result', () => {
     // Regression: replay discarded complete script logs already stored in small tool results.
     // Fixed by: preferring the existing Log output block before resolving a local file.

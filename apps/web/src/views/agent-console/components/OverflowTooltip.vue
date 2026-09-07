@@ -33,8 +33,9 @@ watch(() => props.content, () => nextTick(measureOverflow), { flush: 'post' })
 
 onMounted(() => {
   resizeObserver = new ResizeObserver(measureOverflow)
-  if (textRef.value)
+  if (textRef.value) {
     resizeObserver.observe(textRef.value)
+  }
   measureOverflow()
 })
 
@@ -47,7 +48,6 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
       :content="content"
       :content-class="tooltipContentClass"
       :disabled="!overflowed || !content"
-      :placement="placement"
       :z-index="zIndex"
     >
       <span ref="textRef" class="overflow-tooltip__text">

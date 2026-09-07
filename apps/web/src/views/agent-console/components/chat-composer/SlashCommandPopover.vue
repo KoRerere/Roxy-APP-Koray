@@ -14,11 +14,11 @@ const emit = defineEmits<{
   navigate: [direction: SuggestionNavigationDirection]
   read: [item: AgentComposerItem]
   search: [query: string]
+  toggleTop: [item: AgentComposerItem]
 }>()
 
 const TEMPLATE_UNREAD_HOVER_DELAY_MS = 300
 
-const listRef = ref<HTMLElement | null>(null)
 const router = useRouter()
 let unreadHoverTimer: number | null = null
 let unreadHoverItemId: string | undefined
@@ -79,15 +79,6 @@ watch(
   },
 )
 
-watch(
-  () => props.activeItem?.id,
-  () => nextTick(() => {
-    listRef.value
-      ?.querySelector<HTMLElement>('.slash-command-item--active')
-      ?.scrollIntoView({ block: 'nearest' })
-  }),
-)
-
 onBeforeUnmount(clearUnreadHoverTimer)
 
 function getTemplateTypeLabel(item: AgentComposerItem) {
@@ -131,35 +122,60 @@ function getTemplateTypeLabel(item: AgentComposerItem) {
       </button>
     </div>
 
-    <div ref="listRef" class="slash-command-list">
-      <template v-if="items.length">
-        <button
+    <div class="slash-command-list">
+      <TransitionGroup
+        v-if="items.length"
+        class="slash-command-items"
+        name="slash-command-item"
+        tag="div"
+      >
+        <div
           v-for="item in items"
           :key="item.id"
           class="slash-command-item"
           :class="{ 'slash-command-item--active': activeItem?.id === item.id }"
-          type="button"
           @mouseenter="handleItemMouseEnter(item)"
           @mouseleave="handleItemMouseLeave(item)"
-          @mousedown.prevent="emit('choose', item)"
         >
-          <span class="slash-command-icon-wrap">
-            <SvgIcon class="slash-command-icon" :name="item.iconName" size="16" />
-            <img
-              v-if="item.unread"
-              class="slash-command-unread"
-              src="/images/agent-console/template-unread-dot.svg"
-              alt=""
+          <button
+            class="slash-command-select"
+            type="button"
+            @mousedown.prevent="emit('choose', item)"
+          >
+            <span class="slash-command-icon-wrap">
+              <SvgIcon class="slash-command-icon" :name="item.iconName" size="16" />
+              <img
+                v-if="item.unread"
+                class="slash-command-unread"
+                src="/images/agent-console/template-unread-dot.svg"
+                alt=""
+                aria-hidden="true"
+              >
+            </span>
+            <span class="slash-command-copy">
+              <span class="slash-command-title">{{ item.title }}</span>
+              <span class="slash-command-desc">{{ item.description }}</span>
+            </span>
+          </button>
+          <button
+            class="slash-command-top"
+            :class="{ 'slash-command-top--active': item.isTopped }"
+            type="button"
+            :disabled="item.isTopping"
+            :aria-label="item.isTopped ? $t('取消置顶') : $t('置顶')"
+            :aria-pressed="item.isTopped"
+            @click.stop="emit('toggleTop', item)"
+            @mousedown.prevent.stop
+          >
+            <SvgIcon
+              :name="item.isTopped ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line'"
+              size="16"
               aria-hidden="true"
-            >
-          </span>
-          <span class="slash-command-copy">
-            <span class="slash-command-title">{{ item.title }}</span>
-            <span class="slash-command-desc">{{ item.description }}</span>
-          </span>
+            />
+          </button>
           <span class="slash-command-type">{{ getTemplateTypeLabel(item) }}</span>
-        </button>
-      </template>
+        </div>
+      </TransitionGroup>
 
       <div v-else class="slash-command-empty">
         {{ $t('没有找到模板') }}
@@ -250,12 +266,46 @@ function getTemplateTypeLabel(item: AgentComposerItem) {
 }
 
 .slash-command-list {
+  position: relative;
   display: flex;
   min-height: 0;
   flex: 1;
   flex-direction: column;
   gap: 4px;
   overflow-y: auto;
+}
+
+.slash-command-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slash-command-item-move,
+.slash-command-item-enter-active,
+.slash-command-item-leave-active {
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.slash-command-item-enter-from,
+.slash-command-item-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.slash-command-item-leave-active {
+  position: absolute;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slash-command-item-move,
+  .slash-command-item-enter-active,
+  .slash-command-item-leave-active {
+    transition: none;
+  }
 }
 
 .slash-command-item {
@@ -269,13 +319,27 @@ function getTemplateTypeLabel(item: AgentComposerItem) {
   border-radius: 8px;
   color: var(--color-text-primary, var(--color-text-primary));
   background: transparent;
-  cursor: pointer;
   text-align: left;
 }
 
 .slash-command-item:hover,
 .slash-command-item--active {
   background: var(--color-bg-secondary-hover, var(--color-bg-quaternary));
+}
+
+.slash-command-select {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 }
 
 .slash-command-icon-wrap {
@@ -317,6 +381,32 @@ function getTemplateTypeLabel(item: AgentComposerItem) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.slash-command-top {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  color: var(--color-text-quaternary);
+  background: transparent;
+  cursor: pointer;
+
+  &:hover,
+  &--active {
+    color: var(--color-text-primary);
+    background: var(--color-bg-quaternary);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.5;
+  }
 }
 
 .slash-command-title {

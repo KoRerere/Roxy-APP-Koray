@@ -1,5 +1,4 @@
-import type { ContextContribution, Message, SkillManifest } from '../core/interfaces.ts'
-import { renderSkillCatalog, skillCatalogBudgetChars } from '../skills/prompt.ts'
+import type { ContextContribution, Message } from '../core/interfaces.ts'
 
 export function escapeXml(value: string): string {
   return value
@@ -20,25 +19,6 @@ export function renderSummaryContext(summary: string | null): Message[] {
       role: 'developer',
       content: `<compaction_summary>\n${escapeXml(summary)}\n</compaction_summary>`,
       visible: false,
-    },
-  ]
-}
-
-export function renderSkillCatalogContext(skills: SkillManifest[], contextWindowTokens?: number): Message[] {
-  const catalog = renderSkillCatalog(skills, {
-    maxChars: skillCatalogBudgetChars(contextWindowTokens),
-  })
-  if (!catalog.text) {
-    return []
-  }
-
-  return [
-    {
-      role: 'developer',
-      content: catalog.text,
-      visible: false,
-      compactionKey: 'skill-catalog',
-      compactionOrder: 2,
     },
   ]
 }

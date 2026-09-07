@@ -5,6 +5,7 @@ import Profile from './profile'
 import ResourceUpdater from './resource-updater/index.vue'
 import DownloadAppButton from './download-app-button.vue'
 import Reload from './reload.vue'
+import LifetimeProfileEntry from './lifetime-profile-entry.vue'
 
 const isElectron = globalThis.isElectron
 </script>
@@ -12,6 +13,7 @@ const isElectron = globalThis.isElectron
 <template>
   <div class="rx-layout-header">
     <div class="top-bar-items">
+      <LifetimeProfileEntry />
       <Network />
       <Divider class="!ma-0" layout="vertical" />
       <ResourceUpdater v-if="isElectron" />

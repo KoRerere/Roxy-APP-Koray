@@ -14,7 +14,8 @@ import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { PayWay } from '/@/enums/pay'
-import { BuyEntryType, ProxyIpType, ProxyOrderType } from '/@/enums/proxy'
+import type { ProxyIpType } from '/@/enums/proxy'
+import { BuyEntryType, ProxyOrderType } from '/@/enums/proxy'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { createProxyPurchaseCountryCache, useProxyPurchaseApi, useProxyPurchaseForm, useProxyPurchasePricing } from '/@/views/agent/shop/components/provider-buy/useProxyPurchase.ts'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
@@ -32,6 +33,7 @@ const {
   cancelRedirect = true,
   workspaceType,
   preferredProxyType,
+  preferredCountry,
 } = defineProps<{
   entryType?: BuyEntryType
   data?: Record<string, any>
@@ -43,6 +45,8 @@ const {
   workspaceType?: WorkspaceType
   /** 新人福利等入口指定默认代理类型（机房 / 住宅） */
   preferredProxyType?: ProxyIpType | 'datacenter' | 'residential'
+  /** 检测失败引导购买：仅初始化「国家/地区」时匹配一次 */
+  preferredCountry?: string
 }>()
 
 const emit = defineEmits<{
@@ -66,7 +70,7 @@ const resolvedWorkspaceType = computed(() =>
 const labels = useProxyPurchaseLabels(resolvedMode)
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
-const { openProcessing } = usePay()
+const { openProcessing, maybeShowFirstConsumeReferralPopup } = usePay()
 const { getOfficialWebsite } = useSimpleLocale()
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -105,6 +109,7 @@ const {
   getProxyTypeList: api.getProxyTypeList,
   countryCache,
   preferredProxyType: () => preferredProxyType,
+  preferredCountry: () => preferredCountry,
 })
 
 const {
@@ -127,10 +132,13 @@ const {
   networkCountryCode: computed(() => networkInfo.value?.country_code),
 })
 
+/** 购买结算时一并提交；默认关闭，需用户确认后才会变为开启 */
+const isAuto = ref(false)
+
 const canPay = computed(() => check('Cost_Center_all'))
 const payTooltip = computed(() => {
   return !canPay.value
-    ? $t('暂无权限。如需开通，请联系团队拥有者，更改当前账号身份为管理者并开通‘费用中心’权限。')
+    ? $t('暂无权限。如需开通，请联系团队拥有者，更改当前账号身份为管理者并开通‘充值/账单’权限。')
     : undefined
 })
 
@@ -147,8 +155,9 @@ function checkStock() {
   }
   const sceneId = businessUse.value?.value
   const country = purchaseCountry.value?.country_code?.toLocaleUpperCase()
-  if (sceneId == null || !country)
+  if (sceneId == null || !country) {
     return
+  }
 
   showModal({
     showHeader: false,
@@ -188,7 +197,7 @@ async function onPay() {
 
   async function onConfirm({ payType }: { payType: PayWay }) {
     mixpanelTrack('click_pay_proxy_ip')
-    const { code, data, msg } = await API.pay.userBuyProxySettlementCreate({
+    const payload = {
       entryType,
       purchaseMember: purchaseMember.value,
       subscriptionMonths: subscriptionMonths.value?.value,
@@ -199,19 +208,27 @@ async function onPay() {
       purchaseCountry: purchaseCountry.value?.value,
       businessId: businessUse.value?.value,
       workspaceType,
-    })
+      isAuto: isAuto.value,
+    }
+    const { code, data, msg } = await API.pay.userBuyProxySettlementCreate(payload)
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
     (payType === PayWay.Balance
       ? Promise.resolve()
       : openProcessing(data, 'silent', { cancelRedirect }))
       .then(async () => {
-        showFreedomActivityModal()
         // 买完后刷新新人资格，供活动弹窗把已用档位改灰；无资格则不打接口
         await useNewUserBenefitStore().refreshBenefitIfEligible()
         emit('success', data)
         emit('close')
+        maybeShowFirstConsumeReferralPopup((reason) => {
+          if (reason === 'view-details') {
+            return
+          }
+          showFreedomActivityModal()
+        })
       })
   }
 }
@@ -227,10 +244,10 @@ async function onPay() {
         <DurationSelector v-model="subscriptionMonths" :options="durationOptions" />
       </div>
     </div>
-    <PurchaseSummary v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:proxy-speed-value="proxySpeedValue" :is-c-n="isCN" :is-direct="isDirect"
-                     :loading-proxy-type="loadingProxyType" :current-inventory="currentProxyType.inventory" :proxy-type-options="proxyTypeOptions" :proxy-speed-options="proxySpeedOptions"
-                     :subscription-months="subscriptionMonths" :business-use="businessUse" :details="details" :can-pay="canPay" :pay-tooltip="payTooltip" :official-website-url="getOfficialWebsite('/copyright/user')"
-                     :country-code="purchaseCountry?.value" :vendor-name="provider.vendorName" @pay="checkStock"
+    <PurchaseSummary v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:proxy-speed-value="proxySpeedValue" v-model:is-auto="isAuto" :is-c-n="isCN"
+                     :is-direct="isDirect" :loading-proxy-type="loadingProxyType" :current-inventory="currentProxyType.inventory" :proxy-type-options="proxyTypeOptions"
+                     :proxy-speed-options="proxySpeedOptions" :subscription-months="subscriptionMonths" :business-use="businessUse" :details="details" :can-pay="canPay" :pay-tooltip="payTooltip"
+                     :official-website-url="getOfficialWebsite('/copyright/user')" :country-code="purchaseCountry?.value" :vendor-name="provider.vendorName" @pay="checkStock"
     />
   </div>
 </template>

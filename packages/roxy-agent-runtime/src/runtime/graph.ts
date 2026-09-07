@@ -35,7 +35,7 @@ export interface AgentGraphDeps {
   model: string
   /** Optional token budget forwarded to ChatRequest.maxTokens. */
   maxTokens?: number
-  /** Stable base system prompt. Turn-varying host context is carried by developer messages. */
+  /** Stable base system prompt. Its discovered Skill catalog is appended as a system block; turn-varying host context uses developer messages. */
   systemPrompt?: string
   provider: IModelProvider
   tools: IToolRegistry
@@ -67,10 +67,9 @@ export interface AgentGraphDeps {
    */
   sessionStore?: ISessionStore
   /**
-   * Skill manifests advertised in the bounded XML skill catalog. Implicitly
-   * selected bodies/resources load via `read_file`; explicit `name + path`
-   * selections become persisted internal user-role `<skill>` messages for one turn;
-   * the catalog and other host context use the developer role.
+   * Skill manifests advertised as complete XML progressive-disclosure metadata
+   * in the top-level system prompt. Explicit `name + path` selections become
+   * persisted internal user-role `<skill>` messages for one turn.
    */
   skills?: SkillManifest[]
   /** Trusted path of this agent; `/root` for a root agent, parent-assigned for children. */

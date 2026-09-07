@@ -4223,26 +4223,28 @@ export interface UserUpdateDeviceNameCreateData {
 
 export interface UserUpdateOnboardingTaskStatusCreatePayload {
   /** 首次注册指引弹窗：False未完成 True已完成 */
-  firstRegisterGuideStatus?: boolean;
+  firstRegisterGuideStatus: boolean;
   /** 隐藏侧边栏入口：False未完成 True已完成 */
-  hideSidebarEntryStatus?: boolean;
+  hideSidebarEntryStatus: boolean;
   /** 右键操作点击指引：False未完成 True已完成 */
-  contextMenuGuideStatus?: boolean;
+  contextMenuGuideStatus: boolean;
   /** 保存筛选条件：False未完成 True已完成 */
-  saveFilterGuideStatus?: boolean;
+  saveFilterGuideStatus: boolean;
   /** 创建窗口视频入口：False未完成 True已完成 */
-  createProfileVideoEntryStatus?: boolean;
+  createProfileVideoEntryStatus: boolean;
   /** 创建窗口步骤指引：False未完成 True已完成 */
-  createProfileTourGuideStatus?: boolean;
+  createProfileTourGuideStatus: boolean;
   /** 创建代理视频入口：False未完成 True已完成 */
-  createProxyVideoEntryStatus?: boolean;
-  autoRatingStatus?: boolean;
-  ratingStatus?: boolean;
-  externalRatingStatus?: boolean;
-  firstOpenWindowStatus?: boolean;
-  firstWebRegisterGuideStatus?: boolean;
-  batchOpenWindowNoPromptStatus?: boolean;
-  newSpaceCreateTeamStatus?: boolean;
+  createProxyVideoEntryStatus: boolean;
+  autoRatingStatus: boolean;
+  ratingStatus: boolean;
+  externalRatingStatus: boolean;
+  firstOpenWindowStatus: boolean;
+  firstWebRegisterGuideStatus: boolean;
+  batchOpenWindowNoPromptStatus: boolean;
+  newSpaceCreateTeamStatus: boolean;
+  /** '首次消费弹窗：False未弹 True 已弹/历史已消费不再弹' */
+  firstConsumePopupStatus: boolean;
 }
 
 export interface UserUpdateOnboardingTaskStatusCreateData {
@@ -4532,6 +4534,7 @@ export interface UserGetInviteNotifyListData {
       workspaceName: string;
       workspaceId: number;
       workspacePicture: string;
+      "workspacePictureUrl ": string;
       endTime: string;
       identityType: string;
     };
@@ -6205,13 +6208,11 @@ export interface UserGetWindowTemplateListListData {
   code: number;
   data: {
     /** 模板ID */
-    id: number;
+    id?: number;
     /** 模板名称 */
-    templateName: string;
+    templateName?: string;
     /** 模板内容 */
-    content: string;
-    /** 用户ID */
-    userId: number;
+    content?: string;
   }[];
   msg: string;
 }
@@ -9288,6 +9289,22 @@ export interface UserGetRandomAvailableProxyMergedListData {
   msg: string;
 }
 
+export type UserBatchSetProxyAutoRenewalCreatePayload = object;
+
+export interface UserBatchSetProxyAutoRenewalCreateData {
+  code: number;
+  data: {
+    /** 失败列表 */
+    failList: {
+      msg?: string;
+      proxyId?: number;
+    }[];
+    /** 成功ID列表 */
+    successList: number[];
+  };
+  msg: string;
+}
+
 export interface UserGetPlatformInfoListParams {
   /**
    * 业务平台
@@ -10595,7 +10612,12 @@ export interface UserGetUserPayInfoListData {
     walletDiscount: number;
     workspaceSinglePrice: number;
     pointsDiscount: number;
+    /** 首次消费弹窗：false未弹 true已弹/历史已消费不再弹 */
+    firstConsumePopupStatus: boolean;
     isFirstRecharge: boolean;
+    lastDeductTime: string;
+    /** 最近扣费金额（美元；无记录为 0） */
+    lastDeductAmount: number;
   };
   msg: string;
 }
@@ -10733,11 +10755,31 @@ export interface UserGetPayLinkListParams {
 
 export interface UserGetPayLinkListData {
   code: number;
-  /** 订单支付链接 */
-  data: {
-    payUrl: string;
-  };
   msg: string;
+  data: {
+    /** 订单号 */
+    orderNo: string;
+    /** 支付方式：USDT / USDC */
+    payType: string;
+    /** 收款地址（转账目标地址） */
+    payUrl: string;
+    /** 支付ID */
+    payId: string;
+    /** 订单金额（美元） */
+    orderAmount: number;
+    /** 实际应付金额（含防撞微调，美元） */
+    realAmount: number;
+    /** 订单过期时间（毫秒时间戳） */
+    endTime: number;
+    /** 链协议别名：TRC-20 / BEP-20 / ERC-20 等 */
+    chainAlias: string;
+    /** 链类型：TRX / BSC / POLYGON */
+    chainType: string;
+    /** 链显示名称 */
+    chainName: string;
+    /** 链图标 URL */
+    chainImage: string;
+  };
 }
 
 export type UserSevenDayTrialCreatePayload = object;
@@ -10817,32 +10859,48 @@ export interface UserPaySettlementCreateData {
 }
 
 export interface UserRechargeSettlementCreatePayload {
-  /** 支付方式: Balance,Alipay,USDT,Wechat,Card,ApplePay,GooglePay */
+  /** 必填。支付方式（不支持 Balance）。可选：Wechat, Alipay, USDT, USDC, Card, ApplePay, GooglePay, fpx_my, gcash_ph, upi_in, eps_at, p24_pl, payu_pl, payu_cz, multibanco_pt, bitcoin, grabpay_my, blik_pl, pix_br, touchngo_my, duitnow_my, sbp_ru, yoomoney_ru, sberpay_ru, promptpay_th, truemoney_th, vietqr_vn */
   payType: string;
-  /** 充值金额 */
+  /** 必填。充值金额（美元），最小值 1 */
   rechargeAmount: number;
-  /** 支付方式ID */
-  paymentMethodId: string;
-  /** 银行卡ID */
-  cardId: string;
-  /** 客户key */
-  customerIdKey: string;
-  /** 支付方式 为USDT USDC时候传 链类型 （TRX BSC SOLANA POLYGON） */
-  chainType: string;
+  /** 选填。Stripe 支付方式 ID（payType=Card 时前端可能传，当前后端未实际使用） */
+  paymentMethodId?: string;
+  /** 选填。已绑定银行卡号（payType=Card 且使用已绑卡支付时传；传卡号字符串，不是数据库 ID） */
+  cardId?: string;
+  /** 选填。Stripe 客户会话 key（payType=Card 且新卡支付、未绑卡时必传） */
+  customerIdKey?: string;
+  /** 选填。区块链网络类型（仅 payType=USDT/USDC 时有效）。USDT 可选：TRX(默认), BSC, POLYGON；USDC 可选：BSC, POLYGON */
+  chainType?: string;
+  /** 选填。阿里云验证码校验参数；账号风控等级为 1 且客户端版本 >= 3.7.4 时必填 */
+  captchaVerifyParam?: string;
 }
 
 export interface UserRechargeSettlementCreateData {
   code: number;
   data: {
-    endTime: string;
-    orderAmount: number;
+    /** 订单号 */
     orderNo: string;
-    payId: string;
+    /** 支付方式 */
     payType: string;
+    /** 收款地址 */
     payUrl: string;
+    /** 支付ID */
+    payId: string;
+    /** 订单金额 */
+    orderAmount: number;
+    /** 实际应付金额（含防撞金额微调） */
     realAmount: number;
+    /** 订单过期时间（毫秒时间戳） */
+    endTime: number;
     clientSecret: string;
+    /** 链别名/协议标识：TRC-20、BEP-20、ERC-20 等 */
     chainAlias: string;
+    /** 链类型：TRX、BSC、POLYGON */
+    chainType: string;
+    /** 链显示名称 */
+    chainName: string;
+    /** 链图标 URL */
+    chainImage: string;
   };
   msg: string;
 }
@@ -10933,7 +10991,7 @@ export interface UserCancelSubscriptionListData {
 export interface UserDowngradeSubscriptionListParams {
   /**
    * 窗口数量
-   * @example ""
+   * @example 0
    */
   purchaseMember: number;
 }
@@ -10948,7 +11006,7 @@ export interface UserDowngradeSubscriptionListData {
 export interface UserDowngradeSubscriptionV2ListParams {
   /**
    * 窗口数量
-   * @example ""
+   * @example 0
    */
   purchaseMember: number;
 }
@@ -11041,26 +11099,28 @@ export interface UserGetAutoSubscriptionInfoListData {
 }
 
 export interface UserBuyProxySettlementCreatePayload {
-  entryType?: number;
+  entryType: number;
+  /** 是否自动续费：0=关闭，1=开启；未传则购买默认关闭 */
+  isAuto: number;
   /** 购买数量 */
-  purchaseMember?: number;
+  purchaseMember: number;
   /** 购买月数(1) */
-  subscriptionMonths?: number;
+  subscriptionMonths: number;
   /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
-  payType?: string;
+  payType: string;
   /** 订单类型(续费//购买:renew/purchase) */
-  orderType?: string;
+  orderType: string;
   /** 购买供应商ID */
-  proxyProviderId?: number;
+  proxyProviderId: number;
   /** 购买的城市 */
-  purchaseCountry?: string;
+  purchaseCountry: string;
   /** 商业用途 */
-  businessUse?: string;
+  businessUse: string;
   /** 商业用途 */
-  businessId?: number;
+  businessId: number;
   /** 代理ip 带宽 */
-  bandwidthSpeed?: number;
-  renewIdList?: number[];
+  bandwidthSpeed: number;
+  renewIdList: number[];
 }
 
 export interface UserBuyProxySettlementCreateData {

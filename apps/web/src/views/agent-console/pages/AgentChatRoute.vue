@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AgentAttachment, AgentFolderSelection, AgentHitlRequest, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentQueuedPrompt, AgentTodoProgress } from '../types'
+import type { AgentAttachment, AgentFolderSelection, AgentHitlRequest, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentQueuedPrompt, AgentTaskReportSaveRequest, AgentTodoProgress } from '../types'
 import ChatWorkspace from '../components/ChatWorkspace.vue'
 
 defineProps<{
@@ -22,10 +22,12 @@ const emit = defineEmits<{
   addFolder: [folder: AgentFolderSelection]
   addPathAttachment: [selection: AgentPathSelection]
   loadEarlierMessages: []
+  onboardingComplete: []
   removeAttachment: [fileId: string]
   removeQueuedPrompt: [promptId: string]
   reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
   restoreQueuedPrompt: [promptId: string]
+  saveTemplate: [payload: AgentTaskReportSaveRequest]
   send: []
   stop: []
   submitHitl: [payload: AgentHitlSubmitPayload]
@@ -53,10 +55,12 @@ const prompt = defineModel<string>('prompt', { required: true })
       @add-folder="emit('addFolder', $event)"
       @add-path-attachment="emit('addPathAttachment', $event)"
       @load-earlier-messages="emit('loadEarlierMessages')"
+      @onboarding-complete="emit('onboardingComplete')"
       @remove-attachment="emit('removeAttachment', $event)"
       @remove-queued-prompt="emit('removeQueuedPrompt', $event)"
       @reorder-queued-prompt="emit('reorderQueuedPrompt', $event)"
       @restore-queued-prompt="emit('restoreQueuedPrompt', $event)"
+      @save-template="emit('saveTemplate', $event)"
       @send="emit('send')"
       @stop="emit('stop')"
       @submit-hitl="emit('submitHitl', $event)"

@@ -55,7 +55,13 @@ import {
   generalPurposeAgentResourceKey,
 } from './subagents/general-purpose-subagent'
 import { createRuntimeSystemPrompt } from './system-prompt'
-import { registerRuntimeScriptTools } from './tools'
+import {
+  createSaveUserTemplateTool,
+  createTaskReportTool,
+  createTemplateTools,
+  registerRuntimeScriptTools,
+} from './tools'
+import { createTaskReportWindowTracker } from './tools/task-report-window-tracker'
 
 interface RuntimeTool { descriptor: ToolDescriptor, handler: ToolHandler }
 
@@ -101,6 +107,7 @@ export interface RuntimeChatAgentOptions {
   signal?: AbortSignal
   taskMonitorTaskId?: string
   allowedDirIds?: string[]
+  reportAllowedDirIds?: string[]
   retryHandler?: () => void
   writer?: (event: AgentRunEvent) => void
 }
@@ -123,6 +130,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
     artifactRoots: [agentPaths.sessionBrowserDir(options.conversationId)],
     displayRoot: workspaceDir,
   })
+  const taskReportWindowTracker = createTaskReportWindowTracker()
   // Full access is the existing UI mode. Otherwise the frontend approval gate
   // follows the standard ToolAnnotations policy for every registered tool.
   const commandPermissions = new CommandPermissions({
@@ -163,6 +171,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
       conversationId: options.conversationId,
       allowedDirIds: options.allowedDirIds,
       collector: fileCollector,
+      onBrowserLaunched: dirId => taskReportWindowTracker.record([dirId]),
       owner: {
         runId: options.runId ?? options.executionId,
         taskId: options.taskMonitorTaskId,
@@ -209,6 +218,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
         toolContext: {
           turnId: options.turnId,
           taskMonitorTaskId: options.taskMonitorTaskId,
+          taskReportWindowTracker,
         },
         skills,
       })
@@ -314,7 +324,15 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
       fileCollector,
       taskMonitorTaskId: options.taskMonitorTaskId,
       executionId: options.executionId,
+      onBrowserLaunched: dirId => taskReportWindowTracker.record([dirId]),
     })
+    for (const tool of [
+      createTaskReportTool({ windowTracker: taskReportWindowTracker }),
+      createSaveUserTemplateTool({ workspaceDir }),
+      ...createTemplateTools(),
+    ]) {
+      addTool(registry, tool)
+    }
     for (const tool of [spawnAgentTool({ specs: generalPurposeAgentSpecs }), listAgentsTool(), waitAgentTool()]) {
       addTool(registry, tool)
     }
@@ -401,6 +419,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
         taskMonitorTaskId: options.taskMonitorTaskId,
         writer: options.writer,
         toolCall: { id: undefined },
+        taskReportWindowTracker,
       },
     })
 
@@ -412,6 +431,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
         trailingMessages: Message[] = [],
         metadata?: Message['metadata'],
       ) => {
+        taskReportWindowTracker.beginTurn(options.reportAllowedDirIds ?? options.allowedDirIds)
         const memoryIndex = pendingMemoryIndex
         pendingMemoryIndex = undefined
         const input: Message[] = [
@@ -431,7 +451,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
         childPublishers.clear()
         await agent.dispose()
         if (playwrightCreated) {
-          mcpManager.releaseProfileBinding(workerId)
+          await mcpManager.releaseProfileBinding(workerId)
           await mcpManager.releaseExecution(options.executionId)
         }
       },
@@ -439,7 +459,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
   }
   catch (error) {
     if (playwrightCreated) {
-      mcpManager.releaseProfileBinding(workerId)
+      await mcpManager.releaseProfileBinding(workerId)
       await mcpManager.releaseExecution(options.executionId)
     }
     throw error

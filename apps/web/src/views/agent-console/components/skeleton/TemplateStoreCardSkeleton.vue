@@ -20,10 +20,7 @@ withDefaults(defineProps<{
           <Skeleton width="44px" height="44px" border-radius="10px" />
           <Skeleton width="60%" height="20px" border-radius="6px" />
         </div>
-        <div class="template-store-card-skeleton__actions">
-          <Skeleton width="52px" height="32px" border-radius="10px" />
-          <Skeleton width="72px" height="32px" border-radius="10px" />
-        </div>
+        <Skeleton width="42px" height="20px" border-radius="4px" />
       </div>
 
       <div class="template-store-card-skeleton__divider" aria-hidden="true" />
@@ -37,7 +34,14 @@ withDefaults(defineProps<{
       <div class="template-store-card-skeleton__description" aria-hidden="true">
         <Skeleton width="100%" height="14px" border-radius="4px" />
         <Skeleton width="100%" height="14px" border-radius="4px" />
-        <Skeleton width="62%" height="14px" border-radius="4px" />
+      </div>
+
+      <div class="template-store-card-skeleton__actions" aria-hidden="true">
+        <Skeleton width="86px" height="20px" border-radius="4px" />
+        <div class="template-store-card-skeleton__action-buttons">
+          <Skeleton height="32px" border-radius="10px" />
+          <Skeleton height="32px" border-radius="10px" />
+        </div>
       </div>
     </div>
   </template>
@@ -48,15 +52,15 @@ withDefaults(defineProps<{
   box-sizing: border-box;
   display: flex;
   width: 100%;
-  height: 190px;
+  height: 224px;
   min-width: 0;
   flex-direction: column;
   justify-content: center;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--color-border-secondary);
-  border-radius: 10px;
-  background: var(--color-bg-primary);
+  border-radius: 16px;
+  background: var(--color-bg-tertiary);
   overflow: hidden;
 }
 
@@ -80,9 +84,31 @@ withDefaults(defineProps<{
 
 .template-store-card-skeleton__actions {
   display: flex;
-  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 40px;
+
+  > :deep(.p-skeleton) {
+    flex: 0 0 auto;
+  }
+
+  @media (max-width: 520px) {
+    gap: 12px;
+  }
+}
+
+.template-store-card-skeleton__action-buttons {
+  display: flex;
+  min-width: 0;
+  flex: 1;
   align-items: center;
   gap: 6px;
+
+  :deep(.p-skeleton) {
+    min-width: 0;
+    flex: 1 1 0;
+  }
 }
 
 .template-store-card-skeleton__divider {
@@ -106,8 +132,8 @@ withDefaults(defineProps<{
 .template-store-card-skeleton__description {
   display: flex;
   width: 100%;
-  height: 60px;
-  flex: 0 0 60px;
+  height: 40px;
+  flex: 0 0 40px;
   flex-direction: column;
   justify-content: flex-start;
   gap: 6px;

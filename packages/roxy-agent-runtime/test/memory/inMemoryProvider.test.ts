@@ -104,4 +104,58 @@ describe('InMemoryProvider', () => {
     expect(summary.removedCount).toBe(0)
     expect((await p.getAll('s1')).map((message) => message.content)).toEqual(['old metadata', 'new metadata'])
   })
+
+  it('restores keyed developer context before the retained conversation tail', async () => {
+    // Regression: the safe user-message boundary was applied after keyed
+    // developer context was restored, so compaction removed metadata and the
+    // MEMORY.md snapshot from the next provider request.
+    // Fixed by: choosing the safe boundary for conversational history first,
+    // then restoring the latest keyed context as its own developer prefix.
+    const p = new InMemoryProvider()
+    await p.append('s1', {
+      role: 'developer',
+      content: 'old metadata',
+      visible: false,
+      compactionKey: 'metadata',
+      compactionOrder: 0,
+    })
+    await p.append('s1', {
+      role: 'developer',
+      content: 'memory snapshot',
+      visible: false,
+      compactionKey: 'memory-md',
+      compactionOrder: 1,
+    })
+    await p.append('s1', msg('user', 'old request'))
+    await p.append('s1', msg('assistant', 'old response'))
+    await p.append('s1', {
+      role: 'developer',
+      content: 'current metadata',
+      visible: false,
+      compactionKey: 'metadata',
+      compactionOrder: 0,
+    })
+    await p.append('s1', msg('user', 'continue'))
+
+    const summary = await p.trim('s1', { mode: 'turns', keep: 1 })
+
+    expect(summary.removedCount).toBe(2)
+    expect(await p.getAll('s1')).toEqual([
+      {
+        role: 'developer',
+        content: 'current metadata',
+        visible: false,
+        compactionKey: 'metadata',
+        compactionOrder: 0,
+      },
+      {
+        role: 'developer',
+        content: 'memory snapshot',
+        visible: false,
+        compactionKey: 'memory-md',
+        compactionOrder: 1,
+      },
+      msg('user', 'continue'),
+    ])
+  })
 })

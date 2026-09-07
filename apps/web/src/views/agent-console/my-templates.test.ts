@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict'
+// eslint-disable-next-line test/no-import-node-test
 import test from 'node:test'
 import {
   isReservedOfficialTemplateSlug,
   mapMyTemplateItem,
   normalizeTemplateSlug,
   readUserTemplateMutation,
+  sortMyTemplateItems,
 } from './my-templates'
 
 test('normalizes a parsed template slug before persistence', () => {
@@ -47,6 +49,43 @@ test('maps a snapshotted official icon from user template metadata', () => {
     primaryColor: { light: '#111111' },
     bgColor: { dark: '#222222' },
   })
+})
+
+test('maps the user template top state for card presentation', () => {
+  const item = mapMyTemplateItem({
+    id: 4,
+    workspaceId: 'workspace-1',
+    templateType: 'prompt',
+    name: 'Pinned prompt',
+    source: 'custom',
+    metadata: { prompt: 'Draft a report.' },
+    isTopped: true,
+  })
+
+  assert.equal(item?.isTopped, true)
+})
+
+test('sorts user template cards by the newest pin timestamp', () => {
+  const template = (id: number, isTopped: boolean, toppedAt?: string) => ({
+    id,
+    workspaceId: 'workspace-1',
+    kind: 'prompt' as const,
+    name: `Template ${id}`,
+    description: '',
+    source: 'custom',
+    iconInfo: null,
+    metadata: {},
+    isTopped,
+    toppedAt: toppedAt ?? null,
+  })
+
+  const sorted = sortMyTemplateItems([
+    template(1, true, '2026-09-03T08:00:00.000Z'),
+    template(2, false),
+    template(3, true, '2026-09-03T09:00:00.000Z'),
+  ])
+
+  assert.deepEqual(sorted.map(item => item.id), [3, 1, 2])
 })
 
 test('ignores malformed icon metadata', () => {

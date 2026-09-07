@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import type { UserTemplateCreate } from '@roxy/agent-api'
 import type { CustomTemplatePayload, UserTemplateDTO } from '../my-templates'
-import type { AgentAttachment, AgentFolderSelection, AgentHitlRequest, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentQueuedPrompt, AgentTodoProgress } from '../types'
+import type { AgentAttachment, AgentFolderSelection, AgentHitlRequest, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentQueuedPrompt, AgentTaskReportSaveRequest, AgentTodoProgress } from '../types'
 import type { SvgNames } from '/@/components/rx-icon'
+import type { OnboardingScenarioId } from '../onboarding-scenarios'
 import type { OfficialTemplate, TemplateKind } from '../template-store'
 import type { AgentComposerItem } from './chat-composer/types'
-import {
-  serializeAgentProfileReference,
-  serializeTemplateRef,
-} from '@roxy/shared'
+
 import { useElementSize } from '@vueuse/core'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -41,7 +39,6 @@ import {
   mapRecommendedTemplateComposerItem,
   mapUserTemplateComposerItem,
   recommendedTemplateToChatPrompt,
-  scriptTemplateToRunPrompt,
   setAgentSkillInstalledRoot,
 } from './chat-composer/templateItems'
 import ChatMessageList from './ChatMessageList.vue'
@@ -66,12 +63,12 @@ import {
   hasShownAiBatchCreateGuide,
   isAiBatchCreateGuideForced,
   markAiBatchCreateGuideShown,
-  requestAiBatchCreateGuide,
 } from '../batch-create-guide'
 import {
-  AI_BATCH_CREATE_TEMPLATE_SLUG,
-  pickAiBatchCreatePrompt,
-} from '../batch-create-prefill'
+  buildOnboardingTemplatePrompt,
+  fillOnboardingScenarioInputs,
+  ONBOARDING_TEMPLATE_SLUGS,
+} from '../onboarding-scenarios'
 import {
   clearPendingCreateAutomationGuide,
   CREATE_AUTOMATION_GUIDE_EVENT,
@@ -109,21 +106,16 @@ const emit = defineEmits<{
   addFolder: [folder: AgentFolderSelection]
   addPathAttachment: [selection: AgentPathSelection]
   loadEarlierMessages: []
+  onboardingComplete: []
   removeAttachment: [fileId: string]
   removeQueuedPrompt: [promptId: string]
   reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
   restoreQueuedPrompt: [promptId: string]
+  saveTemplate: [payload: AgentTaskReportSaveRequest]
   send: []
   stop: []
   submitHitl: [payload: AgentHitlSubmitPayload]
 }>()
-
-const ONBOARDING_SCRIPT_TEMPLATE_SLUGS = {
-  nurture: 'tiktok-for-you-nurture',
-  analytics: 'tiktok-comment-analyzer',
-} as const
-
-type OnboardingScriptTemplateSlug = typeof ONBOARDING_SCRIPT_TEMPLATE_SLUGS[keyof typeof ONBOARDING_SCRIPT_TEMPLATE_SLUGS]
 
 interface DroppedFileEntry {
   file: (success: (file: File) => void, error?: (error: DOMException) => void) => void
@@ -194,7 +186,16 @@ const newTemplateGuideVisible = ref(false)
 const newTemplateGuideTarget = shallowRef<HTMLElement | null>(null)
 const newTemplateGuideLabel = ref('')
 const onboardingVisible = ref(false)
+const onboardingCompletionVisible = ref(false)
+const onboardingRunPending = ref(false)
+const onboardingAssistantMessageId = ref<string>()
+const onboardingAssistantRunId = ref<string>()
+const onboardingAssistantBaselineIds = new Set<string>()
 const onboardingSessionKey = ref(0)
+const onboardingScenarioTemplates = ref<Partial<Record<OnboardingScenarioId, OfficialTemplate | null>>>({})
+const onboardingTemplateCache = new Map<OnboardingScenarioId, OfficialTemplate | null>()
+const onboardingTemplateRequests = new Map<OnboardingScenarioId, Promise<OfficialTemplate | undefined>>()
+let onboardingScenarioTemplatesRequest: Promise<void> | undefined
 const agentApi = useAgentConsoleApi()
 const dialog = useDialog()
 const localeStore = useSimpleLocale()
@@ -211,6 +212,7 @@ const TEMPLATE_CARD_COUNT = HOME_TEMPLATE_CACHE_LIMIT
 const SELECT_WINDOW_GUIDE_STORAGE_PREFIX = 'agent-console:recommended-template-select-window-guide:'
 let recommendedTemplatesPromise: Promise<void> | undefined
 let recommendedTemplatesLoaded = false
+let templateCardsRequestSequence = 0
 
 const cachedTemplateCards = readHomeTemplateCache()?.templates ?? []
 if (cachedTemplateCards.length) {
@@ -249,7 +251,7 @@ const chatContainerStyle = computed(() => ({
   '--agent-scroll-button-bottom': `${scrollButtonBottom.value}px`,
 }))
 const composerAutoFocusKey = computed(() => `${props.activeConversationId ?? 'home'}:${props.composerFocusKey ?? 0}`)
-const templateCards = computed<TemplateCard[]>(() => officialTemplates.value.slice(0, TEMPLATE_CARD_COUNT).map((row) => {
+function mapOfficialTemplateCard(row: OfficialTemplate): TemplateCard {
   const item = mapTemplateStoreItem(row, localeStore.currentLocale)
   const darkTheme = themeStore.realTheme === 'dark'
   const templateIcon = pickTemplateThemeValue(item.iconInfo?.icon, darkTheme)
@@ -269,15 +271,17 @@ const templateCards = computed<TemplateCard[]>(() => officialTemplates.value.sli
     iconBackground,
     kind: item.kind,
     metadata: row.metadata,
-    tags: [
-      ...item.labels.slice(0, 2).map(label => ({
-        id: label.id,
-        label: label.label,
-      })),
-    ],
+    tags: item.labels.slice(0, 2).map(label => ({
+      id: label.id,
+      label: label.label,
+    })),
     prompt: pickOfficialTemplatePrompt(row, localeStore.currentLocale) || item.description || item.title,
   }
-}))
+}
+
+const templateCards = computed<TemplateCard[]>(() => officialTemplates.value
+  .slice(0, TEMPLATE_CARD_COUNT)
+  .map(mapOfficialTemplateCard))
 const recommendedTemplateItems = computed<AgentComposerItem[]>(() => templateCards.value.map((card) => {
   const installedTemplate = recommendedTemplates.value.get(card.id)
   if (!installedTemplate) {
@@ -288,6 +292,7 @@ const recommendedTemplateItems = computed<AgentComposerItem[]>(() => templateCar
 }))
 
 async function loadTemplateCards() {
+  const requestSequence = ++templateCardsRequestSequence
   const endLoadTemplateCards = createPerfTimer('chat-workspace:loadTemplateCards')
   templateCardsLoading.value = officialTemplates.value.length === 0
   try {
@@ -296,18 +301,26 @@ async function loadTemplateCards() {
       { paramsSerializer: serializeTemplateQuery },
     )
     const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
-    officialTemplates.value = templates
-    writeHomeTemplateCache(templates)
+    if (requestSequence === templateCardsRequestSequence) {
+      officialTemplates.value = templates
+      writeHomeTemplateCache(templates)
+    }
   }
   catch (error) {
     console.error('[agent-console] Failed to load template cards:', error)
   }
   finally {
-    templateCardsLoading.value = false
+    if (requestSequence === templateCardsRequestSequence) {
+      templateCardsLoading.value = false
+    }
     endLoadTemplateCards({
       templateCount: officialTemplates.value.length,
     })
   }
+}
+
+function handleOfficialTemplateTopChanged() {
+  void loadTemplateCards()
 }
 
 async function ensureSkillInstalledRootLoaded() {
@@ -477,6 +490,23 @@ function openSaveAsPromptDialog(text: string) {
   })
 }
 
+async function resolveTemplateChatPrompt(card: TemplateCard) {
+  await ensureSkillInstalledRootLoaded()
+  await loadRecommendedTemplates()
+
+  const userTemplate = recommendedTemplates.value.get(card.id)
+  const templatePrompt = recommendedTemplateToChatPrompt(
+    card,
+    userTemplate,
+    localeStore.currentLocale,
+  )
+  if (!templatePrompt) {
+    throw new Error($t('模板提示词为空'))
+  }
+
+  return templatePrompt
+}
+
 async function useTemplate(card: TemplateCard) {
   if (resolvingTemplateId.value !== undefined) {
     return false
@@ -484,20 +514,7 @@ async function useTemplate(card: TemplateCard) {
 
   resolvingTemplateId.value = card.id
   try {
-    await ensureSkillInstalledRootLoaded()
-    await loadRecommendedTemplates()
-
-    const userTemplate = recommendedTemplates.value.get(card.id)
-    const templatePrompt = recommendedTemplateToChatPrompt(
-      card,
-      userTemplate,
-      localeStore.currentLocale,
-    )
-    if (!templatePrompt) {
-      throw new Error($t('模板提示词为空'))
-    }
-
-    updatePromptAndFocus(templatePrompt)
+    updatePromptAndFocus(await resolveTemplateChatPrompt(card))
     return true
   }
   catch (error) {
@@ -758,95 +775,174 @@ function dismissAllGuides() {
 
 function openOnboarding() {
   dismissAllGuides()
+  onboardingCompletionVisible.value = false
+  onboardingRunPending.value = false
+  onboardingAssistantMessageId.value = undefined
+  onboardingAssistantRunId.value = undefined
+  onboardingAssistantBaselineIds.clear()
   onboardingSessionKey.value += 1
   onboardingVisible.value = true
+  void preloadOnboardingTemplates()
 }
 
-async function findOfficialScriptTemplate(slug: OnboardingScriptTemplateSlug) {
-  const response = await agentApi.templates.listOfficialTemplates({
-    limit: 20,
-    search: slug,
-    templateType: 'script',
-  })
-  const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
-  return templates.find(template => template.slug === slug)
+function continueAfterOnboardingCompletion() {
+  onboardingCompletionVisible.value = false
+  emit('onboardingComplete')
 }
 
-async function showOnboardingWindowGuide(target: 'button' | 'token') {
-  await nextTick()
-  await new Promise<void>(resolve => window.requestAnimationFrame(() => resolve()))
-  const element = target === 'button'
-    ? composerRef.value?.getSelectWindowButtonElement() ?? null
-    : composerRef.value?.getEmptyProfileTokenElement() ?? null
-  if (!element) {
+function restartOnboardingFromCompletion() {
+  onboardingCompletionVisible.value = false
+  openOnboarding()
+}
+
+function findOfficialOnboardingTemplate(scenario: OnboardingScenarioId) {
+  if (onboardingTemplateCache.has(scenario)) {
+    return Promise.resolve(onboardingTemplateCache.get(scenario) ?? undefined)
+  }
+
+  const existingRequest = onboardingTemplateRequests.get(scenario)
+  if (existingRequest) {
+    return existingRequest
+  }
+
+  const slug = ONBOARDING_TEMPLATE_SLUGS[scenario]
+  const request = (async () => {
+    const response = await agentApi.templates.listOfficialTemplates({
+      limit: 20,
+      search: slug,
+      templateType: 'skill',
+    })
+    const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
+    const template = templates.find(template => template.slug === slug)
+    onboardingTemplateCache.set(scenario, template ?? null)
+    return template
+  })()
+  onboardingTemplateRequests.set(scenario, request)
+  void request.finally(() => onboardingTemplateRequests.delete(scenario)).catch(() => {})
+  return request
+}
+
+async function preloadOnboardingTemplates() {
+  if (onboardingScenarioTemplatesRequest) {
+    return onboardingScenarioTemplatesRequest
+  }
+
+  const scenarioIds = Object.keys(ONBOARDING_TEMPLATE_SLUGS) as OnboardingScenarioId[]
+  if (scenarioIds.every(scenario => Object.hasOwn(onboardingScenarioTemplates.value, scenario))) {
     return
   }
 
-  selectWindowGuideTarget.value = element
-  selectWindowGuideLabel.value = $t('点击选择窗口')
-  selectWindowGuideVisible.value = true
-}
-
-async function fillOnboardingScriptPrompt(slug: OnboardingScriptTemplateSlug) {
-  try {
-    const template = await findOfficialScriptTemplate(slug)
-    if (!template) {
-      throw new Error($t('官方模板不存在或已下架'))
+  onboardingScenarioTemplatesRequest = Promise.all(scenarioIds.map(async (scenario) => {
+    try {
+      const template = await findOfficialOnboardingTemplate(scenario)
+      return { scenario, template: template ?? null }
     }
+    catch (error) {
+      console.warn(`[agent-console] Failed to preload onboarding metadata: ${scenario}`, error)
+      return { scenario, template: null }
+    }
+  })).then((entries) => {
+    onboardingScenarioTemplates.value = Object.fromEntries(
+      entries.map(entry => [entry.scenario, entry.template]),
+    ) as Partial<Record<OnboardingScenarioId, OfficialTemplate | null>>
+  }).finally(() => {
+    onboardingScenarioTemplatesRequest = undefined
+  })
 
-    updatePromptAndFocus(scriptTemplateToRunPrompt(
-      mapTemplateStoreItem(template, localeStore.currentLocale).title,
-      serializeTemplateRef('official', template.id),
-    ))
-    await showOnboardingWindowGuide('token')
-  }
-  catch (error) {
-    console.error(`[agent-console] Failed to prepare onboarding template: ${slug}`, error)
-    onlyErrorToast(-1, error instanceof Error ? error.message : $t('加载官方模板失败'))
-  }
+  return onboardingScenarioTemplatesRequest
 }
-
-async function handleOnboardingExperience(scenario: 'create' | 'publish' | 'nurture' | 'analytics') {
+async function handleOnboardingExperience(scenario: OnboardingScenarioId) {
   if (!onboardingVisible.value) {
     return
   }
 
   onboardingVisible.value = false
 
-  if (scenario === 'create') {
-    try {
-      const response = await agentApi.templates.listOfficialTemplates({
-        limit: 20,
-        search: AI_BATCH_CREATE_TEMPLATE_SLUG,
-        templateType: 'prompt',
-      })
-      const templates = readCatalogList<OfficialTemplate>(response, $t('加载官方模板失败'))
-      const templatePrompt = pickAiBatchCreatePrompt(templates, localeStore.currentLocale)
-      if (!templatePrompt) {
-        throw new Error($t('未找到批量创建窗口模板'))
-      }
-
-      updatePromptAndFocus(templatePrompt)
-      requestAiBatchCreateGuide(true)
+  try {
+    const template = await findOfficialOnboardingTemplate(scenario)
+    if (!template) {
+      throw new Error($t('官方模板不存在或已下架'))
     }
-    catch (error) {
-      console.error('[agent-console] Failed to prepare onboarding batch-create template', error)
-      onlyErrorToast(-1, error instanceof Error ? error.message : $t('加载官方模板失败'))
+
+    const card = mapOfficialTemplateCard(template)
+    const officialPrompt = pickOfficialTemplatePrompt(template, localeStore.currentLocale).trim()
+    if (!officialPrompt) {
+      throw new Error($t('模板提示词为空'))
     }
-    return
-  }
 
-  if (scenario === 'publish') {
-    updatePromptAndFocus($t('在 {profile} 窗口中运行 {script}', {
-      profile: serializeAgentProfileReference([]),
-      script: $t('发布视频'),
-    }))
-    await showOnboardingWindowGuide('token')
-    return
-  }
+    const templateChatPrompt = await resolveTemplateChatPrompt(card)
+    const onboardingPrompt = buildOnboardingTemplatePrompt(templateChatPrompt, officialPrompt)
+    if (!onboardingPrompt) {
+      throw new Error($t('Skill 路径加载失败'))
+    }
 
-  await fillOnboardingScriptPrompt(ONBOARDING_SCRIPT_TEMPLATE_SLUGS[scenario])
+    updatePromptAndFocus(fillOnboardingScenarioInputs(
+      onboardingPrompt,
+      scenario,
+      localeStore.currentLocale,
+    ))
+    onboardingCompletionVisible.value = false
+    onboardingRunPending.value = true
+    onboardingAssistantMessageId.value = undefined
+    onboardingAssistantRunId.value = undefined
+    onboardingAssistantBaselineIds.clear()
+    props.messages.forEach(message => onboardingAssistantBaselineIds.add(message.id))
+    await nextTick()
+    emit('send')
+  }
+  catch (error) {
+    onboardingRunPending.value = false
+    onboardingAssistantMessageId.value = undefined
+    onboardingAssistantRunId.value = undefined
+    onboardingAssistantBaselineIds.clear()
+    console.error(`[agent-console] Failed to run onboarding scenario: ${scenario}`, error)
+    onlyErrorToast(-1, error instanceof Error ? error.message : $t('加载官方模板失败'))
+  }
 }
+
+watch(
+  () => props.messages.map(message => ({
+    id: message.id,
+    role: message.role,
+    runId: message.runId,
+    status: message.status,
+  })),
+  (messages) => {
+    if (!onboardingRunPending.value) {
+      return
+    }
+
+    let assistantMessage = onboardingAssistantRunId.value
+      ? messages.find(message => message.role === 'assistant' && message.runId === onboardingAssistantRunId.value)
+      : undefined
+
+    if (!assistantMessage && onboardingAssistantMessageId.value) {
+      assistantMessage = messages.find(message => message.role === 'assistant' && message.id === onboardingAssistantMessageId.value)
+    }
+
+    if (!assistantMessage) {
+      assistantMessage = messages.findLast(message =>
+        message.role === 'assistant' && !onboardingAssistantBaselineIds.has(message.id),
+      )
+    }
+
+    if (assistantMessage) {
+      onboardingAssistantMessageId.value = assistantMessage.id
+      onboardingAssistantRunId.value = assistantMessage.runId
+    }
+
+    if (!assistantMessage || assistantMessage.status === 'thinking' || assistantMessage.status === 'streaming') {
+      return
+    }
+
+    onboardingRunPending.value = false
+    onboardingAssistantMessageId.value = undefined
+    onboardingAssistantRunId.value = undefined
+    onboardingAssistantBaselineIds.clear()
+    onboardingCompletionVisible.value = true
+  },
+  { flush: 'sync' },
+)
 
 function isFileDrag(event: DragEvent) {
   return Array.from(event.dataTransfer?.types ?? []).some(type => type === 'Files')
@@ -1277,6 +1373,7 @@ onBeforeUnmount(() => {
         @add-to-chat="addSelectionToCurrentChat"
         @save-as-prompt="openSaveAsPromptDialog"
         @load-earlier-messages="emit('loadEarlierMessages')"
+        @save-template="emit('saveTemplate', $event)"
       />
       <div class="composer-scroll-mask" aria-hidden="true" />
       <div v-if="hitlRequest" class="hitl-overlay" aria-hidden="true" />
@@ -1296,6 +1393,7 @@ onBeforeUnmount(() => {
         @add-attachments="emit('addAttachments', $event)"
         @add-folder="emit('addFolder', $event)"
         @add-path-attachment="emit('addPathAttachment', $event)"
+        @official-template-top-changed="handleOfficialTemplateTopChanged"
         @remove-attachment="emit('removeAttachment', $event)"
         @remove-queued-prompt="emit('removeQueuedPrompt', $event)"
         @reorder-queued-prompt="emit('reorderQueuedPrompt', $event)"
@@ -1335,9 +1433,13 @@ onBeforeUnmount(() => {
       />
 
       <AgentOnboarding
+        :completion-visible="onboardingCompletionVisible"
+        :scenario-templates="onboardingScenarioTemplates"
         :session-key="onboardingSessionKey"
         :visible="onboardingVisible"
         @close="onboardingVisible = false"
+        @completion-continue="continueAfterOnboardingCompletion"
+        @completion-restart="restartOnboardingFromCompletion"
         @experience="handleOnboardingExperience"
       />
 

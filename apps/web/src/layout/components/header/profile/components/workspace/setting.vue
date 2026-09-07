@@ -155,6 +155,14 @@ async function handleSaveChange() {
     return
   }
 
+  try {
+    await workspaceFormRef.value?.commitWorkspaceImage()
+  }
+  catch (error) {
+    toast.add({ severity: 'error', summary: $t('发生错误'), detail: error as string, life: 3000 })
+    return
+  }
+
   const { code, msg } = await API.limit.userMdfWorkspaceInfoCreate(workspaceInfo.value as any)
   if (code === 0) {
     getWorkspaceList()

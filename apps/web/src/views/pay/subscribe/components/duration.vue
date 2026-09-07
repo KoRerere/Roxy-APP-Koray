@@ -4,12 +4,15 @@ import currency from 'currency.js'
 import { addDays, format } from 'date-fns'
 
 import { API } from '/@/api'
+import { getImage } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
+import { useThemeStore } from '/@/stores/theme'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import LifetimeProfileModal from '/@/views/pay/wallet/components/lifetime-profile-modal.vue'
+import infinityIcon from '/@/assets/icons/base/rx_ic_infinity.svg?url'
 import { discountCalculate, durationAmountFromMonthly } from '/@/views/pay/subscribe/util.ts'
 import type { Duration } from '/@/views/pay/subscribe/type'
 
@@ -26,8 +29,16 @@ const emit = defineEmits<{
 }>()
 
 const { userPayInfo } = storeToRefs(useUserStore())
+const { isDarkTheme } = storeToRefs(useThemeStore())
 const newUserBenefitStore = useNewUserBenefitStore()
 const { windowOfferActive, benefit } = storeToRefs(newUserBenefitStore)
+
+/** 终身卡片顶部光晕：按深浅色切换设计师导出的渐变底图 */
+const lifetimeBgSrc = computed(() => {
+  return isDarkTheme.value
+    ? getImage('payments/lifetime-duration-bg-dark.svg')
+    : getImage('payments/lifetime-duration-bg-light.svg')
+})
 const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 const { isEcommerce } = useRouteContext()
@@ -174,10 +185,21 @@ function buyLifetimeProfile() {
       </div>
     </div>
     <!-- 与时长档独立：点选不改订阅天数，直接走终身窗口购买弹窗 -->
-    <div v-if="!isEcommerce" class="relative py-2.5 px-3 rounded-lg select-none cursor-pointer duration min-h-16" @click="buyLifetimeProfile">
-      <div class="flex items-baseline gap-1 flex-col">
-        <span class="duration-text">{{ $t('终身') }}</span>
+    <div
+      v-if="!isEcommerce"
+      class="relative flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg select-none cursor-pointer min-h-16 overflow-hidden duration-lifetime"
+      @click="buyLifetimeProfile"
+    >
+      <img
+        :src="lifetimeBgSrc"
+        alt=""
+        draggable="false"
+        class="absolute top-0 left-1/2 -translate-x-1/2 w-[206px] h-full max-w-none pointer-events-none select-none"
+      >
+      <div class="relative z-1 size-6 overflow-hidden shrink-0">
+        <img class="block size-full" :src="infinityIcon" alt="" draggable="false">
       </div>
+      <span class="relative z-1 duration-text lang-zh:(text-3.75 font-500)">{{ $t('终身窗口') }}</span>
     </div>
   </div>
 </template>
@@ -191,7 +213,7 @@ function buyLifetimeProfile() {
   // 最长订阅档的折扣角标用红色强调；终身入口不是时长档，用 last-duration 避免被挤掉
   &.last-duration {
     .duration-discount {
-      font-size: 14px;
+      font-size: 12px;
       background: var(--primitives-red-500, #f53838);
     }
   }
@@ -244,6 +266,12 @@ function buyLifetimeProfile() {
     font-family: Inter;
     font-size: 12px;
     line-height: normal;
+  }
+
+  // 1px 浅描边贴合设计稿，让顶部彩晕能铺到圆角边缘
+  &-lifetime {
+    border: 1px solid var(--colors-border-border-subtle, #c7d1d6);
+    background: var(--colors-background-bg-action);
   }
 }
 </style>

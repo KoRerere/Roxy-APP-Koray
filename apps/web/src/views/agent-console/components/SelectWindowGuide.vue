@@ -12,6 +12,7 @@ interface SpotlightRect {
 
 const props = defineProps<{
   calloutAboveContainer?: boolean
+  calloutBelowTarget?: boolean
   interactiveTarget?: boolean
   label: string
   zIndex?: number
@@ -106,8 +107,12 @@ const targetCenterX = computed(() => {
 })
 
 const calloutTop = computed(() => {
-  const spotlightTop = spotlightRect.value?.top ?? 0
-  const targetTop = spotlightTop - CALLOUT_GAP
+  const spotlight = spotlightRect.value
+  if (props.calloutBelowTarget) {
+    return Math.max(CALLOUT_EDGE_GAP, (spotlight?.bottom ?? 0) + CALLOUT_GAP)
+  }
+
+  const targetTop = (spotlight?.top ?? 0) - CALLOUT_GAP
 
   if (!props.calloutAboveContainer || containerTop.value === undefined)
     return Math.max(CALLOUT_EDGE_GAP, targetTop)
@@ -126,11 +131,23 @@ const calloutStyle = computed<CSSProperties>(() => {
   }
 })
 
-const guideLineStyle = computed<CSSProperties>(() => ({
-  left: `${targetCenterX.value}px`,
-  top: `${calloutTop.value}px`,
-  height: `${Math.max(GUIDE_LINE_LENGTH, (spotlightRect.value?.top ?? 0) - calloutTop.value - SPOTLIGHT_PADDING)}px`,
-}))
+const guideLineStyle = computed<CSSProperties>(() => {
+  const spotlight = spotlightRect.value
+  if (props.calloutBelowTarget) {
+    const lineTop = (spotlight?.bottom ?? 0) + SPOTLIGHT_PADDING
+    return {
+      left: `${targetCenterX.value}px`,
+      top: `${lineTop}px`,
+      height: `${Math.max(GUIDE_LINE_LENGTH, calloutTop.value - lineTop)}px`,
+    }
+  }
+
+  return {
+    left: `${targetCenterX.value}px`,
+    top: `${calloutTop.value}px`,
+    height: `${Math.max(GUIDE_LINE_LENGTH, (spotlight?.top ?? 0) - calloutTop.value - SPOTLIGHT_PADDING)}px`,
+  }
+})
 
 const targetHitAreaStyle = computed<CSSProperties>(() => {
   const rect = targetRect.value
@@ -264,14 +281,14 @@ onBeforeUnmount(() => {
         />
       </svg>
 
-      <div class="select-window-guide__callout" :style="calloutStyle">
+      <div class="select-window-guide__callout" :class="{ 'select-window-guide__callout--below-target': calloutBelowTarget }" :style="calloutStyle">
         <span class="select-window-guide__label">{{ label }}</span>
         <button type="button" class="select-window-guide__skip" @click.stop="handleDismiss">
           {{ $t('跳过') }}
         </button>
       </div>
 
-      <div class="select-window-guide__line" :style="guideLineStyle" aria-hidden="true">
+      <div class="select-window-guide__line" :class="{ 'select-window-guide__line--below-target': calloutBelowTarget }" :style="guideLineStyle" aria-hidden="true">
         <span />
       </div>
 
@@ -350,6 +367,10 @@ onBeforeUnmount(() => {
   pointer-events: auto;
 }
 
+.select-window-guide__callout--below-target {
+  transform: translate(-50%, 0);
+}
+
 .select-window-guide__label {
   white-space: normal;
 }
@@ -408,6 +429,11 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   background: var(--color-fg-pink, #ee46bc);
   box-shadow: 0 0 0 3px var(--select-window-guide-accent-ring, rgba(238, 70, 188, 0.4));
+}
+
+.select-window-guide__line--below-target span {
+  top: -9px;
+  bottom: auto;
 }
 
 .select-window-guide__target-hit-area {

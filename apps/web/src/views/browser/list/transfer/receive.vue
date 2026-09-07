@@ -82,6 +82,7 @@ async function tableRequest(params: any) {
 function getWorkspaceProps(item: Record<string, any>) {
   return getWorkspaceAvatarProps({
     workspacePicture: item.workspacePicture,
+    workspacePictureUrl: item.workspacePictureUrl,
     workspaceName: item.workspaceName,
     size: 24,
     emojiFontSize: 12,

@@ -1,5 +1,6 @@
 import type { AgentAttachment, AgentConsoleState, AgentConversation, AgentFolderSelection, AgentHitlSubmitPayload, AgentMessage, AgentPathSelection, AgentProcessEvent, AgentQueuedPrompt, AgentRunStatus, AgentTodoItem, AgentTodoItemStatus, AgentTodoProgress } from '../types'
 import type { AgentChannelMessage, AgentConversationRunEventDTO } from '@roxy/shared/channel'
+import type { TaskReportTemplateContext } from '@roxy/shared'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -90,6 +91,7 @@ interface SendPromptOptions {
   content?: string
   conversationId?: string
   fromQueue?: boolean
+  templateContext?: TaskReportTemplateContext
 }
 
 const PENDING_RUN_START_TIMEOUT_MS = 15_000
@@ -2274,6 +2276,7 @@ export function useAgentConsole() {
     if (conversationBusy) {
       if (
         options.fromQueue
+        || options.templateContext !== undefined
         || (!content && sourceAttachments.length === 0)
         || sourceAttachments.some(attachment => !attachment.localPath)
       ) {
@@ -2408,6 +2411,7 @@ export function useAgentConsole() {
       message: content,
       attachments: chatAttachments.map(attachment => ({ fileId: attachment.fileId })),
       ...(localAttachments.length > 0 ? { localAttachments } : {}),
+      ...(options.templateContext ? { templateContext: options.templateContext } : {}),
       fullAccess: fullAccess.value,
     })
     if (!requestId) {

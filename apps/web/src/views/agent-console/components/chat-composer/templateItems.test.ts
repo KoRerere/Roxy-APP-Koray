@@ -10,6 +10,7 @@ import {
   readSkillSlugFromMetadata,
   recommendedTemplateToChatPrompt,
   scriptTemplateToRunPrompt,
+  selectTemplateDrawerOfficialItems,
   setAgentSkillInstalledRoot,
   userScriptTemplateToRunPrompt,
   userTemplateToChatPrompt,
@@ -253,6 +254,127 @@ test('a matching user template replaces a recommended item with its user referen
   assert.deepEqual(merged.map(item => item.id), ['user-template-42', 'user-template-43', 'user-template-44'])
   assert.equal(merged[0], installedPreset)
   assert.equal(templateItemToPrompt(merged[0]!), '[@script:Team script](user:42) Use the installed template.')
+})
+
+test('the slash drawer only keeps the top eight official templates', () => {
+  const officialIds = Array.from({ length: 10 }, (_, index) => index + 1)
+
+  assert.deepEqual(
+    selectTemplateDrawerOfficialItems(officialIds),
+    [1, 2, 3, 4, 5, 6, 7, 8],
+  )
+})
+
+test('a deleted user template only falls back to an official template inside the drawer top eight', () => {
+  const officialItems = Array.from({ length: 8 }, (_, index) => mapRecommendedTemplateComposerItem({
+    id: index + 1,
+    kind: 'script',
+    title: `Official ${index + 1}`,
+    description: '',
+    iconName: 'roxy-agent/rx-ic-scripts',
+    prompt: '',
+  }))
+  const derivedOutsideTopEight = mapUserTemplateComposerItem(userTemplate({
+    id: 90,
+    templateType: 'skill',
+    officialTemplateId: 9,
+  }))
+  const derivedInsideTopEight = mapUserTemplateComposerItem(userTemplate({
+    id: 91,
+    templateType: 'skill',
+    officialTemplateId: 3,
+  }))
+
+  const whileUserTemplateExists = mergeTemplateComposerItems(officialItems, [
+    derivedOutsideTopEight,
+    derivedInsideTopEight,
+  ])
+  const afterInsideUserTemplateDeletion = mergeTemplateComposerItems(officialItems, [derivedOutsideTopEight])
+  const afterOutsideUserTemplateDeletion = mergeTemplateComposerItems(officialItems, [])
+
+  assert.equal(whileUserTemplateExists.some(item => item.id === 'user-template-90'), true)
+  assert.equal(whileUserTemplateExists.some(item => item.id === 'user-template-91'), true)
+  assert.equal(afterInsideUserTemplateDeletion.some(item => item.id === 'user-template-91'), false)
+  assert.equal(afterInsideUserTemplateDeletion.some(item => item.templateId === 3), true)
+  assert.equal(afterOutsideUserTemplateDeletion.some(item => item.id === 'user-template-90'), false)
+  assert.equal(afterOutsideUserTemplateDeletion.some(item => item.templateId === 9), false)
+})
+
+test('merged slash templates keep user overrides and place topped items first', () => {
+  const official = mapRecommendedTemplateComposerItem({
+    id: 8,
+    kind: 'script',
+    title: 'Official script',
+    description: 'Official description',
+    iconName: 'roxy-agent/rx-ic-scripts',
+    prompt: '',
+    isTopped: true,
+  })
+  const otherOfficial = mapRecommendedTemplateComposerItem({
+    id: 9,
+    kind: 'prompt',
+    title: 'Official prompt',
+    description: 'Official prompt description',
+    iconName: 'roxy-agent/rx-ic-prompts',
+    prompt: 'Official prompt',
+  })
+  const userOverride = mapUserTemplateComposerItem(userTemplate({
+    id: 42,
+    officialTemplateId: 8,
+    isTopped: false,
+  }))
+  const toppedUserTemplate = mapUserTemplateComposerItem(userTemplate({
+    id: 43,
+    officialTemplateId: null,
+    isTopped: true,
+  }))
+
+  const merged = mergeTemplateComposerItems(
+    [official, otherOfficial],
+    [userOverride, toppedUserTemplate],
+  )
+
+  assert.deepEqual(merged.map(item => item.id), [
+    'user-template-43',
+    'user-template-42',
+    'recommended-template-9',
+  ])
+  assert.equal(merged[1]?.templateSource, 'user')
+  assert.equal(merged[1]?.isTopped, false)
+})
+
+test('merged topped slash templates use the newest pin timestamp first', () => {
+  const olderOfficial = mapRecommendedTemplateComposerItem({
+    id: 20,
+    kind: 'script',
+    title: 'Older official',
+    description: '',
+    iconName: 'roxy-agent/rx-ic-scripts',
+    prompt: '',
+    isTopped: true,
+    toppedAt: '2026-09-03T08:00:00.000Z',
+  })
+  const newerUser = mapUserTemplateComposerItem(userTemplate({
+    id: 21,
+    isTopped: true,
+    toppedAt: '2026-09-03T09:00:00.000Z',
+  }))
+  const untopped = mapRecommendedTemplateComposerItem({
+    id: 22,
+    kind: 'prompt',
+    title: 'Untopped',
+    description: '',
+    iconName: 'roxy-agent/rx-ic-prompts',
+    prompt: '',
+  })
+
+  const merged = mergeTemplateComposerItems([olderOfficial, untopped], [newerUser])
+
+  assert.deepEqual(merged.map(item => item.id), [
+    'user-template-21',
+    'recommended-template-20',
+    'recommended-template-22',
+  ])
 })
 
 test('home recommendations prefer matching user templates for every template kind', () => {

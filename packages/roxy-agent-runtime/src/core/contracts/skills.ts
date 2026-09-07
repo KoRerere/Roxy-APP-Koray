@@ -7,9 +7,9 @@
  * Markdown body) plus optional scripts/resources.
  *
  * Skills are NOT ToolHandlers directly. Only metadata is exposed up-front in
- * the system catalog. An explicitly selected skill injects its complete
- * SKILL.md for that turn; otherwise the model loads it and auxiliary files on
- * demand via the built-in `read_file` tool (progressive disclosure).
+ * the top-level system catalog. An explicitly selected skill injects its
+ * complete SKILL.md for that turn; otherwise the model uses the matching Skill
+ * and loads its body and auxiliary files on demand (progressive disclosure).
  */
 export interface SkillManifest {
   name: string

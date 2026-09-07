@@ -147,6 +147,15 @@ export interface ApiResponseOfficialTemplateInfo {
   message: string;
 }
 
+/** ApiResponse[OfficialTemplatePage] */
+export interface ApiResponseOfficialTemplatePage {
+  /** Code */
+  code: 0;
+  data: OfficialTemplatePage;
+  /** Message */
+  message: string;
+}
+
 /** ApiResponse[SkillInfo] */
 export interface ApiResponseSkillInfo {
   /** Code */
@@ -179,6 +188,15 @@ export interface ApiResponseTemplateSkillAssetInfo {
   /** Code */
   code: 0;
   data: TemplateSkillAssetInfo;
+  /** Message */
+  message: string;
+}
+
+/** ApiResponse[ToppedTemplateResult] */
+export interface ApiResponseToppedTemplateResult {
+  /** Code */
+  code: 0;
+  data: ToppedTemplateResult;
   /** Message */
   message: string;
 }
@@ -1180,6 +1198,15 @@ export interface OfficialTemplateInfo {
   sortOrder: number;
   /** Ishot */
   isHot: boolean;
+  /**
+   * Istopped
+   * @default false
+   */
+  isTopped?: boolean;
+  /** Toppedat */
+  toppedAt?: string | null;
+  /** Approxpoints */
+  approxPoints?: number | null;
   /** 官方模板 metadata 的稳定业务字段；允许保留未来扩展键。 */
   metadata: OfficialTemplateMetadataInfo;
   /** Labels */
@@ -1214,6 +1241,18 @@ export interface OfficialTemplateMetadataInfo {
   /** Usageexample */
   usageExample?: Record<string, string> | null;
   [key: string]: any;
+}
+
+/** OfficialTemplatePage */
+export interface OfficialTemplatePage {
+  /** Items */
+  items: OfficialTemplateInfo[];
+  /** Total */
+  total: number;
+  /** Limit */
+  limit: number;
+  /** Offset */
+  offset: number;
 }
 
 /** PointsGrant */
@@ -1984,6 +2023,8 @@ export interface TemplateCreate {
    * @default false
    */
   isHot?: boolean;
+  /** Approxpoints */
+  approxPoints?: number | null;
   /** Metadata */
   metadata?: Record<string, any>;
   /** Label Ids */
@@ -2190,6 +2231,8 @@ export interface TemplateUpdate {
   enabled?: boolean | null;
   /** Ishot */
   isHot?: boolean | null;
+  /** Approxpoints */
+  approxPoints?: number | null;
   /** Metadata */
   metadata?: Record<string, any> | null;
   /** Label Ids */
@@ -2215,6 +2258,16 @@ export interface TokenUsage {
   total_tokens?: number;
   prompt_tokens_details?: PromptTokensDetails | null;
   [key: string]: any;
+}
+
+/** ToppedTemplateResult */
+export interface ToppedTemplateResult {
+  /** Templateid */
+  templateId: number;
+  /** Istopped */
+  isTopped: boolean;
+  /** Toppedat */
+  toppedAt?: string | null;
 }
 
 /** UploadedFileInfo */
@@ -2573,6 +2626,13 @@ export interface UserTemplateInfo {
   metadata: Record<string, JsonValue>;
   /** Hasfile */
   hasFile: boolean;
+  /**
+   * Istopped
+   * @default false
+   */
+  isTopped?: boolean;
+  /** Toppedat */
+  toppedAt?: string | null;
   /** Createdat */
   createdAt: string | null;
   /** Updatedat */
@@ -3059,6 +3119,11 @@ export interface ListOfficialTemplatesParams {
    */
   limit?: number | null;
   /**
+   * Offset
+   * 偏移量；传入后返回分页结构
+   */
+  offset?: number | null;
+  /**
    * Search
    * 按 slug、名称、描述模糊搜索
    */
@@ -3084,11 +3149,38 @@ export interface ListOfficialTemplatesParams {
   label_ids?: number[] | null;
   /** Labelids */
   labelIds?: number[] | null;
+  /**
+   * Prioritizetopped
+   * 是否按当前用户置顶顺序返回官方模板
+   * @default true
+   */
+  prioritizeTopped?: boolean;
 }
 
-export type ListOfficialTemplatesData = ApiResponseListOfficialTemplateInfo;
+/** Response List Official Templates */
+export type ListOfficialTemplatesData =
+  | ApiResponseListOfficialTemplateInfo
+  | ApiResponseOfficialTemplatePage;
 
 export type ListOfficialTemplatesError = ApiErrorResponse;
+
+export interface TopOfficialTemplateParams {
+  /** Template Id */
+  templateId: number;
+}
+
+export type TopOfficialTemplateData = ApiResponseToppedTemplateResult;
+
+export type TopOfficialTemplateError = ApiErrorResponse;
+
+export interface UntopOfficialTemplateParams {
+  /** Template Id */
+  templateId: number;
+}
+
+export type UntopOfficialTemplateData = ApiResponseToppedTemplateResult;
+
+export type UntopOfficialTemplateError = ApiErrorResponse;
 
 export interface GetOfficialTemplateParams {
   /** Template Id Or Slug */
@@ -3154,6 +3246,24 @@ export interface ListUserTemplatesParams {
 export type ListUserTemplatesData = ApiResponseUserTemplatePage;
 
 export type ListUserTemplatesError = ApiErrorResponse;
+
+export interface TopUserTemplateParams {
+  /** Template Id */
+  templateId: number;
+}
+
+export type TopUserTemplateData = ApiResponseToppedTemplateResult;
+
+export type TopUserTemplateError = ApiErrorResponse;
+
+export interface UntopUserTemplateParams {
+  /** Template Id */
+  templateId: number;
+}
+
+export type UntopUserTemplateData = ApiResponseToppedTemplateResult;
+
+export type UntopUserTemplateError = ApiErrorResponse;
 
 export interface GetUserTemplateParams {
   /**
@@ -3572,7 +3682,7 @@ export interface ListUsersAdminApiUsersGetParams {
   search?: string | null;
   /**
    * Sortby
-   * 排序字段：balance / points_balance / total_used_points
+   * 排序字段：balance / points_balance / total_used_points / last_active_at
    */
   sortBy?: string | null;
   /**
@@ -4217,6 +4327,25 @@ export type FailedRequestsAdminApiStatsFailedRequestsGetData = any;
 
 export type FailedRequestsAdminApiStatsFailedRequestsGetError =
   HTTPValidationError;
+
+export interface AppVersionUsersAdminApiStatsAppVersionUsersGetParams {
+  /**
+   * Days
+   * 近 N 天：7 / 14 / 30
+   * @default 30
+   */
+  days?: number;
+  /**
+   * Start Date
+   * 自定义起始日期 YYYY-MM-DD
+   */
+  start_date?: string | null;
+  /**
+   * End Date
+   * 自定义结束日期 YYYY-MM-DD
+   */
+  end_date?: string | null;
+}
 
 export type AppVersionUsersAdminApiStatsAppVersionUsersGetData = any;
 

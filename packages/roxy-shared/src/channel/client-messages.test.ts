@@ -94,6 +94,31 @@ describe('client channel message schemas', () => {
     }).success).toBe(false)
   })
 
+  it('accepts a strict hidden template context without changing the visible message', () => {
+    const result = AgentConversationRunStartCommandSchema.safeParse({
+      conversationId: 'conversation-1',
+      message: '请你使用 roxy-template-creator Skill，将刚才的任务总结为模板',
+      templateContext: {
+        sourceReportId: 'report-tool-1',
+        report: {
+          taskName: '批量养号',
+          params: [{
+            key: 'browseDuration',
+            name: '每个窗口的浏览时长',
+            value: 15,
+          }],
+          windows: [{ dirId: 'profile-1', success: true, failureReason: '' }],
+        },
+      },
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.message).toBe('请你使用 roxy-template-creator Skill，将刚才的任务总结为模板')
+      expect(result.data.templateContext?.sourceReportId).toBe('report-tool-1')
+    }
+  })
+
   it('rejects the removed multimodal attachment mode', () => {
     expect(AgentConversationRunStartCommandSchema.safeParse({
       conversationId: 'conversation-1',

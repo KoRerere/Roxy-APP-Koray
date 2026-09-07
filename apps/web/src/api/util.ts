@@ -61,6 +61,7 @@ export async function getCommonHeaders() {
     .finally(() => {
       commonHeadersPromise = null
     })
+  return commonHeadersPromise
 }
 
 export function getMpDistinctId() {

@@ -1,4 +1,4 @@
-import type { McpFailureType, ResourceUpdateMessage } from './mainMessage'
+import type { McpFailureType, ResourceUpdateMessage, WorkspaceSelectResultPayload } from './mainMessage'
 import type {
   EnsureBrowserCacheRootDirResult,
   UnwrapRowsType,
@@ -82,6 +82,8 @@ export interface RenderMessage {
   'browser:getOpenedBrowser': () => WindowItemType[]
   /** 获取已打开的窗口数量 */
   'browser:getOpenedBrowserCount': (targetWorkspaceId?: number) => number
+  /** 回传 OpenAPI 发起的前端空间切换结果 */
+  'user:workspace-select-result': (payload: WorkspaceSelectResultPayload) => void
   /** 获取已打开创建信息 */
   'browser:getOpenedBrowserMessage': () => LastMessage[]
   /** 清除浏览器缓存， */
@@ -130,6 +132,8 @@ export interface RenderMessage {
   'user:uploadAvatar': (avatarPath: string) => Promise<string>
   /** 用户上传评价图片 */
   'user:uploadReviewImage': (reviewImagePath: string) => Promise<string>
+  /** 用户上传空间图片；必须带目标空间 ID，避免新建团队时写到当前空间 */
+  'user:uploadWorkspaceImage': (workspaceImagePath: string, workspaceId: number) => Promise<string>
   /** 通用 OSS 文件上传 */
   'user:uploadOssFile': (payload: { localPath: string, objectKey: string }) => Promise<string>
   /** 设置所有空间 ID */

@@ -410,6 +410,110 @@ function responseMessage(response: Response, providerId: string): Message {
   return assistantItemsToMessage(mapOutputItems(response.output, providerId))
 }
 
+const JSON_NUMBER_PATTERN = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:e[+-]?\d+)?$/i
+
+function isJsonSchema(value: unknown): value is JsonSchema {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function valueMatchesJsonSchema(value: unknown, schema: JsonSchema): boolean {
+  try {
+    return jsonSchemaToZod(schema).safeParse(value).success
+  } catch {
+    return false
+  }
+}
+
+/** Coerce only lossless string primitives selected by the caller's JSON Schema. */
+function coerceJsonSchemaValue(value: unknown, schema: JsonSchema): unknown {
+  if (valueMatchesJsonSchema(value, schema)) {
+    return value
+  }
+
+  for (const keyword of ['anyOf', 'oneOf'] as const) {
+    const alternatives = schema[keyword]
+    if (!Array.isArray(alternatives)) {
+      continue
+    }
+    for (const alternative of alternatives) {
+      if (!isJsonSchema(alternative)) {
+        continue
+      }
+      const candidate = coerceJsonSchemaValue(value, alternative)
+      if (valueMatchesJsonSchema(candidate, alternative)) {
+        return candidate
+      }
+    }
+  }
+
+  if (Array.isArray(schema.allOf)) {
+    let candidate = value
+    for (const part of schema.allOf) {
+      if (isJsonSchema(part)) {
+        candidate = coerceJsonSchemaValue(candidate, part)
+      }
+    }
+    if (valueMatchesJsonSchema(candidate, schema)) {
+      return candidate
+    }
+  }
+
+  if (Array.isArray(value) && isJsonSchema(schema.items)) {
+    return value.map((item) => coerceJsonSchemaValue(item, schema.items as JsonSchema))
+  }
+
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const properties = isJsonSchema(schema.properties) ? schema.properties : undefined
+    const additionalProperties = isJsonSchema(schema.additionalProperties) ? schema.additionalProperties : undefined
+    if (properties || additionalProperties) {
+      const result = { ...(value as Record<string, unknown>) }
+      for (const [key, item] of Object.entries(result)) {
+        const propertySchema = properties?.[key]
+        const itemSchema = isJsonSchema(propertySchema) ? propertySchema : additionalProperties
+        if (itemSchema) {
+          result[key] = coerceJsonSchemaValue(item, itemSchema)
+        }
+      }
+      return result
+    }
+  }
+
+  if (typeof value !== 'string') {
+    return value
+  }
+  const trimmed = value.trim()
+  const schemaTypes = Array.isArray(schema.type) ? schema.type : [schema.type]
+  const candidates: unknown[] = []
+  if (schemaTypes.includes('integer') && JSON_NUMBER_PATTERN.test(trimmed)) {
+    const number = Number(trimmed)
+    if (Number.isSafeInteger(number)) {
+      candidates.push(number)
+    }
+  }
+  if (schemaTypes.includes('number') && JSON_NUMBER_PATTERN.test(trimmed)) {
+    const number = Number(trimmed)
+    if (Number.isFinite(number)) {
+      candidates.push(number)
+    }
+  }
+  if (schemaTypes.includes('boolean')) {
+    if (trimmed.toLowerCase() === 'true') {
+      candidates.push(true)
+    } else if (trimmed.toLowerCase() === 'false') {
+      candidates.push(false)
+    }
+  }
+  if (schemaTypes.includes('null') && trimmed.toLowerCase() === 'null') {
+    candidates.push(null)
+  }
+  for (const candidate of candidates) {
+    if (valueMatchesJsonSchema(candidate, schema)) {
+      return candidate
+    }
+  }
+  return value
+}
+
 /** OpenAI Responses wire-protocol implementation of {@link IModelProvider}. */
 export class OpenAIResponsesProvider implements IModelProvider {
   readonly id = PROVIDER_ID
@@ -800,7 +904,7 @@ export class OpenAIResponsesProvider implements IModelProvider {
     schema: JsonSchema,
     options: {
       name?: string
-      method?: 'jsonMode' | 'jsonSchema'
+      method?: 'functionCalling' | 'jsonMode' | 'jsonSchema'
       temperature?: number
       maxTokens?: number
     } = {},
@@ -819,7 +923,18 @@ export class OpenAIResponsesProvider implements IModelProvider {
         ...(this.reasoning ? { reasoning: this.reasoning } : {}),
       }
 
-      if (method === 'jsonMode') {
+      if (method === 'functionCalling') {
+        request.tools = [
+          {
+            type: 'function',
+            name,
+            description: 'Return the requested structured data.',
+            parameters: schema,
+            strict: true,
+          },
+        ]
+        request.tool_choice = { type: 'function', name }
+      } else if (method === 'jsonMode') {
         request.instructions = `Return one valid json object matching this JSON Schema:\n${JSON.stringify(schema)}`
         request.text = { format: { type: 'json_object' } }
       } else {
@@ -851,25 +966,35 @@ export class OpenAIResponsesProvider implements IModelProvider {
         throw incompleteError(response)
       }
 
-      const raw = responseMessage(response, this.id)
-      const content = (raw.content as ContentBlock[])
-        .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
-        .map((block) => block.text)
-        .join('')
-      if (!content) {
-        throw new Error(
-          `OpenAIResponsesProvider.withJsonSchemaOutput: empty output text (${responseDiagnostics(response)})`,
-        )
-      }
       let value: unknown
-      try {
-        value = JSON.parse(content) as unknown
-      } catch {
-        throw new Error(
-          `OpenAIResponsesProvider.withJsonSchemaOutput: invalid JSON (${responseDiagnostics(response)}): ${content}`,
+      const raw = responseMessage(response, this.id)
+      if (method === 'functionCalling') {
+        const call = (raw.content as ContentBlock[]).find(
+          (block): block is ToolUseBlock => block.type === 'tool_use' && block.name === name,
         )
+        if (!call) {
+          throw new Error(`OpenAIResponsesProvider.withJsonSchemaOutput: missing function call ${name}`)
+        }
+        value = call.input
+      } else {
+        const content = (raw.content as ContentBlock[])
+          .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
+          .map((block) => block.text)
+          .join('')
+        if (!content) {
+          throw new Error(
+            `OpenAIResponsesProvider.withJsonSchemaOutput: empty output text (${responseDiagnostics(response)})`,
+          )
+        }
+        try {
+          value = JSON.parse(content) as unknown
+        } catch {
+          throw new Error(
+            `OpenAIResponsesProvider.withJsonSchemaOutput: invalid JSON (${responseDiagnostics(response)}): ${content}`,
+          )
+        }
       }
-      const parsed = validator.safeParse(value)
+      const parsed = validator.safeParse(coerceJsonSchemaValue(value, schema))
       if (!parsed.success) {
         throw new Error(
           `OpenAIResponsesProvider.withJsonSchemaOutput: output does not match JSON Schema: ${parsed.error.message}`,

@@ -1,4 +1,5 @@
 import type { ContentBlock } from './attachments.js'
+import { extractAgentProfileDirIds } from '@roxy/shared'
 import { executionCenter } from '../../core/registry/executionCenter.js'
 import { publishTaskMonitorTaskFinished, publishTaskMonitorTaskStarted } from '../../core/task-monitor/index.js'
 import { createRuntimeChatAgent, RuntimeEventPublisher } from '../../runtime/index.js'
@@ -89,6 +90,9 @@ export class IMBridge {
     let destroy: (() => Promise<void>) | undefined
     let outcome: 'completed' | 'failed' | 'cancelled' = 'completed'
     try {
+      const input = Array.isArray(content)
+        ? content.filter(block => block.type === 'text').map(block => block.text ?? '').join(' ')
+        : content || ''
       const agentInstance = await createRuntimeChatAgent({
         conversationId: threadId,
         executionId: messageId,
@@ -96,13 +100,11 @@ export class IMBridge {
         turnId: messageId,
         fullAccess: true,
         taskMonitorTaskId: messageId,
+        reportAllowedDirIds: extractAgentProfileDirIds(input),
       })
       const { agent, createInput, destroy: _destroy } = agentInstance
       destroy = _destroy
       const publisher = new RuntimeEventPublisher(() => {}, { emitDone: false, agentPath: '/root' })
-      const input = Array.isArray(content)
-        ? content.filter(block => block.type === 'text').map(block => block.text ?? '').join(' ')
-        : content || ''
       for await (const event of agent.stream(createInput(input), abortController.signal)) {
         publisher.handle(event)
         if (event.type === 'text' && onChunk) {

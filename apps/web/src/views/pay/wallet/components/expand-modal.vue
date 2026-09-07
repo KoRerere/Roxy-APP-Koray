@@ -72,7 +72,8 @@ const finalAmount = computed(() => currency(allAmount.value).multiply(allDiscoun
 const discountAmount = computed(() => currency(allAmount.value).subtract(finalAmount.value).value)
 
 const detail = computed(() => {
-  const { discount } = allDiscount.value
+  // 身份折扣文案暂不对外展示，折扣仍参与计价
+  // const { discount } = allDiscount.value
 
   const list = buyList.value.map(item => ({
     title: item.label,
@@ -87,16 +88,17 @@ const detail = computed(() => {
       },
     ],
   })).concat([
-    {
-      items: [
-        {
-          label: $t('专属折扣'),
-          class: '!color-[#FC9D12]',
-          value: `-${discount}%`,
-          visible: !!discount,
-        },
-      ].filter(item => item.visible !== false),
-    },
+    // 身份折扣文案暂不对外展示，折扣仍参与计价
+    // {
+    //   items: [
+    //     {
+    //       label: $t('专属折扣'),
+    //       class: '!color-[#FC9D12]',
+    //       value: `-${discount}%`,
+    //       visible: !!discount,
+    //     },
+    //   ].filter(item => item.visible !== false),
+    // },
     {
       items: [
         {

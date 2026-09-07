@@ -164,9 +164,10 @@ function handleImageLoad() {
         </div>
         <div class="flex gap-2 self-stretch" :class="[userPayInfo.discount ? 'flex-col' : 'flex-row-reverse']">
           <div class="relative">
-            <div v-if="userPayInfo.discount" class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">
+            <!-- 身份折扣文案暂不对外展示，折扣仍参与计价 -->
+            <!-- <div v-if="userPayInfo.discount" class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">
               {{ $t('{discount}% Off', { discount: userPayInfo.discount }) }}
-            </div>
+            </div> -->
             <RxButton class="w-full" :label="$t('立即升级')" @click="toUpgrade" />
           </div>
           <RxButton v-if="currentText.about" severity="secondary" outlined :label="currentText.about" @click="toDocument" />

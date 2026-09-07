@@ -1,6 +1,8 @@
 import type { UserGetBrowserVersionInfoListParams } from '@roxy/backend-api'
+import { isChromiumCoreUnsupported } from '@roxy/shared'
 import type { FormAsyncGate } from './hooks/useAsyncGate'
 import { API } from '/@/api'
+import { getCommonHeaders } from '/@/api/util'
 import { CoreType, UaStrictMode, WorkspaceType } from '/@/enums'
 
 import { useUserStore } from '/@/stores/user'
@@ -246,6 +248,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     API.platform.userGetSearchEnginesList(),
     globalThis.electronAPI.send('app:getCoreList'),
   ]))
+  const { osVersion: systemOsVersion, 'R-OS': systemOs } = await run(() => getCommonHeaders())
 
   // Chrome / Firefox 可能存在相同 coreVersion，需按 coreType 分别过滤本地可用内核
   const availableChromeVersions = coreList
@@ -279,7 +282,8 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     const latestTooltip = latestVersion
       ? $t('Roxy内核已同步至 Chrome {version}，始终与谷歌官方保持一致，安全性领先同行。', { version: latestVersion })
       : undefined
-    return withUseLatestCoreOption(filtered, latestTooltip)
+    const compatibleVersions = filtered.filter((item: any) => !isChromiumCoreUnsupported(systemOs, systemOsVersion, coreType, item.value))
+    return compatibleVersions.length ? withUseLatestCoreOption(compatibleVersions, latestTooltip) : []
   }
 
   const osOptions = $dict_map.os!.map(({ label, ...item }: any) => {
@@ -1826,18 +1830,21 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
 
     // searchEngine 在 basicInputs（基础设置），非 windowInputs
     const searchEngineInput = findInputByName(basicInputs, 'searchEngine')
-    if (searchEngineInput)
+    if (searchEngineInput) {
       searchEngineInput.visible = !isFirefox
+    }
 
     // sandboxPermission：Firefox 内核不支持沙盒设置，Chrome 专有
     const sandboxPermissionInput = findInputByName(highLevelInputs, 'sandboxPermission')
-    if (sandboxPermissionInput)
+    if (sandboxPermissionInput) {
       sandboxPermissionInput.visible = !isFirefox
+    }
 
     // enableGoogleLogin：Firefox 内核不支持谷歌登录设置，Chrome 专有
     const enableGoogleLoginInput = findInputByName(otherInputs, 'enableGoogleLogin')
-    if (enableGoogleLoginInput)
+    if (enableGoogleLoginInput) {
       enableGoogleLoginInput.visible = !isFirefox
+    }
 
     // windowOpenSize：Firefox 下隐藏，值由 original 兜底传递
     const windowOpenSizeInput = findInputByName(basicInputs, 'windowOpenSize')
@@ -1853,16 +1860,19 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
 
     // disableSsl / disableSslList：Firefox 不支持 SSL 指纹设置，Chrome 专有
     const disableSslInput = findInputByName(highLevelInputs, 'disableSsl')
-    if (disableSslInput)
+    if (disableSslInput) {
       disableSslInput.visible = !isFirefox
+    }
     const disableSslListInput = findInputByName(highLevelInputs, 'disableSslList')
-    if (disableSslListInput)
+    if (disableSslListInput) {
       disableSslListInput.visible = !isFirefox && disableSslInput?.value === true
+    }
 
     // syncExtensions：getNeedSyncLocalFileMap 的 Firefox 分支不包含此 key，Chrome 专有
     const syncExtensionsInput = findInputByName(otherInputs, 'syncExtensions')
-    if (syncExtensionsInput)
+    if (syncExtensionsInput) {
       syncExtensionsInput.visible = !isFirefox
+    }
 
     if (browserVersionInput) {
       const showBrowserVersion = !isFirefox && userConfig?.uaModeSwitch === UaStrictMode.close
@@ -1902,8 +1912,9 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
 export function switchMoblieInputVisible(inputs: any[], value: boolean) {
   const keys = ['BatterySeparator', 'NetworkSeparator', 'bluetoothSeparator', 'openBattery', 'openNetwork', 'openBluetooth']
   const list = filterInputsByNames(inputs, keys)
-  if (isEmptyValue(list))
+  if (isEmptyValue(list)) {
     return
+  }
 
   list.forEach((input) => {
     Reflect.set(input, 'visible', value)

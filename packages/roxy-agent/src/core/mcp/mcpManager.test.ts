@@ -52,6 +52,7 @@ it('createPlaywrightClientForWorker starts playwright MCP in memory', async () =
     // 窗口作用域：绑定窗口后越界 dirId 必须被拒绝
     assert.deepEqual(manager.getWorkerAllowedDirIds('worker-1'), ['allowed-dir'])
     const launchTool = visible.find(tool => tool.descriptor.name === 'mcp_roxybrowser_playwright_worker-1__roxy_browser_launch')!
+    assert.match(launchTool.descriptor.description, /authorized profile window/)
     const rejected = await launchTool.handler({ dirId: 'other-account-dir' }, {
       agentId: 'test',
       traceId: 'test',
@@ -60,7 +61,7 @@ it('createPlaywrightClientForWorker starts playwright MCP in memory', async () =
     })
     assert.match(rejected.content, /不在本次任务授权的窗口范围内/)
 
-    manager.releaseProfileBinding('worker-1')
+    await manager.releaseProfileBinding('worker-1')
     await manager.releaseExecution('run-1')
     assert.equal(manager.count, 0)
   }

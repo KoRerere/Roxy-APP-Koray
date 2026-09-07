@@ -17,6 +17,29 @@ describe('roxy_script_run input schema', () => {
       params: { keyword: 'different' },
     }] }).success).toBe(true)
   })
+
+  it('accepts layout at the tool-call level and rejects per-script layout', () => {
+    // 回归：layout 嵌套在单个脚本项中时，同一次工具调用可为不同脚本组请求冲突的窗口布局。
+    // 修复：将 layout 设为整个 scripts 批次共享的单一选项。
+    expect(runScriptInputSchema.safeParse({
+      layout: 'grid',
+      scripts: [{
+        scriptPath: 'official:test',
+        dirIds: ['dir-1'],
+      }, {
+        scriptPath: 'official:other',
+        dirIds: ['dir-2'],
+      }],
+    }).success).toBe(true)
+
+    expect(runScriptInputSchema.safeParse({
+      scripts: [{
+        scriptPath: 'official:test',
+        dirIds: ['dir-1'],
+        layout: 'grid',
+      }],
+    }).success).toBe(false)
+  })
 })
 
 describe('roxy_script_run log formatting', () => {

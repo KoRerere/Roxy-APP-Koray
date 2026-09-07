@@ -1,4 +1,12 @@
-import type { UpstreamUploadedFileInfo, UserTemplateInfo } from '@roxy/agent-api'
+import type {
+  ListOfficialTemplatesData,
+  OfficialTemplateInfo,
+  OfficialTemplatePage,
+  TemplateSkillAssetInfo,
+  UpstreamUploadedFileInfo,
+  UserTemplateCreate,
+  UserTemplateInfo,
+} from '@roxy/agent-api'
 import {
   FilesApi,
   HttpClient,
@@ -122,7 +130,23 @@ export const agentOfficialScriptsApi = {
 }
 
 export const agentTemplatesApi = {
-  getById(templateIdOrSlug: string | number): Promise<unknown> {
+  async listAll(): Promise<OfficialTemplateInfo[]> {
+    const data = await unwrap<ListOfficialTemplatesData['data']>(templatesApi.listOfficialTemplates({}))
+    return Array.isArray(data) ? data : data.items
+  },
+  async listPage(params: { limit: number, offset: number }): Promise<OfficialTemplatePage> {
+    const result = await unwrap<ListOfficialTemplatesData['data']>(templatesApi.listOfficialTemplates(params))
+    if (Array.isArray(result)) {
+      return {
+        items: result,
+        total: result.length,
+        limit: params.limit,
+        offset: params.offset,
+      }
+    }
+    return result
+  },
+  getById(templateIdOrSlug: string | number): Promise<OfficialTemplateInfo> {
     return unwrap(templatesApi.getOfficialTemplate({ templateIdOrSlug: String(templateIdOrSlug) }))
   },
 }
@@ -323,9 +347,19 @@ export const agentUserTemplatesApi = {
       items: page.items.map(template => normalizeUserTemplate(template, 'GET /v1/user/templates')),
     }
   },
-  async getById(templateId: number): Promise<UserTemplateDto> {
-    const template = await unwrap(userTemplatesApi.getUserTemplate({ templateId }))
+  async getById(templateId: string | number): Promise<UserTemplateDto> {
+    const template = await unwrap(userTemplatesApi.getUserTemplate({ templateId: String(templateId) }))
     return normalizeUserTemplate(template, 'GET /v1/user/templates/{template_id}')
+  },
+  uploadSkill(file: File): Promise<TemplateSkillAssetInfo> {
+    return unwrap<TemplateSkillAssetInfo>(userTemplatesApi.uploadUserTemplateSkill({ file }))
+  },
+  async create(input: UserTemplateCreate): Promise<UserTemplateDto> {
+    const template = await unwrap(userTemplatesApi.createUserTemplate(input))
+    return normalizeUserTemplate(template, 'POST /v1/user/templates')
+  },
+  async deleteById(templateId: number): Promise<void> {
+    await unwrap(userTemplatesApi.deleteUserTemplate({ templateId }))
   },
 }
 

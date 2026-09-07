@@ -11,7 +11,103 @@ function collector(): RuntimeFileCollector {
   }
 }
 
-describe('ProfileRuntimeManager', () => {
+describe('profileRuntimeManager', () => {
+  it('syncs automation only when a page tool runs and releases it with its binding', async () => {
+    const connection = {
+      dirId: 'dir-1',
+      endpoint: 'ws://one',
+      protocol: 'cdp' as const,
+      browserType: 'chromium' as const,
+      connectedAt: 1,
+    }
+    const onAutomationSync = vi.fn(async () => true)
+    const onAutomationRelease = vi.fn(async () => {})
+    const manager = new ProfileRuntimeManager({
+      connections: {
+        get: vi.fn(async () => connection),
+        list: vi.fn(async () => [connection]),
+        open: vi.fn(),
+      },
+      createResource: vi.fn(async () => ({
+        tools: new Map(),
+        close: vi.fn(async () => {}),
+        artifactRoot: '/tmp/one',
+        getActiveTargetId: vi.fn(async () => 'target-1'),
+      })),
+      onAutomationSync,
+      onAutomationRelease,
+    })
+    const binding = manager.createBinding({ bindingId: 'binding-a', executionId: 'run-a', collector: collector() })
+
+    await binding.activate('dir-1')
+    await binding.ensureActive()
+    expect(onAutomationSync).not.toHaveBeenCalled()
+
+    await binding.run(async () => {}, { automation: 'sync-before' })
+    await manager.releaseBinding('binding-a')
+
+    expect(onAutomationSync).toHaveBeenCalledTimes(1)
+    expect(onAutomationSync).toHaveBeenCalledWith('dir-1', 'run-a', 'target-1')
+    expect(onAutomationRelease).toHaveBeenCalledTimes(1)
+    expect(onAutomationRelease).toHaveBeenCalledWith('dir-1', 'run-a')
+  })
+
+  it('keeps a group until the last same-execution binding releases it', async () => {
+    const connection = {
+      dirId: 'dir-1', endpoint: 'ws://one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+    }
+    const onAutomationSync = vi.fn(async () => true)
+    const onAutomationRelease = vi.fn(async () => {})
+    const manager = new ProfileRuntimeManager({
+      connections: { get: vi.fn(async () => connection), list: vi.fn(async () => [connection]), open: vi.fn() },
+      createResource: vi.fn(async () => ({
+        tools: new Map(), close: vi.fn(async () => {}), artifactRoot: '/tmp/one', getActiveTargetId: vi.fn(async () => 'target-1'),
+      })),
+      onAutomationSync,
+      onAutomationRelease,
+    })
+    const root = manager.createBinding({ bindingId: 'root', executionId: 'run-a' })
+    const child = manager.createBinding({ bindingId: 'child', executionId: 'run-a' })
+
+    await root.activate('dir-1')
+    await child.activate('dir-1')
+    await root.run(async () => {}, { automation: 'sync-before' })
+    await child.run(async () => {}, { automation: 'sync-before' })
+    await manager.releaseBinding('root')
+
+    expect(onAutomationRelease).not.toHaveBeenCalled()
+    await manager.releaseBinding('child')
+    expect(onAutomationSync).toHaveBeenCalledTimes(2)
+    expect(onAutomationRelease).toHaveBeenCalledWith('dir-1', 'run-a')
+  })
+
+  it('retries a failed sync and forgets UI state when the browser is invalidated', async () => {
+    const connection = {
+      dirId: 'dir-1', endpoint: 'ws://one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+    }
+    const onAutomationSync = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true).mockResolvedValueOnce(true)
+    const onAutomationRelease = vi.fn(async () => {})
+    const manager = new ProfileRuntimeManager({
+      connections: { get: vi.fn(async () => connection), list: vi.fn(async () => [connection]), open: vi.fn() },
+      createResource: vi.fn(async () => ({
+        tools: new Map(), close: vi.fn(async () => {}), artifactRoot: '/tmp/one', getActiveTargetId: vi.fn(async () => 'target-1'),
+      })),
+      onAutomationSync,
+      onAutomationRelease,
+    })
+    const binding = manager.createBinding({ bindingId: 'binding-a', executionId: 'run-a' })
+
+    await binding.activate('dir-1')
+    await binding.run(async () => {}, { automation: 'sync-before' })
+    await binding.run(async () => {}, { automation: 'sync-before' })
+    await manager.invalidate('dir-1')
+    await binding.activate('dir-1')
+    await binding.run(async () => {}, { automation: 'sync-before' })
+
+    expect(onAutomationSync).toHaveBeenCalledTimes(3)
+    expect(onAutomationRelease).not.toHaveBeenCalled()
+  })
+
   it('keeps leases run-scoped while reusing one endpoint-scoped playwright resource', async () => {
     const connection = {
       dirId: 'dir-1',
@@ -59,10 +155,16 @@ describe('ProfileRuntimeManager', () => {
 
   it('allows root and child bindings from the same execution to share one profile lease', async () => {
     const connection = {
-      dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+      dirId: 'dir-1',
+      endpoint: 'ws://127.0.0.1/devtools/browser/one',
+      protocol: 'cdp' as const,
+      browserType: 'chromium' as const,
+      connectedAt: 1,
     }
     const createResource = vi.fn(async () => ({
-      tools: new Map(), close: vi.fn(async () => {}), artifactRoot: '/tmp/shared-execution',
+      tools: new Map(),
+      close: vi.fn(async () => {}),
+      artifactRoot: '/tmp/shared-execution',
     }))
     const manager = new ProfileRuntimeManager({
       connections: {
@@ -86,10 +188,18 @@ describe('ProfileRuntimeManager', () => {
     const closeFirst = vi.fn(async () => {})
     const get = vi.fn()
       .mockResolvedValueOnce({
-        dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/one', protocol: 'cdp', browserType: 'chromium', connectedAt: 1,
+        dirId: 'dir-1',
+        endpoint: 'ws://127.0.0.1/devtools/browser/one',
+        protocol: 'cdp',
+        browserType: 'chromium',
+        connectedAt: 1,
       })
       .mockResolvedValueOnce({
-        dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/two', protocol: 'cdp', browserType: 'chromium', connectedAt: 2,
+        dirId: 'dir-1',
+        endpoint: 'ws://127.0.0.1/devtools/browser/two',
+        protocol: 'cdp',
+        browserType: 'chromium',
+        connectedAt: 2,
       })
     const createResource = vi.fn()
       .mockResolvedValueOnce({ tools: new Map(), close: closeFirst, artifactRoot: '/tmp/one' })
@@ -99,7 +209,10 @@ describe('ProfileRuntimeManager', () => {
       createResource,
     })
     const binding = manager.createBinding({
-      bindingId: 'binding-a', executionId: 'run-a', conversationId: 'conversation-a', collector: collector(),
+      bindingId: 'binding-a',
+      executionId: 'run-a',
+      conversationId: 'conversation-a',
+      collector: collector(),
     })
 
     await binding.activate('dir-1', 'chromium')
@@ -112,7 +225,11 @@ describe('ProfileRuntimeManager', () => {
 
   it('keeps retired artifact generations until the referencing execution is released', async () => {
     const firstConnection = {
-      dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+      dirId: 'dir-1',
+      endpoint: 'ws://127.0.0.1/devtools/browser/one',
+      protocol: 'cdp' as const,
+      browserType: 'chromium' as const,
+      connectedAt: 1,
     }
     const secondConnection = {
       ...firstConnection,
@@ -132,14 +249,23 @@ describe('ProfileRuntimeManager', () => {
       },
       createResource: vi.fn()
         .mockResolvedValueOnce({
-          tools: new Map(), close: vi.fn(async () => {}), artifactRoot: '/tmp/one', cleanupArtifacts: cleanupFirst,
+          tools: new Map(),
+          close: vi.fn(async () => {}),
+          artifactRoot: '/tmp/one',
+          cleanupArtifacts: cleanupFirst,
         })
         .mockResolvedValueOnce({
-          tools: new Map(), close: vi.fn(async () => {}), artifactRoot: '/tmp/two', cleanupArtifacts: cleanupSecond,
+          tools: new Map(),
+          close: vi.fn(async () => {}),
+          artifactRoot: '/tmp/two',
+          cleanupArtifacts: cleanupSecond,
         }),
     })
     const binding = manager.createBinding({
-      bindingId: 'binding-a', executionId: 'run-a', conversationId: 'conversation-a', collector: collector(),
+      bindingId: 'binding-a',
+      executionId: 'run-a',
+      conversationId: 'conversation-a',
+      collector: collector(),
     })
 
     await binding.activate('dir-1')
@@ -156,7 +282,11 @@ describe('ProfileRuntimeManager', () => {
 
   it('cleans a shared artifact generation only once during shutdown', async () => {
     const connection = {
-      dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+      dirId: 'dir-1',
+      endpoint: 'ws://127.0.0.1/devtools/browser/one',
+      protocol: 'cdp' as const,
+      browserType: 'chromium' as const,
+      connectedAt: 1,
     }
     const cleanupArtifacts = vi.fn(async () => {})
     const manager = new ProfileRuntimeManager({
@@ -166,7 +296,10 @@ describe('ProfileRuntimeManager', () => {
         open: vi.fn(),
       },
       createResource: vi.fn(async () => ({
-        tools: new Map(), close: vi.fn(async () => {}), artifactRoot: '/tmp/shared', cleanupArtifacts,
+        tools: new Map(),
+        close: vi.fn(async () => {}),
+        artifactRoot: '/tmp/shared',
+        cleanupArtifacts,
       })),
     })
     const binding = manager.createBinding({ bindingId: 'binding-a', executionId: 'run-a', collector: collector() })
@@ -183,7 +316,11 @@ describe('ProfileRuntimeManager', () => {
     const manager = new ProfileRuntimeManager({
       connections: {
         get: vi.fn(async () => ({
-          dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+          dirId: 'dir-1',
+          endpoint: 'ws://127.0.0.1/devtools/browser/one',
+          protocol: 'cdp' as const,
+          browserType: 'chromium' as const,
+          connectedAt: 1,
         })),
         list: vi.fn(async () => []),
         open: vi.fn(),
@@ -191,7 +328,10 @@ describe('ProfileRuntimeManager', () => {
       createResource: vi.fn(async () => ({ tools: new Map(), close: vi.fn(async () => {}), artifactRoot: '/tmp/one' })),
     })
     const binding = manager.createBinding({
-      bindingId: 'binding-a', executionId: 'run-a', conversationId: 'conversation-a', collector: collector(),
+      bindingId: 'binding-a',
+      executionId: 'run-a',
+      conversationId: 'conversation-a',
+      collector: collector(),
     })
     await binding.activate('dir-1', 'chromium')
     const order: string[] = []
@@ -227,7 +367,9 @@ describe('ProfileRuntimeManager', () => {
         open: vi.fn(),
       },
       createResource: vi.fn(async connection => ({
-        tools: new Map(), close: vi.fn(async () => {}), artifactRoot: `/tmp/${connection.dirId}`,
+        tools: new Map(),
+        close: vi.fn(async () => {}),
+        artifactRoot: `/tmp/${connection.dirId}`,
       })),
     })
     const first = manager.createBinding({ bindingId: 'binding-a', executionId: 'run-a' })
@@ -254,14 +396,20 @@ describe('ProfileRuntimeManager', () => {
 
   it('keeps cached resources when connectionInfo fails during execution release', async () => {
     const connection = {
-      dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+      dirId: 'dir-1',
+      endpoint: 'ws://127.0.0.1/devtools/browser/one',
+      protocol: 'cdp' as const,
+      browserType: 'chromium' as const,
+      connectedAt: 1,
     }
     const close = vi.fn(async () => {})
     const onIdle = vi.fn()
     const manager = new ProfileRuntimeManager({
       connections: {
         get: vi.fn(async () => connection),
-        list: vi.fn(async () => { throw new Error('connectionInfo unavailable') }),
+        list: vi.fn(async () => {
+          throw new Error('connectionInfo unavailable')
+        }),
         open: vi.fn(),
       },
       createResource: vi.fn(async () => ({ tools: new Map(), close, artifactRoot: '/tmp/one' })),
@@ -280,7 +428,11 @@ describe('ProfileRuntimeManager', () => {
   it('invalidates cached resources when polling observes restart or close', async () => {
     const close = vi.fn(async () => {})
     const connection = {
-      dirId: 'dir-1', endpoint: 'ws://127.0.0.1/devtools/browser/one', protocol: 'cdp' as const, browserType: 'chromium' as const, connectedAt: 1,
+      dirId: 'dir-1',
+      endpoint: 'ws://127.0.0.1/devtools/browser/one',
+      protocol: 'cdp' as const,
+      browserType: 'chromium' as const,
+      connectedAt: 1,
     }
     const manager = new ProfileRuntimeManager({
       connections: {

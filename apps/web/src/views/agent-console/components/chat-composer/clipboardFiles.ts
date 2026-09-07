@@ -1,6 +1,13 @@
+export interface ClipboardFileSystemEntryLike {
+  isDirectory: boolean
+  isFile: boolean
+  name: string
+}
+
 export interface ClipboardFileItemLike {
   kind: string
   getAsFile: () => File | null
+  webkitGetAsEntry?: () => ClipboardFileSystemEntryLike | null
 }
 
 export interface ClipboardDataLike {
@@ -8,22 +15,79 @@ export interface ClipboardDataLike {
   items?: ArrayLike<ClipboardFileItemLike> | null
 }
 
-export function getClipboardFiles(clipboardData: ClipboardDataLike | null) {
+export interface ClipboardFilePathSplit {
+  localPathFiles: Array<{ file: File, path: string }>
+  uploadFiles: File[]
+}
+
+export interface ClipboardFileSource {
+  file: File
+  entry: ClipboardFileSystemEntryLike | null
+}
+
+export interface ClipboardPathAttachment {
+  kind: 'file' | 'folder'
+  name: string
+  path: string
+}
+
+function getPathBaseName(value: string) {
+  return value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || value
+}
+
+export function getClipboardFileSources(clipboardData: ClipboardDataLike | null): ClipboardFileSource[] {
   if (!clipboardData)
     return []
 
-  // `files` and file-kind `items` are two views of the same clipboard data.
-  // Prefer one source and only use the other as a fallback so generated
-  // clipboard files are not materialized twice with different metadata.
+  const fileItems = Array.from(clipboardData.items ?? []).filter(item => item.kind === 'file')
   const files = Array.from(clipboardData.files ?? [])
-  if (files.length)
-    return files
+  if (files.length) {
+    return files.map((file, index) => ({
+      file,
+      entry: fileItems[index]?.webkitGetAsEntry?.() ?? null,
+    }))
+  }
 
-  return Array.from(clipboardData.items ?? []).flatMap((item) => {
-    if (item.kind !== 'file')
-      return []
-
+  return fileItems.flatMap((item) => {
     const file = item.getAsFile()
-    return file ? [file] : []
+    return file
+      ? [{ file, entry: item.webkitGetAsEntry?.() ?? null }]
+      : []
   })
+}
+
+export function getClipboardFiles(clipboardData: ClipboardDataLike | null) {
+  return getClipboardFileSources(clipboardData).map(source => source.file)
+}
+
+export function splitClipboardFilesByLocalPath(
+  files: File[],
+  getLocalPath: (file: File) => string,
+): ClipboardFilePathSplit {
+  const localPathFiles: Array<{ file: File, path: string }> = []
+  const uploadFiles: File[] = []
+
+  for (const file of files) {
+    const path = getLocalPath(file)
+    if (path) {
+      localPathFiles.push({ file, path })
+    }
+    else {
+      uploadFiles.push(file)
+    }
+  }
+
+  return { localPathFiles, uploadFiles }
+}
+
+export function createClipboardPathAttachment(
+  fileName: string,
+  path: string,
+  entry: ClipboardFileSystemEntryLike | null,
+): ClipboardPathAttachment {
+  return {
+    kind: entry?.isDirectory ? 'folder' : 'file',
+    name: entry?.name || fileName || getPathBaseName(path),
+    path,
+  }
 }

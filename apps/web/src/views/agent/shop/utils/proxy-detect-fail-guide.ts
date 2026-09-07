@@ -12,6 +12,9 @@ export interface ProxyDetectFailGuideResult {
   proxyType?: ProxyType | number
   /** IPC / 本地网络等系统异常，不得误触发广告或客服入口 */
   systemError?: boolean
+  /** 第三方失败时保留的 lastCountry；RoxyIP / 系统异常不应带此字段 */
+  preDetectLastCountry?: string
+  lastCountry?: string
 }
 
 /** 是否为 RoxyIP（buyProxyType / proxyType === 1） */
@@ -26,10 +29,12 @@ export function isGuidableProxyFailure(result: ProxyDetectFailGuideResult) {
 
 /** 从 reject 值取出可读文案（IPC 有时是 string，有时是 Error） */
 function getErrorMessage(error: unknown) {
-  if (typeof error === 'string')
+  if (typeof error === 'string') {
     return error
-  if (error && typeof error === 'object' && 'message' in error)
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
     return String((error as { message?: unknown }).message ?? '')
+  }
   return String(error ?? '')
 }
 
@@ -51,11 +56,29 @@ export function resolveProxyDetectFailGuide(
 ): ProxyDetectFailGuideKind | null {
   const list = (Array.isArray(results) ? results : [results]).filter(Boolean)
   const failed = list.filter(isGuidableProxyFailure)
-  if (!failed.length)
+  if (!failed.length) {
     return null
+  }
 
   const hasThirdPartyFail = failed.some(item => !isRoxyIpProxyType(item.proxyType))
   return hasThirdPartyFail ? 'ad' : 'support'
+}
+
+/** 失败结果上的 lastCountry；检测失败会清空展示字段，故优先读检测时留下的副本 */
+function resolveFailLastCountry(item: ProxyDetectFailGuideResult) {
+  return item.preDetectLastCountry?.trim() || item.lastCountry?.trim() || ''
+}
+
+/** 购买弹窗初始化用：按结果顺序取第一条第三方失败且存在的 lastCountry */
+export function pickPreferredBuyCountry(
+  results: ProxyDetectFailGuideResult | ProxyDetectFailGuideResult[],
+): string | undefined {
+  const list = (Array.isArray(results) ? results : [results]).filter(Boolean)
+  const first = list.find((item) => {
+    return !!resolveFailLastCountry(item) && isGuidableProxyFailure(item) && !isRoxyIpProxyType(item.proxyType)
+  })
+  const country = first ? resolveFailLastCountry(first) : ''
+  return country || undefined
 }
 
 /** 打开窗口时的本地网络拦截，不触发广告 */

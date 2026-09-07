@@ -2,7 +2,7 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { buildTestAgent, endTurnResponse, chatResponse } from '../helpers/buildTestAgent.ts'
+import { buildTestAgent, endTurnResponse, chatResponse, toolCallResponse } from '../helpers/buildTestAgent.ts'
 import { JsonlSessionStore } from '../../src/memory/session_store.ts'
 import { InMemoryProvider } from '../../src/memory/memory.ts'
 import { replayIntoMemory } from '../../src/memory/replay.ts'
@@ -177,6 +177,43 @@ describe('agent loop rollout double-write', () => {
 
     const toolResultEvt = events.find((e) => e.type === 'tool_result') as Extract<RolloutEvent, { type: 'tool_result' }>
     expect(toolResultEvt.result.tool_use_id).toBe('tu1')
+  })
+
+  it('persists a successful returnDirect result before completing without another model call', async () => {
+    const dir = tmpDir()
+    const store = new JsonlSessionStore({ dir })
+    const { agent, provider, registry } = buildTestAgent({
+      sessionId: 'return-direct-rollout-sid',
+      sessionStore: store,
+      handler: () => toolCallResponse('report-1', 'task_report', { text: 'accepted' }),
+    })
+    registry.add(
+      {
+        name: 'task_report',
+        description: 'save a task report',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        returnDirect: true,
+      },
+      async () => ({ content: 'accepted', isError: false }),
+    )
+
+    const streamEvents = await streamTurn(agent, 'report the task result')
+    const rolloutEvents = await store.read('return-direct-rollout-sid')
+
+    expect(provider.calls).toHaveLength(1)
+    expect(streamEvents.map((event) => event.type)).toEqual(['tool_call', 'tool_result', 'done'])
+    expect(rolloutEvents.find((event) => event.type === 'tool_result')).toMatchObject({
+      result: {
+        tool_use_id: 'report-1',
+        content: 'accepted',
+        is_error: false,
+      },
+    })
+    expect(rolloutEvents.at(-1)).toMatchObject({
+      type: 'turn_completed',
+      stopReason: 'end_turn',
+    })
   })
 })
 

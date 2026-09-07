@@ -1,5 +1,6 @@
 import type { RuntimeFileCollector } from '../file-collector'
 import type { HostToolCapabilities } from '../host-tools'
+import type { TaskReportWindowTracker } from '../tools/task-report-window-tracker'
 import type { AiAgentModelApiFormat } from '@/api/agentApiClient'
 import type { RuntimeMcpTool } from '@/core/mcp/runtimeMcpTool'
 import type { AgentRunEvent } from '@roxy/shared/channel'
@@ -47,13 +48,18 @@ import { registerRuntimeScriptTools } from '../tools'
 const DEFAULT_GENERAL_PURPOSE_TIMEOUT_MS = 60 * 60 * 1000
 const DELEGATION_TOOL_NAMES = new Set(['spawn_agent', 'list_agents', 'wait_agent'])
 const SCRIPT_TOOL_NAMES = new Set(['roxy_script_describe', 'roxy_script_run'])
+const ROOT_ONLY_TOOL_NAMES = new Set([
+  'roxy_task_report',
+  'roxy_save_user_template',
+  'roxy_delete_user_template',
+])
 const PLAYWRIGHT_TOOL_PREFIX = `mcp_${playwrightMcpServerName('')}`
 
 export const GENERAL_PURPOSE_AGENT_SPEC: SubAgentSpec = {
   agentType: 'general-purpose',
   description: 'Handle independent research, file, script, and browser work with the main agent capabilities.',
   systemPrompt: createGeneralPurposeSystemPrompt(),
-  messageGuidance: 'Pass a complete self-contained task in message and optional browser profile ids in dirIds.',
+  messageGuidance: 'Pass a complete self-contained task in message and only the authorized browser profile ids the child should actually use in dirIds; dirIds is an allowlist, not proof that every listed profile was used.',
 }
 
 export interface GeneralPurposeAgentMcp {
@@ -63,9 +69,10 @@ export interface GeneralPurposeAgentMcp {
     conversationId?: string
     allowedDirIds?: readonly string[]
     collector?: RuntimeFileCollector
+    onBrowserLaunched?: (dirId: string) => void
   }) => Promise<void>
   getPlaywrightToolsForBinding: (bindingId: string) => Promise<RuntimeMcpTool[]>
-  releaseProfileBinding: (bindingId: string) => void
+  releaseProfileBinding: (bindingId: string) => Promise<void>
   invalidateProfile?: (dirId: string) => Promise<void>
 }
 
@@ -148,6 +155,7 @@ function normalizeInheritedToolNames(
 
 function shouldInheritTool(name: string, allowlist?: ReadonlySet<string>): boolean {
   return !DELEGATION_TOOL_NAMES.has(name)
+    && !ROOT_ONLY_TOOL_NAMES.has(name)
     && !name.startsWith(PLAYWRIGHT_TOOL_PREFIX)
     && (allowlist === undefined || allowlist.has(name))
 }
@@ -202,6 +210,7 @@ function registerInheritedTools(
     workspaceDir,
     fileCollector: options.fileCollector,
     taskMonitorTaskId: options.taskMonitorTaskId,
+    onBrowserLaunched: dirId => (options.toolContext?.taskReportWindowTracker as TaskReportWindowTracker | undefined)?.record([dirId]),
   })
 
   for (const name of SCRIPT_TOOL_NAMES) {
@@ -240,6 +249,7 @@ export async function createGeneralPurposeAgent(
     throw new Error(`general-purpose dirIds '${unauthorizedDirIds.join(', ')}' are outside the root agent window allowlist`)
   }
   const allowedDirIds = requestedDirIds.length > 0 ? requestedDirIds : (rootAllowedDirIds ?? [])
+  const taskReportWindowTracker = options.toolContext?.taskReportWindowTracker as TaskReportWindowTracker | undefined
 
   const resourceKey = generalPurposeAgentResourceKey(options.conversationId, options.agentPath)
   const childPlaywrightServerName = playwrightMcpServerName(resourceKey)
@@ -257,6 +267,7 @@ export async function createGeneralPurposeAgent(
       conversationId: options.conversationId,
       allowedDirIds,
       collector: options.fileCollector,
+      onBrowserLaunched: dirId => taskReportWindowTracker?.record([dirId]),
     })
     profileBindingCreated = true
 
@@ -428,7 +439,7 @@ export async function createGeneralPurposeAgent(
         }
         finally {
           if (profileBindingCreated) {
-            mcp.releaseProfileBinding(resourceKey)
+            await mcp.releaseProfileBinding(resourceKey)
           }
         }
       },
@@ -437,7 +448,7 @@ export async function createGeneralPurposeAgent(
   catch (error) {
     await agent?.dispose().catch(() => {})
     if (profileBindingCreated) {
-      mcp.releaseProfileBinding(resourceKey)
+      await mcp.releaseProfileBinding(resourceKey)
     }
     throw error
   }

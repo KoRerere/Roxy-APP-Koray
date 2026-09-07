@@ -1,4 +1,5 @@
 import { FeedbackApi, FilesApi, HttpClient, OfficialScriptsApi, TemplatesApi, UserTasksApi, UserTemplatesApi } from '@roxy/agent-api'
+import type { ListOfficialTemplatesParams } from '@roxy/agent-api'
 import type {
   AgentConversationRunEventDTO,
   AgentTaskLogStatus,
@@ -111,6 +112,12 @@ interface AgentConsoleApiResponse<T> {
 export interface PresetTemplateInitialization {
   initialized: boolean
   createdCount: number
+}
+
+export interface ToppedTemplateResult {
+  templateId: number
+  isTopped: boolean
+  toppedAt?: string | null
 }
 
 export interface AgentSkillPathInfo {
@@ -282,15 +289,47 @@ const agentBackendHttpClient = createHttpClient(
 
 const presetInitializationByWorkspace = new Map<string, Promise<void>>()
 
+/**
+ * 官方模板列表接口的本地扩展：后端的置顶排序开关在下一次 OpenAPI 刷新后
+ * 会进入生成客户端；在此之前仍由生成方法透传这个查询字段。
+ */
+type OfficialTemplateListQuery = ListOfficialTemplatesParams & {
+  prioritizeTopped?: boolean
+}
+
 export function useAgentConsoleApi() {
   const agentStore = useAgentStore()
   const workspaceStore = useWorkspaceStore()
   const feedback = new FeedbackApi(agentBackendHttpClient)
   const files = new FilesApi(agentBackendHttpClient)
   const officialScripts = new OfficialScriptsApi(agentBackendHttpClient)
-  const templates = new TemplatesApi(agentBackendHttpClient)
+  const generatedTemplatesApi = new TemplatesApi(agentBackendHttpClient)
+  const generatedListOfficialTemplates = generatedTemplatesApi.listOfficialTemplates.bind(generatedTemplatesApi)
+  const templates = Object.assign(generatedTemplatesApi, {
+    listOfficialTemplates: (
+      query: OfficialTemplateListQuery,
+      params?: Parameters<TemplatesApi['listOfficialTemplates']>[1],
+    ) => generatedListOfficialTemplates(query, params),
+    topOfficialTemplate: (templateId: number) => mutateTemplateTop(
+      `/v1/templates/${templateId}/top`,
+      'PUT',
+    ),
+    untopOfficialTemplate: (templateId: number) => mutateTemplateTop(
+      `/v1/templates/${templateId}/top`,
+      'DELETE',
+    ),
+  })
   const userTasks = new UserTasksApi(agentBackendHttpClient)
-  const userTemplates = new UserTemplatesApi(agentBackendHttpClient)
+  const userTemplates = Object.assign(new UserTemplatesApi(agentBackendHttpClient), {
+    topUserTemplate: (templateId: number) => mutateTemplateTop(
+      `/v1/user/templates/${templateId}/top`,
+      'PUT',
+    ),
+    untopUserTemplate: (templateId: number) => mutateTemplateTop(
+      `/v1/user/templates/${templateId}/top`,
+      'DELETE',
+    ),
+  })
 
   async function ensureAgentReady() {
     const endEnsureAgentReady = createPerfTimer('agent-api:ensureAgentReady')
@@ -497,4 +536,20 @@ export function useAgentConsoleApi() {
     uploadFile,
     updateConversation,
   }
+}
+
+async function mutateTemplateTop(path: string, method: 'PUT' | 'DELETE') {
+  const response = await agentBackendHttpClient.request<AgentConsoleApiResponse<ToppedTemplateResult>>({
+    path,
+    method,
+    format: 'json',
+  })
+  if (response.code !== undefined && response.code !== 0) {
+    throw new Error(getResponseMessage(response))
+  }
+  if (!response.data) {
+    throw new Error('Agent response is missing template top state')
+  }
+
+  return response.data
 }

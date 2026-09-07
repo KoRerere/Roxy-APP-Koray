@@ -13,6 +13,7 @@ const props = defineProps<{
   creatingTask?: boolean
   editDisabled?: boolean
   deleting?: boolean
+  topping?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -20,6 +21,7 @@ const emit = defineEmits<{
   delete: [item: MyTemplateItem]
   createTask: [item: MyTemplateItem]
   runInChat: [item: MyTemplateItem]
+  toggleTop: [item: MyTemplateItem]
 }>()
 
 const themeStore = useThemeStore()
@@ -61,9 +63,55 @@ const templateSvgIconColor = computed(() => pickTemplateThemeValue(
   props.item.iconInfo?.primaryColor,
   themeStore.realTheme === 'dark',
 ) || 'var(--color-text-primary)')
+
+function readMetadataTags(metadata: Record<string, unknown>): string[] {
+  const nestedMetadata = metadata.skillMetadata
+  const source = metadata.labels
+    ?? metadata.tags
+    ?? (nestedMetadata && typeof nestedMetadata === 'object' && !Array.isArray(nestedMetadata)
+      ? (nestedMetadata as Record<string, unknown>).tags
+      : undefined)
+
+  if (!Array.isArray(source)) {
+    return []
+  }
+
+  return source
+    .map((tag) => {
+      if (typeof tag === 'string') {
+        return tag.trim()
+      }
+      if (tag && typeof tag === 'object' && !Array.isArray(tag)) {
+        const record = tag as Record<string, unknown>
+        const value = record.label ?? record.name ?? record.slug
+        return typeof value === 'string' ? value.trim() : ''
+      }
+      return ''
+    })
+    .filter((tag, index, tags): tag is string => Boolean(tag) && tags.indexOf(tag) === index)
+}
+
+const versionText = computed(() => {
+  const version = props.item.metadata.version
+  const normalizedVersion = typeof version === 'string'
+    ? version.trim().replace(/^v/i, '')
+    : typeof version === 'number' && Number.isFinite(version)
+      ? String(version)
+      : ''
+  return `v${normalizedVersion || '1.0.0'}`
+})
+
+const templateTags = computed(() => {
+  const kindLabel = kindPresentation.value[props.item.kind].label
+  return [kindLabel, ...readMetadataTags(props.item.metadata)]
+    .filter((tag, index, tags) => tags.indexOf(tag) === index)
+    .slice(0, 3)
+})
+
 function editTemplate() {
-  if (props.editDisabled)
+  if (props.editDisabled) {
     return
+  }
 
   actionMenuOpen.value = false
   emit('edit', props.item)
@@ -80,6 +128,15 @@ function createTask() {
 
 function runInChat() {
   emit('runInChat', props.item)
+}
+
+function toggleTop() {
+  if (props.topping) {
+    return
+  }
+
+  actionMenuOpen.value = false
+  emit('toggleTop', props.item)
 }
 </script>
 
@@ -117,31 +174,33 @@ function runInChat() {
           <h2 :title="item.name">
             {{ item.name }}
           </h2>
-          <p>
-            <AgentTooltip
-              :content="item.description"
-              placement="top"
-              :disabled="!item.description"
-            >
-              <span class="my-template-card__description-text">{{ item.description || $t('暂无描述') }}</span>
-            </AgentTooltip>
-          </p>
+          <p>{{ versionText }}</p>
         </div>
       </div>
-
-      <span
-        class="my-template-card__kind"
-        :style="{
-          color: kindPresentation[item.kind].color,
-          background: kindPresentation[item.kind].background,
-        }"
-      >
-        <SvgIcon :name="kindPresentation[item.kind].icon" size="16" aria-hidden="true" />
-        {{ kindPresentation[item.kind].label }}
-      </span>
     </header>
 
     <div class="my-template-card__divider" />
+
+    <div class="my-template-card__tags">
+      <span
+        v-for="tag in templateTags"
+        :key="tag"
+        class="my-template-card__tag"
+      >
+        {{ tag }}
+      </span>
+    </div>
+
+    <AgentTooltip
+      :content="item.description || $t('暂无描述')"
+      placement="top-start"
+      :disabled="!item.description"
+      trigger-class="my-template-card__description-trigger"
+    >
+      <p class="my-template-card__description">
+        {{ item.description || $t('暂无描述') }}
+      </p>
+    </AgentTooltip>
 
     <footer class="my-template-card__actions">
       <AgentPopover
@@ -164,6 +223,14 @@ function runInChat() {
           <button type="button" :disabled="editDisabled" @click="editTemplate">
             <SvgIcon name="base/rx_ic_agent_edit" size="16" aria-hidden="true" />
             <span>{{ $t('编辑') }}</span>
+          </button>
+          <button type="button" :disabled="topping" @click="toggleTop">
+            <SvgIcon
+              :name="item.isTopped ? 'base/rx_ic_pin_solid' : 'base/rx_ic_pin_line'"
+              size="16"
+              aria-hidden="true"
+            />
+            <span>{{ item.isTopped ? $t('取消置顶') : $t('置顶') }}</span>
           </button>
           <button class="danger" type="button" :disabled="deleting" @click="deleteTemplate">
             <SvgIcon name="base/rx_ic_bin_1" size="16" aria-hidden="true" />
@@ -201,13 +268,14 @@ function runInChat() {
   box-sizing: border-box;
   display: flex;
   width: 100%;
+  height: 212px;
   min-width: 0;
   flex-direction: column;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--color-border-secondary);
-  border-radius: 10px;
-  background: var(--color-bg-primary);
+  border-radius: 16px;
+  background: var(--color-bg-tertiary);
   overflow: hidden;
 }
 
@@ -248,7 +316,7 @@ function runInChat() {
   align-items: center;
   justify-content: center;
   border-radius: 7px;
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-quaternary);
 
   img {
     width: 44px;
@@ -271,8 +339,11 @@ function runInChat() {
 }
 
 .my-template-card__copy {
+  display: flex;
   min-width: 0;
   flex: 1;
+  flex-direction: column;
+  justify-content: center;
 
   :deep(.agent-tooltip__trigger) {
     display: flex;
@@ -302,22 +373,24 @@ function runInChat() {
 
   p {
     color: var(--color-text-quaternary);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 400;
-    line-height: 20px;
+    line-height: 16px;
   }
 }
 
-.my-template-card__description-text {
-  display: block;
+.my-template-card__tags {
+  display: flex;
   width: 100%;
+  height: 24px;
   min-width: 0;
+  flex: 0 0 24px;
+  align-items: center;
+  gap: 4px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.my-template-card__kind {
+.my-template-card__tag {
   display: inline-flex;
   height: 24px;
   flex: 0 0 auto;
@@ -326,6 +399,8 @@ function runInChat() {
   gap: 4px;
   padding: 2px 6px;
   border-radius: 8px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-quaternary);
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
@@ -338,23 +413,50 @@ function runInChat() {
   border-top: 1px dashed var(--color-border-secondary);
 }
 
+.my-template-card__description {
+  display: -webkit-box;
+  width: 100%;
+  height: 40px;
+  flex: 0 0 40px;
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-quaternary);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+:deep(.my-template-card__description-trigger) {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  flex: 0 0 40px;
+  flex-direction: column;
+  min-width: 0;
+  outline: 0;
+}
+
 .my-template-card__actions {
   display: flex;
   width: 100%;
   min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .my-template-card__more-button {
   display: inline-flex;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  padding: 7px;
   border: 1px solid var(--color-border-secondary);
   border-radius: 10px;
   color: var(--color-text-primary);
@@ -375,25 +477,20 @@ function runInChat() {
 .my-template-card__primary-actions {
   display: flex;
   min-width: 0;
+  flex: 1;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
+
+  :deep(.agent-button) {
+    height: 32px;
+    flex: 1;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
 }
 
-.my-template-card__create-task {
-  --agent-button-border: transparent;
-}
-
-// @media (hover: hover) {
-//   .my-template-card:hover :deep(.my-template-card__run-in-chat) {
-//     --agent-button-bg: var(--color-bg-primary-inverse);
-//     --agent-button-bg-hover: var(--color-bg-primary-inverse-hover);
-//     --agent-button-border: transparent;
-//     --agent-button-color: var(--color-text-primary-inverse);
-//   }
-// }
-
-.my-template-card__run-in-chat:hover {
+.my-template-card__run-in-chat {
   --agent-button-bg: var(--color-bg-primary-inverse);
   --agent-button-bg-hover: var(--color-bg-primary-inverse-hover);
   --agent-button-border: transparent;
@@ -448,12 +545,7 @@ function runInChat() {
   }
 
   .my-template-card__primary-actions {
-    flex: 1;
     gap: 6px;
-
-    :deep(.agent-button) {
-      flex: 1;
-    }
   }
 }
 </style>

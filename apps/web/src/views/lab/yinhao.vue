@@ -1,18 +1,18 @@
 <script setup lang="tsx">
 import { h } from 'vue'
-import currency from 'currency.js'
+// import currency from 'currency.js'
 import { genDriver, sleep } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import RxButton from '/@/components/rx-button'
-import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
+// import TrialEnded from '/@/layout/components/header/components/trial-ended.vue'
 // import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 // import { emitter } from '/@/utils/eventBus'
-import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
-import ActivityRechangeModal from '/@/views/campaign/freedom/activity-rechange-modal.vue'
-import RaffleModal from './raffle-modal.vue'
-import ProxyBindRiskModal from '/@/views/ecommerce/accounts/components/bind-risk-modal.vue'
-import ConsultantModal from '/@/views/tutorial/before-enter/consultant-modal.vue'
+// import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
+// import ActivityRechangeModal from '/@/views/campaign/freedom/activity-rechange-modal.vue'
+// import RaffleModal from './raffle-modal.vue'
+// import ProxyBindRiskModal from '/@/views/ecommerce/accounts/components/bind-risk-modal.vue'
+import ReferralModal from '/@/views/referral-program/components/referral-modal.vue'
 // import BillingCenterRoleModal from './warn-tips-modal.vue'
 // import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
 // ============ table ===================
@@ -27,8 +27,6 @@ import Test from '/@/views/lab/components/test.vue'
 
 // ===================
 
-import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
-
 // import FormItem from '/@/views/lab/components/form/item.vue'
 // import { API } from '/@/api'
 // import { getInviteCode } from '/@/api/util'
@@ -36,48 +34,15 @@ const router = useRouter()
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
 
-function openConsultantModal() {
+function autoRenew() {
   showModal({
     showHeader: false,
     modal: true,
     blockScroll: true,
     slots: {
-      container: ({ hideModal }) => h(ConsultantModal, {
+      container: ({ hideModal }) => h(ReferralModal, {
         onClose: hideModal,
       }),
-    },
-  })
-}
-
-function _openBindRisk() {
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    slots: {
-      container: ({ hideModal }) => (
-        <ProxyBindRiskModal
-          proxyId="754276"
-          displayId="108"
-          formContext={{
-            accountPlatform: null,
-            windowName: 'Profile-1416159',
-            platformUserName: '',
-            deviceInfo: {
-              lastCountry: 'US',
-              lastIp: '45.76.18.61',
-              port: '9100',
-              expireDate: '2026-08-09',
-              proxyType: 1,
-              proxyExpireStatus: 1,
-              orderStatus: 1,
-            },
-          }}
-          onClose={hideModal}
-          onReselect={hideModal}
-          onContinue={hideModal}
-        />
-      ),
     },
   })
 }
@@ -93,7 +58,9 @@ function getToastMessage(options: { msg: string, reCheck?: () => void }) {
           name="base/rx_ic_reload"
           size="xxs"
           label={$t('检查代理配置')}
-          onClick={() => { router.push({ name: 'agent-list' }) }}
+          onClick={() => {
+            router.push({ name: 'agent-list' })
+          }}
         >
         </RxButton>
       </div>
@@ -336,8 +303,9 @@ const mambaSpotlightRect = reactive({
 
 function syncMambaSpotlightRect() {
   const el = mambaRef.value
-  if (!el)
+  if (!el) {
     return
+  }
   const r = el.getBoundingClientRect()
   mambaSpotlightRect.top = r.top
   mambaSpotlightRect.left = r.left
@@ -359,16 +327,18 @@ let stopMambaSpotlightSync: (() => void) | undefined
 watch(mambaSpotlightOn, (on) => {
   stopMambaSpotlightSync?.()
   stopMambaSpotlightSync = undefined
-  if (!on)
+  if (!on) {
     return
+  }
 
   const handler = () => syncMambaSpotlightRect()
   handler()
   window.addEventListener('scroll', handler, true)
   window.addEventListener('resize', handler)
   const ro = new ResizeObserver(handler)
-  if (mambaRef.value)
+  if (mambaRef.value) {
     ro.observe(mambaRef.value)
+  }
 
   stopMambaSpotlightSync = () => {
     window.removeEventListener('scroll', handler, true)
@@ -458,19 +428,10 @@ const ipItems = [
 ]
 
 const ipValues = ref([192, 168, 134, 22])
-
-function _open122() {
-  router.push({ name: 'before-enter' })
-}
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
-    <div>
-      <RxEmojiPicker />
-    </div>
-
-    <RxButton :label="$t('before enter')" @click="_open122" />
     <div>
       <RxInputGroup v-model="ipValues" :items="ipItems" class="max-w-xs" />
     </div>
@@ -491,8 +452,7 @@ function _open122() {
 
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
-    <RxButton label="consultant modal" @click="openConsultantModal" />
-    <RxButton label="bind risk" @click="_openBindRisk" />
+    <RxButton label="auto renew" @click="autoRenew" />
     <!-- <RxButton label="open2" @click="_open2" /> -->
     <!-- <ScrollPanel class="w-100 h-100">
       <p>

@@ -142,6 +142,7 @@ function handleChoose(item: Data) {
 function getWorkspaceAvatar(item: Data) {
   return getWorkspaceAvatarProps({
     workspacePicture: item.workspacePicture,
+    workspacePictureUrl: item.workspacePictureUrl,
     workspaceName: item.workspaceName,
     size: 48,
     emojiFontSize: 24,

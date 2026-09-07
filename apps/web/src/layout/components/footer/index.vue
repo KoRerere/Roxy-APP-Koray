@@ -81,7 +81,7 @@ const items = computed(() => {
     <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }" @hide="hidePreventMask" @show="showPreventMask">
       <template #item="{ item, props }">
         <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
-          <a v-ripple class="relative menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
+          <a v-ripple :id="item.routeName === 'referral-program' ? 'REFERRAL_PROGRAM_ENTRY' : undefined" class="relative menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
             <SvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
             <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title flex gap-1.5" :title="(item.label as string)">
               {{ item.label }}

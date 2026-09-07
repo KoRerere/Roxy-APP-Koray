@@ -86,8 +86,9 @@ export function useProfileInfoProxyMenu(options: {
             Reflect.set(row, '_checkRes', toRaw(checkRes))
             silentUpdateProxy(row, checkRes, { replaceProxy: false })
             batchTestShowToast({ ...checkRes, proxyType: row.buyProxyType }, { reCheck: runCheck })
-            if (row.moduleId && row.buyProxyType === ProxyType.resource)
+            if (row.moduleId && row.buyProxyType === ProxyType.resource) {
               notifyProxyModuleSpeedTest([{ id: row.moduleId, ...checkRes }])
+            }
             await persistProfileRowAfterProxySpeedTest([{ item: row, checkRes }], { onlyErrorToast })
           }
           await runCheck()
@@ -141,8 +142,9 @@ export function useProfileInfoProxyMenu(options: {
         visible: check('Cost_Center_all'),
         command: async () => {
           const proxy = await purchaseImmediateOfficialProxy()
-          if (proxy)
+          if (proxy) {
             setChooseProxy(proxy)
+          }
         },
         render: (props: any) => {
           return (

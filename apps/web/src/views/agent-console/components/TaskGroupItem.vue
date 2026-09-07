@@ -85,6 +85,7 @@ function getCountryIcon(task: AgentTask): SvgNames {
 <style lang="scss" scoped>
 .task-group {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 16px;
   padding: 12px;

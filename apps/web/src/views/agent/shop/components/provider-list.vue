@@ -6,7 +6,7 @@ import type { BuyEntryType, ProxyIpType } from '/@/enums/proxy'
 import type { WorkspaceType } from '/@/enums/base'
 import type { ProxyPurchaseMode } from '../utils/proxy-purchase-labels'
 
-const { provider, entryType, mode, workspaceType, preferredProxyType } = defineProps<{
+const { provider, entryType, mode, workspaceType, preferredProxyType, preferredCountry } = defineProps<{
   provider?: Record<string, any>
   entryType?: BuyEntryType
   /** 不传则由 ProviderBuy 按当前工作区推断 */
@@ -14,6 +14,8 @@ const { provider, entryType, mode, workspaceType, preferredProxyType } = defineP
   workspaceType?: WorkspaceType
   /** 活动入口指定默认机房/住宅类型 */
   preferredProxyType?: ProxyIpType | 'datacenter' | 'residential'
+  /** 检测失败引导购买：仅初始化「国家/地区」时匹配一次 */
+  preferredCountry?: string
 }>()
 
 defineEmits<{
@@ -75,7 +77,7 @@ function toRola() {
       </div>
       <div class="flex-1 flex flex-col overflow-hidden content">
         <component :is="item.data.isJump ? ProviderExternal : ProviderBuy" v-for="item in providers" v-show="activeKey === item.value" :key="item.value" v-model:auto-jump="autoJump" :data="item.data"
-                   :entry-type="entryType" :mode="mode" :workspace-type="workspaceType" :preferred-proxy-type="preferredProxyType" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)"
+                   :entry-type="entryType" :mode="mode" :workspace-type="workspaceType" :preferred-proxy-type="preferredProxyType" :preferred-country="preferredCountry" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)"
         />
       </div>
     </template>

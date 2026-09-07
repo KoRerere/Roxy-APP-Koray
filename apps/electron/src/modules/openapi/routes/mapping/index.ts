@@ -1,6 +1,7 @@
 import { isPlainObject } from 'es-toolkit'
 
 export * from './account'
+export * from './browserCreate'
 export * from './browserList'
 export * from './proxy'
 export * from './team'

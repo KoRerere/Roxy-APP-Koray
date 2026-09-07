@@ -2,6 +2,7 @@ import type { UnwrapRowsType, UserGetWindowInfoV2ListData } from '@roxy/backend-
 import type { QuitSyncProgressMessage } from '@roxy/electron-preload'
 import type { LaunchBy } from '/@/modules/browser/browser-manager/browserItem'
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { isChromiumCoreUnsupported } from '@roxy/shared'
 import { shallowReactive, watch } from '@vue/reactivity'
 import { app } from 'electron'
 import { debounce, isPlainObject } from 'es-toolkit'
@@ -10,7 +11,8 @@ import { join } from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import pLimit from 'p-limit'
 import { API } from '/@/api'
-import { Role } from '/@/constants/common'
+import { osConfig } from '/@/constants'
+import { isMac, Role } from '/@/constants/common'
 import { isAppQuitting } from '/@/modules/app'
 import { beginQuitSyncProgress, finishQuitSyncProgress, updateQuitSyncProgress } from '/@/modules/app/quitSyncProgress'
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
@@ -61,17 +63,29 @@ const QUIT_SYNC_WEIGHT_API = 0.3
 /** 已购代理/设备异常状态文案；按 store.workspaceType 区分普通/电商术语 */
 const OpenErrorMessageMap = {
   /** IP检测不通 */
-  get 1() { return getProxyEntityLabels().openErrorByStatus[1] },
+  get 1() {
+    return getProxyEntityLabels().openErrorByStatus[1]
+  },
   /** 国家不一致 */
-  get 2() { return getProxyEntityLabels().openErrorByStatus[2] },
+  get 2() {
+    return getProxyEntityLabels().openErrorByStatus[2]
+  },
   /** 已过期 */
-  get 3() { return getProxyEntityLabels().openErrorByStatus[3] },
+  get 3() {
+    return getProxyEntityLabels().openErrorByStatus[3]
+  },
   /** 已退款 */
-  get 4() { return getProxyEntityLabels().openErrorByStatus[4] },
+  get 4() {
+    return getProxyEntityLabels().openErrorByStatus[4]
+  },
   /** 退款中 */
-  get 5() { return getProxyEntityLabels().openErrorByStatus[5] },
+  get 5() {
+    return getProxyEntityLabels().openErrorByStatus[5]
+  },
   /** 更换中 */
-  get 6() { return getProxyEntityLabels().openErrorByStatus[6] },
+  get 6() {
+    return getProxyEntityLabels().openErrorByStatus[6]
+  },
 }
 
 export class BrowserManager {
@@ -152,6 +166,12 @@ export class BrowserManager {
       throw new Error('dirId is empty')
     }
 
+    if (isChromiumCoreUnsupported(isMac ? 'mac' : undefined, osConfig.osVersion, winInfo.coreType, winInfo.coreVersion)) {
+      const error = new Error($t('当前系统不支持使用{version}内核', { version: winInfo.coreVersion }))
+      sendErrorMessage(error.message, dirId, error)
+      throw error
+    }
+
     if (this.uploadDataQueue.has(dirId)) {
       console.log(`BrowserManager ${dirId} === Browser data is uploading`)
       await this.uploadDataQueue.get(dirId)
@@ -198,6 +218,11 @@ export class BrowserManager {
           ipcSender.browser.onCloseSyncingData([dirId])
         }
         this.openedBrowserMap.delete(dirId)
+        void import('/@/modules/browser/automation-control').then(({ browserAutomationControlManager }) => {
+          return browserAutomationControlManager.handleBrowserClosed(dirId)
+        }).catch((error) => {
+          console.warn(`[automation-control] Failed to clean up closed browser ${dirId}:`, error)
+        })
 
         const sharedWorkspace = store.sharedWorkspaceList?.find(item => item.workspaceId === browserItem.winInfo.workspaceId)
         const isSharedWorkspaceOwner = sharedWorkspace?.role === Role.OWNER
@@ -575,8 +600,9 @@ export class BrowserManager {
         .filter(dirent => dirent.isDirectory() && dirent.name !== 'RoxyExtensions')
         .map(async (dirent) => {
           const dirId = dirent.name
-          if (this.openedBrowserMap.has(dirId) || this.openingBrowserMap.has(dirId))
+          if (this.openedBrowserMap.has(dirId) || this.openingBrowserMap.has(dirId)) {
             return null
+          }
 
           const profileDir = join(browserCacheRootDir, dirId)
           const targetFile = join(profileDir, 'close_timestamp')
@@ -599,8 +625,9 @@ export class BrowserManager {
             }
           }
 
-          if (!Number.isFinite(lastUsedTime))
+          if (!Number.isFinite(lastUsedTime)) {
             return null
+          }
 
           return Date.now() - lastUsedTime > thresholdMs ? dirId : null
         }),
@@ -612,8 +639,9 @@ export class BrowserManager {
 
   /** 自动清除超过指定时间的缓存 */
   autoClearByTimestamp() {
-    if (!store.autoClearCache)
+    if (!store.autoClearCache) {
       return
+    }
     this.clearCacheByTimestamp({ days: store.clearCachePeriod, clearType: store.clearCacheType })
   }
 

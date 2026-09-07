@@ -20,19 +20,29 @@ withDefaults(defineProps<{
           <Skeleton width="44px" height="44px" border-radius="7px" />
           <div class="my-template-card-skeleton__copy">
             <Skeleton width="58%" height="20px" border-radius="6px" />
-            <Skeleton width="86%" height="14px" border-radius="4px" />
+            <Skeleton width="33px" height="16px" border-radius="4px" />
           </div>
         </div>
-        <Skeleton width="64px" height="24px" border-radius="8px" />
       </div>
 
       <div class="my-template-card-skeleton__divider" aria-hidden="true" />
 
+      <div class="my-template-card-skeleton__tags" aria-hidden="true">
+        <Skeleton width="39px" height="24px" border-radius="8px" />
+        <Skeleton width="40px" height="24px" border-radius="8px" />
+        <Skeleton width="55px" height="24px" border-radius="8px" />
+      </div>
+
+      <div class="my-template-card-skeleton__description" aria-hidden="true">
+        <Skeleton width="94%" height="14px" border-radius="4px" />
+        <Skeleton width="76%" height="14px" border-radius="4px" />
+      </div>
+
       <div class="my-template-card-skeleton__actions" aria-hidden="true">
-        <Skeleton width="34px" height="34px" border-radius="10px" />
+        <Skeleton width="32px" height="32px" border-radius="10px" />
         <div class="my-template-card-skeleton__primary-actions">
-          <Skeleton width="80px" height="32px" border-radius="10px" />
-          <Skeleton width="96px" height="32px" border-radius="10px" />
+          <Skeleton height="32px" border-radius="10px" />
+          <Skeleton height="32px" border-radius="10px" />
         </div>
       </div>
     </div>
@@ -44,13 +54,14 @@ withDefaults(defineProps<{
   box-sizing: border-box;
   display: flex;
   width: 100%;
+  height: 212px;
   min-width: 0;
   flex-direction: column;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--color-border-primary);
-  border-radius: 10px;
-  background: var(--color-bg-primary);
+  border-radius: 16px;
+  background: var(--color-bg-tertiary);
   overflow: hidden;
 }
 
@@ -79,6 +90,23 @@ withDefaults(defineProps<{
   gap: 4px;
 }
 
+.my-template-card-skeleton__tags {
+  display: flex;
+  width: 100%;
+  height: 24px;
+  align-items: center;
+  gap: 4px;
+}
+
+.my-template-card-skeleton__description {
+  display: flex;
+  width: 100%;
+  height: 40px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
 .my-template-card-skeleton__divider {
   width: 100%;
   height: 0;
@@ -91,14 +119,19 @@ withDefaults(defineProps<{
   min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .my-template-card-skeleton__primary-actions {
   display: flex;
+  flex: 1;
   min-width: 0;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
+
+  :deep(.p-skeleton) {
+    flex: 1;
+  }
 }
 </style>

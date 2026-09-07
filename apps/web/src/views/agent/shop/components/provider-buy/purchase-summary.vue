@@ -14,6 +14,7 @@ import type { BandwidthOption, BusinessUseOption, DurationOption, ProxyTypeOptio
 import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 import ExclusivePriceRow from '/@/views/campaign/new-user/exclusive-price-row.vue'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
+import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 
 const {
   isCN,
@@ -60,6 +61,9 @@ const ONE_BUY_MAX = 1000
 const purchaseMember = defineModel<number>('purchaseMember', { required: true })
 const proxyTypeValue = defineModel<number | undefined>('proxyTypeValue')
 const proxySpeedValue = defineModel<number | undefined>('proxySpeedValue')
+/** 购买时是否同时开启自动续费，开启前需弹窗确认 */
+const isAuto = defineModel<boolean>('isAuto', { default: false })
+const { beforeToggleAutoRenew } = useConfirmAutoRenew()
 
 const styles = useCssModule()
 const CID = `${getCurrentInstance()?.uid ?? ''}-ptype`
@@ -70,8 +74,9 @@ function getUnitPrice(proxyType: ProxyTypeOption) {
 
 function inputPurchaseMember(value: number) {
   nextTick(() => {
-    if (!value)
+    if (!value) {
       purchaseMember.value = 1
+    }
   })
 }
 
@@ -80,20 +85,24 @@ const notes = computed(() => labels.value.notes)
 /** 按当前选中代理类型决定是否展示新人专享价签 */
 const newUserOfferKind = computed(() => {
   const current = proxyTypeOptions.find(item => item.id === proxyTypeValue.value)
-  if (current?.proxyType === ProxyIpType.Residential)
+  if (current?.proxyType === ProxyIpType.Residential) {
     return 'residential' as const
-  if (current?.proxyType === ProxyIpType.Datacenter)
+  }
+  if (current?.proxyType === ProxyIpType.Datacenter) {
     return 'datacenter' as const
+  }
   return undefined
 })
 
 /** 选中类型 + 30 天且仍有额度；电商设备购买不展示 */
 const priceRowOfferActive = computed(() => {
-  if (labels.value.mode === 'device')
+  if (labels.value.mode === 'device') {
     return false
+  }
   const kind = newUserOfferKind.value
-  if (!kind)
+  if (!kind) {
     return false
+  }
   return newUserBenefitStore.isNewUserIpOffer(kind, subscriptionMonths?.day ?? 0, countryCode)
 })
 
@@ -103,8 +112,9 @@ const showFirstIpHint = computed(() => priceRowOfferActive.value && purchaseMemb
 /** 类型列表上展示的现价 / 是否划线原价 */
 function listUnitDisplay(item: ProxyTypeOption) {
   const unit = getUnitPrice(item)
-  if (!unit)
+  if (!unit) {
     return undefined
+  }
 
   const kind = item.proxyType === ProxyIpType.Residential
     ? 'residential' as const
@@ -166,7 +176,7 @@ function listUnitDisplay(item: ProxyTypeOption) {
             <div class="flex flex-col gap-1.5">
               <label v-for="item in proxyTypeOptions" :key="item.id" class="w-full flex items-start gap-1.5 select-none cursor-pointer" :for="`${CID}_${item.id}`">
                 <RadioButton v-model="proxyTypeValue" class="!hidden" :input-id="`${CID}_${item.id}`" :value="item.id" name="proxy-provider-type" />
-                <div class="w-full flex items-center gap-2 min-w-0">
+                <div class="w-full flex flex-col gap-1 min-w-0">
                   <div class="flex items-center gap-1.5 min-w-0 flex-1">
                     <div class="shrink-0 details-radio" :class="{ checked: proxyTypeValue === item.id }" />
                     <div class="tt-secondary text-3.5 leading-5 truncate" :class="{ premium: item.proxyType === ProxyIpType.Residential }">
@@ -174,11 +184,11 @@ function listUnitDisplay(item: ProxyTypeOption) {
                     </div>
                     <SvgIcon v-if="item.desc" v-tooltip.top="item.desc" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
                   </div>
-                  <div v-if="listUnitDisplay(item)" class="flex gap-2 shrink-0 whitespace-nowrap">
-                    <span class="tt-secondary text-4 font-[DingTalk_JinBuTi] leading-5">
+                  <div v-if="listUnitDisplay(item)" class="pl-5.5 flex gap-1.5 shrink-0 whitespace-nowrap">
+                    <span class="tt-secondary text-3.25 font-[DingTalk_JinBuTi] leading-4.5">
                       {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.price).format() }) }}
                     </span>
-                    <span v-if="listUnitDisplay(item)!.showOriginal" class="tt-inactive text-3 leading-5 line-through">
+                    <span v-if="listUnitDisplay(item)!.showOriginal" class="tt-tertiary text-3 leading-4.5 line-through">
                       {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.original).format() }) }}
                     </span>
                   </div>
@@ -229,6 +239,14 @@ function listUnitDisplay(item: ProxyTypeOption) {
                 {{ $t('{month}/个', { month: currency(item.originalProxyPrice).format() }) }}
               </span> -->
             </div>
+          </div>
+        </template>
+        <template #autoRenew="{ classes }">
+          <div class="flex items-center justify-between">
+            <div :class="classes">
+              {{ $t('自动续费') }}
+            </div>
+            <RxToggleSwitch v-model="isAuto" :before-change="beforeToggleAutoRenew" />
           </div>
         </template>
         <template #price="{ item }">

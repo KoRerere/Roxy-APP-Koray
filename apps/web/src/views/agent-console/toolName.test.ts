@@ -212,6 +212,33 @@ test('special tool labels match current tool names by contained local name', () 
   assert.equal(friendlyToolName('unknown_tool', 'running'), '[使用工具：unknown_tool]')
 })
 
+test('template tools use scope-aware running and completed labels', () => {
+  globalThis.$t = translate
+
+  assert.equal(
+    friendlyToolName('roxy_list_templates', 'running', { scope: 'official' }),
+    '正在获取官方模板列表',
+  )
+  assert.equal(
+    friendlyToolName('roxy_list_templates', 'success', { scope: 'official' }),
+    '已获取官方模板列表',
+  )
+  assert.equal(
+    friendlyToolName('roxy_list_templates', 'running', { scope: 'user', offset: 20, limit: 20 }),
+    '正在获取用户模板列表',
+  )
+  assert.equal(
+    friendlyToolName('roxy_list_templates', 'success', { scope: 'user', offset: 20, limit: 20 }),
+    '已获取用户模板列表',
+  )
+  assert.equal(friendlyToolName('roxy_read_template_info', 'running'), '正在获取模板详情')
+  assert.equal(friendlyToolName('roxy_read_template_info', 'success'), '已获取模板详情')
+  assert.equal(friendlyToolName('roxy_save_user_template', 'running'), '正在保存用户模板')
+  assert.equal(friendlyToolName('roxy_save_user_template', 'success'), '已保存用户模板')
+  assert.equal(friendlyToolName('roxy_delete_user_template', 'running'), '正在删除用户模板')
+  assert.equal(friendlyToolName('roxy_delete_user_template', 'success'), '已删除用户模板')
+})
+
 test('roxybrowser openapi labels match the current browser preset tool names', () => {
   globalThis.$t = translate
   const cases: Array<[string, string, string]> = [

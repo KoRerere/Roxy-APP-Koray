@@ -66,9 +66,9 @@ const actions = computed(() => {
       },
     },
     {
-      label: $t('续订'),
+      label: $t('续费/购买'),
       visible: !userPayInfo.value?.isAuto && !isFree.value && !isPremiumPartner.value,
-      btnText: isExpired.value && $t('立即续订'),
+      btnText: isExpired.value && $t('立即续费/购买'),
       command: () => {
         emitter.emit('showRenewalDialog', {
           paySuccess: () => {

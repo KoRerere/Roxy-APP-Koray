@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "RoxyBrowser Automation Control",
+  "version": "1.0.0",
+  "description": "Displays native tab-group state while RoxyBrowser automation is active.",
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage",
+    "debugger"
+  ],
+  "background": {
+    "service_worker": "automation-control.js"
+  }
+}

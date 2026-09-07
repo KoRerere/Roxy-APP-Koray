@@ -7,13 +7,13 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'browser',
     name: 'browser',
-    meta: { title: $t('全部窗口'), icon: 'base/rx_ic_browser', workspaceTypes: [...privateOnly] },
+    meta: { title: $t('窗口管理'), icon: 'base/rx_ic_browser', workspaceTypes: [...privateOnly] },
     redirect: { name: 'browser-list' },
     children: [
       {
         path: 'list',
         name: 'browser-list',
-        meta: { title: $t('全部窗口'), hideInMenu: true, workspaceTypes: [...privateOnly] },
+        meta: { title: $t('窗口管理'), hideInMenu: true, workspaceTypes: [...privateOnly] },
         component: () => import('/@/views/browser/list'),
       },
       {

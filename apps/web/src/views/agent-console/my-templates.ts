@@ -12,8 +12,11 @@ export interface UserTemplateDTO {
   name: string
   description?: string | null
   source: 'official' | 'custom' | string
+  approxPoints?: number | null
   metadata?: Record<string, unknown>
   hasFile?: boolean
+  isTopped?: boolean
+  toppedAt?: string | null
   createdAt?: string | null
   updatedAt?: string | null
 }
@@ -35,6 +38,9 @@ export interface MyTemplateItem {
   officialTemplateId?: number | null
   iconInfo: TemplateIconInfo | null
   metadata: Record<string, unknown>
+  isTopped: boolean
+  toppedAt?: string | null
+  approxPoints?: number | null
 }
 
 export interface CustomTemplatePayload {
@@ -158,6 +164,37 @@ export function buildCustomTemplateUpdate(payload: CustomTemplatePayload): UserT
   }
 }
 
+function templatePinTimestamp(value: string | null | undefined): number {
+  if (!value) {
+    return Number.NEGATIVE_INFINITY
+  }
+
+  const timestamp = Date.parse(value)
+  return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY
+}
+
+export function sortMyTemplateItems(items: MyTemplateItem[]): MyTemplateItem[] {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => {
+      const toppedDifference = Number(right.item.isTopped) - Number(left.item.isTopped)
+      if (toppedDifference) {
+        return toppedDifference
+      }
+
+      if (left.item.isTopped && right.item.isTopped) {
+        const timestampDifference = templatePinTimestamp(right.item.toppedAt)
+          - templatePinTimestamp(left.item.toppedAt)
+        if (timestampDifference) {
+          return timestampDifference
+        }
+      }
+
+      return left.index - right.index
+    })
+    .map(entry => entry.item)
+}
+
 export function mapMyTemplateItem(row: UserTemplateDTO): MyTemplateItem | undefined {
   const kind = normalizeMyTemplateKind(row.templateType)
   if (!kind)
@@ -174,5 +211,12 @@ export function mapMyTemplateItem(row: UserTemplateDTO): MyTemplateItem | undefi
     officialTemplateId: row.officialTemplateId,
     iconInfo: normalizeTemplateIconInfo(metadata.iconInfo),
     metadata,
+    isTopped: Boolean(row.isTopped),
+    toppedAt: row.toppedAt ?? null,
+    approxPoints: typeof row.approxPoints === 'number' && Number.isFinite(row.approxPoints)
+      ? row.approxPoints
+      : typeof metadata.approxPoints === 'number' && Number.isFinite(metadata.approxPoints)
+        ? metadata.approxPoints
+        : undefined,
   }
 }

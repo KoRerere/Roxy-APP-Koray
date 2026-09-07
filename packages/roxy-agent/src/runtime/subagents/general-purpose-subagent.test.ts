@@ -323,6 +323,68 @@ describe('general-purpose agent', () => {
     await child.dispose()
   })
 
+  it('keeps root-only report and template tools out of default child inheritance', async () => {
+    // Regression: a general-purpose child inherited root-only completion and
+    // persistence tools, allowing it to submit a partial report or template.
+    // Fixed by: filtering those names before the child registry is assembled.
+    let definition: AgentDefinition | undefined
+    const child = await createGeneralPurposeAgent({
+      agentPath: '/root/report_worker',
+      manager: fakeManager(),
+      message: agentMessage,
+      conversationId: 'conversation-1',
+      executionId: 'run-1',
+      turnId: 'turn-1',
+      model: 'deepseek-v4-flash',
+      apiKey: 'token',
+      parentTools: createParentTools([
+        {
+          descriptor: {
+            name: 'roxy_task_report',
+            description: 'report',
+            inputSchema: z.object({}),
+            source: 'builtin',
+          },
+          handler: async () => ({ content: 'report', isError: false }),
+        },
+        {
+          descriptor: {
+            name: 'roxy_save_user_template',
+            description: 'save template',
+            inputSchema: z.object({}),
+            source: 'builtin',
+          },
+          handler: async () => ({ content: 'saved', isError: false }),
+        },
+        {
+          descriptor: {
+            name: 'roxy_delete_user_template',
+            description: 'delete user template',
+            inputSchema: z.object({ id: z.number() }),
+            source: 'builtin',
+          },
+          handler: async () => ({ content: 'deleted', isError: false }),
+        },
+      ]),
+      workspaceDir: '/tmp/roxy-general-purpose-agents',
+      fileCollector: createRuntimeFileCollector(),
+      mcp: {
+        createProfileBinding: vi.fn(async () => {}),
+        getPlaywrightToolsForBinding: vi.fn(async () => []),
+        releaseProfileBinding: vi.fn(),
+      },
+      runtimeFactory: vi.fn(async (input: AgentDefinition) => {
+        definition = input
+        return fakeAgent()
+      }),
+    })
+
+    expect(definition?.tools.resolve('roxy_task_report')).toBeUndefined()
+    expect(definition?.tools.resolve('roxy_save_user_template')).toBeUndefined()
+    expect(definition?.tools.resolve('roxy_delete_user_template')).toBeUndefined()
+    await child.dispose()
+  })
+
   it('rejects invalid input before allocating a profile binding', async () => {
     const createProfileBinding = vi.fn(async () => {})
     const common = {

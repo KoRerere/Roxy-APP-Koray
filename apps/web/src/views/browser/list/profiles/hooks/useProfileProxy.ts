@@ -59,7 +59,7 @@ export function toInlineWindowProxyList(proxies: Record<string, any>[]): WindowP
 export function expandChosenProxyRows(proxies: Record<string, any>[]): Record<string, any>[] {
   return proxies.flatMap(({ _proxyCount, bindList: _bindList, ...item }) => {
     const count = Math.max(1, Number(_proxyCount) || 1)
-    return Array.from({ length: count }, () => item)
+    return Array.from({ length: count }).fill(item) as Record<string, any>[]
   })
 }
 
@@ -93,8 +93,9 @@ export interface ProxyBuyAddDrawerHandlers {
 
 /** 资源型代理模块测速结果同步（同一 moduleId 可绑定多窗口，批量测速时应对 moduleId 去重后只调一次） */
 export function notifyProxyModuleSpeedTest(proxyList: any[]) {
-  if (isEmptyValue(proxyList))
+  if (isEmptyValue(proxyList)) {
     return
+  }
   API.proxy.userMdfProxyModuleCreate({ proxyList, requestType: ProfileReqType.SpeedTest })
 }
 
@@ -103,9 +104,10 @@ export async function persistProfileRowAfterProxySpeedTest(
   list: { item: ProfileLike, checkRes: CheckResult }[],
   options: { onlyErrorToast?: (code: number, msg: string) => void },
 ): Promise<void> {
-  const validList = list.filter(data => data.checkRes.checkStatus === ProxyCheckStatus.success)
-  if (validList.length === 0)
+  const validList = list.filter(data => data.checkRes.checkStatus !== ProxyCheckStatus.none)
+  if (validList.length === 0) {
     return
+  }
 
   const proxyList = validList.map(data => ({
     id: data.item.id!,
@@ -136,8 +138,9 @@ async function resolvePurchasedProxyFromOrder(
     orderNo: orderInfo?.orderNo,
     type: BuyProxyListType.Use,
   } as any)
-  if (code !== 0 || !data.rows?.[0])
+  if (code !== 0 || !data.rows?.[0]) {
     return
+  }
 
   return data.rows[0]
 }
@@ -150,7 +153,8 @@ export function useProfileProxy() {
     return {
       id: profile.moduleId,
       ...Object.fromEntries(
-        ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel']
+        // lastCountry / buyProxyType 供编辑抽屉测速失败后给购买弹窗默认国家
+        ['host', 'ipType', 'port', 'protocol', 'proxyCategory', 'proxyPassword', 'proxyUserName', 'refreshUrl', 'checkChannel', 'lastCountry', 'buyProxyType']
           .map(key => [key, profile[key]]),
       ),
     }
@@ -178,7 +182,7 @@ export function useProfileProxy() {
 
   function confirmDeleteProxy(targets: ProfileLike | ProfileLike[]) {
     const datas = ([] as ProfileLike[]).concat(targets)
-    const ids = datas.map(item => item.id!)
+    const ids = datas.map(item => item.id!) as any
     const { promise, resolve, reject } = Promise.withResolvers<void>()
 
     confirm.require({
@@ -190,8 +194,9 @@ export function useProfileProxy() {
         const { code, msg } = await API.window.userMdfWindowDataBatchCreate({ ids, type: ProfileModifyType.ProxyDelete, requestType: ProfileReqType.DeleteProxy })
         onlyErrorToast(code, msg)
         resolve()
-        if (code !== 0)
+        if (code !== 0) {
           return
+        }
 
         datas.forEach((item) => {
           const params = buildDeleteProxyParams(item)
@@ -225,13 +230,15 @@ export function usePurchaseOfficialProxy() {
   async function purchaseImmediateOfficialProxy() {
     if (!proxyProvider.value) {
       const vendors = await getProxyVendors()
-      if (!vendors)
+      if (!vendors) {
         return
+      }
       proxyProvider.value = vendors.find((item: any) => item.isOfficial)
     }
 
-    if (!proxyProvider.value)
+    if (!proxyProvider.value) {
       return
+    }
 
     const provider = {
       proxyProviderId: proxyProvider.value.id,
@@ -270,8 +277,9 @@ export function useProxyBuyAddDrawer() {
   const showAdd = computed(() => check('Profiles_add_proxy_outside'))
 
   const provider = computed(() => {
-    if (!proxyProvider.value)
+    if (!proxyProvider.value) {
       return undefined
+    }
 
     return {
       proxyProviderId: proxyProvider.value.id,
@@ -284,14 +292,16 @@ export function useProxyBuyAddDrawer() {
   async function openProxyBuyAddDrawer(nextHandlers: ProxyBuyAddDrawerHandlers = {}) {
     if (showBuy.value && !proxyProvider.value) {
       const vendors = await getProxyVendors()
-      if (!vendors)
+      if (!vendors) {
         return
+      }
       proxyProvider.value = vendors.find((item: any) => item.isOfficial)
     }
 
     // 无可展示面板时不打开
-    if (!showBuy.value && !showAdd.value)
+    if (!showBuy.value && !showAdd.value) {
       return
+    }
 
     handlers.value = nextHandlers
     visible.value = true
@@ -304,8 +314,9 @@ export function useProxyBuyAddDrawer() {
   async function onProxyBuyAddBuySuccess(orderInfo: any) {
     try {
       const proxy = await resolvePurchasedProxyFromOrder(orderInfo, { router, showToast })
-      if (proxy)
+      if (proxy) {
         await handlers.value.onBuySuccess?.(proxy)
+      }
     }
     finally {
       closeProxyBuyAddDrawer()
@@ -345,8 +356,9 @@ export function useProfileProxySpeedTest() {
   const [, onlyErrorToast] = useResponseToast()
 
   async function runProxySpeedTestForRows(targets: ProfileRow[], options?: Record<string, unknown>) {
-    if (!targets.length)
+    if (!targets.length) {
       return
+    }
     if (!globalThis.isElectron) {
       return globalThis.electronAPI.send('proxy:detect', {} as any)
     }
@@ -374,8 +386,9 @@ export function useProfileProxySpeedTest() {
       showConcurrentTaskTopBar,
       tasksCompleted: async (results: any[], cancelled: boolean) => {
         results.forEach((res, i) => {
-          if (res === undefined)
+          if (res === undefined) {
             setOperationLoading(targets[i]!, operationName, false)
+          }
         })
 
         const validResults = results.filter(Boolean)

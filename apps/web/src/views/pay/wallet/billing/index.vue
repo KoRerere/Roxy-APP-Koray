@@ -79,7 +79,7 @@ const columns = [
 const detailMapStr = computed(() => ({
   [SubOrderType.Subscribe]: (data: any) => billingLabels.value.billingPeriodEntities(data.windowCount, data.day),
   [SubOrderType.Upgrade]: (data: any) => billingLabels.value.upgradeEntitiesRange(data.oldWindowCount, data.windowCount),
-  [SubOrderType.Auto]: () => $t('自动续订'),
+  [SubOrderType.Auto]: () => $t('自动续费'),
   [SubOrderType.Extend]: (data: any) => $t('套餐延长 {day} 天', { day: data.day }),
   [SubOrderType.Workspace_Member]: (data: any) => {
     return [

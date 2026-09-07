@@ -13,7 +13,10 @@ export function needsCompactFallbackText(text?: string): boolean {
 const COMPACT_FONT_RATIO = 26 / 34
 
 export interface WorkspaceAvatarOptions {
+  /** emoji 图标 */
   workspacePicture?: string
+  /** 自定义上传的空间图标地址，优先于 emoji */
+  workspacePictureUrl?: string
   workspaceName?: string
   size: number
   emojiFontSize: number
@@ -21,9 +24,23 @@ export interface WorkspaceAvatarOptions {
   radius?: string
 }
 
+/** 空间头像展示属性：自定义图优先，其次 emoji，否则名称前两字 */
 export function getWorkspaceAvatarProps(options: WorkspaceAvatarOptions) {
-  const { workspacePicture, workspaceName, size, emojiFontSize, textFontSize, radius = '6px' } = options
+  const { workspacePicture, workspacePictureUrl, workspaceName, size, emojiFontSize, textFontSize, radius = '6px' } = options
   const fallbackText = workspaceName?.slice(0, 2)
+
+  if (workspacePictureUrl) {
+    return {
+      avatar: workspacePictureUrl,
+      name: fallbackText,
+      color: 'var(--pattern-topnav-space-avatar-bg)',
+      size,
+      fontSize: textFontSize,
+      radius,
+      compact: false,
+    }
+  }
+
   const isEmoji = !!workspacePicture
   const isCompact = !isEmoji && needsCompactFallbackText(fallbackText)
 
@@ -43,16 +60,19 @@ export function getWorkspaceAvatarProps(options: WorkspaceAvatarOptions) {
  * - 含中文：逐字转拼音后取前 3 个字母并转大写（如「经济上行」→ JIN）
  */
 export function getWorkspaceNamePrefix(name?: string, length = 3): string | undefined {
-  if (!name)
+  if (!name) {
     return ''
+  }
 
-  if (!CHINESE_CHAR_REGEX.test(name))
+  if (!CHINESE_CHAR_REGEX.test(name)) {
     return name.slice(0, length).toLocaleUpperCase()
+  }
 
   let prefix = ''
   for (const char of name) {
-    if (prefix.length >= length)
+    if (prefix.length >= length) {
       break
+    }
     if (CHINESE_CHAR_REGEX.test(char)) {
       prefix += pinyin(char, { toneType: 'none' })
     }

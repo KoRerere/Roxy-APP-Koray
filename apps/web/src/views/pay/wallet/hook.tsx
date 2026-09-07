@@ -5,24 +5,31 @@ import UsdtPayModal from './components/payway-usdt-modal.vue'
 import WechatPayModal from './components/payway-wechat-modal.vue'
 import AlipayPayModal from './components/payway-alipay-modal.vue'
 import WalletRechargeModal from '/@/views/pay/wallet/components/wallet-recharge-modal.vue'
+import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue'
+import RxCheckbox from '/@/components/rx-checkbox/index.vue'
 import { useDialog } from 'primevue/usedialog'
 import { useDialog as RxUseDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { useConfirm } from 'primevue/useconfirm'
+import { usePopupMenu } from '/@/hooks/usePopupMenu'
 
 import { API } from '/@/api'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { useSimpleLocale } from '/@/stores/locale'
-import { OrderType, PaymentStatus, PayWay } from '/@/enums/pay'
+import { AutoRechargeStatus, isCardPayWay, OrderType, PaymentStatus, PayWay } from '/@/enums/pay'
+import { RxSvgIcon } from '/@/components/rx-icon'
+import type { SvgNames } from '/@/components/rx-icon'
 import { genPollingChecker } from '/@/utils/basic'
 import { openAliyunCaptcha } from '/@/utils/aliyun-captcha'
-import type { UserRechargeSettlementCreateData } from '@roxy/backend-api'
+import type { UserGetBindCardListListData, UserRechargeSettlementCreateData } from '@roxy/backend-api'
 
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { I18nT } from 'vue-i18n'
 import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent.tsx'
 import { isMainWindow } from '/@/utils/common'
+import { useFirstConsumeReferralPopup } from '/@/views/referral-program/useFirstConsumeReferralPopup'
 
 type Data = UserRechargeSettlementCreateData['data']
 interface ChargeParams {
@@ -49,6 +56,7 @@ export function usePay() {
   const { openRoxyAIAgent } = useOpenRoxyAIAgent()
 
   const { showFreedomActivityModal, showSlotMachine } = useFreedomActivity()
+  const { maybeShowFirstConsumeReferralPopup } = useFirstConsumeReferralPopup()
 
   function openProcessing(
     data: Record<string, any>,
@@ -57,7 +65,7 @@ export function usePay() {
   ) {
     const { cancelRedirect = true } = options
     const { promise, resolve, reject } = Promise.withResolvers<void>()
-    if (data.payType === PayWay.Card || data.payType === PayWay.Balance) {
+    if (isCardPayWay(data.payType) || data.payType === PayWay.Balance) {
       onConfirm()
       return promise
     }
@@ -97,6 +105,9 @@ export function usePay() {
           purchaseSuccess()
           resolve()
           break
+        case OrderType.PointsRecharge:
+          purchaseSuccessIntoPoints().then(resolve)
+          break
         case 'silent':
           resolve()
           break
@@ -107,8 +118,9 @@ export function usePay() {
     }
 
     function onCancel() {
-      if (cancelRedirect)
+      if (cancelRedirect) {
         router.push({ name: 'wallet', query: { name: 'billing' } })
+      }
       reject()
     }
 
@@ -152,8 +164,9 @@ export function usePay() {
     // 窗口订阅/续费成功后刷新新人买赠资格；无资格则跳过
     void useNewUserBenefitStore().refreshBenefitIfEligible()
 
-    if (!check('Cost_Center_all'))
+    if (!check('Cost_Center_all')) {
       return
+    }
 
     await getUserPayInfo()
     const { promise, resolve } = Promise.withResolvers<void>()
@@ -191,8 +204,9 @@ export function usePay() {
   }
 
   async function balanceSuccess() {
-    if (!check('Cost_Center_all'))
+    if (!check('Cost_Center_all')) {
       return
+    }
     const { promise, resolve } = Promise.withResolvers<void>()
     dialog.open(BalanceSuccessModal, {
       props: {
@@ -215,22 +229,25 @@ export function usePay() {
   }
 
   async function purchaseSuccess() {
-    if (!check('Cost_Center_all'))
+    if (!check('Cost_Center_all')) {
       return
+    }
     await getUserPayInfo()
     const { maxMemberCount, maxWorkspaceCount } = userPayInfo.value!
     showToast(0, $t('您的当前资源: {member} 成员, {workspace} 团队', {
       member: maxMemberCount,
       workspace: maxWorkspaceCount,
     }), { life: 5000 })
+    maybeShowFirstConsumeReferralPopup()
   }
 
   /**
    * 购买积分成功后的提示
    */
   async function purchaseSuccessIntoPoints() {
-    if (!check('Cost_Center_all'))
+    if (!check('Cost_Center_all')) {
       return
+    }
     await getUserPayInfo()
     const { points } = userPayInfo.value!
     const detail = isMainWindow
@@ -242,6 +259,7 @@ export function usePay() {
       : $t('您当前的积分：{points}', { points })
 
     showToast(0, detail)
+    maybeShowFirstConsumeReferralPopup()
   }
 
   async function walletRecharge(chargeParams: ChargeParams) {
@@ -261,14 +279,16 @@ export function usePay() {
       })
 
       msg && onlyErrorToast(code, msg)
-      if (code !== 0)
+      if (code !== 0) {
         return
+      }
 
       try {
-        if (payType === PayWay.Card) {
+        if (isCardPayWay(payType)) {
           const isOK = await checker.check(data.orderNo)
-          if (!isOK)
+          if (!isOK) {
             return
+          }
         }
 
         await settlementNext?.(data)
@@ -302,8 +322,9 @@ export function usePay() {
         const { code, data, msg } = await API.pay.userQueryOrderStatusList({ orderNo })
         onlyErrorToast(code, msg)
 
-        if (code !== 0 || [PaymentStatus.Fail, PaymentStatus.Closed].includes(data as PaymentStatus))
+        if (code !== 0 || [PaymentStatus.Fail, PaymentStatus.Closed].includes(data as PaymentStatus)) {
           throw new Error(msg)
+        }
 
         return data === PaymentStatus.Success
       },
@@ -312,8 +333,9 @@ export function usePay() {
 
   async function genRechargeSettlement(params: any) {
     const { code, data, msg } = await API.pay.userPayCaptchaTriggerList()
-    if (code !== 0)
+    if (code !== 0) {
       return { code, data: null, msg }
+    }
 
     if (data.captcha) {
       const captchaVerifyParam = await openAliyunCaptcha({
@@ -322,8 +344,9 @@ export function usePay() {
         language: currentLocale.value === 'zh-CN' ? 'cn' : 'en',
       })
 
-      if (!captchaVerifyParam)
+      if (!captchaVerifyParam) {
         return { code, data: null, msg: '' }
+      }
       Reflect.set(params, 'captchaVerifyParam', captchaVerifyParam)
     }
 
@@ -342,5 +365,247 @@ export function usePay() {
     planSuccessForSlotMachine,
     planSuccessFreedomActivity,
     planSuccessFreedomActivity2,
+    maybeShowFirstConsumeReferralPopup,
+  }
+}
+
+/** 用户已绑定银行卡列表项 */
+export type WalletBindCard = UserGetBindCardListListData['data']['rows'][number]
+
+/** 卡组织到展示图标的映射 */
+const cardTypeMap = {
+  amex: 'cards/american-express',
+  bc: 'cards/bc',
+  dinacard: 'cards/dinacard',
+  diners: 'cards/diners-club',
+  discover: 'cards/discover',
+  jcb: 'cards/jcb',
+  mastercard: 'cards/mastercard',
+  unionpay: 'cards/union-pay',
+  visa: 'cards/visa',
+} as const satisfies Record<string, SvgNames>
+
+/**
+ * 组合支付开关、绑卡与默认卡管理，供钱包页与自动续费弹窗复用
+ */
+export function useBankCards() {
+  const confirm = useConfirm()
+  const { userCards, userPayInfo } = storeToRefs(useUserStore())
+  const { getUserCards, getUserPayInfo } = useUserStore()
+  const { showMenu } = usePopupMenu()
+  const [showModal] = RxUseDialog()
+  const [showToast, onlyErrorToast] = useResponseToast()
+
+  const autoRecharge = ref(userPayInfo.value.autoRecharge?.toString?.())
+
+  watch(() => userPayInfo.value.autoRecharge, (value) => {
+    autoRecharge.value = value.toString()
+  })
+
+  onBeforeMount(() => {
+    getUserCards()
+  })
+
+  /**
+   * 根据卡组织返回对应图标名
+   */
+  function matchCard(type: string): SvgNames {
+    return cardTypeMap[type as keyof typeof cardTypeMap] as SvgNames
+  }
+
+  /**
+   * 将组合支付开关同步到后端；失败时回滚本地开关
+   */
+  async function enableAutoRecharge() {
+    const { code, msg } = await API.pay.userSetAutoRechargeStatusCreate({ status: Number(autoRecharge.value) })
+    onlyErrorToast(code, msg)
+    if (code !== 0) {
+      autoRecharge.value = userPayInfo.value.autoRecharge.toString()
+      return
+    }
+    getUserPayInfo()
+  }
+
+  /**
+   * 打开 Stripe 绑卡弹窗；开通组合支付时强制设为默认卡
+   */
+  function bindCard(defaultCard: boolean = false) {
+    const { promise, resolve, reject } = Promise.withResolvers<boolean>()
+
+    showModal({
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      slots: {
+        container: ({ hideModal }) => {
+          const isDefault = ref(false)
+
+          return (
+            <div class="w-120 flex flex-col gap-4 pa-6 pt-4">
+              <div class="h-9 flex justify-between items-center">
+                <div>{$t('新增卡片')}</div>
+                <div
+                  class="cursor-pointer"
+                  onClick={
+                    () => {
+                      hideModal()
+                      reject(false)
+                    }
+                  }
+                >
+                  <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
+                </div>
+              </div>
+              <StripePay
+                class="w-full !min-w-auto"
+                bind={true}
+                onConfirm={async (card) => {
+                  const { code, msg } = await API.pay.userBindCardCreate({ paymentMethodId: card.payment_method, cardDefault: defaultCard || isDefault.value })
+                  onlyErrorToast(code, msg)
+                  hideModal()
+                  if (code !== 0) {
+                    reject(false)
+                    return
+                  }
+                  getUserCards(true)
+                  resolve(true)
+                }}
+              >
+                {{
+                  after: () => {
+                    return !defaultCard && (
+                      <div class="flex items-center gap-2.5">
+                        <RxCheckbox v-model={isDefault.value} input-id="wrap" binary />
+                        <label for="wrap" class="tt-primary text-3.5 leading-5 select-none">{$t('设置为默认卡片')}</label>
+                      </div>
+                    )
+                  },
+                }}
+              </StripePay>
+            </div>
+          )
+        },
+      },
+    })
+
+    return promise
+  }
+
+  /**
+   * 切换组合支付：关闭需二次确认，无卡时先引导绑卡
+   */
+  async function checkAutoRecharge() {
+    if (AutoRechargeStatus.Open === userPayInfo.value.autoRecharge) {
+      confirm.require({
+        header: $t('关闭组合支付'),
+        message: $t('关闭后，当剩余钱包余额不足以自动续费时，相关服务将会中断。'),
+        rejectProps: {
+          label: $t('取消'),
+          severity: 'secondary',
+          outlined: true,
+        },
+        acceptProps: {
+          label: $t('确认'),
+          severity: 'danger',
+        },
+        accept: () => {
+          enableAutoRecharge()
+        },
+        reject: () => {
+          autoRecharge.value = userPayInfo.value.autoRecharge.toString()
+        },
+        onHide: () => {
+          autoRecharge.value = userPayInfo.value.autoRecharge.toString()
+        },
+      })
+      return
+    }
+
+    if (!userCards.value?.length) {
+      bindCard(true)
+        .then(enableAutoRecharge)
+        .catch(() => {
+          autoRecharge.value = userPayInfo.value.autoRecharge.toString()
+        })
+      return
+    }
+
+    enableAutoRecharge()
+  }
+
+  /**
+   * 将指定卡设为默认卡
+   */
+  async function setMainCard(cardId: any) {
+    const { code, msg } = await API.pay.userSetMainCardCreate({ cardId })
+    showToast(code, msg)
+    if (code !== 0) {
+      return
+    }
+    getUserCards(true)
+  }
+
+  /**
+   * 解绑卡片前二次确认
+   */
+  function deleteCard(cardId: any) {
+    confirm.require({
+      header: $t('删除卡片'),
+      message: $t('删除后，您将无法使用该卡片进行支付。'),
+      rejectProps: {
+        label: $t('取消'),
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptProps: {
+        label: $t('确认'),
+        severity: 'danger',
+      },
+      accept: async () => {
+        const { code, msg } = await API.pay.userUnbindCardCreate({ cardId })
+        showToast(code, msg)
+        if (code !== 0) {
+          return
+        }
+        getUserCards(true)
+      },
+    })
+  }
+
+  /**
+   * 卡片操作菜单：设默认 / 删除
+   */
+  function onMenuCommand(event: MouseEvent, card: WalletBindCard) {
+    showMenu(event, {
+      model: [
+        {
+          label: $t('设置为默认卡片'),
+          icon: 'base/rx_ic_credit_card',
+          disabled: !!card.cardDefault,
+          command: () => {
+            setMainCard(card.cardId)
+          },
+        },
+        {
+          separator: true,
+        },
+        {
+          label: $t('删除'),
+          icon: 'base/rx_ic_bin_1',
+          command: () => {
+            deleteCard(card.cardId)
+          },
+        },
+      ],
+    })
+  }
+
+  return {
+    userCards,
+    autoRecharge,
+    matchCard,
+    checkAutoRecharge,
+    bindCard,
+    onMenuCommand,
   }
 }

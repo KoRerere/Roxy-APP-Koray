@@ -929,10 +929,10 @@ describe('OpenAIResponsesProvider API', () => {
     ).rejects.toThrow(/invalid JSON.*status=completed.*outputTokens=7.*reasoningTokens=3.*textLength=10/)
   })
 
-  it('rejects JSON mode output that does not match the raw JSON Schema', async () => {
-    // Regression: valid JSON with the wrong shape was returned as a successful
-    // Sandbox json() result because only JSON.parse was performed.
-    // Fixed by: validating raw-schema output before returning it.
+  it('coerces JSON mode output when a string safely converts to the raw JSON Schema type', async () => {
+    // Regression: models sometimes serialize numeric fields as strings even
+    // when the caller's JSON Schema requires a number.
+    // Fixed by: applying lossless schema-directed coercion before validation.
     const client = makeClient(() =>
       makeResponse([
         {
@@ -947,9 +947,9 @@ describe('OpenAIResponsesProvider API', () => {
     const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
     const schema = { type: 'object', properties: { price: { type: 'number' } }, required: ['price'] }
 
-    await expect(provider.withJsonSchemaOutput(schema, { method: 'jsonMode' })('return json')).rejects.toThrow(
-      /does not match JSON Schema/,
-    )
+    await expect(provider.withJsonSchemaOutput(schema, { method: 'jsonMode' })('return json')).resolves.toEqual({
+      price: 12,
+    })
   })
 
   it('supports function calling and JSON mode structured output', async () => {
@@ -994,6 +994,122 @@ describe('OpenAIResponsesProvider API', () => {
     ).toEqual({ ok: true })
     const jsonBody = jsonClient.responses.create.mock.calls[0]?.[0] as ResponseCreateParams
     expect(jsonBody.text?.format).toEqual({ type: 'json_object' })
+  })
+
+  it('uses a raw JSON Schema for forced function-call output', async () => {
+    // Regression: Sandbox json() used JSON text mode, so DeepSeek could return
+    // numeric fields as strings and fail only during local schema validation.
+    // Fixed by: forcing a function call while preserving the caller's raw JSON Schema.
+    const client = makeClient(() =>
+      makeResponse([
+        {
+          type: 'function_call',
+          call_id: 'fc_json',
+          name: 'json',
+          arguments: '{"feedbackMessageIndex":"2"}',
+          status: 'completed',
+        },
+      ] as Response['output']),
+    )
+    const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
+    const schema = {
+      type: 'object',
+      properties: { feedbackMessageIndex: { type: 'number' } },
+      required: ['feedbackMessageIndex'],
+      additionalProperties: false,
+    }
+
+    await expect(
+      provider.withJsonSchemaOutput(schema, {
+        name: 'json',
+        method: 'functionCalling',
+        temperature: 0.2,
+        maxTokens: 77,
+      })('return json'),
+    ).resolves.toEqual({ feedbackMessageIndex: 2 })
+
+    const body = client.responses.create.mock.calls[0]?.[0] as ResponseCreateParams
+    expect(body.tools).toEqual([
+      {
+        type: 'function',
+        name: 'json',
+        description: 'Return the requested structured data.',
+        parameters: schema,
+        strict: true,
+      },
+    ])
+    expect(body.tool_choice).toEqual({ type: 'function', name: 'json' })
+    expect(body.max_output_tokens).toBe(77)
+    expect(body.temperature).toBe(0.2)
+  })
+
+  it('rejects function-call values that cannot be coerced to the raw JSON Schema', async () => {
+    // Regression: type coercion must not turn malformed numeric strings into
+    // partial numbers or hide an output that still violates the caller's schema.
+    // Fixed by: accepting only lossless schema-directed primitive coercions.
+    const client = makeClient(() =>
+      makeResponse([
+        {
+          type: 'function_call',
+          call_id: 'fc_invalid_json',
+          name: 'json',
+          arguments: '{"feedbackMessageIndex":"2abc"}',
+          status: 'completed',
+        },
+      ] as Response['output']),
+    )
+    const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
+    const schema = {
+      type: 'object',
+      properties: { feedbackMessageIndex: { type: 'number' } },
+      required: ['feedbackMessageIndex'],
+      additionalProperties: false,
+    }
+
+    await expect(
+      provider.withJsonSchemaOutput(schema, { name: 'json', method: 'functionCalling' })('return json'),
+    ).rejects.toThrow(/does not match JSON Schema/)
+  })
+
+  it('coerces nested array values through anyOf schema branches', async () => {
+    // Regression: schema coercion at the root did not cover primitive values
+    // nested inside arrays, objects, and anyOf branches used by behavior events.
+    // Fixed by: recursively applying coercion through structural schema nodes.
+    const client = makeClient(() =>
+      makeResponse([
+        {
+          type: 'function_call',
+          call_id: 'fc_nested_json',
+          name: 'json',
+          arguments: '{"behaviorEvents":[{"position":"3","enabled":"false"}]}',
+          status: 'completed',
+        },
+      ] as Response['output']),
+    )
+    const provider = new OpenAIResponsesProvider({ apiKey: 'key', model: 'm', _client: client })
+    const schema = {
+      type: 'object',
+      properties: {
+        behaviorEvents: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              position: {
+                anyOf: [{ type: 'string', enum: ['pre', 'post'] }, { type: 'number' }],
+              },
+              enabled: { type: 'boolean' },
+            },
+            required: ['position', 'enabled'],
+          },
+        },
+      },
+      required: ['behaviorEvents'],
+    }
+
+    await expect(
+      provider.withJsonSchemaOutput(schema, { name: 'json', method: 'functionCalling' })('return json'),
+    ).resolves.toEqual({ behaviorEvents: [{ position: 3, enabled: false }] })
   })
 
   it('maps incomplete responses and surfaces failed responses', async () => {

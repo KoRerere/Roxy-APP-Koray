@@ -225,10 +225,13 @@ const discountRows = computed(() => {
     ? [{
         label: $t('折扣'),
         percent: Math.min(Number(totalDiscount.toFixed(2)), 25),
-        tooltip: $t('专属折扣与消费折扣按乘法叠加计算，最高可享 25% 折扣'),
+        // 身份折扣文案暂不对外展示，此处不再说明叠加口径
+        // tooltip: $t('专属折扣与消费折扣按乘法叠加计算，最高可享 25% 折扣'),
+        tooltip: '',
       }]
     : [
-        { label: $t('专属折扣'), percent: identityDiscount.value },
+        // 身份折扣文案暂不对外展示，折扣仍参与计价
+        // { label: $t('专属折扣'), percent: identityDiscount.value },
         { label: $t('消费折扣'), percent: tierDiscount.value },
       ].filter(row => row.percent > 0)
 })

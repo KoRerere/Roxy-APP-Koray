@@ -8,6 +8,7 @@ import type {
   ToolUseBlock,
 } from '../core/interfaces.ts'
 import { assistantItemsToMessage } from '../transcript/items.ts'
+import { createCompactionSummaryMessage } from './memory.ts'
 
 export interface ReplayResult {
   /** Number of rollout events replayed into memory. */
@@ -35,6 +36,16 @@ function interruptedToolResult(block: ToolUseBlock): ToolResultBlock {
     content: `${INTERRUPTED_TOOL_RESULT_CONTENT} Tool: ${block.name}.`,
     is_error: true,
   }
+}
+
+function isLegacyEmbeddedSummary(message: Message, summary: string): boolean {
+  const expected = createCompactionSummaryMessage(summary)
+  return (
+    message.role === expected.role &&
+    message.content === expected.content &&
+    message.visible === expected.visible &&
+    Object.keys(message).length === Object.keys(expected).length
+  )
 }
 
 function createMessageReplayer(append: (message: Message) => Promise<void>) {
@@ -125,16 +136,16 @@ export async function replayIntoMemory(
     if (events[i]!.type === 'compaction') {
       const comp = events[i]! as Extract<(typeof events)[number], { type: 'compaction' }>
       // Build summary message from the compaction event.
-      await memory.append(sessionId, {
-        role: 'developer',
-        content: `Previous conversation summary:\n<summary>\n${comp.summary}\n</summary>`,
-        visible: false,
-      })
+      await memory.append(sessionId, createCompactionSummaryMessage(comp.summary))
       // Newer compaction events carry the retained tail explicitly. Without
       // this snapshot, replay would discard not only the archived prefix but
       // also the completed messages that were intentionally kept in memory.
       const keptMessages = comp.keptMessages ?? (await messagesFromEvents(memory, sessionId, events.slice(0, i)))
-      const legacyKeptMessages = comp.keptMessages ? keptMessages : keptMessages.slice(comp.compactedCount)
+      const legacyKeptMessages = comp.keptMessages
+        ? keptMessages[0] && isLegacyEmbeddedSummary(keptMessages[0], comp.summary)
+          ? keptMessages.slice(1)
+          : keptMessages
+        : keptMessages.slice(comp.compactedCount)
       for (const message of legacyKeptMessages) {
         await memory.append(sessionId, message)
       }

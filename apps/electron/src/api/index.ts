@@ -41,7 +41,7 @@ httpClient.instance.interceptors.request.use(async (config) => {
   // api请求后端使用新域名
   if (config.headers.source === 'api') {
     config.baseURL = store.lastSelectedNetworkNode === 'auto' ? getOpenAPIUrl() : `https://${store.lastSelectedNetworkNode.api}`
-    config.headers['r-api-token'] = store.userApiToken
+    config.headers['r-api-token'] ||= store.userApiToken
   }
 
   // handleRequest(config)

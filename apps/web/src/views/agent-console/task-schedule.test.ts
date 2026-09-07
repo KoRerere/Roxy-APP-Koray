@@ -31,6 +31,7 @@ describe('task schedule draft', () => {
   it('parses and rebuilds standard cron frequencies', () => {
     const cases = [
       { cron: '26 11 * * *', frequency: 'daily' },
+      { cron: '26 * * * *', frequency: 'hourly' },
       { cron: '26 11 * * 3', frequency: 'weekly' },
       { cron: '26 11 20 * *', frequency: 'monthly' },
     ] as const
@@ -67,14 +68,26 @@ describe('task schedule draft', () => {
 
     assert.equal(buildTaskSchedulePlan(draft).enabled, false)
   })
+
+  it('builds an hourly schedule at the selected minute', () => {
+    const draft = createTaskScheduleDraft({ planType: 'manual' }, 'hourly')
+    draft.hourlyMinute = 42
+
+    assert.equal(buildTaskSchedulePlan(draft).cron, '42 * * * *')
+
+    draft.hourlyMinute = 60
+    assert.equal(buildTaskSchedulePlan(draft).cron, null)
+  })
 })
 
 describe('isValidTaskCron', () => {
   it('accepts supported five-part expressions and rejects malformed values', () => {
     assert.equal(isValidTaskCron('0 9 * * *'), true)
+    assert.equal(isValidTaskCron('45 * * * *'), true)
     assert.equal(isValidTaskCron('30 18 * * 5'), true)
     assert.equal(isValidTaskCron('15 7 20 * *'), true)
     assert.equal(isValidTaskCron('*/15 8-18 * * 1-5'), false)
+    assert.equal(isValidTaskCron('60 * * * *'), false)
     assert.equal(isValidTaskCron('0 9 * *'), false)
     assert.equal(isValidTaskCron('0 9 * * MON'), false)
   })

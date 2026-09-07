@@ -509,6 +509,10 @@ function formatSchedule(task: TaskTableItem) {
     return task.cron
   }
   const [minute, hour, day, month, week] = fields
+  if (hour === '*' && day === '*' && month === '*' && week === '*') {
+    return $t('每小时第 {minute} 分钟', { minute })
+  }
+
   const nextExecuteAt = new Date(task.nextExecuteAt ?? '')
   const hasNextExecuteAt = !Number.isNaN(nextExecuteAt.getTime())
   const time = hasNextExecuteAt
@@ -584,7 +588,7 @@ function formatWindowIds(
     .filter((label): label is string => Boolean(label))
   return labels.length > 0
     ? labels.join('、')
-    : $t('窗口已删除')
+    : $t('窗口不可用或无权限')
 }
 
 function formatTaskWindows(task: Pick<UserTaskDTO, 'windowIds'>) {

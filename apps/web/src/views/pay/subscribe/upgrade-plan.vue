@@ -79,7 +79,7 @@ const currentSubscribe = computed(() => {
 })
 
 const details = computed(() => {
-  const { firstPurchaseDiscount, discount } = allDiscount.value
+  const { firstPurchaseDiscount /* , discount */ } = allDiscount.value
 
   const profileCount = currency(selectedCount.value, { precision: 0, symbol: '' })
   const freeWindowCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
@@ -115,12 +115,13 @@ const details = computed(() => {
           value: `-${firstPurchaseDiscount}%`,
           visible: !!firstPurchaseDiscount,
         },
-        {
-          label: $t('专属折扣'),
-          class: '!color-[#FC9D12]',
-          value: `-${discount}%`,
-          visible: !!discount,
-        },
+        // 身份折扣文案暂不对外展示，折扣仍参与计价
+        // {
+        //   label: $t('专属折扣'),
+        //   class: '!color-[#FC9D12]',
+        //   value: `-${discount}%`,
+        //   visible: !!discount,
+        // },
       ].filter(item => item.visible !== false),
     },
     {
@@ -171,7 +172,7 @@ const details = computed(() => {
 })
 
 const subInfo = computed(() => ({
-  due: userPayInfo.value.isAuto ? $t('自动续订') : $t('有效期至 {date}', { date: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
+  due: userPayInfo.value.isAuto ? $t('自动续费') : $t('有效期至 {date}', { date: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
   days: userPayInfo.value.isAuto ? '' : $t('(剩余 {day} 天)', { day: Math.max(differenceInDays(userPayInfo.value.subEndDate, userPayInfo.value.subCurrentDate), 1) }),
 }))
 
@@ -302,7 +303,7 @@ async function planUpgrade() {
 }
 
 /**
- * 自动续订套餐升级
+ * 自动续费套餐升级
  */
 function subscribeUpgrade() {
   showModal({
@@ -346,7 +347,7 @@ function subscribeUpgrade() {
 }
 
 /**
- * 自动续订套餐降级
+ * 自动续费套餐降级
  */
 async function subscribeDowngrade() {
   const dialogInstance = showModal({

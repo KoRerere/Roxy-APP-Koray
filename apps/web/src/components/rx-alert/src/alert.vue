@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
 
 interface Props {
   type?: 'success' | 'info' | 'warn' | 'error'
@@ -13,7 +13,7 @@ const { type = 'success', announcement = false, closable = true } = defineProps<
 
 const emit = defineEmits(['close'])
 
-const visibleModel = defineModel('visible', { default: true })
+const visibleModel = defineModel<boolean>('visible', { default: true })
 
 const iconMap: Record<string, [string, SvgNames]> = {
   success: ['var(--colors-icon-icon-success)', 'status/rx_ic_check_fill'],
@@ -28,12 +28,12 @@ const colorType = computed(() => {
     error: ['var(--component-alert-announcement-text-error)', 'var(--component-alert-announcement-border-error)', 'var(--component-alert-bg-error)'],
     info: ['var(--component-alert-announcement-text-info)', 'var(--component-alert-announcement-border-info)', 'var(--component-alert-bg-info)'],
     warn: ['var(--component-alert-announcement-text-warning)', 'var(--component-alert-announcement-border-warning)', 'var(--component-alert-bg-warn)'],
-  }
-  [type]
+  }[type]
+
   return {
     titleColor: announcement ? titleColor : 'var(--colors-text-text-primary)',
     borderColor: announcement ? borderColor : bgColor,
-    bgColor
+    bgColor,
   }
 })
 
@@ -57,7 +57,7 @@ function handleClose() {
   <Transition>
     <div v-if="visibleModel" class="rx-alert" v-bind="$attrs">
       <slot name="tips-icon">
-        <RxSvgIcon v-bind="iconProps" />
+        <SvgIcon class="mt-0.25" v-bind="iconProps" />
       </slot>
       <div class="rx-alert-body">
         <div v-if="title || $slots.title" class="rx-alert__title">
@@ -73,7 +73,7 @@ function handleClose() {
       </div>
       <div v-if="closable" class="rx-alert-close" @click="handleClose">
         <slot name="close-icon">
-          <RxSvgIcon name="base/rx_ic_delete" />
+          <SvgIcon name="base/rx_ic_delete" />
         </slot>
       </div>
     </div>
@@ -125,7 +125,7 @@ function handleClose() {
       font-family: Inter;
       font-size: 12px;
       font-weight: 600;
-      line-height: normal;
+      line-height: 18px;
     }
 
     .rx-alert__content {

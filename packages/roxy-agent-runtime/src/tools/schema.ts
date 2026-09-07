@@ -39,12 +39,16 @@ export async function parseToolInput(
   schema: ZodType,
   input: unknown,
   toolName: string,
+  formatInputError?: (input: unknown, error: z.ZodError) => string,
 ): Promise<{ success: true; data: unknown } | { success: false; content: string }> {
   try {
     const parsed = await schema.safeParseAsync(input)
     return parsed.success
       ? { success: true, data: parsed.data }
-      : { success: false, content: formatToolInputError(toolName, parsed.error) }
+      : {
+          success: false,
+          content: formatInputError?.(input, parsed.error) ?? formatToolInputError(toolName, parsed.error),
+        }
   } catch (error) {
     return { success: false, content: formatToolInputError(toolName, error) }
   }
@@ -65,10 +69,10 @@ export interface ToolDefinitionOptions<TSchema extends ZodType> extends Omit<
  * registry boundary so third-party registrations cannot bypass the contract.
  */
 export function defineTool<TSchema extends ZodType>(options: ToolDefinitionOptions<TSchema>): ToolDefinition {
-  const { handler, inputSchema, previewFn, ...descriptor } = options
+  const { handler, inputSchema, previewFn, formatInputError, ...descriptor } = options
   const parsedHandler: ToolHandler = (input, ctx) => handler(input as z.infer<TSchema>, ctx)
   const validatingHandler: ToolHandler = async (input, ctx) => {
-    const parsed = await parseToolInput(inputSchema, input, descriptor.name)
+    const parsed = await parseToolInput(inputSchema, input, descriptor.name, formatInputError)
     if (!parsed.success) {
       return {
         content: parsed.content,
@@ -84,6 +88,7 @@ export function defineTool<TSchema extends ZodType>(options: ToolDefinitionOptio
     descriptor: {
       ...descriptor,
       inputSchema,
+      ...(formatInputError ? { formatInputError } : {}),
       ...(previewFn
         ? {
             previewFn: async (input: unknown) => {

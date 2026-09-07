@@ -7,6 +7,7 @@ import { API } from '/@/api'
 // import { appConfig } from '/@/constants'
 import { isLinux, isMac, isWindows } from '/@/constants/common'
 import { browserManager, coreManager } from '/@/modules/browser'
+import { ensureAutomationExtensionLaunchArg, prepareAutomationControlExtension } from '/@/modules/browser/automation-control/extensionBootstrap'
 import { connectBrowser, launchBrowser } from '/@/modules/browser/browser-manager/adapter'
 import { defaultCLIArgs, firefoxCacheToKeep, firefoxDefaultCLIArgs } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage, sendSuccessMessage } from '/@/modules/browser/browser-manager/message'
@@ -217,8 +218,9 @@ export class BeforeLaunchTask {
       if (!this.browser) {
         let acc = 0
         launchProgressTimer = setInterval(() => {
-          if (isTimedOut)
+          if (isTimedOut) {
             return
+          }
           acc += 0.2
           this.sendSuccessMessage($t('正在启动浏览器'), Math.min(this.progress + acc, 98))
         }, 60)
@@ -406,8 +408,9 @@ export class BeforeLaunchTask {
       const userCustomArgs = startupParam.split(';')
         .map((item: string) => item.trim())
         .filter((arg: string) => {
-          if (!arg)
+          if (!arg) {
             return false
+          }
           const key = arg.split('=')[0]
           return key !== '-profile' && key !== '--remote-debugging-port'
         })
@@ -452,6 +455,11 @@ export class BeforeLaunchTask {
       '--disable-backgrounding-occluded-windows',
       // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-133\devtools-frontend\out\Default\gen\front_end`}`,
     ]
+
+    const automationExtensionDir = await prepareAutomationControlExtension(dirId!).catch((error) => {
+      console.warn(`[automation-control] Failed to prepare extension for ${dirId}:`, getErrorMessage(error))
+      return undefined
+    })
 
     // 临时解决 macOS code_sign_clone 问题
     if (isMac) {
@@ -518,6 +526,12 @@ export class BeforeLaunchTask {
         })
 
       args.push(...userCustomArgs)
+    }
+
+    // This product extension is mandatory for native AI tab-group state. Merge it
+    // after custom arguments so a user-provided --load-extension cannot replace it.
+    if (automationExtensionDir) {
+      ensureAutomationExtensionLaunchArg(args, automationExtensionDir)
     }
 
     // 如果是全屏，则不设置窗口大小
@@ -1021,10 +1035,12 @@ export class BeforeLaunchTask {
     }
     else {
       win.sizemode = 'normal'
-      if (openWidth)
+      if (openWidth) {
         win.width = String(openWidth)
-      if (openHeight)
+      }
+      if (openHeight) {
         win.height = String(openHeight)
+      }
 
       // 与 Chrome 共用同一套定位换算（鼠标所在屏为基准 / 绝对坐标优先）
       const { x, y } = this.resolveWindowTopLeft(Number(openWidth) || 0, Number(openHeight) || 0)

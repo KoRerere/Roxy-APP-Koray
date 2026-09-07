@@ -15,6 +15,7 @@ import {
   readUserTemplateMutation,
   readUserTemplatePage,
   readUserTemplateVoidMutation,
+  sortMyTemplateItems,
 } from '../my-templates'
 import { useAgentConsoleApi } from '../api'
 import { isTemplateUnread, markTemplateRead, markTemplateUnread, readUnreadTemplateKeys } from '../template-unread'
@@ -56,6 +57,7 @@ const loadError = ref(false)
 const creatingTaskId = ref<number>()
 const openingTemplateId = ref<number>()
 const deletingTemplateIds = ref(new Set<number>())
+const toppingTemplateIds = ref(new Set<number>())
 const unreadTemplateKeys = ref(readUnreadTemplateKeys())
 let requestSequence = 0
 
@@ -253,6 +255,63 @@ function setTemplateDeleting(templateId: number, deleting: boolean) {
   deletingTemplateIds.value = nextDeletingIds
 }
 
+function setTemplateTopping(templateId: number, topping: boolean) {
+  const nextToppingIds = new Set(toppingTemplateIds.value)
+  if (topping) {
+    nextToppingIds.add(templateId)
+  }
+  else {
+    nextToppingIds.delete(templateId)
+  }
+  toppingTemplateIds.value = nextToppingIds
+}
+
+async function toggleTemplateTop(item: MyTemplateItem) {
+  if (toppingTemplateIds.value.has(item.id)) {
+    return
+  }
+
+  const previousTemplates = templates.value.slice()
+  const nextTopped = !item.isTopped
+  const optimisticToppedAt = nextTopped ? new Date().toISOString() : null
+  setTemplateTopping(item.id, true)
+  templates.value = sortMyTemplateItems(templates.value.map((template) => {
+    if (template.id !== item.id) {
+      return template
+    }
+
+    return {
+      ...template,
+      isTopped: nextTopped,
+      toppedAt: optimisticToppedAt,
+    }
+  }))
+  try {
+    const result = nextTopped
+      ? await agentApi.userTemplates.topUserTemplate(item.id)
+      : await agentApi.userTemplates.untopUserTemplate(item.id)
+    templates.value = sortMyTemplateItems(templates.value.map((template) => {
+      if (template.id !== item.id) {
+        return template
+      }
+
+      return {
+        ...template,
+        isTopped: result.isTopped,
+        toppedAt: result.isTopped ? result.toppedAt ?? optimisticToppedAt : null,
+      }
+    }))
+  }
+  catch (error) {
+    console.error('Failed to update user template top state', error)
+    templates.value = previousTemplates
+    onlyErrorToast(-1, error instanceof Error ? error.message : $t('模板置顶操作失败'))
+  }
+  finally {
+    setTemplateTopping(item.id, false)
+  }
+}
+
 function deleteTemplate(item: MyTemplateItem) {
   confirm.require({
     group: 'agentConsoleDeleteConfirmDialog',
@@ -344,7 +403,7 @@ async function fetchAllTemplates() {
     } while (offset < expectedTotal)
 
     if (currentRequest === requestSequence) {
-      templates.value = mapTemplates(rows)
+      templates.value = sortMyTemplateItems(mapTemplates(rows))
       total.value = expectedTotal
     }
   }
@@ -429,7 +488,12 @@ onMounted(() => {
         </button>
       </div>
 
-      <div v-else-if="templates.length" class="my-templates-grid">
+      <TransitionGroup
+        v-else-if="templates.length"
+        class="my-templates-grid"
+        name="my-template-card"
+        tag="div"
+      >
         <MyTemplateCard
           v-for="item in templates"
           :key="item.id"
@@ -438,12 +502,14 @@ onMounted(() => {
           :creating-task="creatingTaskId === item.id"
           :edit-disabled="openingTemplateId !== undefined"
           :deleting="deletingTemplateIds.has(item.id)"
+          :topping="toppingTemplateIds.has(item.id)"
           @edit="openTemplateDialog"
           @delete="deleteTemplate"
           @create-task="createTaskFromTemplate"
           @run-in-chat="runTemplateInChat"
+          @toggle-top="toggleTemplateTop"
         />
-      </div>
+      </TransitionGroup>
 
       <div v-else class="my-templates-state">
         <SvgIcon name="roxy-agent/rx-ic-templates" size="32" />
@@ -533,9 +599,36 @@ onMounted(() => {
 }
 
 .my-templates-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(360px, 100%), 1fr));
   gap: 12px;
+}
+
+.my-template-card-move,
+.my-template-card-enter-active,
+.my-template-card-leave-active {
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.my-template-card-enter-from,
+.my-template-card-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.my-template-card-leave-active {
+  position: absolute;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .my-template-card-move,
+  .my-template-card-enter-active,
+  .my-template-card-leave-active {
+    transition: none;
+  }
 }
 
 .my-templates-state {

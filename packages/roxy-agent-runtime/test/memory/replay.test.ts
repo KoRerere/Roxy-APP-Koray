@@ -73,6 +73,70 @@ describe('replayIntoMemory', () => {
     ])
   })
 
+  it('removes the duplicate summary embedded by legacy invoke compaction events', async () => {
+    // Regression: invoke captured keptMessages after prepending the summary,
+    // while replay also reconstructed the summary from the event field.
+    // Fixed by: recognizing only the exact legacy synthetic summary at the
+    // front of keptMessages and replaying the canonical summary once.
+    const store = new JsonlSessionStore({ dir: tmpDir() })
+    const memory = new InMemoryProvider()
+    const sid = 'legacy-invoke-summary-snapshot'
+    const summaryMessage: Message = {
+      role: 'developer',
+      content: 'Previous conversation summary:\n<summary>\nsummary\n</summary>',
+      visible: false,
+    }
+    await writeRollout(store, sid, [
+      {
+        type: 'compaction',
+        summary: 'summary',
+        compactedCount: 2,
+        ts: 2,
+        keptMessages: [summaryMessage, { role: 'user', content: 'recent' }],
+      },
+    ])
+
+    await replayIntoMemory(store, memory, sid)
+
+    expect(await memory.getAll(sid)).toEqual([summaryMessage, { role: 'user', content: 'recent' }])
+  })
+
+  it('preserves a similar retained developer message with host metadata', async () => {
+    // Regression: broad content-based deduplication could remove a legitimate
+    // host message that happens to use the same visible summary text.
+    // Fixed by: legacy cleanup accepts only the exact synthetic message shape.
+    const store = new JsonlSessionStore({ dir: tmpDir() })
+    const memory = new InMemoryProvider()
+    const sid = 'host-summary-message'
+    const hostMessage: Message = {
+      role: 'developer',
+      content: 'Previous conversation summary:\n<summary>\nsummary\n</summary>',
+      visible: false,
+      metadata: { source: 'host' },
+    }
+    await writeRollout(store, sid, [
+      {
+        type: 'compaction',
+        summary: 'summary',
+        compactedCount: 2,
+        ts: 2,
+        keptMessages: [hostMessage, { role: 'user', content: 'recent' }],
+      },
+    ])
+
+    await replayIntoMemory(store, memory, sid)
+
+    expect(await memory.getAll(sid)).toEqual([
+      {
+        role: 'developer',
+        content: 'Previous conversation summary:\n<summary>\nsummary\n</summary>',
+        visible: false,
+      },
+      hostMessage,
+      { role: 'user', content: 'recent' },
+    ])
+  })
+
   it('reconstructs the retained tail for legacy compaction events', async () => {
     const store = new JsonlSessionStore({ dir: tmpDir() })
     const memory = new InMemoryProvider()

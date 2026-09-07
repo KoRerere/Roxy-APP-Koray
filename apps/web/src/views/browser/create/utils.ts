@@ -399,11 +399,13 @@ async function addExplain(worksheet: ExcelJS.Worksheet) {
 }
 
 function normalizeImportCellText(cellValue: unknown): string {
-  if (cellValue == null || cellValue === '')
+  if (cellValue == null || cellValue === '') {
     return ''
+  }
 
-  if (typeof cellValue === 'object' && cellValue !== null && 'text' in cellValue)
+  if (typeof cellValue === 'object' && cellValue !== null && 'text' in cellValue) {
     return String((cellValue as { text: string }).text).trim()
+  }
 
   return String(cellValue).trim()
 }
@@ -428,8 +430,9 @@ export async function parseTemplate(file: File) {
              * excel 索引从1开始
              */
             const cellValue = (row.values as ExcelJS.CellValue[])[index + 1]
-            if (column.key === 'cookie')
+            if (column.key === 'cookie') {
               return [column.key, normalizeImportCellText(cellValue)] as const
+            }
 
             const value = column.formatValue?.((cellValue as any)?.text || cellValue) || cellValue
             return [column.key, value] as const
@@ -466,8 +469,9 @@ export async function parseTextFile(file: File) {
     const reader = new FileReader()
     reader.onload = function (e) {
       const content = e.target?.result
-      if (!content)
+      if (!content) {
         return resolve([])
+      }
 
       getExportColumns().then((columns) => {
         const keys = columns.map(column => column.key)
@@ -523,8 +527,9 @@ export function getDefaultWindowName() {
 export async function fetchDefaultWindowName(): Promise<string | undefined> {
   try {
     const { code, data } = await API.window.userGetWindowSortNumList()
-    if (code !== 0 || data?.windowSortNum == null)
+    if (code !== 0 || data?.windowSortNum == null) {
       return undefined
+    }
 
     const sortNum = data.windowSortNum || 1
     return `${format(new Date(), 'yyMMdd')}-${sortNum}`

@@ -19,6 +19,7 @@ const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.curre
 function getWorkspaceAvatar(item: Record<string, any>) {
   return getWorkspaceAvatarProps({
     workspacePicture: item.workspacePicture,
+    workspacePictureUrl: item.workspacePictureUrl,
     workspaceName: item.workspaceName,
     size: 24,
     emojiFontSize: 12,

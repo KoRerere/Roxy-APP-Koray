@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AgentConversationProcess, AgentMessage, AgentProcessEvent } from '../types'
+import type { AgentConversationProcess, AgentMessage, AgentProcessEvent, AgentTaskReportSaveRequest } from '../types'
 import { useAgentStore } from '/@/stores/agent'
 import AgentCopyControl from './AgentCopyControl.vue'
 import AgentProcessTimeline from './AgentProcessTimeline.vue'
@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   copy: [text: string]
+  saveTemplate: [payload: AgentTaskReportSaveRequest]
 }>()
 
 const agentStore = useAgentStore()
@@ -206,9 +207,11 @@ onUnmounted(() => document.removeEventListener('keydown', handlePreviewKeydown))
     <div class="message-body">
       <AgentProcessTimeline
         v-if="message.role === 'assistant' && message.process"
+        :conversation-id="message.conversationId"
         :has-message-content="Boolean(message.content.trim())"
         :process="message.process"
         :message-status="message.status"
+        @save-template="emit('saveTemplate', $event)"
       />
 
       <AgentStatusMessage

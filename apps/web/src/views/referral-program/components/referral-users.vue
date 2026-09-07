@@ -29,12 +29,12 @@ const columns = [
     classes: 'text-orange-400',
     getText: (data: Data) => `${data.proxyYouGet}%`,
   },
-  {
-    title: $t('用户优惠'),
-    key: 'theyGet',
-    classes: 'text-orange-400',
-    getText: (data: Data) => `${data.theyGet}%`,
-  },
+  // {
+  //   title: $t('用户优惠'),
+  //   key: 'theyGet',
+  //   classes: 'text-orange-400',
+  //   getText: (data: Data) => `${data.theyGet}%`,
+  // },
   {
     title: $t('注册时间'),
     key: 'status',

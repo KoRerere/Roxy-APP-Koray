@@ -1,6 +1,6 @@
 import type { TaskPlanType } from './task-manager'
 
-export type TaskScheduleFrequency = 'daily' | 'monthly' | 'once' | 'weekly'
+export type TaskScheduleFrequency = 'daily' | 'hourly' | 'monthly' | 'once' | 'weekly'
 
 export interface TaskScheduleSource {
   planType?: TaskPlanType
@@ -12,6 +12,7 @@ export interface TaskScheduleSource {
 
 export interface TaskScheduleDraft {
   frequency: TaskScheduleFrequency
+  hourlyMinute: number
   scheduleDate: Date | null
   scheduleTime: Date | null
   monthlyDay: number
@@ -55,9 +56,20 @@ function applyCron(draft: TaskScheduleDraft, cron?: string | null, nextExecuteAt
 
   const [minuteField, hourField, dayField, monthField, weekdayField] = fields
   const minute = parseInteger(minuteField, 0, 59)
-  const hour = parseInteger(hourField, 0, 23)
-  if (minute === undefined || hour === undefined)
+  if (minute === undefined) {
     return
+  }
+
+  if (hourField === '*' && dayField === '*' && monthField === '*' && weekdayField === '*') {
+    draft.frequency = 'hourly'
+    draft.hourlyMinute = minute
+    return
+  }
+
+  const hour = parseInteger(hourField, 0, 23)
+  if (hour === undefined) {
+    return
+  }
 
   const scheduleTime = new Date(nextExecuteAt ?? draft.scheduleTime ?? defaultScheduleDate())
   if (!nextExecuteAt)
@@ -100,6 +112,7 @@ export function createTaskScheduleDraft(
   const fallbackDate = defaultScheduleDate()
   const draft: TaskScheduleDraft = {
     frequency: defaultFrequency,
+    hourlyMinute: fallbackDate.getMinutes(),
     scheduleDate: new Date(fallbackDate),
     scheduleTime: new Date(fallbackDate),
     monthlyDay: 1,
@@ -124,6 +137,13 @@ export function createTaskScheduleDraft(
 }
 
 function buildCron(draft: TaskScheduleDraft) {
+  if (draft.frequency === 'hourly') {
+    if (!Number.isInteger(draft.hourlyMinute) || draft.hourlyMinute < 0 || draft.hourlyMinute > 59) {
+      return null
+    }
+    return `${draft.hourlyMinute} * * * *`
+  }
+
   if (!validDate(draft.scheduleTime))
     return null
 
@@ -185,12 +205,22 @@ export function buildTaskSchedulePlan(
 
 export function isValidTaskCron(value: string) {
   const fields = value.trim().split(/\s+/)
-  if (fields.length !== 5)
+  if (fields.length !== 5) {
     return false
+  }
 
   const [minuteField, hourField, dayField, monthField, weekdayField] = fields
-  if (parseInteger(minuteField, 0, 59) === undefined || parseInteger(hourField, 0, 23) === undefined)
+  if (parseInteger(minuteField, 0, 59) === undefined) {
     return false
+  }
+
+  const hourly = hourField === '*' && dayField === '*' && monthField === '*' && weekdayField === '*'
+  if (hourly) {
+    return true
+  }
+  if (parseInteger(hourField, 0, 23) === undefined) {
+    return false
+  }
 
   const daily = dayField === '*' && monthField === '*' && weekdayField === '*'
   const weekly = dayField === '*' && monthField === '*' && parseInteger(weekdayField, 0, 6) !== undefined

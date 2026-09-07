@@ -36,9 +36,10 @@ async function receiveSuccess(type?: FirstGiftType) {
     if (windowIds?.length) {
       emitter.emit('refreshProfileList')
       API.base.userUpdateOnboardingTaskStatusCreate({ firstWebRegisterGuideStatus: true, firstRegisterGuideStatus: true })
-      await API.window.userActivateCloudBrowserCreate({ windowId: windowIds[0] }).then(() => {
-        updateUserConfig()
-      })
+      // 激活云端浏览器
+      // await API.window.userActivateCloudBrowserCreate({ windowId: windowIds[0] }).then(() => {
+      //   updateUserConfig()
+      // })
     }
     emitter.emit('firstRegisterGuide')
   }

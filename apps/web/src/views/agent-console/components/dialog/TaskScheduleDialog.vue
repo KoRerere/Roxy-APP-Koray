@@ -13,6 +13,7 @@ import {
   isValidTaskCron,
 } from '../../task-schedule'
 import AgentFormField from '../form/AgentFormField.vue'
+import AgentMinutePicker from '../form/AgentMinutePicker.vue'
 import AgentSelect from '../form/AgentSelect.vue'
 import './agent-dialog.scss'
 
@@ -35,6 +36,7 @@ const formError = ref('')
 
 const scheduleFrequencyOptions = computed<SelectOption<TaskScheduleFrequency>[]>(() => [
   { label: $t('单次执行'), value: 'once' },
+  { label: $t('每小时'), value: 'hourly' },
   { label: $t('每天'), value: 'daily' },
   { label: $t('每周'), value: 'weekly' },
   { label: $t('每月'), value: 'monthly' },
@@ -137,6 +139,13 @@ async function saveSchedule() {
             </DatePicker>
           </template>
 
+          <AgentMinutePicker
+            v-else-if="draft.frequency === 'hourly'"
+            v-model="draft.hourlyMinute"
+            class="task-schedule-dialog__datepicker task-schedule-dialog__time wide"
+            :disabled="saving"
+          />
+
           <AgentSelect
             v-else-if="draft.frequency === 'weekly'"
             v-model="draft.weekday"
@@ -156,7 +165,7 @@ async function saveSchedule() {
           />
 
           <DatePicker
-            v-if="draft.frequency !== 'once'"
+            v-if="draft.frequency !== 'once' && draft.frequency !== 'hourly'"
             v-model="draft.scheduleTime"
             class="task-schedule-dialog__datepicker task-schedule-dialog__time"
             :class="{ wide: draft.frequency === 'daily' }"

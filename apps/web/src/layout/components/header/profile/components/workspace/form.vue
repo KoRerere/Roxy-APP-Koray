@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-api'
 import { z } from 'zod'
-import { RxEmojiPicker } from '/@/components/rx-emoji-picker'
-import { useWorkspaceStore } from '/@/stores/workspace'
-import { emitter } from '/@/utils/eventBus'
+import WorkspaceIconPicker from '/@/layout/components/header/profile/components/workspace/icon-picker.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/'
 import { Role } from '/@/enums/role'
@@ -13,7 +11,9 @@ import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 const workspaceInfo = defineModel<UnwrapRowType<UserGetWorkspaceListListData>>('workspaceInfo', { required: true })
 const errorMessage = defineModel<string>('errorMessage', { required: false, default: '' })
 
-const workspaceStore = useWorkspaceStore()
+const iconPickerRef = useTemplateRef<{
+  commitWorkspaceImage: (workspaceId: number) => Promise<string | undefined>
+}>('iconPicker')
 const [showToast] = useResponseToast()
 const profileLabels = useProfileEntityLabels()
 
@@ -23,14 +23,6 @@ const exampleName = computed(() => {
 })
 
 const disabled = computed(() => workspaceInfo.value.role !== Role.OWNER && Boolean(workspaceInfo.value.id))
-
-/** 剩余可创建窗口数量 */
-const remainWorkspaceCount = computed(() => {
-  if (workspaceInfo.value?.id) {
-    return workspaceStore.maxCreateWindowCount + (workspaceStore.currentWorkspace?.maxWindowCount ?? 0) - workspaceInfo.value.maxWindowCount!
-  }
-  return workspaceStore.maxCreateWindowCount - workspaceInfo.value.maxWindowCount!
-})
 
 function onInput() {
   const result = z.string()
@@ -47,27 +39,25 @@ function onInput() {
   }
 }
 
-watch(() => workspaceInfo.value.maxWindowCount, () => {
-  if (workspaceInfo.value?.id) {
-    emitter.emit('maxWindowCountChange', remainWorkspaceCount.value)
-  }
-})
-
-onBeforeUnmount(() => {
-  if (workspaceInfo.value?.id) {
-    emitter.emit('maxWindowCountChange', undefined)
-  }
-})
-
 function onCopy(text: any) {
   copyText(text)
   showToast(0, $t('复制成功'))
+}
+
+/** 有新选图才上传；创建时传入新空间 ID，编辑时用当前表单 ID */
+async function commitWorkspaceImage(workspaceId?: number) {
+  const targetWorkspaceId = workspaceId ?? workspaceInfo.value.id
+  if (!targetWorkspaceId) {
+    return
+  }
+  return iconPickerRef.value?.commitWorkspaceImage(targetWorkspaceId)
 }
 
 defineExpose({
   workspaceInfo,
   errorMessage,
   onInput,
+  commitWorkspaceImage,
 })
 </script>
 
@@ -93,14 +83,13 @@ defineExpose({
           {{ $t('默认图标展示团队名称的前两个字符') }}
         </div>
       </div>
-      <div class="emoji-picker-box">
-        <RxEmojiPicker v-model="workspaceInfo.workspacePicture" :disabled="disabled"
-                       :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)"
-        />
-        <div class="choose-icon-desc">
-          {{ $t('选择图标') }}
-        </div>
-      </div>
+      <WorkspaceIconPicker
+        ref="iconPicker"
+        v-model:picture="workspaceInfo.workspacePicture"
+        v-model:picture-url="workspaceInfo.workspacePictureUrl"
+        :disabled="disabled"
+        :fallback-text="workspaceInfo.workspaceName?.slice(0, 2)"
+      />
     </div>
 
     <div class="row">
@@ -171,17 +160,6 @@ defineExpose({
       font-size: 12px;
       line-height: var(--Line-Height-text-xs, 16px);
       /* 160% */
-    }
-
-    .choose-icon-desc {
-      color: var(--colors-text-text-tertiary, #575d60);
-      text-align: center;
-      font-family: Inter;
-      font-size: 12px;
-      font-style: normal;
-      font-weight: 500;
-      line-height: var(--Line-Height-text-xs, 16px);
-      /* 133.333% */
     }
   }
 }

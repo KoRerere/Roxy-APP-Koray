@@ -4,19 +4,14 @@ import type {
   ProfileConnectionSource,
   ProfileProtocol,
 } from './profileRuntimeManager'
-import type { ProfileConnectionInfo } from '@roxybrowser/openapi'
-import { RoxyBrowserClient } from '@roxybrowser/openapi'
-import { env } from '@/config'
+import type { ProfileConnectionInfo, RoxyBrowserClient } from '@roxybrowser/openapi'
+import { getRoxyBrowserClient } from '@/core/roxyBrowserClient'
 
 export class RoxyProfileConnectionSource implements ProfileConnectionSource {
   private readonly client: RoxyBrowserClient
 
   constructor(client?: RoxyBrowserClient) {
-    this.client = client ?? new RoxyBrowserClient({
-      baseUrl: env.ROXY_API_HOST,
-      apiKey: env.ROXY_API_KEY,
-      workspaceId: Number(env.ROXY_WORKSPACE_ID),
-    })
+    this.client = client ?? getRoxyBrowserClient()
   }
 
   async get(dirId: string, browserType?: ProfileBrowserType): Promise<ProfileConnection | undefined> {
@@ -34,7 +29,9 @@ export class RoxyProfileConnectionSource implements ProfileConnectionSource {
     await this.client.profiles.open(dirId, { forceOpen: false })
     for (let attempt = 0; attempt < 5; attempt++) {
       const connection = await this.get(dirId, browserType)
-      if (connection) return connection
+      if (connection) {
+        return connection
+      }
       await new Promise(resolve => setTimeout(resolve, 200))
     }
     throw new Error(`浏览器 ${dirId} 打开后未提供可用的自动化连接。`)

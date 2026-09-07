@@ -1,4 +1,5 @@
-import type { IModelProvider, SystemBlock, Summarizer, SystemPromptBuilder } from '../core/interfaces.ts'
+import type { IModelProvider, SkillManifest, SystemBlock, Summarizer, SystemPromptBuilder } from '../core/interfaces.ts'
+import { renderSkillCatalog } from '../skills/prompt.ts'
 
 /**
  * Default summarisation prompt, mirrored from Anthropic's official compaction
@@ -63,17 +64,22 @@ export class BackgroundSummarizer implements Summarizer {
 }
 
 /**
- * Default stable system-prompt assembler. Turn-varying host context is
- * assembled as persisted internal developer messages by the runtime loop.
+ * Default system-prompt assembler. The discovered Skill catalog is stable for
+ * one Agent instance and is sent as top-level system context; other turn-varying
+ * host context remains in persisted internal developer messages.
  *
  * Cache breakpoints (`cache_control`) are intentionally NOT set here — the
  * runtime/provider decides breakpoint placement at request time so this
  * builder stays a pure content function.
  */
-export const buildSystemPrompt: SystemPromptBuilder = (base) => {
+export const buildSystemPrompt: SystemPromptBuilder = (base, skills: readonly SkillManifest[] = []) => {
   const blocks: SystemBlock[] = []
   if (base) {
     blocks.push({ type: 'text', text: base })
+  }
+  const catalog = renderSkillCatalog([...skills])
+  if (catalog.text) {
+    blocks.push({ type: 'text', text: catalog.text })
   }
   return blocks
 }

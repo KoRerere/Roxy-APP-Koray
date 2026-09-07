@@ -1,7 +1,9 @@
 import type { Server } from 'node:http'
 import express from 'express'
 import { API } from '/@/api'
+import { isProd } from '/@/constants/common'
 import { store } from '/@/modules/store'
+import { writeCodexBootstrapConfig } from './codexBootstrapConfig'
 import { setupMiddlewares } from './middlewares/'
 import { setupRoutes } from './routes/'
 import { listenOnPort } from './server'
@@ -39,6 +41,7 @@ export class OpenAPIServer {
           store.apiPort = actualPort
           store.apiKey = data.apiKey
           console.log(`OpenAPI server is running on ${actualPort}`)
+          await this.writeCodexBootstrapConfig(actualPort, data.apiKey)
           return { success: true, port: actualPort }
         }
         catch (error) {
@@ -95,6 +98,25 @@ export class OpenAPIServer {
       }
       throw error
     })
+  }
+
+  private async writeCodexBootstrapConfig(apiPort: number, apiKey?: string, workspaceId = store.workspaceId) {
+    try {
+      const written = await writeCodexBootstrapConfig({
+        apiKey,
+        workspaceId,
+        apiHost: `http://127.0.0.1:${apiPort}`,
+      }, {
+        isProduction: isProd,
+      })
+
+      if (!written) {
+        console.warn('OpenAPI server skipped Codex bootstrap config: missing apiKey, workspaceId, or apiHost')
+      }
+    }
+    catch (error) {
+      console.error('OpenAPI server failed to write Codex bootstrap config:', error)
+    }
   }
 
   async stop() {

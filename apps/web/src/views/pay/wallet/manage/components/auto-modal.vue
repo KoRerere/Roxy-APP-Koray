@@ -7,6 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 
 const emit = defineEmits<{
   (e: 'close', needUpdate: boolean): void
@@ -16,11 +17,10 @@ const [_, onlyErrorToast] = useResponseToast()
 const { userPayInfo } = storeToRefs(useUserStore())
 const billingLabels = useBillingEntityLabels()
 
-const autoRenewOpen = AutoRenewalStatus.Open.toString()
-const autoRenewClose = AutoRenewalStatus.Close.toString()
-const isAuto = ref(userPayInfo.value.isAuto.toString())
+const isAuto = ref(userPayInfo.value.isAuto)
 const needUpdate = ref(false)
 const currentPlan = ref<Array<{ label: string, value?: string, class?: string }>>([])
+const { beforeToggleAutoRenew } = useConfirmAutoRenew()
 
 onBeforeMount(() => {
   getCurrentPlan()
@@ -29,8 +29,9 @@ onBeforeMount(() => {
 async function getCurrentPlan() {
   const { code, data, msg } = await API.pay.userGetAutoSubscriptionInfoList({ queryType: 'profile' })
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
   currentPlan.value = [
     {
       label: $t('价格'),
@@ -56,7 +57,7 @@ async function toggleAutoRenew() {
   const { code, msg } = await API.pay.userSetAutoRenewalStatusCreate({ status: Number(isAuto.value) })
   onlyErrorToast(code, msg)
   if (code !== 0) {
-    isAuto.value = userPayInfo.value.isAuto.toString()
+    isAuto.value = userPayInfo.value.isAuto
     return
   }
   needUpdate.value = true
@@ -75,17 +76,17 @@ function close() {
     </div>
     <div class="flex flex-col gap-3">
       <div class="sub-title flex items-center justify-between">
-        <span class="title">{{ $t('自动续订') }}</span>
-        <RxToggleSwitch v-model="isAuto" :true-value="autoRenewOpen" :false-value="autoRenewClose" @change="toggleAutoRenew" />
+        <span class="title">{{ $t('自动续费') }}</span>
+        <RxToggleSwitch v-model="isAuto" :true-value="AutoRenewalStatus.Open" :false-value="AutoRenewalStatus.Close" :before-change="beforeToggleAutoRenew" @change="toggleAutoRenew" />
       </div>
       <div class="desc">
         <div>{{ $t('续订费用将在订阅到期当日从您的钱包中扣除。') }}</div>
         <i18n-t class="whitespace-pre-wrap desc" tag="div" :keypath="$t('您可以提前向钱包储值，或{link}。', { link: '{link}' })" scope="global">
           <template #link>
-            <span class="font-bold">{{ $t('启用自动续订组合支付') }}</span>
+            <span class="font-bold">{{ $t('启用自动续费组合支付') }}</span>
           </template>
         </i18n-t>
-        <i18n-t class="whitespace-pre-wrap desc" tag="div" :keypath="$t('启用自动续订将享受 {discount}。', { discount: '{discount}' })" scope="global">
+        <i18n-t class="whitespace-pre-wrap desc" tag="div" :keypath="$t('启用自动续费将享受 {discount}。', { discount: '{discount}' })" scope="global">
           <template #discount>
             <span class="discount">{{ $t('{discount}% Off', { discount: userPayInfo.autoRenewDiscount }) }}</span>
           </template>

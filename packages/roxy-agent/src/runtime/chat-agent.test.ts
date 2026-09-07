@@ -90,7 +90,7 @@ describe('runtime chat agent tree configuration', () => {
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('`<system-lang>` value from the latest metadata message')
     expect(createRuntimeSystemPrompt()).toBe(ROXY_MAIN_SYSTEM_PROMPT)
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Lead with the outcome')
-    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Templates are reusable RoxyBrowser wrappers')
+    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Templates are reusable Roxy Agent artifacts')
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('RoxyBrowser exposes a bounded set of product actions')
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('perform at most one focused capability check')
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Do not repeatedly probe guessed endpoints')
@@ -117,6 +117,27 @@ describe('runtime chat agent tree configuration', () => {
     expect(ROXY_MAIN_SYSTEM_PROMPT).not.toContain('ROXY_APPLY_PATCH_START')
     expect(ROXY_MAIN_SYSTEM_PROMPT).not.toContain('ROXY_MAIN_AGENT_START')
     expect(ROXY_MAIN_SYSTEM_PROMPT).not.toContain('ROXY_GENERAL_PURPOSE_AGENT_START')
+  })
+
+  it('keeps report and template-save rules on the root prompt only', () => {
+    const rootPrompt = createRuntimeSystemPrompt()
+    const childPrompt = createGeneralPurposeSystemPrompt()
+
+    expect(rootPrompt).toContain('call `roxy_task_report` after all operational tools finish')
+    expect(rootPrompt).toContain('the profile references in the user message are the admission set')
+    expect(rootPrompt).toContain('status=unused')
+    expect(rootPrompt).toContain('taskName must use the user\'s system language')
+    expect(rootPrompt).toContain('key, a brief user-facing name, and a concise primitive value')
+    expect(rootPrompt).toContain('Direct execution of an existing template is an exception to all task-report rules below')
+    expect(rootPrompt).toContain('This applies to script, skill, and prompt templates from any source')
+    expect(rootPrompt).toContain('regardless of the template\'s business purpose, number of browser windows, batch behavior, or execution outcome')
+    expect(rootPrompt).toContain('do not produce a report that invites the user to save the same workflow as another template')
+    expect(rootPrompt).toContain('`roxy_save_user_template`')
+    expect(rootPrompt).toContain('use the `roxy-template-creator` skill')
+    expect(rootPrompt).toContain('window-independent companion Composer prompt')
+    expect(rootPrompt).toContain('Never copy report window ids or add `[@profile:...]()`')
+    expect(childPrompt).not.toContain('roxy_task_report')
+    expect(childPrompt).not.toContain('roxy_save_user_template')
   })
 
   it('prefers rg guidance and rg-based memory search when ripgrep is available', () => {

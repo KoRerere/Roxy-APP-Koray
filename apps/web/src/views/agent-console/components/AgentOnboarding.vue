@@ -2,67 +2,62 @@
 import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { grantAgentOnboardingGuidePoints } from '../onboarding-gift'
+import type { OnboardingScenarioId } from '../onboarding-scenarios'
+import { isOnboardingScenarioId, ONBOARDING_TEMPLATE_SLUGS, resolveOnboardingScenarioIcon } from '../onboarding-scenarios'
+import type { OfficialTemplate } from '../template-store'
+import { pickLocalized } from '../template-store'
 import AgentTooltip from './AgentTooltip.vue'
+import OverflowTooltip from './OverflowTooltip.vue'
 import OnboardingSendGuide from './OnboardingSendGuide.vue'
+import { useThemeStore } from '/@/stores/theme'
+import { useSimpleLocale } from '/@/stores/locale'
 
-type OnboardingScenarioId = 'create' | 'publish' | 'nurture' | 'analytics'
+type LegacyOnboardingScenarioId = 'create' | 'publish' | 'nurture' | 'analytics'
+type OnboardingDemoScenarioId = OnboardingScenarioId | LegacyOnboardingScenarioId
 
 interface OnboardingScenario {
-  id: OnboardingScenarioId
-  icon: string
+  id: OnboardingDemoScenarioId
+  icon?: string
   title: string
   description: string
   demoPrompt: string
 }
 
 const props = defineProps<{
+  completionVisible?: boolean
+  scenarioTemplates?: Partial<Record<OnboardingScenarioId, OfficialTemplate | null>>
   sessionKey: number
   visible: boolean
 }>()
 
 const emit = defineEmits<{
   close: []
+  completionContinue: []
+  completionRestart: []
   experience: [scenario: OnboardingScenarioId]
 }>()
 
 const userStore = useUserStore()
 const workspaceStore = useWorkspaceStore()
+const themeStore = useThemeStore()
+const localeStore = useSimpleLocale()
 
-const scenarios: OnboardingScenario[] = [
-  {
-    id: 'create',
-    icon: 'roxy-agent/rx-ic-browser-control',
-    title: $t('批量创建窗口'),
-    description: $t('批量创建窗口并自动配置代理和平台账号'),
-    demoPrompt: $t('帮我新建3个窗口环境，配置好代理，绑定好平台账号'),
-  },
-  {
-    id: 'publish',
-    icon: 'roxy-agent/rx-ic-attachment',
-    title: $t('AI 批量发布视频'),
-    description: $t('在指定窗口中自动发布视频'),
-    demoPrompt: $t('在这些窗口中发布视频'),
-  },
-  {
-    id: 'nurture',
-    icon: 'roxy-agent/rx-ic-scripts',
-    title: $t('AI 全自动养号'),
-    description: $t('在指定窗口中自动执行TikTok拟真人养号流程'),
-    demoPrompt: $t('在选择的窗口中运行 TikTok推荐页养号'),
-  },
-  {
-    id: 'analytics',
-    icon: 'roxy-agent/rx-ic-templates',
-    title: $t('AI 数据分析'),
-    description: $t('自动查看TikTok评论区并AI分析客户意向等'),
-    demoPrompt: $t('在选择的窗口中运行 TikTok带货评论分析'),
-  },
-]
+const scenarios = computed<OnboardingScenario[]>(() => (
+  (Object.keys(ONBOARDING_TEMPLATE_SLUGS) as OnboardingScenarioId[]).map((id) => {
+    const template = props.scenarioTemplates?.[id]
+    return {
+      id,
+      title: pickLocalized(template?.name, localeStore.currentLocale) || template?.slug || '',
+      description: pickLocalized(template?.description, localeStore.currentLocale),
+      demoPrompt: '',
+    }
+  })
+))
 
 const page = ref<1 | 2 | 3 | 4>(1)
 const welcomeGiftVisible = ref(false)
 let welcomeGiftRequestVersion = 0
-const selectedId = ref<OnboardingScenarioId>('create')
+const selectedId = ref<OnboardingDemoScenarioId>('copy-editing')
 const draft = ref('')
 const typing = ref(false)
 const promptRichVisible = ref(false)
@@ -91,7 +86,14 @@ const onboardingMainRef = ref<HTMLElement | null>(null)
 const demoComposerRef = ref<HTMLElement | null>(null)
 const selectWindowButtonRef = ref<HTMLElement | null>(null)
 const sendButtonRef = ref<HTMLButtonElement | null>(null)
-const selected = computed(() => scenarios.find(item => item.id === selectedId.value) ?? scenarios[0]!)
+const selected = computed(() => scenarios.value.find(item => item.id === selectedId.value) ?? scenarios.value[0]!)
+function getScenarioIcon(scenario: OnboardingScenario): ReturnType<typeof resolveOnboardingScenarioIcon> {
+  return resolveOnboardingScenarioIcon(
+    isOnboardingScenarioId(scenario.id) ? props.scenarioTemplates?.[scenario.id]?.iconInfo : undefined,
+    scenario.icon ?? 'roxy-agent/rx-ic-skills',
+    themeStore.realTheme === 'dark',
+  )
+}
 const createdProfiles = [
   { id: '001', name: 'Roxy-TikTok-01', proxy: 'US · 192.168.1.101' },
   { id: '002', name: 'Roxy-TikTok-02', proxy: 'US · 192.168.1.102' },
@@ -99,7 +101,7 @@ const createdProfiles = [
 ]
 const createdProfileCount = computed(() => Math.min(3, Math.floor(progress.value / 25)))
 const visibleCreatedProfiles = computed(() => createdProfiles.slice(0, createdProfileCount.value))
-const createExecutionLines = [
+const createExecutionLines = computed(() => [
   $t('正在读取批量创建配置…'),
   ...createdProfiles.map((profile, index) => $t('{order} {name} 已创建，独立代理 {proxy} 已配置。', {
     order: [$t('第一个窗口'), $t('第二个窗口'), $t('第三个窗口')][index],
@@ -107,39 +109,41 @@ const createExecutionLines = [
     proxy: profile.proxy,
   })),
   $t('创建完成：3 个窗口均已创建，并已配置独立代理。'),
-]
+])
 const publishProfiles = ['TikTok-1', 'TikTok-2', 'TikTok-3', 'TikTok-4']
-const publishExecutionLines = [
+const publishExecutionLines = computed(() => [
   $t('收到，已连接 4 个窗口'),
   $t('4 个窗口开始上传视频'),
   $t('正在填写信息'),
   $t('视频发布完成 4/4'),
-]
+])
 const publishStage = computed(() => Math.min(4, Math.floor(progress.value / 25)))
-const nurtureExecutionLines = [
+const nurtureExecutionLines = computed(() => [
   $t('收到，已连接 4 个窗口'),
   $t('开始浏览推荐内容'),
   $t('执行点赞、收藏和停留操作'),
   $t('本轮养号完成，共计 20 项互动行为'),
-]
+])
 const nurtureStage = computed(() => Math.min(4, Math.floor(progress.value / 25)))
-const analyticsExecutionLines = [
+const analyticsExecutionLines = computed(() => [
   $t('收到，已连接 4 个窗口'),
   $t('开始收集四个账号的评论信息'),
   $t('归纳用户痛点、购买意向、常见问题和负面反馈'),
   $t('正在生成 CSV 文件'),
   $t('分析完成'),
-]
+])
 const analyticsStage = computed(() => Math.min(5, Math.floor(progress.value / 20)))
-const analyticsComments = [
-  { user: 'mila_shop', text: $t('尺码偏小吗？平时穿 M 应该选什么码？'), time: $t('{minutes}分钟前', { minutes: 12 }) },
-  { user: 'dailyfinds', text: $t('已经回购第二次了，包装和物流都不错。'), time: $t('{minutes}分钟前', { minutes: 5 }) },
-  { user: 'amy_review', text: $t('有没有其他颜色？想要深色款。'), time: $t('{minutes}分钟前', { minutes: 8 }) },
-  { user: 'leo_2026', text: $t('价格有点高，活动期间会有优惠吗？'), time: $t('{minutes}分钟前', { minutes: 12 }) },
-  { user: 'goodthings', text: $t('实际效果和视频里一样吗？'), time: $t('{minutes}分钟前', { minutes: 18 }) },
-  { user: 'tina_home', text: $t('希望可以再详细介绍一下使用方法。'), time: $t('{minutes}分钟前', { minutes: 22 }) },
-]
-const analyticsCommentLoop = [...analyticsComments, ...analyticsComments]
+const analyticsCommentLoop = computed(() => {
+  const analyticsComments = [
+    { user: 'mila_shop', text: $t('尺码偏小吗？平时穿 M 应该选什么码？'), time: $t('{minutes}分钟前', { minutes: 12 }) },
+    { user: 'dailyfinds', text: $t('已经回购第二次了，包装和物流都不错。'), time: $t('{minutes}分钟前', { minutes: 5 }) },
+    { user: 'amy_review', text: $t('有没有其他颜色？想要深色款。'), time: $t('{minutes}分钟前', { minutes: 8 }) },
+    { user: 'leo_2026', text: $t('价格有点高，活动期间会有优惠吗？'), time: $t('{minutes}分钟前', { minutes: 12 }) },
+    { user: 'goodthings', text: $t('实际效果和视频里一样吗？'), time: $t('{minutes}分钟前', { minutes: 18 }) },
+    { user: 'tina_home', text: $t('希望可以再详细介绍一下使用方法。'), time: $t('{minutes}分钟前', { minutes: 22 }) },
+  ]
+  return [...analyticsComments, ...analyticsComments]
+})
 const CREATE_CHARACTER_DELAY = 18
 const CREATE_PROFILE_INTERVAL = 1000
 
@@ -148,8 +152,9 @@ const timers = new Set<ReturnType<typeof setTimeout>>()
 function schedule(callback: () => void, delay: number) {
   const timer = setTimeout(() => {
     timers.delete(timer)
-    if (!props.visible)
+    if (!props.visible && !props.completionVisible) {
       return
+    }
     callback()
   }, delay)
   timers.add(timer)
@@ -177,8 +182,9 @@ function playCompletionCreditsCountUp() {
       const easedRatio = 1 - (1 - ratio) ** 3
       completionCredits.value = Math.round(200 * easedRatio)
 
-      if (ratio < 1)
+      if (ratio < 1) {
         schedule(updateCredits, 16)
+      }
     }
 
     updateCredits()
@@ -214,7 +220,7 @@ function resetDemo() {
 function resetOnboarding() {
   resetDemo()
   page.value = 1
-  selectedId.value = 'create'
+  selectedId.value = 'copy-editing'
   welcomeGiftVisible.value = false
   void refreshWelcomeGift()
 }
@@ -222,8 +228,9 @@ function resetOnboarding() {
 async function refreshWelcomeGift() {
   const requestVersion = ++welcomeGiftRequestVersion
   const workspaceId = workspaceStore.currentWorkspace?.id
-  if (!workspaceId)
+  if (!workspaceId) {
     return
+  }
 
   try {
     const response = await grantAgentOnboardingGuidePoints(workspaceId)
@@ -253,11 +260,18 @@ async function refreshWelcomeGift() {
   }
 }
 
-function chooseScenario(id: OnboardingScenarioId) {
+function chooseScenario(id: OnboardingDemoScenarioId) {
   selectedId.value = id
 }
 
-function openDemo() {
+function continueToAgent() {
+  clearTimers()
+  if (isOnboardingScenarioId(selectedId.value)) {
+    emit('experience', selectedId.value)
+  }
+}
+
+function _openDemo() {
   resetDemo()
   page.value = 3
   status.value = $t('正在填写指令')
@@ -294,8 +308,9 @@ function makeReadyToSend() {
 
 function moveAutoCursorTo(target: Element | null, fromOffset?: { x: number, y: number }) {
   const composer = demoComposerRef.value
-  if (!composer || !target)
+  if (!composer || !target) {
     return
+  }
 
   const composerRect = composer.getBoundingClientRect()
   const targetRect = target.getBoundingClientRect()
@@ -370,8 +385,9 @@ function playPublishWindowSelection() {
 }
 
 function playExecution() {
-  if (!readyToSend.value || completed.value)
+  if (!readyToSend.value || completed.value) {
     return
+  }
 
   readyToSend.value = false
   sendGuideVisible.value = false
@@ -415,12 +431,14 @@ function playExecution() {
 }
 
 function streamCreateLine(lineIndex: number) {
-  const line = createExecutionLines[lineIndex]
-  if (!line)
+  const line = createExecutionLines.value[lineIndex]
+  if (!line) {
     return
+  }
 
-  if (createExecutionText.value)
+  if (createExecutionText.value) {
     createExecutionText.value += '\n'
+  }
 
   let characterIndex = 0
   const typeNextCharacter = () => {
@@ -430,7 +448,7 @@ function streamCreateLine(lineIndex: number) {
       return
     }
 
-    if (lineIndex < createExecutionLines.length - 1) {
+    if (lineIndex < createExecutionLines.value.length - 1) {
       schedule(() => streamCreateLine(lineIndex + 1), lineIndex === 0 ? 260 : 360)
       return
     }
@@ -454,12 +472,14 @@ function playCreateExecution() {
 }
 
 function streamPublishLine(lineIndex: number) {
-  const line = publishExecutionLines[lineIndex]
-  if (!line)
+  const line = publishExecutionLines.value[lineIndex]
+  if (!line) {
     return
+  }
 
-  if (publishExecutionText.value)
+  if (publishExecutionText.value) {
     publishExecutionText.value += '\n'
+  }
 
   let characterIndex = 0
   const typeNextCharacter = () => {
@@ -470,7 +490,7 @@ function streamPublishLine(lineIndex: number) {
     }
 
     progress.value = (lineIndex + 1) * 25
-    if (lineIndex < publishExecutionLines.length - 1) {
+    if (lineIndex < publishExecutionLines.value.length - 1) {
       schedule(() => streamPublishLine(lineIndex + 1), 600)
       return
     }
@@ -488,12 +508,14 @@ function playPublishExecution() {
 }
 
 function streamNurtureLine(lineIndex: number) {
-  const line = nurtureExecutionLines[lineIndex]
-  if (!line)
+  const line = nurtureExecutionLines.value[lineIndex]
+  if (!line) {
     return
+  }
 
-  if (nurtureExecutionText.value)
+  if (nurtureExecutionText.value) {
     nurtureExecutionText.value += '\n'
+  }
 
   let characterIndex = 0
   const typeNextCharacter = () => {
@@ -504,7 +526,7 @@ function streamNurtureLine(lineIndex: number) {
     }
 
     progress.value = (lineIndex + 1) * 25
-    if (lineIndex < nurtureExecutionLines.length - 1) {
+    if (lineIndex < nurtureExecutionLines.value.length - 1) {
       const stageDelay = [900, 1800, 6600][lineIndex] ?? 900
       schedule(() => streamNurtureLine(lineIndex + 1), stageDelay)
       return
@@ -523,12 +545,14 @@ function playNurtureExecution() {
 }
 
 function streamAnalyticsLine(lineIndex: number) {
-  const line = analyticsExecutionLines[lineIndex]
-  if (!line)
+  const line = analyticsExecutionLines.value[lineIndex]
+  if (!line) {
     return
+  }
 
-  if (analyticsExecutionText.value)
+  if (analyticsExecutionText.value) {
     analyticsExecutionText.value += '\n'
+  }
 
   let characterIndex = 0
   const typeNextCharacter = () => {
@@ -539,7 +563,7 @@ function streamAnalyticsLine(lineIndex: number) {
     }
 
     progress.value = (lineIndex + 1) * 20
-    if (lineIndex < analyticsExecutionLines.length - 1) {
+    if (lineIndex < analyticsExecutionLines.value.length - 1) {
       const stageDelay = [700, 1800, 2400, 1400][lineIndex] ?? 700
       schedule(() => streamAnalyticsLine(lineIndex + 1), stageDelay)
       return
@@ -563,8 +587,9 @@ function backToChoose() {
 }
 
 function showCompletionDialog() {
-  if (page.value !== 4 || !completed.value)
+  if (page.value !== 4 || !completed.value) {
     return
+  }
 
   completionDialogVisible.value = true
   playCompletionCreditsCountUp()
@@ -576,17 +601,36 @@ function close() {
 }
 
 function experience() {
-  if (page.value !== 4 || !completed.value)
+  if (props.completionVisible) {
+    clearTimers()
+    emit('completionContinue')
     return
+  }
+
+  if (page.value !== 4 || !completed.value) {
+    return
+  }
 
   clearTimers()
-  emit('experience', selected.value.id)
+  if (isOnboardingScenarioId(selected.value.id)) {
+    emit('experience', selected.value.id)
+  }
+}
+
+function restartFromCompletion() {
+  if (props.completionVisible) {
+    clearTimers()
+    emit('completionRestart')
+    return
+  }
+
+  backToChoose()
 }
 
 const ScenarioPrompt = defineComponent({
   name: 'ScenarioPrompt',
   props: {
-    scenarioId: { type: String as PropType<OnboardingScenarioId>, required: true },
+    scenarioId: { type: String as PropType<OnboardingDemoScenarioId>, required: true },
     text: { type: String, required: true },
     compact: Boolean,
     showProfile: { type: Boolean, default: true },
@@ -594,8 +638,9 @@ const ScenarioPrompt = defineComponent({
   },
   setup(scenarioProps) {
     return () => {
-      if (scenarioProps.scenarioId === 'create')
+      if (scenarioProps.scenarioId === 'create') {
         return h('span', scenarioProps.text)
+      }
 
       const profile = h('span', { class: 'demo-token demo-token--profile' }, [
         h('span', { class: 'demo-token__prefix' }, `${$t('窗口')}`),
@@ -604,18 +649,21 @@ const ScenarioPrompt = defineComponent({
 
       if (scenarioProps.scenarioId === 'publish') {
         const content = [h('span', {}, $t('在这些窗口中发布视频'))]
-        if (scenarioProps.showProfile)
+        if (scenarioProps.showProfile) {
           content.push(profile)
+        }
         return h('span', { class: 'scenario-prompt' }, content)
       }
 
       const templateName = scenarioProps.scenarioId === 'nurture' ? $t('TikTok推荐页养号') : $t('TikTok带货评论分析')
       const script = h('span', { class: 'demo-token demo-token--script' }, `${templateName}`)
       const content = [h('span', {}, $t('在选择的窗口中运行'))]
-      if (scenarioProps.showTemplate)
+      if (scenarioProps.showTemplate) {
         content.push(script)
-      if (scenarioProps.showProfile)
+      }
+      if (scenarioProps.showProfile) {
         content.push(profile)
+      }
       return h('span', { class: 'scenario-prompt' }, content)
     }
   },
@@ -633,10 +681,18 @@ watch(() => props.visible, (visible) => {
   }
 })
 
+watch(() => props.completionVisible, (visible) => {
+  completionCredits.value = 0
+  if (visible) {
+    playCompletionCreditsCountUp()
+  }
+}, { flush: 'post' })
+
 watch(completed, (isCompleted) => {
   completionCredits.value = 0
-  if (!isCompleted)
+  if (!isCompleted) {
     completionDialogVisible.value = false
+  }
 }, { flush: 'sync' })
 
 watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
@@ -688,7 +744,7 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
         <template v-else-if="page === 2">
           <div class="page-title">
             <div>
-              <h1>{{ $t('1.选择一个演示场景') }}</h1>
+              <h1>{{ $t('选择一个演示场景') }}</h1>
             </div>
           </div>
 
@@ -703,11 +759,23 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
                 @click="chooseScenario(scenario.id)"
               >
                 <span class="scenario-icon">
-                  <SvgIcon :name="scenario.icon" size="20" color="currentColor" />
+                  <img
+                    v-if="getScenarioIcon(scenario).isImage"
+                    :src="getScenarioIcon(scenario).source"
+                    :alt="scenario.title"
+                  >
+                  <SvgIcon
+                    v-else
+                    :name="getScenarioIcon(scenario).source as any"
+                    size="48"
+                    color="currentColor"
+                  />
                 </span>
                 <span class="scenario-copy">
                   <strong>{{ scenario.title }}</strong>
-                  <small>{{ scenario.description }}</small>
+                  <small>
+                    <OverflowTooltip :content="scenario.description" fallback="" placement="top" :z-index="2147483001" />
+                  </small>
                 </span>
                 <span class="scenario-radio" />
               </button>
@@ -718,7 +786,7 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
             <button class="secondary-action" type="button" @click="page = 1">
               {{ $t('上一步') }}
             </button>
-            <button class="primary-action compact" type="button" @click="openDemo">
+            <button class="primary-action compact" type="button" @click="continueToAgent">
               {{ $t('下一步') }} <span><img class="button-arrow-icon" src="/images/agent-onboarding/icons/arrow-right.svg" alt=""></span>
             </button>
           </div>
@@ -757,7 +825,7 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
                   <nav class="browser-nav-demo">
                     <div class="browser-menu-item active">
                       <SvgIcon name="base/rx_ic_browser" size="17" color="currentColor" />
-                      {{ $t('全部窗口') }}
+                      {{ $t('窗口管理') }}
                     </div>
                     <div class="browser-menu-item">
                       <SvgIcon name="base/rx_ic_stack" size="17" color="currentColor" />
@@ -1182,76 +1250,6 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
               {{ $t('完成') }}
             </button>
           </div>
-
-          <Transition name="completion-dialog">
-            <div v-if="completionDialogVisible" class="onboarding-completion-mask">
-              <section class="onboarding-completion-dialog" role="dialog" aria-modal="true" :aria-labelledby="`onboarding-completion-title-${sessionKey}`">
-                <div class="onboarding-completion-visual" aria-hidden="true">
-                  <i v-for="index in 18" :key="index" class="onboarding-completion-particle" />
-                  <span class="onboarding-completion-orbit onboarding-completion-orbit--outer" />
-                  <span class="onboarding-completion-orbit onboarding-completion-orbit--inner" />
-                  <span class="onboarding-completion-icon">
-                    <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-                      <path d="M8.5 18.5L13.2 23.2L25.8 10.8" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                  </span>
-                </div>
-
-                <div class="onboarding-completion-copy">
-                  <h2 :id="`onboarding-completion-title-${sessionKey}`">
-                    {{ $t('新手引导已完成') }}
-                  </h2>
-                  <p class="onboarding-completion-subtitle">
-                    {{ $t('你已经了解 Agent 的基本使用方式') }}
-                  </p>
-                  <div class="onboarding-completion-reward">
-                    <span class="onboarding-completion-reward-medal" aria-hidden="true">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15.5 13C19.0899 13 22 12.1046 22 11C22 9.89543 19.0899 9 15.5 9C11.9101 9 9 9.89543 9 11C9 12.1046 11.9101 13 15.5 13Z" stroke="white" stroke-width="2" />
-                        <path d="M22 15.5C22 16.6046 19.0899 17.5 15.5 17.5C11.9101 17.5 9 16.6046 9 15.5" stroke="white" stroke-width="2" />
-                        <path d="M22 11V19.8C22 21.015 19.0899 22 15.5 22C11.9101 22 9 21.015 9 19.8V11" stroke="white" stroke-width="2" />
-                        <path d="M8.5 6C12.0899 6 15 5.10457 15 4C15 2.89543 12.0899 2 8.5 2C4.91015 2 2 2.89543 2 4C2 5.10457 4.91015 6 8.5 6Z" stroke="white" stroke-width="2" />
-                        <path d="M6 11C4.10819 10.7698 2.36991 10.1745 2 9M6 16C4.10819 15.7698 2.36991 15.1745 2 14" stroke="white" stroke-width="2" stroke-linecap="round" />
-                        <path d="M6 21C4.10819 20.7698 2.36991 20.1745 2 19V4" stroke="white" stroke-width="2" stroke-linecap="round" />
-                        <path d="M15 6V4" stroke="white" stroke-width="2" stroke-linecap="round" />
-                      </svg>
-                    </span>
-                    <span class="onboarding-completion-reward-copy">
-                      <span class="onboarding-completion-reward-main">
-                        <strong class="onboarding-completion-credits">+{{ completionCredits }}</strong>
-                        <span class="onboarding-completion-credits-label">{{ $t('积分已到账') }}</span>
-                      </span>
-                      <small>
-                        <span>{{ $t('含新用户100积分，约可执行50+次AI任务') }}</span>
-                        <AgentTooltip placement="top" :offset="8" :z-index="2147483001">
-                          <button class="onboarding-completion-task-info" type="button" :aria-label="$t('约可执行50+次AI任务')">
-                            <SvgIcon name="base/rx_ic_info" size="12" color="currentColor" />
-                          </button>
-                          <template #content>
-                            <span class="onboarding-completion-task-tooltip">
-                              <span>{{ $t('单任务视频发布约 {n} 次', { n: 50 }) }}</span>
-                              <span>{{ $t('竞品数据采集约 {n} 次', { n: 20 }) }}</span>
-                              <span>{{ $t('单窗口账号养号约 {n} 次', { n: 20 }) }}</span>
-                              <span>{{ $t('执行自动化脚本约 {n} 次', { n: 84 }) }}</span>
-                            </span>
-                          </template>
-                        </AgentTooltip>
-                      </small>
-                    </span>
-                  </div>
-                </div>
-
-                <div class="onboarding-completion-actions">
-                  <button class="secondary-action" type="button" @click="backToChoose">
-                    {{ $t('重新选择场景') }}
-                  </button>
-                  <button class="primary-action compact" type="button" @click="experience">
-                    {{ $t('立即使用') }} <span><img class="button-arrow-icon" src="/images/agent-onboarding/icons/arrow-right.svg" alt=""></span>
-                  </button>
-                </div>
-              </section>
-            </div>
-          </Transition>
         </template>
       </main>
 
@@ -1262,6 +1260,76 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
         :visible="sendGuideVisible"
       />
     </section>
+
+    <Transition name="completion-dialog">
+      <div v-if="completionDialogVisible || completionVisible" class="onboarding-completion-mask">
+        <section class="onboarding-completion-dialog" role="dialog" aria-modal="true" :aria-labelledby="`onboarding-completion-title-${sessionKey}`">
+          <div class="onboarding-completion-visual" aria-hidden="true">
+            <i v-for="index in 18" :key="index" class="onboarding-completion-particle" />
+            <span class="onboarding-completion-orbit onboarding-completion-orbit--outer" />
+            <span class="onboarding-completion-orbit onboarding-completion-orbit--inner" />
+            <span class="onboarding-completion-icon">
+              <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                <path d="M8.5 18.5L13.2 23.2L25.8 10.8" stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
+          </div>
+
+          <div class="onboarding-completion-copy">
+            <h2 :id="`onboarding-completion-title-${sessionKey}`">
+              {{ $t('新手引导已完成') }}
+            </h2>
+            <p class="onboarding-completion-subtitle">
+              {{ $t('你已经了解 Agent 的基本使用方式') }}
+            </p>
+            <div class="onboarding-completion-reward">
+              <span class="onboarding-completion-reward-medal" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15.5 13C19.0899 13 22 12.1046 22 11C22 9.89543 19.0899 9 15.5 9C11.9101 9 9 9.89543 9 11C9 12.1046 11.9101 13 15.5 13Z" stroke="white" stroke-width="2" />
+                  <path d="M22 15.5C22 16.6046 19.0899 17.5 15.5 17.5C11.9101 17.5 9 16.6046 9 15.5" stroke="white" stroke-width="2" />
+                  <path d="M22 11V19.8C22 21.015 19.0899 22 15.5 22C11.9101 22 9 21.015 9 19.8V11" stroke="white" stroke-width="2" />
+                  <path d="M8.5 6C12.0899 6 15 5.10457 15 4C15 2.89543 12.0899 2 8.5 2C4.91015 2 2 2.89543 2 4C2 5.10457 4.91015 6 8.5 6Z" stroke="white" stroke-width="2" />
+                  <path d="M6 11C4.10819 10.7698 2.36991 10.1745 2 9M6 16C4.10819 15.7698 2.36991 15.1745 2 14" stroke="white" stroke-width="2" stroke-linecap="round" />
+                  <path d="M6 21C4.10819 20.7698 2.36991 20.1745 2 19V4" stroke="white" stroke-width="2" stroke-linecap="round" />
+                  <path d="M15 6V4" stroke="white" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </span>
+              <span class="onboarding-completion-reward-copy">
+                <span class="onboarding-completion-reward-main">
+                  <strong class="onboarding-completion-credits">+{{ completionCredits }}</strong>
+                  <span class="onboarding-completion-credits-label">{{ $t('积分已到账') }}</span>
+                </span>
+                <small>
+                  <span>{{ $t('含新用户100积分，约可执行50+次AI任务') }}</span>
+                  <AgentTooltip placement="top" :offset="8" :z-index="2147483001">
+                    <button class="onboarding-completion-task-info" type="button" :aria-label="$t('约可执行50+次AI任务')">
+                      <SvgIcon name="base/rx_ic_info" size="12" color="currentColor" />
+                    </button>
+                    <template #content>
+                      <span class="onboarding-completion-task-tooltip">
+                        <span>{{ $t('单任务视频发布约 {n} 次', { n: 50 }) }}</span>
+                        <span>{{ $t('竞品数据采集约 {n} 次', { n: 20 }) }}</span>
+                        <span>{{ $t('单窗口账号养号约 {n} 次', { n: 20 }) }}</span>
+                        <span>{{ $t('执行自动化脚本约 {n} 次', { n: 84 }) }}</span>
+                      </span>
+                    </template>
+                  </AgentTooltip>
+                </small>
+              </span>
+            </div>
+          </div>
+
+          <div class="onboarding-completion-actions">
+            <button class="secondary-action" type="button" @click="restartFromCompletion">
+              {{ $t('重新选择场景') }}
+            </button>
+            <button class="primary-action compact" type="button" @click="experience">
+              {{ $t('立即使用') }} <span><img class="button-arrow-icon" src="/images/agent-onboarding/icons/arrow-right.svg" alt=""></span>
+            </button>
+          </div>
+        </section>
+      </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -1617,6 +1685,12 @@ watch(() => props.sessionKey, resetOnboarding, { flush: 'sync' })
   border-radius: 10px;
   color: #c11574;
   background: var(--agent-gradient-soft);
+}
+
+.scenario-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .scenario-copy {

@@ -11,13 +11,13 @@ export const BEFORE_ENTER_STEP_KEY_PREFIX = 'before_enter_step:'
 export type BeforeEnterStep = 'choose' | 'proxy' | 'third' | 'platform'
 
 /** 跳过引导后的创建账号 tour 阶段 */
-export type EcommerceSkipCreateGuidePhase =
-  | 'create_btn'
-  | 'basic_info'
-  | 'post_create'
+export type EcommerceSkipCreateGuidePhase
+  = | 'create_btn'
+    | 'basic_info'
+    | 'post_create'
   /** 已点击绑定，等待绑定成功后再聚焦启动 */
-  | 'awaiting_bind'
-  | 'open'
+    | 'awaiting_bind'
+    | 'open'
 
 export interface EcommerceSkipCreateGuideState {
   phase: EcommerceSkipCreateGuidePhase
@@ -46,20 +46,24 @@ export function isGuideIncomplete(userInfo: UserInfo): boolean {
 
 /** 仅登录流判断：Owner 且未完成首次引导时应进入 before-enter */
 export function needsBeforeEnter(userInfo: UserInfo, intoWorkspaceId?: number): boolean {
-  if (intoWorkspaceId)
+  if (intoWorkspaceId) {
     return false
-  if (userInfo.role !== Role.OWNER)
+  }
+  if (userInfo.role !== Role.OWNER) {
     return false
+  }
   return isGuideIncomplete(userInfo)
 }
 
 /** 冷启动/导航强制恢复：引导未完成且本地仍有步骤进度 */
 export function needsBeforeEnterResume(userInfo: UserInfo, intoWorkspaceId?: number): boolean {
-  if (!needsBeforeEnter(userInfo, intoWorkspaceId))
+  if (!needsBeforeEnter(userInfo, intoWorkspaceId)) {
     return false
+  }
   const userId = userInfo.id
-  if (userId == null)
+  if (userId == null) {
     return false
+  }
   return hasBeforeEnterProgress(userId)
 }
 
@@ -83,8 +87,9 @@ export function hasBeforeEnterProgress(userId: number | string): boolean {
 /** 进入引导时若尚无进度则写入 choose，不覆盖已有步骤 */
 export function ensureBeforeEnterStep(userId: number | string): BeforeEnterStep {
   const existing = getBeforeEnterStep(userId)
-  if (existing)
+  if (existing) {
     return existing
+  }
   setBeforeEnterStep(userId, 'choose')
   return 'choose'
 }
@@ -111,20 +116,23 @@ export function hasPendingEcommerceOpenGuide(): boolean {
 }
 
 export function consumePendingEcommerceOpenGuide(): boolean {
-  if (sessionStorage.getItem(ECOMMERCE_OPEN_GUIDE_PENDING_KEY) !== '1')
+  if (sessionStorage.getItem(ECOMMERCE_OPEN_GUIDE_PENDING_KEY) !== '1') {
     return false
+  }
   sessionStorage.removeItem(ECOMMERCE_OPEN_GUIDE_PENDING_KEY)
   return true
 }
 
 function parseSkipCreateGuideState(raw: string | null): EcommerceSkipCreateGuideState | null {
-  if (!raw)
+  if (!raw) {
     return null
+  }
   try {
     const parsed = JSON.parse(raw) as Partial<EcommerceSkipCreateGuideState>
     const phases: EcommerceSkipCreateGuidePhase[] = ['create_btn', 'basic_info', 'post_create', 'awaiting_bind', 'open']
-    if (!parsed.phase || !phases.includes(parsed.phase))
+    if (!parsed.phase || !phases.includes(parsed.phase)) {
       return null
+    }
     return {
       phase: parsed.phase,
       skipBind: parsed.skipBind === true,

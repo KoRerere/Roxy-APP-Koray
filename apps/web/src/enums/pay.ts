@@ -3,6 +3,8 @@ import { $t } from '/@/locales'
 export enum PayWay {
   /** 银行卡 */
   Card = 'Card',
+  /** 信用卡 */
+  Credit = 'Credit',
   /** 余额 */
   Balance = 'Balance',
   /** 支付宝 */
@@ -62,37 +64,103 @@ export enum PayWay {
   VietqrVn = 'vietqr_vn',
 }
 
+/** 银行卡与信用卡共用 Stripe 表单、绑卡与订单轮询 */
+export function isCardPayWay(payway?: PayWay | string | null): payway is PayWay.Card | PayWay.Credit {
+  return payway === PayWay.Card || payway === PayWay.Credit
+}
+
 /** 支付方式展示文案 */
 export const PayWayStr = {
-  get [PayWay.Card]() { return $t('银行卡') },
-  get [PayWay.Balance]() { return $t('Roxy 钱包') },
-  get [PayWay.Alipay]() { return $t('支付宝') },
-  get [PayWay.Wechat]() { return $t('微信支付') },
-  get [PayWay.USDT]() { return 'USDT' },
-  get [PayWay.USDC]() { return 'USDC' },
-  get [PayWay.PayPal]() { return 'PayPal' },
-  get [PayWay.ApplePay]() { return 'Apple Pay' },
-  get [PayWay.GooglePay]() { return 'Google Pay' },
-  get [PayWay.FpxMy]() { return 'FPX' },
-  get [PayWay.GcashPh]() { return 'GCash' },
-  get [PayWay.UpiIn]() { return 'UPI' },
-  get [PayWay.EpsAt]() { return 'EPS' },
-  get [PayWay.P24Pl]() { return 'Przelewy24' },
-  get [PayWay.PayuPl]() { return 'PayU PL' },
-  get [PayWay.PayuCz]() { return 'PayU CZ' },
-  get [PayWay.MultibancoPt]() { return 'Multibanco' },
-  get [PayWay.Bitcoin]() { return 'Bitcoin' },
-  get [PayWay.GrabpayMy]() { return 'GrabPay' },
-  get [PayWay.BlikPl]() { return 'BLIK' },
-  get [PayWay.PixBr]() { return 'Pix' },
-  get [PayWay.TouchngoMy]() { return "Touch 'n Go" },
-  get [PayWay.DuitnowMy]() { return 'DuitNow' },
-  get [PayWay.SbpRu]() { return 'SBP' },
-  get [PayWay.YoomoneyRu]() { return 'YooMoney' },
-  get [PayWay.SberpayRu]() { return 'SberPay' },
-  get [PayWay.PromptpayTh]() { return 'PromptPay' },
-  get [PayWay.TruemoneyTh]() { return 'TrueMoney' },
-  get [PayWay.VietqrVn]() { return 'VietQR' },
+  get [PayWay.Card]() {
+    return $t('银行卡')
+  },
+  get [PayWay.Credit]() {
+    return $t('信用卡')
+  },
+  get [PayWay.Balance]() {
+    return $t('Roxy 钱包')
+  },
+  get [PayWay.Alipay]() {
+    return $t('支付宝')
+  },
+  get [PayWay.Wechat]() {
+    return $t('微信支付')
+  },
+  get [PayWay.USDT]() {
+    return 'USDT'
+  },
+  get [PayWay.USDC]() {
+    return 'USDC'
+  },
+  get [PayWay.PayPal]() {
+    return 'PayPal'
+  },
+  get [PayWay.ApplePay]() {
+    return 'Apple Pay'
+  },
+  get [PayWay.GooglePay]() {
+    return 'Google Pay'
+  },
+  get [PayWay.FpxMy]() {
+    return 'FPX'
+  },
+  get [PayWay.GcashPh]() {
+    return 'GCash'
+  },
+  get [PayWay.UpiIn]() {
+    return 'UPI'
+  },
+  get [PayWay.EpsAt]() {
+    return 'EPS'
+  },
+  get [PayWay.P24Pl]() {
+    return 'Przelewy24'
+  },
+  get [PayWay.PayuPl]() {
+    return 'PayU PL'
+  },
+  get [PayWay.PayuCz]() {
+    return 'PayU CZ'
+  },
+  get [PayWay.MultibancoPt]() {
+    return 'Multibanco'
+  },
+  get [PayWay.Bitcoin]() {
+    return 'Bitcoin'
+  },
+  get [PayWay.GrabpayMy]() {
+    return 'GrabPay'
+  },
+  get [PayWay.BlikPl]() {
+    return 'BLIK'
+  },
+  get [PayWay.PixBr]() {
+    return 'Pix'
+  },
+  get [PayWay.TouchngoMy]() {
+    return 'Touch \'n Go'
+  },
+  get [PayWay.DuitnowMy]() {
+    return 'DuitNow'
+  },
+  get [PayWay.SbpRu]() {
+    return 'SBP'
+  },
+  get [PayWay.YoomoneyRu]() {
+    return 'YooMoney'
+  },
+  get [PayWay.SberpayRu]() {
+    return 'SberPay'
+  },
+  get [PayWay.PromptpayTh]() {
+    return 'PromptPay'
+  },
+  get [PayWay.TruemoneyTh]() {
+    return 'TrueMoney'
+  },
+  get [PayWay.VietqrVn]() {
+    return 'VietQR'
+  },
 }
 
 export enum OrderType {
@@ -133,23 +201,57 @@ export enum OrderType {
 }
 
 export const OrderTypeStr = {
-  get [OrderType.Renew]() { return $t('续费') },
-  get [OrderType.Subscribe]() { return $t('订阅') },
-  get [OrderType.Purchase]() { return $t('购买') },
-  get [OrderType.Change]() { return $t('变更') },
-  get [OrderType.Recharge]() { return $t('充值') },
-  get [OrderType.Withdraw]() { return $t('提现') },
-  get [OrderType.Refund]() { return $t('退款') },
-  get [OrderType.Exchange]() { return $t('兑换') },
-  get [OrderType.Gift]() { return $t('赠送') },
-  get [OrderType.ProxyPurchase]() { return $t('代理 IP 购买') },
-  get [OrderType.ProxyRefund]() { return $t('代理 IP 退款') },
-  get [OrderType.ProxyRenew]() { return $t('代理 IP 续费') },
-  get [OrderType.OfficialGift]() { return $t('官方赠送') },
-  get [OrderType.RewardRedeem]() { return $t('奖励兑换') },
-  get [OrderType.EventRewards]() { return $t('活动奖励') },
-  get [OrderType.PointsRecharge]() { return $t('AI Agent 积分购买') },
-  get [OrderType.BandwidthUpgrade]() { return $t('升级带宽') },
+  get [OrderType.Renew]() {
+    return $t('续费')
+  },
+  get [OrderType.Subscribe]() {
+    return $t('订阅')
+  },
+  get [OrderType.Purchase]() {
+    return $t('购买')
+  },
+  get [OrderType.Change]() {
+    return $t('变更')
+  },
+  get [OrderType.Recharge]() {
+    return $t('充值')
+  },
+  get [OrderType.Withdraw]() {
+    return $t('提现')
+  },
+  get [OrderType.Refund]() {
+    return $t('退款')
+  },
+  get [OrderType.Exchange]() {
+    return $t('兑换')
+  },
+  get [OrderType.Gift]() {
+    return $t('赠送')
+  },
+  get [OrderType.ProxyPurchase]() {
+    return $t('代理 IP 购买')
+  },
+  get [OrderType.ProxyRefund]() {
+    return $t('代理 IP 退款')
+  },
+  get [OrderType.ProxyRenew]() {
+    return $t('代理 IP 续费')
+  },
+  get [OrderType.OfficialGift]() {
+    return $t('官方赠送')
+  },
+  get [OrderType.RewardRedeem]() {
+    return $t('奖励兑换')
+  },
+  get [OrderType.EventRewards]() {
+    return $t('活动奖励')
+  },
+  get [OrderType.PointsRecharge]() {
+    return $t('AI Agent 积分购买')
+  },
+  get [OrderType.BandwidthUpgrade]() {
+    return $t('升级带宽')
+  },
 }
 
 export enum SubOrderType {
@@ -157,7 +259,7 @@ export enum SubOrderType {
   Subscribe = 'subscribe',
   /** 升级套餐 */
   Upgrade = 'upgrade',
-  /** 自动续订 */
+  /** 自动续费 */
   Auto = 'auto',
   /** 延长套餐 */
   Extend = 'extend',
@@ -190,11 +292,21 @@ export enum PaymentStatus {
 }
 
 export const PaymentStatusStr = {
-  get [PaymentStatus.Success]() { return $t('支付成功') },
-  get [PaymentStatus.Closed]() { return $t('交易关闭') },
-  get [PaymentStatus.Wait]() { return $t('待支付') },
-  get [PaymentStatus.Fail]() { return $t('支付失败') },
-  get [PaymentStatus.Refund]() { return $t('已退款') },
+  get [PaymentStatus.Success]() {
+    return $t('支付成功')
+  },
+  get [PaymentStatus.Closed]() {
+    return $t('交易关闭')
+  },
+  get [PaymentStatus.Wait]() {
+    return $t('待支付')
+  },
+  get [PaymentStatus.Fail]() {
+    return $t('支付失败')
+  },
+  get [PaymentStatus.Refund]() {
+    return $t('已退款')
+  },
 }
 
 export enum PayIdentity {

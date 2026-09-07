@@ -66,20 +66,23 @@ export function useSubscribe() {
   const { isOwner } = storeToRefs(useRoleStore())
 
   watchEffect(() => {
-    if (!globalThis.isElectron)
+    if (!globalThis.isElectron) {
       return
+    }
 
     // token 清空时 effect 会重跑，顺带重置本会话检查标记，无需额外 watch
     if (!userStore.token) {
       hasCheckedScoreDialog = false
       return
     }
-    if (!userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus)
+    if (!userStore.userInfo.onboardingTaskStatus?.firstRegisterGuideStatus) {
       return
+    }
 
     const workspace = currentWorkspace.value
-    if (!workspace?.id || hasCheckedScoreDialog)
+    if (!workspace?.id || hasCheckedScoreDialog) {
       return
+    }
 
     hasCheckedScoreDialog = true
     // 更新公告已前置到下载完成（ResourceUpdater）；登录就绪后只调度评价弹窗
@@ -171,8 +174,9 @@ export function useSubscribe() {
     globalThis.electronAPI.on('browser:window-open-limit', (result) => {
       console.log('browser:window-open-limit', result)
       // 电商模式由设备绑定/续费引导，不弹出窗口额度升级提示
-      if (isCurrentEcommerceWorkspace())
+      if (isCurrentEcommerceWorkspace()) {
         return
+      }
       handleBusinessCode(result.code)
     })
     /** 当主窗口聚焦时 */
@@ -197,8 +201,9 @@ export function useSubscribe() {
 
   /** 显示升级套餐弹窗 */
   function showUpgradePlanDialog(alertType: MittEvents['showUpgradePlanDialog']) {
-    if (isCurrentEcommerceWorkspace())
+    if (isCurrentEcommerceWorkspace()) {
       return
+    }
 
     showModal({
       header: 'showUpgradePlanDialog',
@@ -231,8 +236,9 @@ export function useSubscribe() {
   /** 显示 APP 更新公告弹窗（前置升级 / 上次更新日志） */
   async function showAppUpgradeDialog(payload: ShowAppUpgradeDialogPayload) {
     const { tips, actionMode = 'dismiss', updateItem } = payload
-    if (!tips?.length)
+    if (!tips?.length) {
       return
+    }
 
     const appVersion = await globalThis.electronAPI.send('app:getAppVersion')
     const headerVersion = updateItem?.version || appVersion
@@ -255,8 +261,9 @@ export function useSubscribe() {
               actionMode={actionMode}
               onSkip={() => {
                 handleCancel()
-                if (actionMode === 'dismiss')
+                if (actionMode === 'dismiss') {
                   checkScoreDialog()
+                }
               }}
               onUpgrade={() => {
                 handleCancel()
@@ -274,8 +281,9 @@ export function useSubscribe() {
 
   /** 显示定向消息弹窗（复用 AppUpgradeTips 富文本翻页） */
   function showMessageTipsDialog(tips: MittEvents['showMessageTipsDialog']) {
-    if (isShowingMessageTips || !tips?.length)
+    if (isShowingMessageTips || !tips?.length) {
       return
+    }
 
     isShowingMessageTips = true
     showModal({
@@ -331,6 +339,10 @@ export function useSubscribe() {
           if (code === 0) {
             (params.payType === PayWay.Balance ? planSuccess() : openProcessing({ payType: params.payType, ...data }, OrderType.Subscribe))
               .finally(() => {
+                // 续费时勾选自动续费会新建订阅关系，钱包页「自动续费服务」列表常驻挂载，需主动同步
+                if (params.isAuto) {
+                  emitter.emit('updateAutoRenewList')
+                }
                 options?.paySuccess?.({ code, data, msg })
               })
           }
@@ -466,8 +478,9 @@ export function useSubscribe() {
     countdown?.stop()
 
     // 活动期间不自动弹评价，避免与活动海报抢焦点
-    if (useCampaignStore().seasonalActivity.active)
+    if (useCampaignStore().seasonalActivity.active) {
       return
+    }
 
     if (userStore.userInfo.onboardingTaskStatus?.autoRatingStatus === false) {
       const $score_timestamp = localStorage.getItem('$score_timestamp')
@@ -481,8 +494,9 @@ export function useSubscribe() {
         onEnd: () => {
           localStorage.removeItem('$score_timestamp')
           // 倒计时结束时若仍在活动期，跳过本次自动弹出
-          if (useCampaignStore().seasonalActivity.active)
+          if (useCampaignStore().seasonalActivity.active) {
             return
+          }
           showModal({
             showHeader: false,
             modal: true,
@@ -498,8 +512,9 @@ export function useSubscribe() {
 
   function showDefaultWorkspaceDialog() {
     // 解决网络过慢时，用户已回到默认空间，封禁空间接口才返回结果导致误弹出
-    if (isOwner.value)
+    if (isOwner.value) {
       return
+    }
     showModal({
       header: 'key',
       showHeader: false,

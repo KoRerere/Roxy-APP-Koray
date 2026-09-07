@@ -8,6 +8,7 @@ import { mkdirSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { mcpToolName } from 'roxy-agent-runtime'
 import { env } from '@/config'
+import { releaseBrowserAutomationControl, syncBrowserAutomationControl } from '@/core/profiles/browserAutomationControl'
 import { RoxyProfileConnectionSource } from '@/core/profiles/profileConnections'
 import { ProfileRuntimeManager } from '@/core/profiles/profileRuntimeManager'
 import { agentPaths } from '@/core/storage/agentPaths'
@@ -21,6 +22,7 @@ export interface CloseableMcpClient {
 interface PlaywrightMcpClientBundle {
   client: CloseableMcpClient
   tools: RuntimeMcpTool[]
+  getActiveTargetId: () => Promise<string | undefined>
 }
 
 interface BindingRecord {
@@ -91,6 +93,10 @@ async function createInProcessPlaywrightMcpClient(
         close: async () => bundle.client.disconnect().finally(() => inMemoryBundle.close()),
       },
       tools: bundle.tools,
+      getActiveTargetId: async () => {
+        const runtime = inMemoryBundle.runtimeManager.getRuntime(inMemoryBundle.getLastSessionId?.())
+        return (await runtime.listTabs()).find(tab => tab.active)?.id
+      },
     }
   }
   catch (err) {
@@ -106,6 +112,17 @@ function originalToolName(name: string): string {
 
 function inputRecord(input: unknown): Record<string, unknown> {
   return input && typeof input === 'object' && !Array.isArray(input) ? input as Record<string, unknown> : {}
+}
+
+function withBrowserLifecycleGuidance(descriptor: ToolDescriptor, rawName: string): ToolDescriptor {
+  const guidance = rawName === 'roxy_browser_launch'
+    ? 'Use this once for each authorized profile window you intend to operate; a successful launch makes that window part of the task report used set.'
+    : rawName === 'roxy_browser_connect'
+      ? 'Use only with an endpoint returned by a browser launch or connection result; do not guess an endpoint or switch profiles.'
+      : undefined
+  return guidance
+    ? { ...descriptor, description: [descriptor.description?.trim(), guidance].filter(Boolean).join(' ') }
+    : descriptor
 }
 
 function launchResult(connection: ProfileConnection, toolUseId: string): ToolResult {
@@ -131,6 +148,12 @@ export class PlaywrightMcpManager {
     this.runtime = options.runtime ?? new ProfileRuntimeManager({
       connections: new RoxyProfileConnectionSource(),
       createResource: connection => this.createProfileResource(connection),
+      onAutomationSync: async (dirId, executionId, targetId) => {
+        return syncBrowserAutomationControl(dirId, executionId, targetId)
+      },
+      onAutomationRelease: async (dirId, executionId) => {
+        await releaseBrowserAutomationControl(dirId, executionId)
+      },
       onRunning: (dirId, binding, connection) => {
         const taskId = binding.owner?.taskId
         if (!taskId) {
@@ -172,8 +195,11 @@ export class PlaywrightMcpManager {
     const tools = descriptors.map((descriptor): RuntimeMcpTool => {
       const rawName = originalToolName(descriptor.name)
       return {
-        descriptor: { ...descriptor, name: mcpToolName(serverName, rawName) },
-        handler: this.createFacadeHandler(binding, rawName),
+        descriptor: {
+          ...withBrowserLifecycleGuidance(descriptor, rawName),
+          name: mcpToolName(serverName, rawName),
+        },
+        handler: this.createFacadeHandler(binding, rawName, options.onBrowserLaunched),
       }
     })
     this.bindings.set(options.bindingId, {
@@ -191,8 +217,8 @@ export class PlaywrightMcpManager {
     return [...(this.bindings.get(bindingId)?.allowedDirIds ?? [])]
   }
 
-  releaseProfileBinding(bindingId: string): void {
-    this.runtime.releaseBinding(bindingId)
+  async releaseProfileBinding(bindingId: string): Promise<void> {
+    await this.runtime.releaseBinding(bindingId)
     this.bindings.delete(bindingId)
   }
 
@@ -221,7 +247,11 @@ export class PlaywrightMcpManager {
     await this.runtime.shutdown()
   }
 
-  private createFacadeHandler(binding: ProfileBinding, rawName: string): ToolHandler {
+  private createFacadeHandler(
+    binding: ProfileBinding,
+    rawName: string,
+    onBrowserLaunched?: (dirId: string) => void,
+  ): ToolHandler {
     if (rawName === 'roxy_browser_launch') {
       return async (input, ctx) => {
         const record = inputRecord(input)
@@ -235,6 +265,7 @@ export class PlaywrightMcpManager {
         if (!connection) {
           throw new Error(`Browser ${dirId} did not provide a usable connection.`)
         }
+        onBrowserLaunched?.(dirId)
         return launchResult(connection, ctx.toolUseId ?? 'roxy_browser_launch')
       }
     }
@@ -275,6 +306,8 @@ export class PlaywrightMcpManager {
         throw new Error(`Playwright profile resource does not expose ${rawName}`)
       }
       return tool.handler(input, ctx)
+    }, {
+      automation: rawName === 'browser_tabs' ? 'sync-before-and-after' : 'sync-before',
     })
   }
 
@@ -332,6 +365,7 @@ export class PlaywrightMcpManager {
       connection,
       close: () => bundle.client.close(),
       cleanupArtifacts: () => rmSync(artifactRoot, { recursive: true, force: true }),
+      getActiveTargetId: () => bundle.getActiveTargetId(),
     }
   }
 
@@ -342,8 +376,7 @@ export class PlaywrightMcpManager {
 
   /** @deprecated Transitional worker API. */
   destroyClientForWorker(workerId: string): Promise<void> {
-    this.releaseProfileBinding(workerId)
-    return Promise.resolve()
+    return this.releaseProfileBinding(workerId)
   }
 
   /** @deprecated Transitional worker API. */

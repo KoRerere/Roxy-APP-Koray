@@ -27,8 +27,9 @@ const initial = model.value ?? {}
 /** 归一化后台协议字段（兼容 protocol、带路径的历史值） */
 function normalizeProxyCategory(raw: unknown) {
   const value = raw?.toString?.()?.split('/')[0]?.trim()
-  if (!value || value.toLowerCase() === 'noproxy')
+  if (!value || value.toLowerCase() === 'noproxy') {
     return ''
+  }
   return value.toLocaleUpperCase()
 }
 
@@ -40,8 +41,9 @@ function scheduleSyncToModel() {
 /** 智能识别：解析成功后回填并同步 */
 function onProxyRulesBlur(event: Event) {
   const result = parseProxyUrl((event.target as HTMLTextAreaElement).value)
-  if (isEmptyValue(Object.values(result).filter(Boolean)))
+  if (isEmptyValue(Object.values(result).filter(Boolean))) {
     return
+  }
 
   const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl } = result
   const ipType = host?.startsWith('[') ? IPType.IPV6 : IPType.IPV4
@@ -82,8 +84,9 @@ async function resolveCheckChannel(ipType: string, currentChannel?: string) {
   const matched = options.find(item => item.value === currentChannel)
   // 仅当当前渠道属于目标字典时才保留，避免 IPv6 渠道在切回 IPv4 后被 currentChannel 粘住
   let checkChannel = matched ? currentChannel : options[0]?.value
-  if (!isIPV6 && !matched)
+  if (!isIPV6 && !matched) {
     checkChannel = userConfigData?.ipChecker || checkChannel
+  }
 
   return { checkChannel, options, dictMap: $dict_map }
 }
@@ -115,8 +118,9 @@ const inputs = [
     resolver: (zod: any) => zod
       .string()
       .refine((value: string) => {
-        if (isEmptyValue(value))
+        if (isEmptyValue(value)) {
           return true
+        }
         return !isEmptyValue(Object.values(parseProxyUrl(value)).filter(Boolean))
       }, { message: $t('解析错误,请检查格式') }),
   },
@@ -173,8 +177,9 @@ const inputs = [
         resolver: (zod: any) => zod
           .string()
           .refine((value: string) => {
-            if (isEmptyValue(value))
+            if (isEmptyValue(value)) {
               return false
+            }
             return Number(value) >= 1 || Number(value) <= 65535
           }, { message: $t('端口范围 1~65535') }),
       },
@@ -309,8 +314,9 @@ function getFormData() {
 
 /** 把当前表单写回 UI 草稿（proxyInfoList[0]）；单窗/模板持久化以扁平字段为准 */
 function syncToModel() {
-  if (!formRef.value)
+  if (!formRef.value) {
     return
+  }
 
   const formData = getFormData()
   const proxyCategory = normalizeProxyCategory(formData.proxyCategory)
@@ -338,29 +344,35 @@ async function applyExternalItem(item: ProxyInfoItem) {
 defineExpose({ applyExternalItem })
 
 async function onCheckProxyStatus() {
-  if (!globalThis.isElectron)
+  if (!globalThis.isElectron) {
     return globalThis.electronAPI.send('proxy:detect', {} as any)
+  }
 
   await formRef.value?.instance!.validate()
-  if (!formRef.value?.instance!.valid)
+  if (!formRef.value?.instance!.valid) {
     return
+  }
 
   // 点击测速前可能仍有未 blur 的文本框，先强制同步
   syncToModel()
   loading.value = true
   const formData = getFormData()
-  // 直连白名单用户标记，与代理创建页测速一致
+  const lastCountry = typeof model.value?.lastCountry === 'string' ? model.value.lastCountry.trim() : ''
+  // 表单字段不含 lastCountry，测速入参带上当前值；失败购买只在有国家时匹配
   const result = await testProxy({
     ...deepClone(formData),
     apiCheck: false,
     isDirect: userPayInfo.value.isDirectWhitelist,
+    proxyType: model.value?.proxyType ?? model.value?.buyProxyType ?? ProxyType.resource,
+    ...(lastCountry ? { lastCountry } : {}),
   })
   loading.value = false
   batchTestShowToast([{ ...result, proxyType: ProxyType.resource }], {
     reCheck: () => onCheckProxyStatus(),
   })
-  if (model.value)
+  if (model.value) {
     Object.assign(model.value, result)
+  }
 }
 </script>
 

@@ -5,6 +5,7 @@ import accountRouter from './account'
 import browserRouter from './browser'
 import projectRouter from './project'
 import proxyRouter from './proxy'
+import workspaceRouter from './workspace'
 
 const notNeedTokenRoutes = [
   '/health',
@@ -17,11 +18,16 @@ const notNeedWorkspaceIdRoutes = [
   '/browser/open',
   '/browser/agent/open',
   '/browser/agent/open_status',
+  '/browser/automation/acquire',
+  '/browser/automation/sync',
+  '/browser/automation/release',
   '/browser/workspace',
+  '/workspace/list',
   '/browser/clear_local_cache',
   '/project/list',
   '/user/info',
   '/user/config',
+  '/workspace/active',
 ]
 
 export function setupRoutes(app: Application) {
@@ -67,6 +73,7 @@ export function setupRoutes(app: Application) {
   app.use('/browser', browserRouter)
   app.use('/project', projectRouter)
   app.use('/proxy', proxyRouter)
+  app.use('/workspace', workspaceRouter)
 
   app.use((req, res) => {
     res.status(404).send('Not Found')

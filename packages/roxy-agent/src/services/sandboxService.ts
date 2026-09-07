@@ -1,11 +1,11 @@
 import type { SandboxHostReservation } from './sandboxHostManager'
 import type { SandboxProfile } from '@/core/sandbox/sandbox-runtime'
-import { RoxyBrowserClient } from '@roxybrowser/openapi'
+import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
 import fsPromises from 'node:fs/promises'
 import path from 'node:path'
-import { env } from '@/config'
 import { profileLeaseRegistry } from '@/core/profiles/profileLeaseRegistry'
+import { getRoxyBrowserClient } from '@/core/roxyBrowserClient'
 import { isLoginRequired } from '@/core/sandbox/script-entry'
 import { agentPaths } from '@/core/storage/agentPaths'
 import {
@@ -80,6 +80,8 @@ export interface StartSandboxScriptRunOptions {
   options?: unknown
   signal?: AbortSignal
   onLog?: (event: SandboxLogEvent) => void
+  /** Called once when this run has to open the requested browser profile. */
+  onBrowserLaunched?: (dirId: string) => void
   taskMonitor?: {
     taskId: string
     browserId?: string
@@ -125,21 +127,6 @@ function inferBrowserType(marionettePort: unknown, ws?: string): 'firefox' | 'ch
     : 'chromium'
 }
 
-let roxyBrowserClient: RoxyBrowserClient | undefined
-
-function getRoxyBrowserClient(): RoxyBrowserClient {
-  const workspaceId = env.ROXY_WORKSPACE_ID
-  if (!workspaceId) {
-    throw new Error('ROXY_WORKSPACE_ID is not configured')
-  }
-
-  return roxyBrowserClient ??= new RoxyBrowserClient({
-    baseUrl: env.ROXY_API_HOST,
-    apiKey: env.ROXY_API_KEY,
-    workspaceId: Number(workspaceId),
-  })
-}
-
 function scriptPathToAssetSlug(scriptPath: string): string {
   const baseName = path.basename(scriptPath)
   const ext = path.extname(baseName)
@@ -161,6 +148,151 @@ export async function openBrowserForDirId(dirId: string): Promise<BrowserConnect
   return {
     ws,
     browserType: inferBrowserType(undefined, ws),
+  }
+}
+
+export interface OpenBrowsersOptions {
+  layout?: 'grid' | 'stack'
+  signal?: AbortSignal
+  onBrowserLaunched?: (dirId: string) => void
+}
+
+interface AgentOpenRow {
+  dirId?: unknown
+  success?: unknown
+  status?: unknown
+  error?: unknown
+  launchInfo?: {
+    ws?: unknown
+    http?: unknown
+    [key: string]: unknown
+  }
+  ws?: unknown
+  http?: unknown
+  [key: string]: unknown
+}
+
+interface AgentOpenBatchData {
+  rows?: AgentOpenRow[]
+}
+
+let agentOpenQueue: Promise<void> = Promise.resolve()
+
+function abortIfNeeded(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new Error('Browser opening was interrupted.')
+  }
+}
+
+function connectionFromAgentOpenRow(row: AgentOpenRow): BrowserConnection | undefined {
+  const dirId = typeof row.dirId === 'string' ? row.dirId : ''
+  const launchInfo = row.launchInfo && typeof row.launchInfo === 'object' ? row.launchInfo : row
+  const ws = typeof launchInfo.ws === 'string' ? launchInfo.ws.trim() : ''
+  if (!dirId || !ws) {
+    return undefined
+  }
+  return {
+    ws,
+    browserType: inferBrowserType(undefined, ws),
+  }
+}
+
+/**
+ * 批量预打开脚本目标窗口，并同步等待内核下载/启动完成。
+ * `/agent/open` 在内核缺失时会返回 core_downloading，连接信息需要通过
+ * `/agent/open_status` 轮询到 opened 后才可交给 Sandbox Host。
+ */
+async function openBrowsersForDirIdsInternal(
+  dirIds: readonly string[],
+  options: OpenBrowsersOptions = {},
+): Promise<Map<string, BrowserConnection>> {
+  const uniqueDirIds = [...new Set(dirIds.map(dirId => dirId.trim()).filter(Boolean))]
+  if (!uniqueDirIds.length) {
+    return new Map()
+  }
+
+  abortIfNeeded(options.signal)
+  const openedAt = Date.now()
+  console.debug(`[sandboxService] browser open start dirIds=${uniqueDirIds.join(',')} count=${uniqueDirIds.length}`)
+  const client = getRoxyBrowserClient()
+  const workspaceId = client.api.transport.workspaceId
+  const initial = await client.api.transport.request<AgentOpenBatchData>({
+    method: 'POST',
+    path: '/browser/agent/open',
+    params: {
+      ...(workspaceId !== undefined ? { workspaceId } : {}),
+      dirIds: uniqueDirIds,
+      forceOpen: false,
+      layout: options.layout ?? 'stack',
+    },
+  })
+  if (initial.code !== 0) {
+    throw new Error(initial.msg || 'Failed to open browser windows.')
+  }
+
+  const connections = new Map<string, BrowserConnection>()
+  const consumeRows = (rows: AgentOpenRow[] | undefined): void => {
+    for (const row of rows ?? []) {
+      const dirId = typeof row.dirId === 'string' ? row.dirId : ''
+      if (!dirId) {
+        continue
+      }
+      if (row.success === false && !['core_downloading', 'launching'].includes(String(row.status))) {
+        throw new Error(typeof row.error === 'string' ? row.error : `Failed to open browser ${dirId}.`)
+      }
+      const connection = connectionFromAgentOpenRow(row)
+      if (connection) {
+        if (!connections.has(dirId)) {
+          options.onBrowserLaunched?.(dirId)
+        }
+        connections.set(dirId, connection)
+      }
+    }
+  }
+  consumeRows(initial.data?.rows)
+
+  const deadline = Date.now() + 120_000
+  while (connections.size < uniqueDirIds.length) {
+    abortIfNeeded(options.signal)
+    if (Date.now() >= deadline) {
+      const pending = uniqueDirIds.filter(dirId => !connections.has(dirId))
+      throw new Error(`Timed out waiting for browser windows to open: ${pending.join(', ')}`)
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 250))
+    const status = await client.api.transport.request<AgentOpenRow[]>({
+      method: 'GET',
+      path: '/browser/agent/open_status',
+      params: { dirIds: uniqueDirIds },
+    })
+    if (status.code !== 0) {
+      throw new Error(status.msg || 'Failed to query browser opening status.')
+    }
+    consumeRows(status.data)
+  }
+
+  console.debug(`[sandboxService] browser open finished count=${connections.size} durationMs=${Date.now() - openedAt}`)
+  return new Map(uniqueDirIds.map(dirId => [dirId, connections.get(dirId)!]))
+}
+
+/** 串行化批量打开请求，避免同一工具调用内的脚本配置重复启动同一窗口。 */
+export async function openBrowsersForDirIds(
+  dirIds: readonly string[],
+  options: OpenBrowsersOptions = {},
+): Promise<Map<string, BrowserConnection>> {
+  const queuedAt = Date.now()
+  let release!: () => void
+  const previous = agentOpenQueue
+  agentOpenQueue = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await previous
+  console.debug(`[sandboxService] browser open queue acquired waitMs=${Date.now() - queuedAt}`)
+  try {
+    return await openBrowsersForDirIdsInternal(dirIds, options)
+  }
+  finally {
+    release()
   }
 }
 
@@ -462,6 +594,7 @@ async function startSandboxScriptRunInternal(opts: StartSandboxScriptRunOptions)
   const executionId = opts.executionId ?? `sandbox:${runId}`
   const dirId = opts.dirId
   const startedAtMs = Date.now()
+  console.debug(`[sandboxService] run=${runId} start asset=${opts.assetSlug ?? path.basename(opts.scriptPath)} dirId=${dirId ?? 'none'}`)
   let browserUrl = opts.browserUrl
   let browserType: 'chromium' | 'firefox' = opts.browserType ?? 'chromium'
   let dirOccupied = false
@@ -489,23 +622,33 @@ async function startSandboxScriptRunInternal(opts: StartSandboxScriptRunOptions)
       fsPromises.mkdir(path.dirname(logFilePath), { recursive: true }),
     ])
     const existingFilePaths = await collectExistingFilePaths(outputDir, logFilePath)
+    const reservationRequestedAt = Date.now()
     reservation = await sandboxHostManager.reserve(opts.signal)
+    console.debug(`[sandboxService] run=${runId} Host reservation acquired waitMs=${Date.now() - reservationRequestedAt}`)
 
     if (dirId) {
       profileLeaseRegistry.acquire({ executionId, runId, sourceType: 'sandbox' }, [dirId])
+      const profileOperationRequestedAt = Date.now()
       releaseBrowserOperation = await profileLeaseRegistry.acquireOperation(dirId)
+      console.debug(`[sandboxService] run=${runId} profile operation acquired dirId=${dirId} waitMs=${Date.now() - profileOperationRequestedAt}`)
       sandboxOwners.set(dirId, executionId)
       dirOccupied = true
     }
 
     if (!browserUrl && dirId) {
-      const conn = await getOpenedCdpForDirId(dirId) ?? await openBrowserForDirId(dirId)
+      const existingConnection = await getOpenedCdpForDirId(dirId)
+      const conn = existingConnection ?? await openBrowserForDirId(dirId)
+      if (!existingConnection) {
+        opts.onBrowserLaunched?.(dirId)
+      }
       browserUrl = conn.ws
       browserType = conn.browserType
     }
     if (!browserUrl) {
       throw new Error('Sandbox run requires a browser WebSocket endpoint')
     }
+
+    console.debug(`[sandboxService] run=${runId} browser endpoint ready browserType=${browserType}`)
 
     const hostRun = await reservation.start(runId, {
       scriptPath: materialized.scriptPath,
@@ -525,6 +668,7 @@ async function startSandboxScriptRunInternal(opts: StartSandboxScriptRunOptions)
     }, { onLog: opts.onLog })
 
     const finished = hostRun.finished.then(async (hostResult): Promise<SandboxRunResult> => {
+      console.debug(`[sandboxService] run=${runId} Host finished status=${hostResult.status} elapsedMs=${Date.now() - startedAtMs}`)
       const reportedChanges: SandboxRunOutput[] = hostResult.storageChanges.map(change => ({
         type: change.type,
         path: change.path,
@@ -539,7 +683,7 @@ async function startSandboxScriptRunInternal(opts: StartSandboxScriptRunOptions)
       const status = hostResult.status === 'done' && isLoginRequired(hostResult.returnValue)
         ? 'failed'
         : hostResult.status
-      return {
+      const result = {
         status,
         exitCode: hostResult.exitCode,
         ...(hostResult.returnValue !== undefined ? { returnValue: hostResult.returnValue } : {}),
@@ -548,7 +692,10 @@ async function startSandboxScriptRunInternal(opts: StartSandboxScriptRunOptions)
         logFilePath,
         ...(hostResult.error !== undefined ? { error: hostResult.error } : {}),
       }
+      console.debug(`[sandboxService] run=${runId} result collected elapsedMs=${Date.now() - startedAtMs} artifacts=${result.artifacts.length} outputs=${result.outputs.length}`)
+      return result
     }).finally(async () => {
+      const cleanupStartedAt = Date.now()
       if (dirOccupied && dirId) {
         releaseBrowserOperation?.()
         sandboxOwners.delete(dirId)
@@ -557,6 +704,7 @@ async function startSandboxScriptRunInternal(opts: StartSandboxScriptRunOptions)
         }
       }
       await materialized.cleanup()
+      console.debug(`[sandboxService] run=${runId} cleanup finished durationMs=${Date.now() - cleanupStartedAt} totalMs=${Date.now() - startedAtMs}`)
     })
 
     return {

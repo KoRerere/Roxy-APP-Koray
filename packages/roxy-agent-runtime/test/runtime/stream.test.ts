@@ -56,6 +56,78 @@ describe('AgentImpl.stream', () => {
     expect(types.at(-1)).toBe('done')
   })
 
+  it('emits the direct tool result before an end_turn done event without another model call', async () => {
+    // Regression: stream mode always re-entered the provider after a successful
+    // report-style tool call, causing an unnecessary model request and text.
+    // Fixed by: finish after persisting and emitting one successful returnDirect result.
+    let modelCalls = 0
+    const { agent, provider, registry } = buildTestAgent({
+      handler: () => {
+        modelCalls++
+        if (modelCalls === 1) {
+          return toolCallResponse('report-1', 'task_report', { text: 'accepted' })
+        }
+        return endTurnResponse('this call must not happen')
+      },
+    })
+    registry.add(
+      {
+        name: 'task_report',
+        description: 'save a task report',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        returnDirect: true,
+      },
+      async () => ({ content: 'accepted', isError: false }),
+    )
+
+    const events = await collect(agent, 'report the task result')
+    const toolResultIndex = events.findIndex((event) => event.type === 'tool_result')
+
+    expect(provider.calls).toHaveLength(1)
+    expect(toolResultIndex).toBeGreaterThanOrEqual(0)
+    expect(events.at(-1)).toEqual({ type: 'done', stopReason: 'end_turn' })
+    expect(toolResultIndex).toBeLessThan(events.length - 1)
+  })
+
+  it('emits a failed returnDirect result and continues to the next model call', async () => {
+    let modelCalls = 0
+    const { agent, provider, registry } = buildTestAgent({
+      handler: () => {
+        modelCalls++
+        if (modelCalls === 1) {
+          return toolCallResponse('report-1', 'task_report', { text: 'invalid' })
+        }
+        return endTurnResponse('corrected report guidance')
+      },
+    })
+    registry.add(
+      {
+        name: 'task_report',
+        description: 'save a task report',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        returnDirect: true,
+      },
+      async () => ({ content: 'fix the report input', isError: true }),
+    )
+
+    const events = await collect(agent, 'report the task result')
+    const failedResult = events.find((event) => event.type === 'tool_result')
+
+    expect(provider.calls).toHaveLength(2)
+    expect(failedResult).toMatchObject({
+      type: 'tool_result',
+      result: {
+        toolUseId: 'report-1',
+        content: 'fix the report input',
+        isError: true,
+      },
+    })
+    expect(events.some((event) => event.type === 'text' && event.delta === 'corrected report guidance')).toBe(true)
+    expect(events.at(-1)).toEqual({ type: 'done', stopReason: 'end_turn' })
+  })
+
   it('text and thinking events identify the model call that produced them', async () => {
     // Regression: all streamed text/thinking deltas looked identical across
     // the tool loop, so hosts merged separate LLM responses into one UI block.

@@ -61,6 +61,12 @@ const SPECIAL_TOOL_LABELS: Array<[string, string, string]> = [
 
 type ToolLabelPair = readonly [running: string, completed: string]
 
+const TEMPLATE_TOOL_LABELS: Record<string, ToolLabelPair> = {
+  roxy_read_template_info: [$t('正在获取模板详情'), $t('已获取模板详情')],
+  roxy_save_user_template: [$t('正在保存用户模板'), $t('已保存用户模板')],
+  roxy_delete_user_template: [$t('正在删除用户模板'), $t('已删除用户模板')],
+}
+
 const BROWSER_TOOL_LABELS: Record<string, ToolLabelPair> = {
   roxy_browser_connect: [$t('正在连接浏览器窗口'), $t('已连接浏览器窗口')],
   roxy_browser_launch: [$t('正在启动浏览器窗口'), $t('已启动浏览器窗口')],
@@ -164,6 +170,22 @@ function inputUrlHost(input: unknown): string | undefined {
 
 function withToolTarget(label: string, target: string | undefined): string {
   return target ? `${label} ${target}` : label
+}
+
+function templateToolLabel(toolName: string, completed: boolean, input: unknown): string | undefined {
+  if (toolName === 'roxy_list_templates') {
+    const scope = inputString(input, 'scope')
+    if (scope === 'official') {
+      return completed ? $t('已获取官方模板列表') : $t('正在获取官方模板列表')
+    }
+    if (scope === 'user') {
+      return completed ? $t('已获取用户模板列表') : $t('正在获取用户模板列表')
+    }
+    return undefined
+  }
+
+  const labels = TEMPLATE_TOOL_LABELS[toolName]
+  return labels ? labels[completed ? 1 : 0] : undefined
 }
 
 function browserTabsLabel(completed: boolean, input: unknown): string {
@@ -418,6 +440,10 @@ export function friendlyToolName(
     if (label) {
       return label
     }
+  }
+  const templateLabel = templateToolLabel(displayName, completed, input)
+  if (templateLabel) {
+    return templateLabel
   }
   const browserLabel = browserToolLabel(displayName, completed, input)
   if (browserLabel) {

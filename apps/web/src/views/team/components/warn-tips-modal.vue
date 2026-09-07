@@ -15,7 +15,7 @@ async function onSetPermissions(allowViewerEditorCostCenter: number) {
   <div class="w-96 flex flex-col gap-3 pa-6 pt-4 rounded-2">
     <div class="h-9 flex items-center justify-between">
       <div class="tt-primary text-4 font-600 leading-normal">
-        {{ $t('费用中心权限提醒') }}
+        {{ $t('充值/账单权限提醒') }}
       </div>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="emit('close')" />
     </div>

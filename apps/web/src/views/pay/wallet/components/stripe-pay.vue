@@ -7,10 +7,12 @@ import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { PayWay } from '/@/enums/pay'
 import { useThemeStore } from '/@/stores/theme'
+import { useSimpleLocale } from '/@/stores/locale'
 
-const { confirmText = $t('确认'), rechargeAmount = 0, onConfirm } = defineProps<{
+const { confirmText = $t('确认'), rechargeAmount = 0, payType = PayWay.Card, onConfirm } = defineProps<{
   rechargeAmount?: number
   confirmText?: string
+  payType?: PayWay
   onConfirm: (stripeResult: any) => void | Promise<void>
 }>()
 
@@ -21,6 +23,7 @@ const bindCard = defineModel<boolean>('bind', { default: false })
 const { genRechargeSettlement } = usePay()
 const [_, onlyErrorToast] = useResponseToast()
 const { realTheme } = storeToRefs(useThemeStore())
+const { getOfficialWebsite } = useSimpleLocale()
 
 // Stripe 相关变量
 let elements: StripeElements | null = null
@@ -67,8 +70,9 @@ async function getStripeKey() {
    */
   const { code, data, msg } = await API.pay.userGetStripePkKeyList({ queryType: '0' })
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
   stripe.value = await loadStripe(data.stripe_pk_key)
   publishableKey.value = data.stripe_pk_key
   bindCardClientSecret.value = data.client_secret
@@ -174,11 +178,12 @@ async function stripeBindCard() {
 async function stripePayment() {
   const { code, data, msg } = await genRechargeSettlement({
     rechargeAmount,
-    payType: PayWay.Card,
+    payType,
     customerIdKey: customerIdKey.value,
   })
-  if (code !== 0 || !data)
+  if (code !== 0 || !data) {
     return { error: new Error(msg), result: undefined }
+  }
 
   const { error, paymentIntent } = await stripe.value!.confirmCardPayment(data.clientSecret, {
     payment_method: {
@@ -214,22 +219,25 @@ async function stripePayment() {
       </div>
     </div>
     <RxButton class="mt-1 w-full" type="submit" size="lg" :loading="isLoading" :label="confirmText" />
-    <slot name="after" />
-    <div class="flex items-center justify-between gap-2">
-      <span class="tip">{{ $t('*我们不会存储您的完整卡号或敏感信息。') }}</span>
-      <img v-if="realTheme === 'dark'" class="block h-5" :src="getImage('payments/stripe-blurple-dark.svg')">
-      <img v-else class="block h-5" :src="getImage('payments/stripe-blurple.svg')">
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center justify-between">
+        <slot name="after" />
+        <img v-if="realTheme === 'dark'" class="block h-5" :src="getImage('payments/stripe-blurple-dark.svg')">
+        <img v-else class="block h-5" :src="getImage('payments/stripe-blurple.svg')">
+      </div>
+      <i18n-t class=" tt-inactive text-3 leading-5" tag="div" scope="global" :keypath="$t('开通即视为同意 Roxy {agreement}和{privacy}', { agreement: '{agreement}', privacy: '{privacy}' })">
+        <template #agreement>
+          <a class="underline decoration-solid decoration-auto underline-offset-[25%] underline-from-font" :href="getOfficialWebsite('/copyright/user')" target="_blank">{{ $t('用户协议') }}</a>
+        </template>
+        <template #privacy>
+          <a class="underline decoration-solid decoration-auto underline-offset-[25%] underline-from-font" :href="getOfficialWebsite('/copyright/privacy')" target="_blank">{{ $t('隐私政策') }}</a>
+        </template>
+      </i18n-t>
     </div>
   </form>
 </template>
 
 <style lang="scss" scoped>
-.tip {
-  color: var(--colors-text-text-inactive);
-  font-size: 12px;
-  line-height: 20px;
-}
-
 .form-label {
   color: var(--colors-text-text-primary);
   font-family: Inter;

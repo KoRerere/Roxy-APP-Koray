@@ -14,6 +14,7 @@ import { usePay } from '/@/views/pay/wallet/hook'
 import { PayWay } from '/@/enums/pay'
 import { ProxyOrderType, ProxyType } from '/@/enums/proxy'
 import { hasVisiblePriceDiscount, purchaseMonthsToDays } from '/@/views/pay/subscribe/util'
+import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 import { useProxyShopLabels } from '../utils/proxy-shop-labels'
 import { I18nT } from 'vue-i18n'
 import {
@@ -54,8 +55,11 @@ const [_, onlyErrorToast] = useResponseToast()
 const toast = useToast()
 const { openProcessing } = usePay()
 const { showFreedomActivityModal } = useFreedomActivity()
+const { beforeToggleAutoRenew } = useConfirmAutoRenew()
 const shopLabels = useProxyShopLabels()
 
+/** 续费结算时一并提交；默认关闭，需用户确认后才会变为开启 */
+const isAuto = ref(false)
 /** 时长折扣接口按天返回 % Off；缺省为空对象，不挡续费主流程 */
 const discountsByDays = ref<Record<string, number>>({})
 const periods = ref<RenewPeriod[]>()
@@ -169,13 +173,13 @@ const footerOffMix = computed(() => {
 })
 
 /** 混合场景展示当前档位长续折数，不用加权总价比 */
-const mixedLongRenewOfferText = computed(() => {
-  const off = footerOffMix.value.longRenewOff
-  return $t('长续首享 {discount} 折', {
-    discount: percentOffToZhe(off),
-    off,
-  })
-})
+// const mixedLongRenewOfferText = computed(() => {
+//   const off = footerOffMix.value.longRenewOff
+//   return $t('长续首享 {discount} 折', {
+//     discount: percentOffToZhe(off),
+//     off,
+//   })
+// })
 
 /** 混合优惠文案插值：中文折数在 script 内算好，tsx setup 的导入函数不能直接进模板 */
 const mixedLongRenewZhe = computed(() => percentOffToZhe(footerOffMix.value.longRenewOff))
@@ -293,12 +297,14 @@ async function onPay() {
   async function onConfirm({ payType }: any) {
     const expectedAmount = totalAmount.value
     const renewIdList = dataList.map(item => item.id)
-    const { code, data, msg } = await API.pay.userBuyProxySettlementCreate({
+    const payload = {
       payType,
       renewIdList,
       orderType: ProxyOrderType.Renew,
       subscriptionMonths: periodValue.value?.value,
-    })
+      isAuto: isAuto.value,
+    }
+    const { code, data, msg } = await API.pay.userBuyProxySettlementCreate(payload)
     onlyErrorToast(code, msg)
     if (code !== 0) {
       return
@@ -364,8 +370,8 @@ async function onPay() {
             {{ $t('续费时长:') }}
           </div>
           <div class="flex gap-4">
-            <div v-for="item in periods" :key="item.value" class="relative h-10 flex items-center px-5 leading-none cursor-pointer select-none period radio" :class="{ active: item.value === periodValue?.value }"
-                 @click="periodValue = item"
+            <div v-for="item in periods" :key="item.value" class="relative h-10 flex items-center px-5 leading-none cursor-pointer select-none period radio"
+                 :class="{ active: item.value === periodValue?.value }" @click="periodValue = item"
             >
               <span v-if="hasEligibleLongRenew && item.discount > 0" class="period-discount">
                 {{ $t('{discount}% Off', { discount: item.discount }) }}
@@ -382,39 +388,47 @@ async function onPay() {
             <span class="promo-desc">{{ promoDiscountDesc }}</span>
             <span class="promo-hint">{{ $t('( 三档可选，每个 IP 仅可享 1 次 )') }}</span>
             <!-- 无身份折扣时不存在叠加取优，不必展示该提示 -->
-            <SvgIcon v-if="userPayInfo.proxyDiscount" v-tooltip.top="{ value: $t('该优惠不与身份优惠叠加，系统自动选取最优折扣'), showDelay: 300 }" class="shrink-0 cursor-pointer" name="base/rx_ic_info" size="16" color="var(--colors-icon-icon-note)" />
+            <!-- 身份折扣文案暂不对外展示，取优逻辑仍生效 -->
+            <!-- <SvgIcon v-if="userPayInfo.proxyDiscount" v-tooltip.top="{ value: $t('该优惠不与身份优惠叠加，系统自动选取最优折扣'), showDelay: 300 }" class="shrink-0 cursor-pointer" name="base/rx_ic_info" size="16"
+                     color="var(--colors-icon-icon-note)"
+            /> -->
           </div>
         </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="tt-primary text-3.5 font-500 leading-5">
+          {{ $t('自动续费') }}
+        </div>
+        <RxToggleSwitch v-model="isAuto" :before-change="beforeToggleAutoRenew" />
       </div>
       <RxDivider line-only line-style="dashed" line-color="var(--colors-border-border-base)" />
       <div class="flex items-center gap-8 w-full">
         <!-- 两种底部：混合走长续专享人数，单一走最优折扣百分比；第二行都展示立省金额 -->
-        <div
-          v-if="footerOffMix.mixed || appliedOffPercentText"
-          class="flex flex-col gap-1.5 items-start justify-center shrink-0"
-        >
-          <div v-if="footerOffMix.mixed" class="flex items-center gap-1 whitespace-nowrap">
-            <I18nT class="mixed-off-text" tag="span" :keypath="shopLabels.mixedLongRenewEnjoy" scope="global">
-              <template #count>
-                <span class="mixed-off-count">{{ footerOffMix.longRenewCount }}</span>
-              </template>
-              <!-- 中文走折数，英/俄走 % Off，同一组插值由各语言选用 -->
-              <template #discount>
-                {{ mixedLongRenewZhe }}
-              </template>
-              <template #off>
-                {{ footerOffMix.longRenewOff }}
-              </template>
-            </I18nT>
-          </div>
-          <div v-else class="flex items-center">
-            <span class="tt-primary text-4 leading-normal">{{ $t('已享最优折扣：') }}</span>
-            <span class="tt-warning text-4 font-600 leading-normal">-{{ appliedOffPercentText }}%</span>
-          </div>
-          <div v-if="hasFooterDiscount" class="flex items-center">
-            <span class="tt-primary text-4 leading-normal">{{ $t('共计优惠：') }}</span>
-            <span class="tt-warning text-4 font-600 leading-normal">{{ currency(discountAmount).format() }}</span>
-          </div>
+        <div class="flex flex-col gap-1.5 items-start justify-center shrink-0">
+          <template v-if="footerOffMix.mixed || appliedOffPercentText">
+            <div v-if="footerOffMix.mixed" class="flex items-center gap-1 whitespace-nowrap">
+              <I18nT class="mixed-off-text" tag="span" :keypath="shopLabels.mixedLongRenewEnjoy" scope="global">
+                <template #count>
+                  <span class="mixed-off-count">{{ footerOffMix.longRenewCount }}</span>
+                </template>
+                <!-- 中文走折数，英/俄走 % Off，同一组插值由各语言选用 -->
+                <template #discount>
+                  {{ mixedLongRenewZhe }}
+                </template>
+                <template #off>
+                  {{ footerOffMix.longRenewOff }}
+                </template>
+              </I18nT>
+            </div>
+            <div v-else class="flex items-center">
+              <span class="tt-primary text-4 leading-normal">{{ $t('已享最优折扣：') }}</span>
+              <span class="tt-warning text-4 font-600 leading-normal">-{{ appliedOffPercentText }}%</span>
+            </div>
+            <div v-if="hasFooterDiscount" class="flex items-center">
+              <span class="tt-primary text-4 leading-normal">{{ $t('共计优惠：') }}</span>
+              <span class="tt-warning text-4 font-600 leading-normal">{{ currency(discountAmount).format() }}</span>
+            </div>
+          </template>
         </div>
         <div class="flex-1 flex items-end justify-end gap-6">
           <div class="flex flex-col gap-1.5 items-end">
@@ -466,6 +480,7 @@ async function onPay() {
   border: 0.5px solid var(--colors-border-border-subtle);
   overflow: auto;
 }
+
 .radio {
   border-radius: 8px;
   border: 3px solid var(--colors-background-bg-page);

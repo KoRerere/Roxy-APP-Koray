@@ -33,10 +33,12 @@ const prevType = ref<BeforeEnterStep | null>(null)
 
 /** proxy → platform 主路径不展示返回（设备已购）；仅 third → platform 可回退 */
 const showBack = computed(() => {
-  if (type.value === 'choose')
+  if (type.value === 'choose') {
     return false
-  if (type.value === 'platform' && prevType.value !== 'third')
+  }
+  if (type.value === 'platform' && prevType.value !== 'third') {
     return false
+  }
   return true
 })
 
@@ -56,15 +58,17 @@ async function onNext(nextType: 'choose' | 'normal' | 'proxy' | 'third' | 'platf
   }
   prevType.value = type.value
   type.value = nextType
-  if (userInfo.value.id != null)
+  if (userInfo.value.id != null) {
     setBeforeEnterStep(userInfo.value.id, nextType)
+  }
 }
 
 /** 按引导路径回退：platform → 来源设备步；third → proxy；proxy → choose */
 function onBack() {
   const current = type.value
-  if (current === 'choose')
+  if (current === 'choose') {
     return
+  }
 
   let target: BeforeEnterStep
   if (current === 'platform') {
@@ -91,8 +95,9 @@ async function onClose() {
 async function onSkip() {
   const { code, msg } = await API.team.userSelectOnboardingWorkspaceTypeCreate({ workspaceType: WorkspaceType.ECommerce })
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   await switchWorkspaceType(WorkspaceType.ECommerce)
   markPendingEcommerceSkipCreateGuide()
@@ -102,8 +107,9 @@ async function onSkip() {
 async function onSuccess({ data, checkResult }: any) {
   const { code, msg } = await API.team.userSelectOnboardingWorkspaceTypeCreate({ workspaceType: WorkspaceType.ECommerce })
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   await switchWorkspaceType(WorkspaceType.ECommerce)
   await genDefaultProfileByCount(1, data)

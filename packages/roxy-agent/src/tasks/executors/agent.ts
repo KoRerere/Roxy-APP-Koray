@@ -2,6 +2,7 @@ import type { ResolvedTaskWindow, TaskExecutorResult } from '../types'
 import type { ResolvedTemplate } from '@/services/templateService'
 import type { AgentRunEvent } from '@roxy/shared/channel'
 import {
+  extractAgentProfileDirIds,
   serializeAgentProfileReference,
   serializeAgentSkillReference,
 } from '@roxy/shared'
@@ -215,6 +216,7 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
       signal: abortController.signal,
       taskMonitorTaskId: input.taskLogId,
       allowedDirIds: input.windows.map(window => window.dirId),
+      reportAllowedDirIds: extractAgentProfileDirIds(initialUserMessage),
     })
     destroy = instance.destroy
     const runtimePublisher = new RuntimeEventPublisher(event => publisher.publish(event), { emitDone: false, agentPath: '/root' })

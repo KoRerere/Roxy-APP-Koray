@@ -53,7 +53,7 @@ function onCopy() {
       </div>
     </div>
     <i18n-t tag="div" class="select-none desc"
-            :keypath="$t('请根据以下指引进行代理 IP 兑换：前往费用中心，点击代理 IP 卡片旁的购买按钮，在弹出的浮层窗口中完成代理 IP 的兑换即可。{video}', { video: '{video}' })"
+            :keypath="$t('请根据以下指引进行代理 IP 兑换：前往充值/账单，点击代理 IP 卡片旁的购买按钮，在弹出的浮层窗口中完成代理 IP 的兑换即可。{video}', { video: '{video}' })"
             scope="global"
     >
       <template #video>

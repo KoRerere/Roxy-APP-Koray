@@ -17,7 +17,6 @@ export interface ShowAppUpgradeDialogPayload {
 
 export type MittEvents = {
   notifyUpdateData: UserGetNotifyListData
-  maxWindowCountChange?: number
   /** 显示 toast */
   showToast: ToastMessageOptions
   /** 被挤号 */

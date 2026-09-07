@@ -38,16 +38,18 @@ async function saveSingleProxy(formData: Record<string, any>) {
 }
 
 function onTabsChange(value: string | number) {
-  if (value === 'batch')
+  if (value === 'batch') {
     mixpanelTrack('click_batch_add_proxy')
+  }
 }
 
 /** 全页广告「立即购买」：弹购买菜单，成功后回列表并高亮新单 */
-async function onBuyClick() {
+async function onBuyClick(preferredCountry?: string) {
   try {
     const orderInfo = await buyProxy({
       entryType: BuyEntryType.Immediate,
       ...(isDeviceMode.value ? { mode: 'device' as const } : {}),
+      ...(preferredCountry ? { preferredCountry } : {}),
     })
 
     showToast(0, isDeviceMode.value

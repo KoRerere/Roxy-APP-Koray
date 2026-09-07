@@ -49,8 +49,9 @@ const thumbExtra = useTemplateRef('thumbex')
 const currentPosition = computed(() => getPosition(selectedValue.value))
 // 额外提示框的位置，处理边界情况
 const thumbExtraPosition = computed(() => {
-  if (!sliderTrack.value || !thumbExtra.value)
+  if (!sliderTrack.value || !thumbExtra.value) {
     return {}
+  }
 
   const trackWidth = sliderTrack.value.clientWidth
   const extraWidth = thumbExtra.value.clientWidth
@@ -155,8 +156,9 @@ const tooltipValue = computed(() => {
  * 获取值对应的位置（百分比）
  */
 function getPosition(value: number): number {
-  if (!sliderTrack.value)
+  if (!sliderTrack.value) {
     return 0
+  }
 
   const trackWidth = sliderTrack.value.clientWidth
 
@@ -219,8 +221,9 @@ function calculateInterpolatedPosition(value: number, sortedValues: number[], se
  * 找到最接近点击位置的值
  */
 function findClosestValue(clientX: number): number {
-  if (!sliderTrack.value)
+  if (!sliderTrack.value) {
     return props.min
+  }
 
   const rect = sliderTrack.value.getBoundingClientRect()
   const trackWidth = rect.width
@@ -238,8 +241,9 @@ function findClosestValue(clientX: number): number {
     const midValue = possibleValues[mid]!
     const midPosition = ((getPosition(midValue) * trackWidth / 100 - VISUAL_PADDING_PX) / adjustedWidth) * 100
 
-    if (midPosition === clickPosition)
+    if (midPosition === clickPosition) {
       return midValue
+    }
 
     // 检查相邻值，返回最接近的
     if (mid > 0) {
@@ -262,10 +266,12 @@ function findClosestValue(clientX: number): number {
       }
     }
 
-    if (midPosition < clickPosition)
+    if (midPosition < clickPosition) {
       left = mid + 1
-    else
+    }
+    else {
       right = mid - 1
+    }
   }
 
   // 如果二分查找没有找到精确匹配，返回最接近的边界值
@@ -276,18 +282,21 @@ function findClosestValue(clientX: number): number {
  * 格式化数字显示（支持K/M/B格式）
  */
 function formatter(value: number): string {
-  if (props.numberFormatter)
+  if (props.numberFormatter) {
     return props.numberFormatter(value)
+  }
 
-  if (props.useKMB)
+  if (props.useKMB) {
     return formatNumberToKMB(value, 1)
+  }
 
   return value.toLocaleString('en-US')
 }
 
 function handleLabelClick(value: number): void {
-  if (value < props.min)
+  if (value < props.min) {
     return
+  }
   selectedValue.value = value
   emit('change', value)
 }
@@ -304,8 +313,9 @@ function handleMouseDown(e: MouseEvent): void {
 }
 
 function handleMouseMove(e: MouseEvent): void {
-  if (isDragging.value)
+  if (isDragging.value) {
     updateValue(e.clientX)
+  }
 }
 
 function handleMouseUp(): void {
@@ -355,18 +365,18 @@ onMounted(() => {
 
 <template>
   <div class="relative w-full select-none">
-    <!-- 滑动轨道 -->
+    <!-- sliding Track -->
     <div ref="slider" class="relative h-5 rounded-full cursor-pointer bg-gradient-to-r from-[#12A3FC] to-[#EC51F7]" @mousedown="handleMouseDown">
-      <!-- 未选中部分的轨道 -->
+      <!-- unselected portion of the track -->
       <div class="absolute top-0 right-0 h-full rounded-r-full track-slider" :style="{ width: `calc(${100 - currentPosition}% - 8px)`, transition: isDragging ? 'none' : 'all 0.3s ease' }" />
-      <!-- 刻度标记和标签 -->
+      <!-- scale marks and labels -->
       <div v-for="{ value, position } in labelPositions" :key="value" class="absolute top-1/2 -translate-1/2 w-2.5 h-2.5 rounded-full" :class="[
         position < currentPosition
           ? 'bg-white opacity-30'
           : Math.abs(position - currentPosition) < 2 ? 'bg-white opacity-80' : 'track-dot',
       ]" :style="{ left: `${position}%` }"
       />
-      <!-- 滑块 -->
+      <!-- slider -->
       <div class="absolute top-1/2 -translate-1/2 thumb" :class="{ tooltip }" :style="{
         left: `${currentPosition}%`,
         transition: isDragging ? 'none' : 'all 0.3s ease',
@@ -381,7 +391,7 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    <!-- 底部数值标签 -->
+    <!-- bottom numeric labels -->
     <div class="relative h-5 mt-2">
       <div v-for="{ value, position, hide } in labelPositions" :key="value" class="absolute text-sm transform -translate-x-1/2 cursor-pointer track-marker"
            :class="{ 'foucs font-semibold': value === selectedValue, 'hidden': hide }" :style="{ left: `${position}%` }" @click="handleLabelClick(value)"

@@ -1,5 +1,4 @@
 import { h } from 'vue'
-import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import DeviceDetail from '/@/views/ecommerce/devices/device-detail.vue'
 import { useConfirm } from 'primevue/useconfirm'
@@ -33,6 +32,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useProxyFilter } from '/@/views/agent/shop/components/proxy-filter/useProxyFilter'
 import { usePermission } from '/@/hooks/usePermission'
 import { useEmitterEvent } from '/@/utils/eventBus'
+import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 import { useEcommerceAccountNavigation } from '/@/views/ecommerce/accounts/hooks/useEcommerceAccountNavigation'
 import type { DeviceItem } from '../device-operation'
 import type { ConcurrentProxyTestResults, ConcurrentProxyTestRun, ConcurrentProxyValidResult } from '/@/views/agent/hooks'
@@ -47,6 +47,7 @@ export function useDevicePage() {
   const { showProxyFormDrawer } = useProxyFormDrawer(drawerInstance)
   const { updateProxyModules } = useProxyModuleCreate()
   const [showModal] = useDialog()
+  const { confirmEnableAutoRenew } = useConfirmAutoRenew()
   const [showToast, onlyErrorToast] = useResponseToast()
   const { userConfig } = storeToRefs(useUserStore())
   const { mixpanelTrack } = useUserStore()
@@ -496,31 +497,14 @@ export function useDevicePage() {
       return false
     }
 
-    const notShowAgain = localStorage.getItem('autoRenewModalNotShowAgain')
+    if (data.autoRenew !== ProxyAutoRenewalStatus.Enabled) {
+      const confirmed = await confirmEnableAutoRenew()
+      if (!confirmed) {
+        return false
+      }
+    }
 
-    if (!!notShowAgain || data.autoRenew === ProxyAutoRenewalStatus.Enabled)
-      return toggleAutoRenew(data)
-
-    const { promise, resolve } = Promise.withResolvers<boolean>()
-    showModal({
-      showHeader: false,
-      modal: true,
-      blockScroll: true,
-      slots: {
-        container: ({ hideModal }) => h(AutoRenewModal, {
-          onClose: () => {
-            hideModal()
-            resolve(false)
-          },
-          onConfirm: async () => {
-            const isOK = await toggleAutoRenew(data)
-            resolve(isOK)
-            hideModal()
-          },
-        }),
-      },
-    })
-    return promise
+    return toggleAutoRenew(data)
   }
 
   async function toggleAutoRenew(data: DeviceItem) {

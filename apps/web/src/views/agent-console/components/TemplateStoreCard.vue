@@ -53,6 +53,19 @@ const templateImageIcon = computed(() => templateIcon.value && isTemplateImageIc
 const templateSvgIcon = computed(() => templateIcon.value && !isTemplateImageIconSource(templateIcon.value) ? templateIcon.value : '')
 const defaultIcon = computed(() => defaultIconByKind[props.item.kind])
 const descriptionText = computed(() => props.item.description || $t('暂无描述'))
+const versionText = computed(() => {
+  const version = props.item.version?.trim()
+  if (!version) {
+    return ''
+  }
+  return version.startsWith('v') ? version : `v${version}`
+})
+const approxPointsText = computed(() => {
+  const points = props.item.approxPoints
+  return typeof points === 'number' && Number.isFinite(points)
+    ? $t('约 {n} 积分/次', { n: points })
+    : ''
+})
 const titleRef = useTemplateRef<HTMLElement>('titleRef')
 const descriptionRef = useTemplateRef<HTMLElement>('descriptionRef')
 const titleOverflowed = ref(false)
@@ -78,8 +91,9 @@ function updateDescriptionOverflow() {
 }
 
 function handleGet() {
-  if (!props.installed)
+  if (!props.installed) {
     emit('get', props.item.id)
+  }
 }
 
 function handleRun() {
@@ -91,12 +105,14 @@ watch(descriptionText, () => nextTick(updateDescriptionOverflow), { flush: 'post
 
 onMounted(() => {
   titleResizeObserver = new ResizeObserver(updateTitleOverflow)
-  if (titleRef.value)
+  if (titleRef.value) {
     titleResizeObserver.observe(titleRef.value)
+  }
 
   descriptionResizeObserver = new ResizeObserver(updateDescriptionOverflow)
-  if (descriptionRef.value)
+  if (descriptionRef.value) {
     descriptionResizeObserver.observe(descriptionRef.value)
+  }
 
   updateTitleOverflow()
   updateDescriptionOverflow()
@@ -139,23 +155,42 @@ onBeforeUnmount(() => {
               placement="top"
               trigger-class="template-store-card__title-trigger"
             >
-              <h2 ref="titleRef">{{ item.title }}</h2>
+              <h2 ref="titleRef">
+                {{ item.title }}
+              </h2>
             </AgentTooltip>
-            <SvgIcon
-              v-if="item.official"
-              class="template-store-card__official"
-              name="roxy-agent/rx-ic-official-badge"
-              size="18"
-            />
             <SvgIcon v-if="item.isHot" class="template-store-card__hot" name="base/fire" size="16" />
           </div>
-          <!-- <p class="template-store-card__author">
-            by RoxyBrowser
-          </p> -->
+          <span v-if="versionText" class="template-store-card__version">{{ versionText }}</span>
         </div>
       </div>
+    </header>
 
-      <div class="template-store-card__actions">
+    <div class="template-store-card__divider" />
+
+    <div class="template-store-card__tags">
+      <RxTag class="template-store-card__kind" :label="kindLabel" readonly />
+      <RxTag v-for="tag in item.labels" :key="tag.id" :label="tag.label" readonly />
+    </div>
+
+    <AgentTooltip
+      :content="descriptionText"
+      :disabled="!descriptionOverflowed"
+      content-class="template-store-card__description-tooltip"
+      placement="top-start"
+      trigger-class="template-store-card__description-trigger"
+    >
+      <p
+        ref="descriptionRef"
+        class="template-store-card__description"
+      >
+        {{ descriptionText }}
+      </p>
+    </AgentTooltip>
+
+    <div class="template-store-card__actions">
+      <span v-if="approxPointsText" class="template-store-card__points">{{ approxPointsText }}</span>
+      <div class="template-store-card__action-buttons">
         <button
           class="template-store-card__get-button"
           type="button"
@@ -175,55 +210,24 @@ onBeforeUnmount(() => {
           {{ busyAction === 'run' ? $t('准备中...') : installed ? $t('运行') : $t('获取并运行') }}
         </button>
       </div>
-    </header>
-
-    <div class="template-store-card__divider" />
-
-    <div class="template-store-card__tags">
-      <!-- <RxTag class="template-store-card__kind" :label="kindLabel" readonly /> -->
-      <RxTag v-for="tag in item.labels" :key="tag.id" :label="tag.label" readonly />
     </div>
-
-    <AgentTooltip
-      :content="descriptionText"
-      :disabled="!descriptionOverflowed"
-      content-class="template-store-card__description-tooltip"
-      placement="top-start"
-      trigger-class="template-store-card__description-trigger"
-    >
-      <p
-        ref="descriptionRef"
-        class="template-store-card__description"
-      >
-        {{ descriptionText }}
-      </p>
-    </AgentTooltip>
   </RxCard>
 </template>
 
 <style lang="scss" scoped>
-:global(body.agent-console-window) {
-  --template-run-hover-bg: #fce7f6;
-}
-
-:global(html[data-theme='dark'] body.agent-console-window),
-:global(html.app-dark body.agent-console-window) {
-  --template-run-hover-bg: #300f27;
-}
-
 :global(.template-store-card.rx-card) {
   box-sizing: border-box;
   display: flex;
   width: 100%;
-  height: 190px;
+  height: 224px;
   min-width: 0;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--color-border-secondary);
-  border-radius: 10px;
-  background: var(--color-bg-primary);
+  border-radius: 16px;
+  background: var(--color-bg-tertiary);
   box-shadow: none;
   overflow: hidden;
 }
@@ -236,6 +240,15 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.template-store-card__version {
+  display: block;
+  color: var(--color-text-disabled);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
 }
 
 .template-store-card__identity {
@@ -254,7 +267,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: var(--color-bg-tertiary);
+  background: var(--color-bg-quaternary);
 
   img {
     width: 44px;
@@ -298,7 +311,6 @@ onBeforeUnmount(() => {
   }
 }
 
-.template-store-card__official,
 .template-store-card__hot {
   flex: 0 0 auto;
 }
@@ -317,7 +329,25 @@ onBeforeUnmount(() => {
 
 .template-store-card__actions {
   display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 40px;
+}
+
+.template-store-card__points {
   flex: 0 0 auto;
+  color: var(--color-text-quaternary);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.template-store-card__action-buttons {
+  display: flex;
+  min-width: 0;
+  flex: 1;
   align-items: center;
   gap: 6px;
 }
@@ -327,7 +357,8 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   display: inline-flex;
   height: 32px;
-  flex: 0 0 auto;
+  min-width: 0;
+  flex: 1 1 0;
   align-items: center;
   justify-content: center;
   border-radius: 10px;
@@ -346,7 +377,7 @@ onBeforeUnmount(() => {
   padding: 5px 10px;
   border: 1px solid var(--color-border-secondary);
   color: var(--color-text-primary);
-  background: var(--color-bg-primary);
+  background: var(--color-bg-primary-hover);
 
   &:not(:disabled):hover {
     border-color: var(--color-border-secondary);
@@ -360,15 +391,21 @@ onBeforeUnmount(() => {
   }
 }
 
+@media (max-width: 520px) {
+  .template-store-card__actions {
+    gap: 12px;
+  }
+}
+
 .template-store-card__run-button {
   overflow: hidden;
   padding: 6px 10px;
-  border: 1px solid #ee46bc;
-  color: #ee46bc;
-  background-color: transparent;
+  border: 1px solid var(--color-bg-primary-inverse);
+  color: var(--color-text-primary-inverse);
+  background-color: var(--color-bg-primary-inverse);
 
   &:not(:disabled):hover {
-    background: var(--template-run-hover-bg);
+    background: var(--color-bg-primary-inverse-hover);
   }
 
   &:disabled {
@@ -403,7 +440,7 @@ onBeforeUnmount(() => {
     border: 0;
     border-radius: 8px;
     color: var(--color-text-primary);
-    background: var(--color-bg-tertiary);
+    background: var(--color-bg-quaternary);
     font-size: 14px;
     font-weight: 400;
     line-height: 20px;
@@ -423,8 +460,8 @@ onBeforeUnmount(() => {
 .template-store-card__description {
   display: -webkit-box;
   width: 100%;
-  height: 100%;
-  flex: 1 1 auto;
+  height: 40px;
+  flex: 0 0 40px;
   margin: 0;
   overflow: hidden;
   color: var(--color-text-quaternary);
@@ -434,15 +471,17 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
   word-break: break-word;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
 
 :deep(.template-store-card__description-trigger) {
   display: flex;
   width: 100%;
-  height: 60px;
-  flex: 0 0 60px;
+  height: 40px;
+  flex: 0 0 40px;
+  flex-direction: column;
   min-width: 0;
+  outline: 0;
 }
 </style>
 

@@ -1,4 +1,4 @@
-import type { SandboxHostRunResult, SandboxRunPayload } from './host-protocol'
+import type { SandboxHostRunResult, SandboxRunPayload, SandboxRunPhase } from './host-protocol'
 import type { AskRequest } from '@/modes/sandbox-api/llm'
 import buffer, { Buffer } from 'node:buffer'
 import crypto, { randomUUID } from 'node:crypto'
@@ -31,6 +31,7 @@ export type SandboxRunState = 'created' | 'running' | 'aborting' | 'finished' | 
 export type SandboxRunSessionEvent
   = | { type: 'log', level: string, message: string }
     | { type: 'llm.request', requestId: string, request: { prompt: string, schema?: unknown } }
+    | { type: 'phase', phase: SandboxRunPhase, timestamp: number }
 
 export interface SandboxRunSessionOptions {
   runId: string
@@ -155,6 +156,7 @@ export class SandboxRunSession {
 
   async run(): Promise<SandboxHostRunResult> {
     this.state = 'running'
+    this.phase('sandbox_execute_start')
     try {
       const result = await Promise.race([this.execute(), this.terminated])
       this.state = 'finished'
@@ -163,12 +165,17 @@ export class SandboxRunSession {
     catch (error) {
       this.state = 'finished'
       if (error instanceof SandboxProcessExit) {
+        if (error.code !== 0) {
+          this.phase('run_failed')
+        }
         return this.result(error.code === 0 ? 'done' : 'failed', error.code, undefined, error.code === 0 ? undefined : error.message)
       }
       if (this.abortController.signal.aborted) {
+        this.phase('run_failed')
         return this.result('timeout', 124, undefined, errorMessage(error))
       }
       const message = errorDetail(error)
+      this.phase('run_failed')
       this.log('error', `[sandbox] Script failed: ${message}`)
       return this.result('failed', 1, undefined, message)
     }
@@ -181,6 +188,8 @@ export class SandboxRunSession {
     if (this.state === 'disposed') {
       return
     }
+    const startedAt = Date.now()
+    console.debug(`[sandbox] run=${this.runId} dispose started`)
     if (!this.abortController.signal.aborted) {
       this.abortController.abort(new Error('Sandbox run disposed'))
     }
@@ -190,8 +199,11 @@ export class SandboxRunSession {
       pending.reject(new Error('Sandbox run disposed'))
     }
     this.llmRequests.clear()
+    const playwrightDisposeStartedAt = Date.now()
     await this.playwright?.dispose()
+    console.debug(`[sandbox] run=${this.runId} Playwright disposed durationMs=${Date.now() - playwrightDisposeStartedAt}`)
     this.state = 'disposed'
+    console.debug(`[sandbox] run=${this.runId} dispose finished durationMs=${Date.now() - startedAt}`)
   }
 
   private async execute(): Promise<SandboxHostRunResult> {
@@ -212,11 +224,13 @@ export class SandboxRunSession {
       fsPromises.mkdir(path.dirname(payload.logFilePath), { recursive: true }),
     ])
     await cleanOldBrowserDirs(payload.browserOutputDir)
+    this.phase('filesystem_ready')
 
     const source = await fsPromises.readFile(payload.scriptPath)
     if (payload.scriptSha512) {
       assertSha512(source, payload.scriptSha512)
     }
+    this.phase('script_loaded')
 
     const runtime = createRuntimeContext({
       profile: payload.profile,
@@ -239,6 +253,7 @@ export class SandboxRunSession {
       browserUrl: payload.browserUrl,
       browserOutputDir: payload.browserOutputDir,
       isActive: () => this.state === 'running',
+      onPhase: phase => this.phase(phase),
     })
 
     const sandboxProcess = buildSandboxProcess({
@@ -384,7 +399,9 @@ export class SandboxRunSession {
     const module = new vm.SourceTextModule(jsSource, { context, identifier: payload.scriptPath })
     await module.link(linker)
     await module.evaluate()
+    this.phase('vm_ready')
     const mainPromise = executeSandboxScriptEntry(module.namespace as Record<string, unknown>, payload.options)
+    this.phase('script_entry_start')
     mainPromise.catch(() => {})
     const returnValue = await Promise.race([mainPromise, this.terminated])
     return this.result('done', 0, returnValue)
@@ -410,6 +427,10 @@ export class SandboxRunSession {
       return
     }
     this.emitEvent({ type: 'log', level, message })
+  }
+
+  private phase(phase: SandboxRunPhase): void {
+    this.emitEvent({ type: 'phase', phase, timestamp: Date.now() })
   }
 
   private recordStorageChange(event: {

@@ -52,11 +52,8 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const isSwitchingWorkspace = ref(false)
   /** before-enter 等场景：已设置 workspace 上下文但不触发进空间副作用 */
   const workspaceEntrySilent = ref(false)
+  const workspaceEntryRestartApiServer = ref(true)
   const defaultWorkspace = computed(() => workspaceList.value.find(item => item.workspaceDefault && item.role === Role.OWNER))
-
-  const maxCreateWindowCount = computed(() => {
-    return (defaultWorkspace.value?.maxWindowCount || 0) - (defaultWorkspace.value?.useWindowCount || 0)
-  })
 
   const debounceGetPayInfo = debounce(() => {
     const userStore = getUserStore()
@@ -91,7 +88,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
-  function runPostWorkspaceEntryEffects(workspace: Workspace) {
+  function runPostWorkspaceEntryEffects(workspace: Workspace, options?: { restartApiServer?: boolean }) {
     clearTimeout(hidePageLoadingTimeout)
 
     debounceGetPayInfo()
@@ -100,7 +97,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
     hidePageLoadingTimeout = setTimeout(() => {
       hidePageLoading()
-      globalThis.electronAPI.send('app:restartAPIServer')
+      if (options?.restartApiServer !== false) {
+        globalThis.electronAPI.send('app:restartAPIServer')
+      }
 
       if (workspace.role === Role.OWNER) {
         if (globalThis.isElectron) {
@@ -161,7 +160,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       syncElectronWorkspaceId(val.id, val.workspaceType)
       rememberLastWorkspace()
     }
-    runPostWorkspaceEntryEffects(val)
+    runPostWorkspaceEntryEffects(val, { restartApiServer: workspaceEntryRestartApiServer.value })
   }, { flush: 'post' })
 
   async function fetchSharedWorkspaceList() {
@@ -271,12 +270,13 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   async function setCurrentWorkspace(
     workspaceId: number,
-    options?: { silent?: boolean, force?: boolean },
+    options?: { silent?: boolean, force?: boolean, restartApiServer?: boolean },
   ) {
     const endSetCurrentWorkspace = createPerfTimer('workspace:setCurrentWorkspace', {
       workspaceId,
       silent: Boolean(options?.silent),
       force: Boolean(options?.force),
+      restartApiServer: options?.restartApiServer !== false,
     })
     const run = async () => {
       isSwitchingWorkspace.value = true
@@ -288,6 +288,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         }
 
         workspaceEntrySilent.value = options?.silent ?? false
+        workspaceEntryRestartApiServer.value = options?.restartApiServer ?? true
         if (!workspaceEntrySilent.value) {
           isMainWindow && showPageLoading()
         }
@@ -296,7 +297,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
           await fetchWorkspaceList()
         }
 
-        const targetWorkspace = workspaceList.value.find(item => item.id === workspaceId)
+        const targetWorkspace = workspaceList.value.find(item => String(item.id) === String(workspaceId))
         const nextWorkspace = targetWorkspace || defaultWorkspace.value
         if (!nextWorkspace?.id) {
           return
@@ -310,6 +311,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
             workspaceChangeChannel.postMessage({
               workspaceId: nextWorkspace.id,
               workspaceName: nextWorkspace.workspaceName,
+              restartApiServer: options?.restartApiServer,
             })
           }
           else if (document.visibilityState === 'visible') {
@@ -339,11 +341,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   /** 静默准备 workspace 上下文（默认 silent），不触发全局 loading 与进空间副作用 */
   async function prepareWorkspace(
     workspaceId: number,
-    options?: { silent?: boolean, force?: boolean },
+    options?: { silent?: boolean, force?: boolean, restartApiServer?: boolean },
   ) {
     return setCurrentWorkspace(workspaceId, {
       silent: options?.silent ?? true,
       force: options?.force,
+      restartApiServer: options?.restartApiServer,
     })
   }
 
@@ -381,7 +384,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   workspaceChangeChannel.onmessage = (event) => {
     console.log('Received message:', event.data)
     if (event.data.workspaceId !== currentWorkspace.value?.id) {
-      setCurrentWorkspace(event.data.workspaceId)
+      setCurrentWorkspace(event.data.workspaceId, {
+        restartApiServer: event.data.restartApiServer,
+      })
     }
     if (event.data.token) {
       getUserStore().setToken(event.data.token)
@@ -448,7 +453,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     currentWorkspace,
     isSwitchingWorkspace,
     workspaceEntrySilent,
-    maxCreateWindowCount,
     resetWorkspace,
     clearWorkspaceCache,
     getWorkspaceList,

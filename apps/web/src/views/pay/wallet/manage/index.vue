@@ -3,6 +3,7 @@ import Services from '/@/views/pay/wallet/manage/services.vue'
 import AutoRenew from '/@/views/pay/wallet/manage/auto-renew.vue'
 import Wallet from '/@/views/pay/wallet/manage/wallet.vue'
 import BankCards from '/@/views/pay/wallet/manage/bank-cards.vue'
+import ActivityInfoWallet from '/@/views/campaign/new-user/activity-info-wallet.vue'
 // import Redeem from '/@/views/pay/wallet/manage/redeem.vue'
 import { useUserStore } from '/@/stores/user'
 
@@ -17,13 +18,15 @@ onBeforeMount(() => {
 })
 
 onBeforeUnmount(() => {
-  if (balanceRefreshSuccessTimer)
+  if (balanceRefreshSuccessTimer) {
     clearTimeout(balanceRefreshSuccessTimer)
+  }
 })
 
 function onRefresh() {
-  if (balanceRefreshUi.value !== 'idle')
+  if (balanceRefreshUi.value !== 'idle') {
     return
+  }
 
   balanceRefreshUi.value = 'loading'
   const startedAt = Date.now()
@@ -33,8 +36,9 @@ function onRefresh() {
       const remainingSpin = Math.max(0, 1000 - (Date.now() - startedAt))
       setTimeout(() => {
         balanceRefreshUi.value = 'success'
-        if (balanceRefreshSuccessTimer)
+        if (balanceRefreshSuccessTimer) {
           clearTimeout(balanceRefreshSuccessTimer)
+        }
         balanceRefreshSuccessTimer = setTimeout(() => {
           balanceRefreshUi.value = 'idle'
         }, 2000)
@@ -46,23 +50,14 @@ function onRefresh() {
 <template>
   <div class="flex flex-col w-full h-full overflow-y-auto">
     <div class="rx-container h-auto">
-      <div class="flex gap-14 px-16 pt-6 pb-10">
-        <div class="flex-1 flex flex-col gap-8 overflow-hidden">
-          <Services />
-          <AutoRenew class="h-70" />
+      <div class="flex flex-col gap-4 px-16 pt-6 pb-10">
+        <div class="flex items-stretch gap-4">
+          <Wallet class="min-w-0 flex-[1.4]" :balance-refresh-ui="balanceRefreshUi" @refresh="onRefresh" />
+          <BankCards class="min-w-0 flex-1" />
         </div>
-        <RxDivider vertical line-only />
-        <div class="w-90 flex flex-col gap-6">
-          <Wallet :balance-refresh-ui="balanceRefreshUi" @refresh="onRefresh">
-            <template #footer>
-              <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
-              <BankCards />
-            </template>
-          </Wallet>
-
-          <!-- <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
-          <Redeem></Redeem> -->
-        </div>
+        <Services />
+        <ActivityInfoWallet class="relative z-1" />
+        <AutoRenew />
       </div>
     </div>
   </div>

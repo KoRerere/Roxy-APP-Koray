@@ -117,7 +117,7 @@ it('aborts and rejects an LLM call that exceeds the sandbox timeout', async () =
   assert.equal(providerInvoke.mock.calls[0][1].aborted, true)
 })
 
-it('returns JSON-schema output through Responses structured output without tool choice', async () => {
+it('returns JSON-schema output through a forced Responses function call', async () => {
   providerWithJsonSchemaOutput.mockReturnValue(vi.fn().mockResolvedValue({ price: 12 }))
   const { buildLlmTransport } = await import('./hostLlm')
   const schema = { type: 'object', properties: { price: { type: 'number' } } }
@@ -130,7 +130,7 @@ it('returns JSON-schema output through Responses structured output without tool 
   assert.deepEqual(providerWithJsonSchemaOutput.mock.calls[0][0], schema)
   assert.deepEqual(providerWithJsonSchemaOutput.mock.calls[0][1], {
     name: 'json',
-    method: 'jsonMode',
+    method: 'functionCalling',
     temperature: 0.2,
     maxTokens: 77,
   })

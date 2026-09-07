@@ -29,7 +29,7 @@ const { seasonalActivity } = storeToRefs(useCampaignStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
-const { openProcessing, planSuccessFreedomActivity2 } = usePay()
+const { openProcessing, planSuccessFreedomActivity2, maybeShowFirstConsumeReferralPopup } = usePay()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const billingLabels = useBillingEntityLabels()
@@ -161,12 +161,13 @@ const details = computed(() => {
           value: `-${userPayInfo.value?.firstPurchaseDiscount}%`,
           visible: !!userPayInfo.value?.firstPurchaseDiscount,
         },
-        {
-          label: $t('专属折扣'),
-          class: '!color-orange',
-          value: `-${userPayInfo.value?.discount}%`,
-          visible: !!userPayInfo.value?.discount,
-        },
+        // 身份折扣文案暂不对外展示，折扣仍参与计价
+        // {
+        //   label: $t('专属折扣'),
+        //   class: '!color-orange',
+        //   value: `-${userPayInfo.value?.discount}%`,
+        //   visible: !!userPayInfo.value?.discount,
+        // },
         {
           label: selectedDuration.value?.discountStr || $t('订阅折扣'),
           class: '!color-orange',
@@ -267,7 +268,12 @@ async function onSubscribe() {
           if (code === 0) {
             (payType === PayWay.Balance ? planSuccessFreedomActivity2() : openProcessing({ payType, ...data }, OrderType.Subscribe))
               .then(() => {
-                router.push({ name: 'browser-list' })
+                maybeShowFirstConsumeReferralPopup((reason) => {
+                  if (reason === 'view-details') {
+                    return
+                  }
+                  router.push({ name: 'browser-list' })
+                })
               })
           }
         },

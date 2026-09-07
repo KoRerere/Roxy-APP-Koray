@@ -1,35 +1,33 @@
-import type {
-  ContentBlock,
-  IMemoryProvider,
-  Message,
-  SessionId,
-  TrimPolicy,
-  TrimSummary,
-  Trimmer,
-} from '../core/interfaces.ts'
+import type { IMemoryProvider, Message, SessionId, TrimPolicy, TrimSummary, Trimmer } from '../core/interfaces.ts'
 import { SlidingWindowTrimmer } from './trimmer.ts'
 
-// Advance from the front of `messages` until we find a `user` message that
-// does NOT contain `tool_result` blocks — this is the only safe starting
-// position for an Anthropic API request (assistant-first or orphaned
-// tool_result both produce 400 errors). Never removes the last message.
-function advanceToSafeBoundary(messages: Message[]): Message[] {
+export function createCompactionSummaryMessage(summary: string): Message {
+  return {
+    role: 'developer',
+    content: `Previous conversation summary:\n<summary>\n${summary}\n</summary>`,
+    visible: false,
+  }
+}
+
+function isSafeConversationStart(message: Message): boolean {
+  if (message.role !== 'user') {
+    return false
+  }
+  if (!Array.isArray(message.content)) {
+    return true
+  }
+  return !message.content.some((block) => block.type === 'tool_result')
+}
+
+function retainSafeConversationTail(messages: Message[]): Message[] {
   let i = 0
   while (i < messages.length - 1) {
-    const msg = messages[i]!
-    if (msg.role === 'user' && !hasToolResultBlocks(msg)) {
+    if (isSafeConversationStart(messages[i]!)) {
       break
     }
     i++
   }
   return i === 0 ? messages : messages.slice(i)
-}
-
-function hasToolResultBlocks(msg: Message): boolean {
-  if (!Array.isArray(msg.content)) {
-    return false
-  }
-  return (msg.content as ContentBlock[]).some((b) => b.type === 'tool_result')
 }
 
 function compactionContext(messages: Message[]): Message[] {
@@ -83,15 +81,15 @@ export class InMemoryProvider implements IMemoryProvider {
   async trim(sessionId: SessionId, policy: TrimPolicy): Promise<TrimSummary> {
     const messages = this.histories.get(sessionId) ?? []
     const compressibleMessages = messages.filter((message) => !message.compactionKey)
-    const { kept, summary } = this.trimmer.trim(compressibleMessages, policy)
-    const retainedContext = compactionContext(messages)
+    const { kept: retainedConversation, summary } = this.trimmer.trim(compressibleMessages, policy)
     if (summary.removedCount === 0) {
       this.histories.set(sessionId, messages)
       return summary
     }
-    // Keep automatic hidden context out of the summarizer while restoring its
-    // latest snapshots before the retained user/tool history.
-    this.histories.set(sessionId, advanceToSafeBoundary([...retainedContext, ...kept]))
+
+    const retainedContext = compactionContext(messages)
+    const conversationTail = retainSafeConversationTail(retainedConversation)
+    this.histories.set(sessionId, [...retainedContext, ...conversationTail])
     return summary
   }
 

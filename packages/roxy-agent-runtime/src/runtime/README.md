@@ -71,7 +71,7 @@
 ## 4. 调用时序与异常语义
 
 - 节点顺序：`model`（调用 provider）→ `hitl`（拦截）→ `tools`（执行）。
-- 条件边：`stopReason === "end_turn" | "max_tokens"` → 结束；`stopReason === "tool_use"` → 回到 model 循环。
+- 条件边：`stopReason === "end_turn" | "max_tokens"` → 结束；`stopReason === "tool_use"` → 回到 model 循环。若本次响应只包含一个 `descriptor.returnDirect === true` 的已解析工具调用，且该工具成功，runtime 在写入并发布 `tool_result` 后以 `end_turn` 结束，不再请求模型。
 - `streamEvents()` 经 `TrajectoryBridge` 转为 `TrajectoryEvent` 喂入 `ITrajectoryRecorder`。
 - `AgentResponse.trajectory` 是 **per-call**（每次 invoke 独立 trace），**非累积**。
 - `AgentResponse.messages` **排除输入**消息。
@@ -91,6 +91,8 @@ tools 节点 → executor.execute(name, input, ctx, toolUseId)
   → 回到 model 节点
 直到 stopReason: end_turn / max_tokens
 ```
+
+`returnDirect` 只属于本地 `ToolDescriptor` 元数据，不进入 provider 的工具 JSON Schema。它只在单工具调用且结果非错误时生效；输入校验失败、HITL 拒绝、handler 错误、取消，以及同一响应中的多工具调用都会保持原有的回到模型循环语义。
 
 canonical phase 序列：`model_thought → tool_selected → hitl_intercept? → tool_executed → result_returned`（见 observability）。
 

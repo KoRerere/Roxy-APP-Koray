@@ -1,4 +1,5 @@
 import type { Message, RoxyAssistantItem, StopReason, SystemBlock, ToolResultBlock } from './provider.ts'
+import type { SkillManifest } from './skills.ts'
 
 // ---------------------------------------------------------------------------
 // Memory
@@ -126,7 +127,7 @@ export type RolloutEvent =
       summary: string
       compactedCount: number
       ts: number
-      /** Messages kept after trimming, persisted for correct session replay. */
+      /** Messages kept after trimming, excluding the synthetic summary message. */
       keptMessages?: Message[]
     }
   /**
@@ -222,9 +223,9 @@ export interface Summarizer {
 }
 
 /**
- * Stable system-prompt assembly contract. Dynamic summaries, skill catalogs,
- * selected skill bodies, host context, and contributor output travel as
- * persisted internal developer-role XML messages instead of changing the top-level
- * system prompt.
+ * System-prompt assembly contract. The stable Agent base prompt and discovered
+ * Skill catalog travel in top-level system blocks. Dynamic summaries, selected
+ * skill bodies, host context, and contributor output remain persisted internal
+ * messages.
  */
-export type SystemPromptBuilder = (base: string) => SystemBlock[]
+export type SystemPromptBuilder = (base: string, skills?: readonly SkillManifest[]) => SystemBlock[]

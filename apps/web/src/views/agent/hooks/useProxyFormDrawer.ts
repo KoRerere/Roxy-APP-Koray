@@ -58,15 +58,17 @@ export async function openProxyFormDrawer(
   } = options
 
   /** 广告「立即购买」：弹购买菜单，成功后关抽屉并回列表高亮新单 */
-  async function onBuy() {
-    if (!buyDeps)
+  async function onBuy(preferredCountry?: string) {
+    if (!buyDeps) {
       return
+    }
 
     try {
       const isDevice = mode === 'device'
       const orderInfo = await buyDeps.buyProxy({
         entryType: BuyEntryType.Immediate,
         ...(isDevice ? { mode: 'device' as const } : {}),
+        ...(preferredCountry ? { preferredCountry } : {}),
       })
 
       buyDeps.showToast(0, isDevice
@@ -103,8 +105,9 @@ export async function openProxyFormDrawer(
         onBuy,
         onConfirm: async (formData: Record<string, any>) => {
           const result = await onConfirm(formData)
-          if (result === false)
+          if (result === false) {
             return
+          }
           drawerInstance.hideDrawer()
         },
       }),

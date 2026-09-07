@@ -1,4 +1,5 @@
 import type { SandboxAgentToHostMessage, SandboxHostEvent } from '@/core/sandbox/host-protocol'
+import { monitorEventLoopDelay } from 'node:perf_hooks'
 import { installProcessFaultGuards } from '@/core/processFaultGuard'
 import { parseSandboxAgentToHostMessage, SANDBOX_HOST_PROTOCOL_VERSION } from '@/core/sandbox/host-protocol'
 import { SandboxRunSession } from '@/core/sandbox/sandbox-run-session'
@@ -26,6 +27,8 @@ export async function runSandboxMode(): Promise<() => Promise<void>> {
   const generation = requireHostGeneration()
   const startedAt = Date.now()
   const runs = new Map<string, ActiveRun>()
+  const eventLoop = monitorEventLoopDelay({ resolution: 20 })
+  eventLoop.enable()
   let draining = false
   let stopping = false
 
@@ -76,12 +79,20 @@ export async function runSandboxMode(): Promise<() => Promise<void>> {
       return
     }
 
+    const runReceivedAt = Date.now()
+    console.debug(`[sandbox] run=${message.runId} received activeRuns=${runs.size + 1}`)
+    send({ type: 'run.phase', runId: message.runId, phase: 'run_received', timestamp: runReceivedAt })
+
     const session = new SandboxRunSession({
       runId: message.runId,
       payload: message.payload,
       emit: (event) => {
         if (event.type === 'log') {
           send({ type: 'run.log', runId: message.runId, level: event.level, message: event.message })
+        }
+        else if (event.type === 'phase') {
+          console.debug(`[sandbox] run=${message.runId} phase=${event.phase} elapsedMs=${Date.now() - runReceivedAt}`)
+          send({ type: 'run.phase', runId: message.runId, phase: event.phase, timestamp: event.timestamp })
         }
         else {
           send({
@@ -96,7 +107,11 @@ export async function runSandboxMode(): Promise<() => Promise<void>> {
 
     send({ type: 'run.started', runId: message.runId })
     const finished = session.run()
-      .then(result => send({ type: 'run.finished', runId: message.runId, result }))
+      .then((result) => {
+        console.debug(`[sandbox] run=${message.runId} finished status=${result.status} durationMs=${Date.now() - runReceivedAt}`)
+        send({ type: 'run.phase', runId: message.runId, phase: 'run_finished', timestamp: Date.now() })
+        send({ type: 'run.finished', runId: message.runId, result })
+      })
       .catch((error) => {
         const messageText = error instanceof Error ? error.message : String(error)
         send({
@@ -162,7 +177,9 @@ export async function runSandboxMode(): Promise<() => Promise<void>> {
       timestamp: Date.now(),
       activeRuns: runs.size,
       memory: { rss: memory.rss, heapUsed: memory.heapUsed, external: memory.external },
+      eventLoopDelayMs: Number((eventLoop.max / 1e6).toFixed(1)),
     })
+    eventLoop.reset()
   }, HEARTBEAT_INTERVAL_MS)
   heartbeat.unref()
 
@@ -181,6 +198,7 @@ export async function runSandboxMode(): Promise<() => Promise<void>> {
     draining = true
     uninstallProcessFaultGuards()
     clearInterval(heartbeat)
+    eventLoop.disable()
     process.off('message', onMessage)
     for (const run of runs.values()) {
       run.session.abort(reason)

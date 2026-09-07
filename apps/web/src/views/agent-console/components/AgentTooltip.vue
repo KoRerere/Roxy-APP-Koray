@@ -80,8 +80,9 @@ const alignConfig = computed(() => {
 const isTopPlacement = computed(() => props.placement.startsWith('top'))
 
 function align() {
-  if (!popupRef.value || !triggerRef.value)
+  if (!popupRef.value || !triggerRef.value) {
     return
+  }
 
   domAlign(popupRef.value, triggerRef.value, {
     points: alignConfig.value.points,
@@ -99,12 +100,14 @@ function align() {
 }
 
 function updateArrowPosition() {
-  if (!props.showArrow || !popupRef.value || !triggerRef.value)
+  if (!props.showArrow || !popupRef.value || !triggerRef.value) {
     return
+  }
 
   const contentEl = popupRef.value.querySelector<HTMLElement>('.agent-tooltip__content')
-  if (!contentEl)
+  if (!contentEl) {
     return
+  }
 
   const triggerRect = triggerRef.value.getBoundingClientRect()
   const popupRect = popupRef.value.getBoundingClientRect()
@@ -117,8 +120,9 @@ function updateArrowPosition() {
 }
 
 function syncAlign() {
-  if (!mounted.value || !visible.value)
+  if (!mounted.value || !visible.value) {
     return
+  }
 
   requestAnimationFrame(align)
 }
@@ -141,8 +145,9 @@ function open() {
   clearOpenTimer()
   clearCloseTimer()
 
-  if (props.disabled || visible.value)
+  if (props.disabled || visible.value) {
     return
+  }
 
   mounted.value = true
   visible.value = true
@@ -157,8 +162,9 @@ function close() {
   clearOpenTimer()
   clearCloseTimer()
 
-  if (!mounted.value)
+  if (!mounted.value) {
     return
+  }
 
   visible.value = false
   emit('openChange', false)
@@ -172,8 +178,9 @@ function close() {
 function scheduleOpen() {
   clearCloseTimer()
 
-  if (props.disabled || visible.value)
+  if (props.disabled || visible.value) {
     return
+  }
 
   if (props.showDelay <= 0) {
     open()
@@ -202,36 +209,43 @@ function scheduleClose() {
 }
 
 function toggle() {
-  if (visible.value)
+  if (visible.value) {
     close()
-  else
+  }
+  else {
     open()
+  }
 }
 
 function onTriggerClick(event: MouseEvent) {
-  if (props.trigger !== 'click')
+  if (props.trigger !== 'click') {
     return
+  }
 
   event.stopPropagation()
   toggle()
 }
 
 function onTriggerEnter() {
-  if (props.trigger === 'hover')
+  if (props.trigger === 'hover') {
     scheduleOpen()
+  }
 }
 
 function onTriggerLeave() {
-  if (props.trigger === 'hover')
+  if (props.trigger === 'hover') {
     scheduleClose()
+  }
 }
 
 function onDocumentPointerDown(event: PointerEvent) {
   const path = event.composedPath()
-  if (triggerRef.value && path.includes(triggerRef.value))
+  if (triggerRef.value && path.includes(triggerRef.value)) {
     return
-  if (popupRef.value && path.includes(popupRef.value))
+  }
+  if (popupRef.value && path.includes(popupRef.value)) {
     return
+  }
 
   close()
 }
@@ -245,8 +259,9 @@ function unbindOutsideListener() {
 }
 
 watch(visible, (open) => {
-  if (props.trigger !== 'click')
+  if (props.trigger !== 'click') {
     return
+  }
 
   if (outsideListenerTimer) {
     clearTimeout(outsideListenerTimer)
@@ -277,8 +292,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', syncAlign)
   window.removeEventListener('scroll', syncAlign, true)
   unbindOutsideListener()
-  if (outsideListenerTimer)
+  if (outsideListenerTimer) {
     window.clearTimeout(outsideListenerTimer)
+  }
   clearOpenTimer()
   clearCloseTimer()
 })

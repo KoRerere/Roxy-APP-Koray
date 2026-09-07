@@ -35,6 +35,7 @@ import AgentFormField from '../form/AgentFormField.vue'
 import AgentInput from '../form/AgentInput.vue'
 import AgentSelect from '../form/AgentSelect.vue'
 import ChatComposer from '../ChatComposer.vue'
+import MarkdownContent from '../MarkdownContent.vue'
 import ScriptSchemaForm from '../form/ScriptSchemaForm.vue'
 import CreateTemplateFormSkeleton from '../skeleton/CreateTemplateFormSkeleton.vue'
 import AgentTooltip from '../AgentTooltip.vue'
@@ -664,7 +665,12 @@ onMounted(() => {
             <span>{{ templateType === 'script' ? $t('脚本详情') : $t('Skill 详情') }}</span>
             <small>{{ $t('仅查看') }}</small>
           </div>
-          <p>{{ detailDescription || $t('选择来源后展示详情') }}</p>
+          <MarkdownContent
+            v-if="templateType === 'script' && detailDescription"
+            class="create-template-dialog__description"
+            :content="detailDescription"
+          />
+          <p v-else>{{ detailDescription || $t('选择来源后展示详情') }}</p>
           <template v-if="templateType === 'skill' && Array.isArray(activeMetadata.files)">
             <div class="create-template-dialog__parameters-title">{{ $t('包含文件') }}</div>
             <p class="create-template-dialog__files">{{ activeMetadata.files.join('、') }}</p>
@@ -960,6 +966,33 @@ onMounted(() => {
     margin: 6px 0 0;
     color: var(--color-text-tertiary);
     line-height: 20px;
+  }
+}
+
+.create-template-dialog__description {
+  margin-top: 6px;
+  color: var(--color-text-tertiary);
+  line-height: 20px;
+  overflow-wrap: anywhere;
+
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4),
+  :deep(h5),
+  :deep(h6) {
+    margin: 8px 0 4px;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  :deep(> :first-child) {
+    margin-top: 0;
+  }
+
+  :deep(> :last-child) {
+    margin-bottom: 0;
   }
 }
 

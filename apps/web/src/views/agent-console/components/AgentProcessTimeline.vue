@@ -1,28 +1,39 @@
 <script setup lang="ts">
-import type { AgentConversationProcess, AgentFileArtifact, AgentFileProcessEvent, AgentMessageStatus } from '../types'
+import type { AgentConversationProcess, AgentFileArtifact, AgentFileProcessEvent, AgentMessageStatus, AgentTaskReportSaveRequest } from '../types'
+import type { TaskReportWindowInfo } from '../task-report-window-info'
 import { useAgentConsoleApi } from '../api'
 import { splitProcessEventBlocks } from '../processEventGrouping'
+import { fetchTaskReportWindowInfo } from '../task-report-window-info'
+import { shouldCollapseProcessBeforeTaskReport } from '../task-report-presentation'
 import AgentCollapse from './AgentCollapse.vue'
 import AgentLifecycleTree from './AgentLifecycleTree.vue'
 import AgentProcessEventList from './AgentProcessEventList.vue'
+import AgentTaskReportCard from './AgentTaskReportCard.vue'
 import MarkdownContent from './MarkdownContent.vue'
 
 const props = defineProps<{
+  conversationId: string
   hasMessageContent?: boolean
   process: AgentConversationProcess
   messageStatus?: AgentMessageStatus
 }>()
 
+const emit = defineEmits<{
+  saveTemplate: [payload: AgentTaskReportSaveRequest]
+}>()
+
 const processExpanded = ref(props.process.collapsed === false || props.messageStatus === 'thinking' || props.messageStatus === 'streaming')
+const reportWindowInfo = ref<ReadonlyMap<string, TaskReportWindowInfo>>(new Map())
 const now = ref(Date.now())
 const api = useAgentConsoleApi()
 let timer: number | undefined
 
-const rootEvents = computed(() => props.process.events.filter(event => event.type !== 'final_answer' && event.type !== 'agent_file'))
+const rootEvents = computed(() => props.process.events.filter(event => event.type !== 'final_answer' && event.type !== 'agent_file' && event.type !== 'task_report'))
 const rootBlocks = computed(() => splitProcessEventBlocks(rootEvents.value, 'root'))
 const lastRootBlockId = computed(() => rootBlocks.value.at(-1)?.id)
 const answer = computed(() => props.process.events.find(event => event.type === 'final_answer'))
 const files = computed(() => props.process.events.filter((event): event is AgentFileProcessEvent => event.type === 'agent_file').flatMap(event => event.files.filter(file => !/\.log$/i.test(file.fileName))))
+const reports = computed(() => props.process.events.filter((event): event is Extract<typeof event, { type: 'task_report' }> => event.type === 'task_report' && !event.superseded))
 const answerStreaming = computed(() => props.messageStatus === 'thinking' || props.messageStatus === 'streaming')
 const showWaitingPlaceholder = computed(() => {
   const running = props.messageStatus === 'thinking' || props.messageStatus === 'streaming'
@@ -82,6 +93,32 @@ watch(() => [props.messageStatus, props.process.durationStartedAt] as const, ([s
   syncTimer()
 }, { immediate: true })
 
+watch(reports, async (nextReports) => {
+  const dirIds = nextReports.flatMap(report => report.report.windows.map(window => window.dirId))
+  if (dirIds.length === 0) {
+    reportWindowInfo.value = new Map()
+    return
+  }
+
+  try {
+    reportWindowInfo.value = await fetchTaskReportWindowInfo(dirIds)
+  }
+  catch (error) {
+    console.warn('[agent-console] Failed to load task report window info:', error)
+    reportWindowInfo.value = new Map()
+  }
+}, { immediate: true })
+
+watch(
+  [() => props.messageStatus, () => props.process.revision],
+  ([status]) => {
+    if (shouldCollapseProcessBeforeTaskReport(props.process.events, status)) {
+      processExpanded.value = false
+    }
+  },
+  { immediate: true },
+)
+
 onBeforeUnmount(() => {
   if (timer) {
     window.clearTimeout(timer)
@@ -129,6 +166,15 @@ onBeforeUnmount(() => {
       :content="answer.content"
       :streaming="answerStreaming"
       variant="answer"
+    />
+
+    <AgentTaskReportCard
+      v-for="report in reports"
+      :key="report.id"
+      :conversation-id="conversationId"
+      :event="report"
+      :window-info="reportWindowInfo"
+      @save-template="emit('saveTemplate', $event)"
     />
 
     <div v-if="files.length" class="agent-file-list">

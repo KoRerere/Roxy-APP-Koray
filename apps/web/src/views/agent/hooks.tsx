@@ -23,7 +23,7 @@ import {
   resolveProxyDownloadRows,
 } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
 import { createProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
-import { isProxyDetectSystemError, resolveProxyDetectFailGuide } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
+import { isProxyDetectSystemError, isRoxyIpProxyType, pickPreferredBuyCountry, resolveProxyDetectFailGuide } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
 import ProxyDetectFailAd from '/@/views/agent/shop/components/proxy-detect-fail-ad.vue'
 import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
 import { emitter } from '/@/utils/eventBus'
@@ -43,6 +43,8 @@ export interface CheckResult {
   proxyType?: ProxyType
   /** IPC / 本地网络等系统异常，不触发失败引导 */
   systemError?: boolean
+  /** 第三方失败时保留的检测前国家码，只给 toast 购买弹窗做默认国家，不写回列表 */
+  preDetectLastCountry?: string
 }
 
 interface ProxyCheckParams extends Partial<ProxyDetectionParams> {
@@ -50,6 +52,10 @@ interface ProxyCheckParams extends Partial<ProxyDetectionParams> {
   proxyEncryptInfo?: string
   apiCheck?: boolean
   id?: number
+  lastCountry?: string
+  proxyType?: ProxyType
+  /** 窗口行用 buyProxyType 区分来源，测速入参可能只有它 */
+  buyProxyType?: ProxyType
 }
 
 /** 并发任务单条结果（filter(Boolean) 之后），含行 id / proxyType 供业务筛选 */
@@ -133,6 +139,9 @@ export function useCheckProxy(): useCheckProxyResult {
     }
 
     const checkData = deepClone(data)
+    // 失败后 lastCountry 会被清空；第三方才留下检测前国家码给 toast 购买默认选中
+    const incomingLastCountry = typeof data.lastCountry === 'string' ? data.lastCountry.trim() : ''
+    const incomingProxyType = data.proxyType ?? data.buyProxyType
 
     if (isEncryptProxy && proxyEncryptInfo) {
       const decryptedProxyEncryptInfo = await decryptAESGCM(proxyEncryptInfo)
@@ -164,12 +173,21 @@ export function useCheckProxy(): useCheckProxyResult {
       local.loading = false
       checkData.dirId && globalThis.electronAPI.send('proxy:delRoxynetProxy', checkData.dirId)
     }
+    if (
+      incomingLastCountry
+      && local.checkStatus === ProxyCheckStatus.failure
+      && !local.systemError
+      && !isRoxyIpProxyType(incomingProxyType)
+    ) {
+      local.preDetectLastCountry = incomingLastCountry
+    }
     return { ...local }
   }
 
   function batchTestShowToast(__results: CheckResult | CheckResult[], options?: BatchTestShowToastOptions) {
     const results = (Array.isArray(__results) ? __results : [__results]).filter(Boolean)
     const guide = resolveProxyDetectFailGuide(results)
+    const preferredCountry = pickPreferredBuyCountry(results)
     const toastLife = guide ? { life: 8000 } : undefined
 
     if (results.length === 1) {
@@ -177,7 +195,7 @@ export function useCheckProxy(): useCheckProxyResult {
       const shopLabels = createProxyShopLabels(isCurrentEcommerceWorkspace())
       const errMsg = checkRes.proxyType === ProxyType.buy ? checkRes.error : shopLabels.testFailedCheckConfig
       const [code, msg] = checkRes.checkStatus === ProxyCheckStatus.failure
-        ? [-1, genProxyTestToastDetail(errMsg, { ...options, guide })]
+        ? [-1, genProxyTestToastDetail(errMsg, { ...options, guide, preferredCountry })]
         : [0, $t('位置: {location}\nIP: {ip}\n时区: {timezone}', { location: `${checkRes.lastCountry}${strConcat('/', checkRes.lastCity)}`, ip: checkRes.lastIp, timezone: checkRes.timezone })]
       showToast(code, msg, toastLife)
     }
@@ -186,13 +204,13 @@ export function useCheckProxy(): useCheckProxyResult {
       const error = results.filter(item => item.checkStatus === ProxyCheckStatus.failure)
       const summary = $t('{success} 条成功，{error} 条失败', { success: success.length, error: error.length })
       // 全部失败时走错误 toast（红色图标 +「操作失败」）；只要有一条成功仍用成功态汇总
-      showToast(success.length === 0 ? -1 : 0, genProxyTestToastDetail(summary, { ...options, guide }), toastLife)
+      showToast(success.length === 0 ? -1 : 0, genProxyTestToastDetail(summary, { ...options, guide, preferredCountry }), toastLife)
     }
   }
 
   /** RoxyIP 失败：客服链接触在文案后；第三方失败：下方紧凑购买条（走 detail，避免 footer 被 PrimeVue 丢掉） */
-  function genProxyTestToastDetail(msg: string, options?: BatchTestShowToastOptions & { guide?: 'ad' | 'support' | null }) {
-    const { reCheck, onBuy, guide } = options ?? {}
+  function genProxyTestToastDetail(msg: string, options?: BatchTestShowToastOptions & { guide?: 'ad' | 'support' | null, preferredCountry?: string }) {
+    const { reCheck, onBuy, guide, preferredCountry } = options ?? {}
     const isAd = guide === 'ad'
     const isSupport = guide === 'support'
     // 主进程失败文案常自带句号，拼「，联系技术支持」前去掉，避免出现「。……，」
@@ -228,7 +246,7 @@ export function useCheckProxy(): useCheckProxyResult {
                 onBuy()
                 return
               }
-              void buyFromDetectFailAd()
+              void buyFromDetectFailAd(preferredCountry)
             }}
           />
         )}
@@ -240,9 +258,12 @@ export function useCheckProxy(): useCheckProxyResult {
    * toast 广告「立即购买」：关弹窗后必须离开测速失败现场，否则用户以为买完仍停在原页。
    * 已在列表页时靠 updateShopList 刷新并高亮；电商工作区落到设备列表。
    */
-  async function buyFromDetectFailAd() {
+  async function buyFromDetectFailAd(preferredCountry?: string) {
     try {
-      const orderInfo = await buyProxy({ entryType: BuyEntryType.Immediate })
+      const orderInfo = await buyProxy({
+        entryType: BuyEntryType.Immediate,
+        ...(preferredCountry ? { preferredCountry } : {}),
+      })
       const isEcommerce = isCurrentEcommerceWorkspace()
       showToast(0, isEcommerce
         ? $t('设备已购买成功，正在为您配置中，请稍后。若长时间未加载设备，请刷新页面或联系技术支持。')

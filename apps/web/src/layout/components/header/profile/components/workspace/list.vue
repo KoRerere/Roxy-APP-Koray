@@ -36,7 +36,7 @@ const roleStr = getRoleLabelMap()
 const workspaceForm = ref({
   workspaceName: '',
   workspacePicture: '',
-  maxWindowCount: 0,
+  workspacePictureUrl: '',
 })
 const workspaceFormRef = ref<InstanceType<typeof WorkspaceForm>>()
 
@@ -50,6 +50,7 @@ const list = computed(() => {
 function getAvatarProps(item: Data) {
   return getWorkspaceAvatarProps({
     workspacePicture: item.workspacePicture,
+    workspacePictureUrl: item.workspacePictureUrl,
     workspaceName: item.workspaceName,
     size: 20,
     emojiFontSize: 12,
@@ -89,8 +90,10 @@ async function showCreateWorkspaceDialog() {
   const resetWorkspaceForm = () => {
     workspaceForm.value.workspaceName = ''
     workspaceForm.value.workspacePicture = ''
-    workspaceForm.value.maxWindowCount = 0
+    workspaceForm.value.workspacePictureUrl = ''
   }
+
+  resetWorkspaceForm()
 
   return showWorkspaceFormDialog({
     header: $t('创建新的团队'),
@@ -123,26 +126,48 @@ async function showCreateWorkspaceDialog() {
       if (workspaceFormRef.value?.errorMessage) {
         return Promise.reject(new Error('表单校验失败'))
       }
-      Reflect.deleteProperty(workspaceForm.value, 'maxWindowCount')
-      const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate({
-        ...workspaceForm.value,
-        workspaceType: currentWorkspace.value?.workspaceType,
-      })
-      if (code === 0) {
-        userStore.fetchUserInfo()
-        resetWorkspaceForm()
-        await getWorkspaceList()
-        setCurrentWorkspace(data.workspaceId)
-        sleep(600).then(() => {
-          router.replace({ name: 'home' })
-        })
+      const payload = {
+        workspaceName: workspaceForm.value.workspaceName,
+        workspacePicture: workspaceForm.value.workspacePicture || '',
+        workspaceType: currentWorkspace.value?.workspaceType ?? WorkspaceType.Private,
       }
-      else {
+      const { code, data, msg } = await API.limit.userAddWorkspaceInfoCreate({
+        ...payload,
+        workspacePictureUrl: '',
+      })
+      if (code !== 0) {
         await handleBusinessCode(code, () => {
           onlyErrorToast(code, msg)
           return Promise.reject(new Error(msg))
         })
+        return
       }
+
+      try {
+        const imageUrl = await workspaceFormRef.value?.commitWorkspaceImage(data.workspaceId)
+        if (imageUrl) {
+          const { code: mdfCode, msg: mdfMsg } = await API.limit.userMdfWorkspaceInfoCreate({
+            id: data.workspaceId,
+            ...payload,
+            workspacePicture: '',
+            workspacePictureUrl: imageUrl,
+          })
+          if (mdfCode !== 0) {
+            onlyErrorToast(mdfCode, mdfMsg)
+          }
+        }
+      }
+      catch (error) {
+        onlyErrorToast(-1, error as string)
+      }
+
+      userStore.fetchUserInfo()
+      resetWorkspaceForm()
+      await getWorkspaceList()
+      setCurrentWorkspace(data.workspaceId)
+      sleep(600).then(() => {
+        router.replace({ name: 'home' })
+      })
     },
   })
 }

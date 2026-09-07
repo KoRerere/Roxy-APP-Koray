@@ -445,11 +445,12 @@ onMounted(() => {
 .claw-mark__image {
   position: absolute;
   top: -17px;
-  left: 0;
+  left: 50%;
   display: block;
   width: 81px;
   max-width: none;
   height: 81px;
+  transform: translateX(-50%);
   object-fit: contain;
   pointer-events: none;
   user-select: none;

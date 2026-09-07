@@ -80,11 +80,12 @@ export function buildLlmTransport(runId: string): LlmTransport {
         reasoning: { effort: 'none' },
       })
 
-      // 带 schema：使用 Responses API 的 JSON mode，并在 provider 内本地校验 schema。
+      // 带 schema：使用 Responses API 的强制 function call，同时保留脚本传入的
+      // 原始 JSON Schema，避免 JSON 文本模式下出现数字被序列化为字符串的问题。
       if (req.schema) {
         const extract = provider.withJsonSchemaOutput(req.schema, {
           name: 'json',
-          method: 'jsonMode',
+          method: 'functionCalling',
           ...(req.options?.temperature !== undefined ? { temperature: req.options.temperature } : {}),
           ...(req.options?.maxTokens !== undefined ? { maxTokens: req.options.maxTokens } : {}),
         })

@@ -24,6 +24,7 @@ import AgentBadge from '../form/AgentBadge.vue'
 import AgentCheckbox from '../form/AgentCheckbox.vue'
 import AgentFormField from '../form/AgentFormField.vue'
 import AgentInput from '../form/AgentInput.vue'
+import AgentMinutePicker from '../form/AgentMinutePicker.vue'
 import AgentSelect from '../form/AgentSelect.vue'
 import OverflowTooltip from '../OverflowTooltip.vue'
 import './agent-dialog.scss'
@@ -83,6 +84,7 @@ const scheduleEnabled = ref(
 const planEnabled = ref(initialSchedule.enabled)
 const scheduleFrequency = ref<TaskScheduleFrequency>(initialSchedule.frequency)
 const scheduleTime = ref(initialSchedule.scheduleTime ?? new Date())
+const hourlyMinute = ref(initialSchedule.hourlyMinute)
 const monthlyDay = ref(initialSchedule.monthlyDay)
 const weekday = ref(initialSchedule.weekday)
 const saving = ref(false)
@@ -100,6 +102,7 @@ const selectedTemplateKind = computed(() => templateOptions
 
 const scheduleFrequencyOptions = computed<SelectOption<TaskScheduleFrequency>[]>(() => [
   { label: $t('单次执行'), value: 'once' },
+  { label: $t('每小时'), value: 'hourly' },
   { label: $t('每天'), value: 'daily' },
   { label: $t('每周'), value: 'weekly' },
   { label: $t('每月'), value: 'monthly' },
@@ -268,6 +271,7 @@ async function saveTask() {
   const userTemplateId = selectedTemplateId.value
   const schedulePlan = buildTaskSchedulePlan({
     frequency: scheduleFrequency.value,
+    hourlyMinute: hourlyMinute.value,
     scheduleDate: scheduleTime.value,
     scheduleTime: scheduleTime.value,
     monthlyDay: monthlyDay.value,
@@ -519,8 +523,15 @@ onBeforeUnmount(() => {
               :disabled="saving"
             />
 
+            <AgentMinutePicker
+              v-if="scheduleFrequency === 'hourly'"
+              v-model="hourlyMinute"
+              class="schedule-datepicker"
+              :disabled="saving"
+            />
+
             <AgentSelect
-              v-if="scheduleFrequency === 'weekly'"
+              v-else-if="scheduleFrequency === 'weekly'"
               v-model="weekday"
               class="schedule-detail-select"
               overlay-class="agent-schedule-select-overlay"
@@ -538,6 +549,7 @@ onBeforeUnmount(() => {
             />
 
             <DatePicker
+              v-if="scheduleFrequency !== 'hourly'"
               v-model="scheduleTime"
               class="schedule-datepicker"
               panel-class="agent-schedule-datepicker-panel"

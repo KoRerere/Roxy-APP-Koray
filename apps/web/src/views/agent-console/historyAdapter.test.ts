@@ -47,6 +47,162 @@ it('script outputs are process events and default to collapsed', () => {
   assert.equal(parsed.process.collapsed, true)
 })
 
+it('projects a successful task report from tool input so replay keeps the report card data', () => {
+  const parsed = buildProcessFromEvents('message-task-report', [
+    runEvent(1, {
+      type: 'tool_started',
+      data: {
+        toolName: 'roxy_task_report',
+        toolId: 'report-1',
+        input: {
+          taskName: '批量养号',
+          params: [{
+            key: 'browseDuration',
+            name: '每个窗口的浏览时长',
+            value: 15,
+          }],
+          windows: [
+            { dirId: 'profile-1', success: true, failureReason: '' },
+            { dirId: 'profile-2', success: false, status: 'unused', failureReason: '' },
+          ],
+        },
+      },
+    }),
+    runEvent(2, {
+      type: 'tool_finished',
+      data: { toolName: 'roxy_task_report', toolId: 'report-1', output: 'accepted', status: 'success' },
+    }),
+    runEvent(3, { type: 'run_completed', data: {} }),
+  ])
+
+  const report = parsed.process.events.find(event => event.type === 'task_report')
+  assert.ok(report?.type === 'task_report')
+  assert.equal(report.sourceReportId, 'report-1')
+  assert.equal(report.report.windows.length, 2)
+  assert.equal(report.report.windows[1]?.status, 'unused')
+  assert.deepEqual(parsed.process.events.map(event => event.type), ['task_report'])
+})
+
+it('does not expose a pending report tool call before it succeeds', () => {
+  const parsed = buildProcessFromEvents('message-pending-task-report', [
+    runEvent(1, {
+      type: 'tool_started',
+      data: {
+        toolName: 'roxy_task_report',
+        toolId: 'report-pending',
+        input: {
+          taskName: '批量养号',
+          params: [],
+          windows: [{ dirId: 'profile-1', success: true, failureReason: '' }],
+        },
+      },
+    }),
+  ])
+
+  assert.deepEqual(parsed.process.events, [])
+})
+
+it('keeps the assistant text before a successful task report card', () => {
+  const parsed = buildProcessFromEvents('message-task-report-with-prefix', [
+    runEvent(1, {
+      type: 'content_delta',
+      data: { contentId: 'prefix', text: '我已经拿到了关键价格信息。' },
+    }),
+    runEvent(2, {
+      type: 'tool_started',
+      data: {
+        toolName: 'roxy_task_report',
+        toolId: 'report-1',
+        input: {
+          taskName: '搜索价格',
+          params: [],
+          windows: [{ dirId: 'profile-1', success: true, failureReason: '' }],
+        },
+      },
+    }),
+    runEvent(3, {
+      type: 'tool_finished',
+      data: { toolName: 'roxy_task_report', toolId: 'report-1', output: 'accepted', status: 'success' },
+    }),
+    runEvent(4, { type: 'run_completed', data: { finalAnswer: '我已经拿到了关键价格信息。' } }),
+  ])
+
+  assert.deepEqual(parsed.process.events.map(event => event.type), ['final_answer', 'task_report'])
+  assert.equal(parsed.content, '我已经拿到了关键价格信息。')
+})
+
+it('does not project a report card for a failed report tool call', () => {
+  const parsed = buildProcessFromEvents('message-failed-task-report', [
+    runEvent(1, {
+      type: 'tool_started',
+      data: {
+        toolName: 'roxy_task_report',
+        toolId: 'report-failed',
+        input: {
+          taskName: '批量养号',
+          params: [],
+          windows: [{ dirId: 'profile-1', success: true, failureReason: '' }],
+        },
+      },
+    }),
+    runEvent(2, {
+      type: 'tool_finished',
+      data: {
+        toolName: 'roxy_task_report',
+        toolId: 'report-failed',
+        output: '## Task report validation failed',
+        status: 'failed',
+      },
+    }),
+    runEvent(3, { type: 'content_delta', data: { contentId: 'retry', text: '我会修正报告后重新提交。' } }),
+  ])
+
+  assert.equal(parsed.process.events.some(event => event.type === 'task_report'), false)
+  assert.equal(parsed.process.events.some(event => event.type === 'tool_call' && event.toolName === 'roxy_task_report'), false)
+  assert.equal(parsed.content, '')
+})
+
+it('projects only the successful retry after a failed report attempt', () => {
+  const parsed = buildProcessFromEvents('message-retried-task-report', [
+    runEvent(1, {
+      type: 'tool_started',
+      data: {
+        toolName: 'roxy_task_report',
+        toolId: 'report-failed',
+        input: {
+          taskName: '批量养号',
+          params: [],
+          windows: [{ dirId: 'profile-1', success: true, failureReason: '' }],
+        },
+      },
+    }),
+    runEvent(2, {
+      type: 'tool_finished',
+      data: { toolName: 'roxy_task_report', toolId: 'report-failed', output: 'invalid', status: 'failed' },
+    }),
+    runEvent(3, {
+      type: 'tool_started',
+      data: {
+        toolName: 'roxy_task_report',
+        toolId: 'report-success',
+        input: {
+          taskName: '批量养号',
+          params: [],
+          windows: [{ dirId: 'profile-1', success: true, failureReason: '' }],
+        },
+      },
+    }),
+    runEvent(4, {
+      type: 'tool_finished',
+      data: { toolName: 'roxy_task_report', toolId: 'report-success', output: 'accepted', status: 'success' },
+    }),
+  ])
+
+  const reports = parsed.process.events.filter(event => event.type === 'task_report')
+  assert.equal(reports.length, 1)
+  assert.equal(reports[0]?.type === 'task_report' && reports[0].sourceReportId, 'report-success')
+})
+
 it('missing replay script logs use a localized placeholder', () => {
   const parsed = buildProcessFromEvents('message-missing-script-log', [
     runEvent(1, {

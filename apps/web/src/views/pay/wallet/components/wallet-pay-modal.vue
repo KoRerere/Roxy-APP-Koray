@@ -6,8 +6,9 @@ import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { PayWay } from '/@/enums/pay'
-import { discountCalculate } from '/@/views/pay/subscribe/util'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { getImage } from '/@/utils/basic'
+import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 
 interface Props {
   amount: number
@@ -25,7 +26,7 @@ const emit = defineEmits<{
   (e: 'close'): void
 }>()
 
-const { realTheme } = storeToRefs(useThemeStore())
+const { isDarkTheme } = storeToRefs(useThemeStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
@@ -34,26 +35,24 @@ const [showToast] = useResponseToast()
 
 const loading = ref(false)
 const isAuto = ref(showAutoRenew ? !!userPayInfo.value.isAuto : false)
+const { beforeToggleAutoRenew } = useConfirmAutoRenew()
 
 const imgSrc = computed(() => {
-  return new URL(`../../../../assets/icons/${realTheme.value === 'light' ? 'empty' : 'empty-dark'}/wallet.svg`, import.meta.url).href
+  return isDarkTheme.value ? getImage('payments/dark/wallet.svg') : getImage('payments/light/wallet.svg')
 })
 
 const finalResult = computed(() => {
-  // 开启自动续费后，需要包含自动续费折扣
-  const autoRenewDiscount = isAuto.value ? userPayInfo.value.autoRenewDiscount : 0
-  const _amount = currency(amount, { precision: 6 }).multiply(discountCalculate([autoRenewDiscount])).value
-  const _discountAmount = currency(amount, { precision: 6 }).subtract(_amount).add(discountAmount ?? 0).value
+  // 自动续费折扣自下一期账单起生效，本次付款不参与折抵，金额只取上游传入的结算价
+  // 跟后台保持一致，2 位小数四舍五入
+  const _amount = currency(amount).value
+  const _discountAmount = currency(discountAmount ?? 0).value
   const needAmount = currency(_amount).subtract(userPayInfo.value.balance).value
 
-  // 跟后台保持一致，2 位小数四舍五入
-  const __amount = currency(_amount).value
-  const __discountAmount = currency(_discountAmount).value
   return {
     originalAmount,
-    amount: __amount,
-    discountAmount: __discountAmount,
-    showDiscount: originalAmount && __discountAmount,
+    amount: _amount,
+    discountAmount: _discountAmount,
+    showDiscount: originalAmount && _discountAmount,
     needRecharge: needAmount > 0,
     needAmount,
   }
@@ -88,8 +87,9 @@ async function confirm() {
 
 function close(isCancel: boolean) {
   emit('close')
-  if (isCancel)
+  if (isCancel) {
     onCancel?.()
+  }
 }
 </script>
 
@@ -143,10 +143,10 @@ function close(isCancel: boolean) {
         <div class="flex flex-col">
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
-              <span class="auto-title">{{ $t('启用钱包自动续订') }}</span>
+              <span class="auto-title">{{ $t('启用钱包自动续费') }}</span>
               <span class="auto-value">{{ $t('{discount}% Off', { discount: userPayInfo.autoRenewDiscount }) }}</span>
             </div>
-            <RxToggleSwitch v-model="isAuto" />
+            <RxToggleSwitch v-model="isAuto" :before-change="beforeToggleAutoRenew" />
           </div>
           <div class="auto-desc">
             {{ $t('您可以在钱包中管理续订设置。') }}

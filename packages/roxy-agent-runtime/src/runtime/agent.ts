@@ -39,7 +39,8 @@ import { extractDeps } from './graph.ts'
 import { runAfterMiddleware, runBeforeMiddleware, runPreviewMiddleware } from './middleware_chain.ts'
 import { renderSelectedSkillMessages } from '../skills/prompt.ts'
 import { runContributors } from './contributor_chain.ts'
-import { renderContributionContext, renderSkillCatalogContext, renderSummaryContext } from './turn-context.ts'
+import { renderContributionContext, renderSummaryContext } from './turn-context.ts'
+import { createCompactionSummaryMessage } from '../memory/memory.ts'
 
 const DEFAULT_COMPACTION_TRIGGER_RATIO = 0.8
 const FALLBACK_COMPACTION_TRIGGER_TOKENS = 150_000
@@ -336,7 +337,6 @@ export class AgentImpl implements Agent {
     const candidateInternalMessages = [
       ...contextualMessages.map(normalizeInternalMessage),
       ...renderSummaryContext(summary),
-      ...renderSkillCatalogContext(this.deps.skills ?? [], this.deps.contextWindowTokens),
       ...skillMessages,
       ...renderContributionContext(contributions),
     ]
@@ -444,6 +444,19 @@ export class AgentImpl implements Agent {
         })
       }
     }
+  }
+
+  private async commitCompaction(traceId: string, trimResult: TrimSummary, summary: string): Promise<void> {
+    const keptMessages = await this.deps.memory.getAll(this.sessionId)
+    await this.record({
+      type: 'compaction',
+      summary,
+      compactedCount: trimResult.removedCount,
+      ts: Date.now(),
+      keptMessages,
+    })
+    await this.emitMemoryCompaction(traceId, trimResult, summary)
+    await this.deps.memory.prependMessage(this.sessionId, createCompactionSummaryMessage(summary))
   }
 
   // -------------------------------------------------------------------------
@@ -755,7 +768,7 @@ export class AgentImpl implements Agent {
       ...this.deps,
       deps: null,
     }
-    const { model, maxTokens, systemPrompt, trimPolicy, summarizer } = this.deps
+    const { model, maxTokens, systemPrompt, trimPolicy, summarizer, skills } = this.deps
 
     let totalModelCalls = 0
     let totalToolCalls = 0
@@ -793,27 +806,14 @@ export class AgentImpl implements Agent {
             if (summarizer && textForSummary) {
               const txt = await summarizer.summarize(textForSummary)
               if (txt) {
-                await this.emitMemoryCompaction(traceId, trimResult, txt)
-                await memory.prependMessage(this.sessionId, {
-                  role: 'developer',
-                  content: `Previous conversation summary:\n<summary>\n${txt}\n</summary>`,
-                  visible: false,
-                })
-                const keptMessages = await memory.getAll(this.sessionId)
-                await this.record({
-                  type: 'compaction',
-                  summary: txt,
-                  compactedCount: trimResult.removedCount,
-                  ts: Date.now(),
-                  keptMessages,
-                })
+                await this.commitCompaction(traceId, trimResult, txt)
               }
             }
           }
         }
       }
       const history = await memory.getAll(this.sessionId)
-      const systemBlocks = buildSystemPrompt(systemPrompt ?? '')
+      const systemBlocks = buildSystemPrompt(systemPrompt ?? '', skills)
       const request: ChatRequest = {
         model,
         messages: history,
@@ -962,6 +962,10 @@ export class AgentImpl implements Agent {
       }
 
       const toolResults: ToolResultBlock[] = []
+      const directReturnCandidate =
+        allToolUseBlocks.length === 1 &&
+        toolUseBlocks.length === 1 &&
+        tools.resolve(toolUseBlocks[0]!.name)?.descriptor.returnDirect === true
 
       for (const block of toolUseBlocks) {
         if (signal?.aborted) {
@@ -1073,7 +1077,12 @@ export class AgentImpl implements Agent {
         for (const r of toolResults) {
           await this.record({ type: 'tool_result', result: r })
         }
-        yield { ...toolResultMsg, _stopReason: undefined }
+        const returnDirect = directReturnCandidate && toolResults.length === 1 && toolResults[0]!.is_error !== true
+        yield { ...toolResultMsg, _stopReason: returnDirect ? 'end_turn' : undefined }
+        if (returnDirect) {
+          finalStopReason = 'end_turn'
+          break
+        }
       }
 
       void finalStopReason // suppress unused warning
@@ -1099,7 +1108,7 @@ export class AgentImpl implements Agent {
     tokenAcc?: { input: number; output: number },
   ): AsyncIterable<AgentStreamEvent> {
     const { provider, tools, memory, hitl, recorder, hooks, middleware } = this.deps
-    const { model, maxTokens, systemPrompt, trimPolicy, summarizer } = this.deps
+    const { model, maxTokens, systemPrompt, trimPolicy, summarizer, skills } = this.deps
 
     let totalModelCalls = 0
     let totalToolCalls = 0
@@ -1135,20 +1144,7 @@ export class AgentImpl implements Agent {
               }
               const txt = await summarizer.summarize(textForSummary)
               if (txt) {
-                const keptMessages = await memory.getAll(this.sessionId)
-                await this.record({
-                  type: 'compaction',
-                  summary: txt,
-                  compactedCount: trimResult.removedCount,
-                  ts: Date.now(),
-                  keptMessages,
-                })
-                await this.emitMemoryCompaction(traceId, trimResult, txt)
-                await memory.prependMessage(this.sessionId, {
-                  role: 'developer',
-                  content: `Previous conversation summary:\n<summary>\n${txt}\n</summary>`,
-                  visible: false,
-                })
+                await this.commitCompaction(traceId, trimResult, txt)
               }
               yield {
                 type: 'context_compacted',
@@ -1161,7 +1157,7 @@ export class AgentImpl implements Agent {
         }
       }
       const history = await memory.getAll(this.sessionId)
-      const systemBlocks = buildSystemPrompt(systemPrompt ?? '')
+      const systemBlocks = buildSystemPrompt(systemPrompt ?? '', skills)
       const request: ChatRequest = {
         model,
         messages: history,
@@ -1365,6 +1361,10 @@ export class AgentImpl implements Agent {
 
       // Process tools
       const toolResults: ToolResultBlock[] = []
+      const directReturnCandidate =
+        toolUseBlocks.length === 1 &&
+        effectiveToolUseBlocks.length === 1 &&
+        tools.resolve(effectiveToolUseBlocks[0]!.name)?.descriptor.returnDirect === true
       for (const block of effectiveToolUseBlocks) {
         yield { type: 'tool_call', block, callIndex }
 
@@ -1513,6 +1513,11 @@ export class AgentImpl implements Agent {
         await memory.append(this.sessionId, toolResultMsg)
         for (const r of toolResults) {
           await this.record({ type: 'tool_result', result: r })
+        }
+        const returnDirect = directReturnCandidate && toolResults.length === 1 && toolResults[0]!.is_error !== true
+        if (returnDirect) {
+          yield { type: 'done', stopReason: 'end_turn' }
+          break
         }
       }
     }

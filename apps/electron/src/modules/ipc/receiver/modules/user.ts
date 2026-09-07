@@ -1,13 +1,16 @@
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import { getCurrentScope } from '@sentry/electron/main'
 import { randomUUID } from 'node:crypto'
+import { stat } from 'node:fs/promises'
 import path from 'node:path'
 // import { getGatewayConfig } from '/@/api/getGatewayConfig'
 import { syncAutoStart } from '/@/modules/app/auto-start'
+import { getMainWindow } from '/@/modules/app/mainWindow'
 import { browserManager } from '/@/modules/browser'
 import { initDictCache } from '/@/modules/dict'
 import { mcpManager } from '/@/modules/mcp'
 import { openAPIServer } from '/@/modules/openapi'
+import { workspaceSwitchBridge } from '/@/modules/openapi/workspaceSwitchBridgeInstance'
 import { fetchUserConfig, store } from '/@/modules/store'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
 import { aliOSS, uploadOssFile } from '/@/utils'
@@ -64,8 +67,23 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
   /** 切换空间时设置当前空间 ID；workspaceType 为可选第二参（旧客户端忽略） */
   ipcMain.on('user:setWorkspaceId', (event, workspaceId, workspaceType?: number) => {
     store.workspaceId = workspaceId
-    if (workspaceType !== undefined)
+    if (workspaceType !== undefined) {
       store.workspaceType = workspaceType
+    }
+  })
+
+  ipcMain.on('user:workspace-select-result', (event, result) => {
+    console.log('[workspace-select] ipc result received by main', {
+      requestId: result.requestId,
+      workspaceId: result.workspaceId,
+      success: result.success,
+      senderId: event.sender.id,
+    })
+    const mainWindow = getMainWindow()
+    if (!mainWindow || event.sender.id !== mainWindow.webContents.id) {
+      return
+    }
+    workspaceSwitchBridge.complete(result)
   })
 
   /** 设置所有空间 ID */
@@ -93,6 +111,23 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     const uuid = randomUUID()
     const extname = path.extname(reviewImagePath)
     const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${userId}_review_${uuid}${extname}`, reviewImagePath)
+    return url
+  })
+
+  /** 用户上传空间图片；同一空间固定一个 object，再次上传即覆盖 */
+  ipcMain.on('user:uploadWorkspaceImage', async (event, workspaceImagePath, workspaceId) => {
+    const extname = path.extname(workspaceImagePath).toLowerCase()
+    if (!['.png', '.jpg', '.jpeg', '.bmp'].includes(extname)) {
+      throw new Error('Invalid workspace image type')
+    }
+    const fileStat = await stat(workspaceImagePath)
+    if (fileStat.size > 1024 * 1024) {
+      throw new Error('Workspace image exceeds 1MB')
+    }
+
+    const userId = store.userId
+    const targetWorkspaceId = workspaceId ?? store.workspaceId
+    const { url } = await aliOSS.put(`/groupdata/useravatar/${userId}/${targetWorkspaceId}${extname}`, workspaceImagePath)
     return url
   })
 

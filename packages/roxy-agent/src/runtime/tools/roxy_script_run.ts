@@ -1,6 +1,6 @@
 import type { FileCollectorStore } from '../file-collector-store'
 import type { ParamsSchema } from '@/modes/sandbox-api'
-import type { StartedSandboxScriptRun } from '@/services/sandboxService'
+import type { BrowserConnection, StartedSandboxScriptRun } from '@/services/sandboxService'
 import type { AgentRunEvent } from '@roxy/shared/channel'
 import { Buffer } from 'node:buffer'
 import { randomUUID } from 'node:crypto'
@@ -19,7 +19,7 @@ import {
   findMissingRequiredScriptParams,
   mergeScriptParams,
 } from '@/script/scriptParams'
-import { startSandboxScriptRun } from '@/services/sandboxService'
+import { openBrowsersForDirIds, startSandboxScriptRun } from '@/services/sandboxService'
 import { isAbsoluteLikePath, isHttpScriptUrl, resolveExecutableScriptSource } from './script_source'
 import { parseScriptTemplateReference, resolveScriptTemplate } from './script_template_source'
 
@@ -30,7 +30,7 @@ const runScriptItemSchema = z.strictObject({
   dirIds: z.array(z.string()
     .refine(value => value.trim().length > 0, 'dirIds must not contain blank values'))
     .min(1, 'dirIds must contain at least one profile')
-    .describe('profile dirIds (Use roxy_profile_list). The same script runs in every listed browser window.'),
+    .describe('Exact authorized profile dirIds from the user reference or a confirmed roxy_profile_list result. The same script runs in every listed browser window.'),
   debug: z.boolean()
     .default(false)
     .describe('Running the script in debug mode will increase logging and output HTML snapshots, facilitating script debugging.'),
@@ -39,6 +39,9 @@ const runScriptItemSchema = z.strictObject({
 
 /** 一次工具调用可提交多个脚本配置，每个配置可使用不同窗口和参数。 */
 export const runScriptInputSchema = z.strictObject({
+  layout: z.enum(['grid', 'stack'])
+    .optional()
+    .describe('Profile arrangement shared by all script runs in this tool call'),
   scripts: z.array(runScriptItemSchema)
     .min(1, 'scripts must contain at least one script run')
     .describe('Independent script run specifications. All items run in parallel.'),
@@ -66,6 +69,7 @@ export interface RunScriptToolOptions {
   /** 当前 Agent 运行在任务监控 Hub 中的执行 ID。 */
   taskMonitorTaskId?: string
   executionId?: string
+  onBrowserLaunched?: (dirId: string) => void
   /** @deprecated 新路径默认使用 agentPaths.workdir(slug)。 */
   scriptOutputDir?: string
   /** @deprecated 新路径默认使用 agentPaths.workdirRunLogFile(slug, runId)。 */
@@ -103,12 +107,10 @@ interface ScriptExecutionContext {
 
 const roxy_script_run_DESCRIPTION = [
   'Run one or more automation scripts in parallel.',
-  'Pass a scripts array of run specifications. Each item has its own scriptPath, dirIds, params, and debug values.',
-  'The scriptPath can be an official:<id> or user:<id> script template reference from an @script token, an official script slug, or an absolute local file path.',
-  'Canonical template references resolve only within their namespace. Bare numeric ids are invalid. Remote scripts are downloaded from the OSS URL returned by the backend and must pass SHA-512 verification before execution.',
-  'The script runs in a session-scoped VM inside the persistent roxy-agent Sandbox Host process with Chromium or Firefox access over BROWSER_URL and BROWSER_TYPE.',
-  'The script entry signature is `export async function main(params)`; pass params as an object or JSON string.',
-  'If main returns `LoginRequired`, the run fails and the user must login in target website before retrying.',
+  'Input: `{ layout?, scripts: [{ scriptPath, dirIds, params?, debug? }] }`. layout is shared by all items; it defaults to grid for multiple windows and stack for one window.',
+  'Each listed dirId is an execution target: this call attempts to open/use every listed window in parallel. List only ids from the user profile reference or an explicit user confirmation, and only for windows this script should actually use; do not add other referenced windows just for reporting.',
+  'scriptPath accepts an `official:<id>` or `user:<id>` template reference, an official script slug, or an absolute local path. Bare numeric IDs and direct URLs are not supported; remote scripts are SHA-512 verified.',
+  'Resolve template details with `roxy_script_describe` first. Scripts export `async function main(params)`; pass params as an object or JSON string.',
 ].join(' ')
 
 const runScriptMessage = {
@@ -624,8 +626,8 @@ export function createRunScriptTool(options: RunScriptToolOptions = {}) {
       const taskMonitorTaskId: string | undefined = options.taskMonitorTaskId
         ?? (_config as any)?.configurable?.taskMonitorTaskId
         ?? (_config as any)?.taskMonitorTaskId
-
       const groups = await Promise.all(input.scripts.map(runSpec => runScriptSpec(runSpec, {
+        layout: input.layout,
         abortSignal,
         profile: runSpec.debug ? 'debug' : (options.defaultProfile || 'release'),
         writer,
@@ -656,6 +658,7 @@ export interface ScriptRunGroup {
 }
 
 interface RunScriptSpecContext {
+  layout?: 'grid' | 'stack'
   abortSignal?: AbortSignal
   profile: 'debug' | 'release'
   writer?: (event: AgentRunEvent) => void
@@ -717,6 +720,24 @@ async function runScriptSpec(runSpec: RunScriptParam, context: RunScriptSpecCont
       return { scriptName: displayName, results: [], error: runScriptMessage.missingRequiredParams(displayName, missingRequiredParams) }
     }
 
+    let browserConnections: Map<string, BrowserConnection>
+    try {
+      browserConnections = await openBrowsersForDirIds(dirIds, {
+        layout: context.layout ?? (dirIds.length > 1 ? 'grid' : 'stack'),
+        signal: context.abortSignal,
+        onBrowserLaunched: context.options.onBrowserLaunched,
+      })
+    }
+    catch (error: any) {
+      return {
+        scriptName: displayName,
+        results: [],
+        error: context.abortSignal?.aborted
+          ? runScriptMessage.interrupted(displayName)
+          : runScriptMessage.startFailed(displayName, String(error?.message ?? error)),
+      }
+    }
+
     const runInputs = dirIds.map(dirId => ({ runId: createRunId(), dirId }))
     const settled = await Promise.allSettled(runInputs.map(({ runId, dirId }) => runScriptInWindow({
       runId,
@@ -738,6 +759,7 @@ async function runScriptSpec(runSpec: RunScriptParam, context: RunScriptSpecCont
       executionId: context.options.executionId,
       options: context.options,
       fileCollector: context.options.fileCollector,
+      browserConnection: browserConnections.get(dirId),
     })))
     const results = settled.map((entry, index): ScriptRunResult => {
       if (entry.status === 'fulfilled') {
@@ -781,6 +803,7 @@ interface RunScriptInWindowOptions {
   executionId?: string
   options: RunScriptToolOptions
   fileCollector?: FileCollectorStore
+  browserConnection?: BrowserConnection
 }
 
 async function runScriptInWindow(options: RunScriptInWindowOptions): Promise<ScriptRunResult> {
@@ -808,6 +831,12 @@ async function runScriptInWindow(options: RunScriptInWindowOptions): Promise<Scr
       scriptPath: options.scriptPath,
       scriptSha512: options.scriptSha512,
       dirId: options.dirId,
+      ...(options.browserConnection
+        ? {
+            browserUrl: options.browserConnection.ws,
+            browserType: options.browserConnection.browserType,
+          }
+        : {}),
       runId,
       executionId: options.executionId,
       assetSlug,
@@ -817,6 +846,7 @@ async function runScriptInWindow(options: RunScriptInWindowOptions): Promise<Scr
       logFilePath,
       options: options.resolvedOptions,
       signal: options.abortSignal,
+      onBrowserLaunched: options.options.onBrowserLaunched,
       taskMonitor: options.taskMonitorTaskId
         ? {
             taskId: options.taskMonitorTaskId,

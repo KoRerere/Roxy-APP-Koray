@@ -7,10 +7,58 @@ const webDomains: string[] = JSON.parse(import.meta.env.VITE_WEB_BASE_URL || '[]
 const defaultDomain = webDomains.find(domain => domain.includes('roxybrowser.cn')) || webDomains[0]
 
 let lastWebDomain = ''
+/** Chromium 主框架已确认加载失败的 hostname，探测与 failover 都要跳过 */
+const failedWebHostnames = new Set<string>()
 
 /** 清除进程内 Web 域名缓存，供 proxy 失败后强制重新探测。 */
 export function invalidateProdWebDomainCache() {
   lastWebDomain = ''
+}
+
+/** 判断 URL/域名是否已被 Chromium 确认加载失败 */
+function isFailedWebDomain(urlOrDomain: string) {
+  const hostname = parseWebHostname(urlOrDomain)
+  return Boolean(hostname && failedWebHostnames.has(hostname))
+}
+
+/** 记录 Chromium 加载失败的 Web 域名，避免探测与 failover 反复命中同一条 */
+export function markProdWebDomainFailed(urlOrDomain: string) {
+  const hostname = parseWebHostname(urlOrDomain)
+  if (!hostname) {
+    return
+  }
+  failedWebHostnames.add(hostname)
+  // 清掉指向该失败域名的缓存，否则刷新/探测仍会钉死在同一条线路
+  if (lastWebDomain && parseWebHostname(lastWebDomain) === hostname) {
+    lastWebDomain = ''
+  }
+  if (store.lastWebDomain && parseWebHostname(store.lastWebDomain) === hostname) {
+    store.lastWebDomain = ''
+  }
+}
+
+/** 记住当前可用的 Web 源，供后续 getWebEntryUrl / 探测复用 */
+export function rememberProdWebDomain(domain: string) {
+  const normalized = domain.replace(/\/$/, '')
+  lastWebDomain = normalized
+  store.lastWebDomain = normalized
+  const hostname = parseWebHostname(normalized)
+  if (hostname) {
+    failedWebHostnames.delete(hostname)
+  }
+}
+
+/** Chromium 主框架加载失败后，返回尚未失败的其它 Web 源 */
+export function getRemainingProdWebOrigins(failedUrl: string): string[] {
+  markProdWebDomainFailed(failedUrl)
+  return getConfiguredWebDomains().filter(domain => !isFailedWebDomain(domain))
+}
+
+/** 把失败页 URL 换到下一个 Web 源，保留 path/query/hash */
+export function replaceWebOrigin(failedUrl: string, nextOrigin: string): string {
+  const current = new URL(failedUrl)
+  const origin = nextOrigin.includes('://') ? nextOrigin : `https://${nextOrigin}`
+  return new URL(`${current.pathname}${current.search}${current.hash}`, origin).href
 }
 
 /** 返回 env 中配置的全部 Web 域名候选（去尾斜杠）。 */
@@ -114,17 +162,27 @@ export function setupTrustedWebCertificateHandler() {
 
 /** 并发测试多个域名，返回第一个可用的域名，如果都不可用，则返回 CN 的域名 */
 export async function getProdWebDomain(force = false) {
-  if (!force && lastWebDomain) {
+  if (force) {
+    // 用户手动刷新时允许重试刚才失败的域名，网络可能已经恢复
+    failedWebHostnames.clear()
+    lastWebDomain = ''
+  }
+
+  if (!force && lastWebDomain && !isFailedWebDomain(lastWebDomain)) {
     return lastWebDomain
   }
 
   if (store.lastSelectedNetworkNode !== 'auto' && store.lastSelectedNetworkNode?.site) {
-    lastWebDomain = `https://${store.lastSelectedNetworkNode.site}`
-    store.lastWebDomain = lastWebDomain
-    return lastWebDomain
+    const selected = `https://${store.lastSelectedNetworkNode.site}`
+    if (!isFailedWebDomain(selected)) {
+      lastWebDomain = selected
+      store.lastWebDomain = lastWebDomain
+      return lastWebDomain
+    }
+    console.warn('[getProdWebDomain] selected network node site already failed, probe others', selected)
   }
 
-  if (store.lastWebDomain) {
+  if (store.lastWebDomain && !isFailedWebDomain(store.lastWebDomain)) {
     try {
       const result = await axios.get(store.lastWebDomain, {
         // adapter: electronAdapter,
@@ -143,7 +201,8 @@ export async function getProdWebDomain(force = false) {
     }
   }
 
-  const attempts = webDomains.map(async (domain) => {
+  const probeTargets = getConfiguredWebDomains().filter(domain => !isFailedWebDomain(domain))
+  const attempts = (probeTargets.length ? probeTargets : getConfiguredWebDomains()).map(async (domain) => {
     const result = await axios.get(domain, {
       // adapter: electronAdapter,
       proxy: false,
@@ -164,7 +223,7 @@ export async function getProdWebDomain(force = false) {
   }
   catch (error) {
     console.error('getProdWebDomain error', error)
-    lastWebDomain = defaultDomain
+    lastWebDomain = probeTargets[0] || defaultDomain
     store.lastWebDomain = lastWebDomain
     return lastWebDomain
   }

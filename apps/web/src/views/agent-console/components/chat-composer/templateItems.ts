@@ -6,11 +6,19 @@ import {
   serializeAgentScriptReference,
   serializeTemplateRef,
 } from '@roxy/shared'
-import { pickLocalized } from '../../template-store'
+import type { OfficialTemplate } from '../../template-store'
+import { pickLocalized, pickOfficialTemplatePrompt } from '../../template-store'
+import { HOME_TEMPLATE_CACHE_LIMIT } from '../../home-template-cache'
 import { templateItemToPrompt } from './protocol'
 import type { AgentComposerItem } from './types'
 
 type UserTemplateComposerSource = UserTemplateDTO | MyTemplateItem
+
+export const TEMPLATE_DRAWER_OFFICIAL_LIMIT = HOME_TEMPLATE_CACHE_LIMIT
+
+export function selectTemplateDrawerOfficialItems<T>(rows: readonly T[]): T[] {
+  return rows.slice(0, TEMPLATE_DRAWER_OFFICIAL_LIMIT)
+}
 
 let agentSkillInstalledRoot = ''
 
@@ -249,6 +257,10 @@ export function mapUserTemplateComposerItem(row: UserTemplateComposerSource, loc
     description,
     iconName: 'roxy-agent/rx-ic-templates',
     group: 'Templates',
+    isTopped: Boolean(row.isTopped),
+    toppedAt: row.toppedAt ?? null,
+    templateId: row.id,
+    templateSource: 'user',
     payload,
     template: {
       prompt,
@@ -266,6 +278,8 @@ interface RecommendedTemplateComposerSource {
   description: string
   iconName: string
   prompt: string
+  isTopped?: boolean
+  toppedAt?: string | null
 }
 
 export function mapRecommendedTemplateComposerItem(
@@ -292,6 +306,10 @@ export function mapRecommendedTemplateComposerItem(
     description: template.description,
     iconName: template.iconName,
     group: 'Templates',
+    isTopped: Boolean(template.isTopped),
+    toppedAt: template.toppedAt ?? null,
+    templateId: template.id,
+    templateSource: 'official',
     payload: {
       officialTemplateId: String(template.id),
       templateType: template.kind === 'skill' ? 'skills' : template.kind,
@@ -301,6 +319,54 @@ export function mapRecommendedTemplateComposerItem(
       tokens,
     },
   }
+}
+
+export function mapOfficialTemplateComposerItem(
+  template: OfficialTemplate,
+  locale?: string,
+): AgentComposerItem {
+  return mapRecommendedTemplateComposerItem({
+    id: template.id,
+    kind: normalizeTemplateKind(template.templateType),
+    metadata: template.metadata,
+    slug: template.slug,
+    title: pickLocalized(template.name, locale) || template.slug,
+    description: pickLocalized(template.description, locale),
+    iconName: 'roxy-agent/rx-ic-templates',
+    prompt: pickOfficialTemplatePrompt(template, locale),
+    isTopped: template.isTopped,
+    toppedAt: template.toppedAt,
+  })
+}
+
+function toppedTimestamp(value: string | null | undefined): number {
+  if (!value) {
+    return Number.NEGATIVE_INFINITY
+  }
+
+  const timestamp = Date.parse(value)
+  return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY
+}
+
+export function sortTemplateComposerItems(items: AgentComposerItem[]): AgentComposerItem[] {
+  return items
+    .map((item, index) => ({ item, index }))
+    .sort((left, right) => {
+      const toppedDifference = Number(Boolean(right.item.isTopped)) - Number(Boolean(left.item.isTopped))
+      if (toppedDifference) {
+        return toppedDifference
+      }
+
+      if (left.item.isTopped && right.item.isTopped) {
+        const timestampDifference = toppedTimestamp(right.item.toppedAt) - toppedTimestamp(left.item.toppedAt)
+        if (timestampDifference) {
+          return timestampDifference
+        }
+      }
+
+      return left.index - right.index
+    })
+    .map(entry => entry.item)
 }
 
 export function mergeTemplateComposerItems(
@@ -322,7 +388,7 @@ export function mergeTemplateComposerItems(
     }
   })
 
-  return [
+  const mergedItems = [
     ...recommendedItems.map((item) => {
       const officialTemplateId = item.payload.officialTemplateId
       return officialTemplateId
@@ -338,6 +404,8 @@ export function mergeTemplateComposerItems(
       return !officialTemplateId || !recommendedOfficialTemplateIds.has(officialTemplateId)
     }),
   ]
+
+  return sortTemplateComposerItems(mergedItems)
 }
 
 export function userTemplateToPrompt(row: UserTemplateComposerSource, locale?: string): string {

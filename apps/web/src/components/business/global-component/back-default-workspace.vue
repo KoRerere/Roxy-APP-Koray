@@ -10,6 +10,7 @@ const { setCurrentWorkspace } = useWorkspaceStore()
 
 const workspaceAvatarProps = computed(() => getWorkspaceAvatarProps({
   workspacePicture: currentWorkspace.value?.workspacePicture,
+  workspacePictureUrl: currentWorkspace.value?.workspacePictureUrl,
   workspaceName: currentWorkspace.value?.workspaceName,
   size: 32,
   emojiFontSize: 22,

@@ -65,10 +65,15 @@ const agentUpdateLabel = computed(() => {
   return $t('更新')
 })
 const agentUpdateDisabled = computed(() => props.updateInfo?.status === 'downloading')
+const newChatElement = ref<HTMLAnchorElement | null>(null)
 const sidebarScrollRef = ref<HTMLElement | null>(null)
 const sidebarCanScrollUp = ref(false)
 const sidebarCanScrollDown = ref(false)
 let sidebarScrollResizeObserver: ResizeObserver | null = null
+
+defineExpose({
+  getNewChatElement: () => newChatElement.value,
+})
 
 function onNavSelect(id: AgentNavId) {
   if (id === 'new-chat') {
@@ -144,6 +149,7 @@ onBeforeUnmount(() => {
     <div class="sidebar-new-chat-wrap">
       <RouterLink v-if="newChatItem" v-slot="{ href, isExactActive }" custom :to="newChatItem.to">
         <a
+          ref="newChatElement"
           :href="href"
           class="sidebar-new-chat"
           :class="{ active: isExactActive }"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ResourceUpdateMessage } from '@roxy/electron-preload'
+import type { AgentTaskReportSaveRequest } from '../types'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -9,10 +10,15 @@ import { useAgentConsole } from '../composables/useAgentConsole'
 import { provideProfileMonitorContext } from '../composables/useProfileMonitorContext'
 import AgentDeleteConfirmDialog from './AgentDeleteConfirmDialog.vue'
 import AgentSidebar from './AgentSidebar.vue'
+import SelectWindowGuide from './SelectWindowGuide.vue'
 import FeedbackDialog from './dialog/FeedbackDialog.vue'
 import RenameConversationDialog from './dialog/RenameConversationDialog.vue'
 import ProfileMonitorPanel from './ProfileMonitorPanel.vue'
 import { perfLog } from '/@/utils/perf-log'
+
+interface AgentSidebarExpose {
+  getNewChatElement: () => HTMLElement | null
+}
 
 perfLog('agent-shell:setup:start')
 
@@ -87,6 +93,9 @@ const taskMonitorAvailable = computed(() => taskMonitorViewportAvailable.value &
 const taskMonitorVisible = computed(() => taskMonitorOpen.value && taskMonitorAvailable.value)
 const taskMonitorWidth = ref(TASK_MONITOR_DEFAULT_WIDTH)
 const agentSidebarWidth = ref(AGENT_SIDEBAR_DEFAULT_WIDTH)
+const agentSidebarRef = ref<AgentSidebarExpose | null>(null)
+const onboardingNewChatGuideVisible = ref(false)
+const onboardingNewChatGuideTarget = shallowRef<HTMLElement | null>(null)
 const agentConsoleLayoutStyle = computed(() => ({
   '--agent-sidebar-width': `${agentSidebarWidth.value}px`,
   '--task-monitor-width': `${taskMonitorWidth.value}px`,
@@ -133,6 +142,22 @@ const hasRunningAgentActivity = computed(() => {
     || runningTaskCount.value > 0
     || conversationList.value.some(conversation => conversation.runningRunIds.length > 0)
 })
+
+async function saveTaskReportTemplate(request: AgentTaskReportSaveRequest): Promise<void> {
+  const started = await sendPrompt({
+    conversationId: request.conversationId,
+    content: $t('请你将刚才的任务保存为模板'),
+    templateContext: {
+      sourceReportId: request.sourceReportId,
+      report: request.report,
+    },
+  })
+  if (started) {
+    request.resolve()
+    return
+  }
+  request.reject(new Error('Template save turn could not be started.'))
+}
 const backToAppRoute = computed(() => activeConversationId.value
   ? { name: 'agent-console-conversation', params: { conversationId: activeConversationId.value } }
   : { name: 'agent-console-chat' })
@@ -435,7 +460,24 @@ function openFeedbackDialog() {
   })
 }
 
+function dismissOnboardingNewChatGuide() {
+  onboardingNewChatGuideVisible.value = false
+  onboardingNewChatGuideTarget.value = null
+}
+
+async function showOnboardingNewChatGuide() {
+  await nextTick()
+  const target = agentSidebarRef.value?.getNewChatElement() ?? null
+  if (!target) {
+    return
+  }
+
+  onboardingNewChatGuideTarget.value = target
+  onboardingNewChatGuideVisible.value = true
+}
+
 async function handleStartNewChat() {
+  dismissOnboardingNewChatGuide()
   await startNewChat()
   newChatFocusKey.value += 1
 }
@@ -556,6 +598,7 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
 
     <AgentSidebar
       v-else
+      ref="agentSidebarRef"
       :active-conversation-id="activeConversationId"
       :conversations="conversationList"
       :has-more-conversations="conversationListHasMore"
@@ -623,6 +666,8 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
         @reorder-queued-prompt="reorderQueuedPrompt"
         @restore-queued-prompt="restoreQueuedPrompt"
         @load-earlier-messages="loadEarlierMessages"
+        @save-template="saveTaskReportTemplate"
+        @onboarding-complete="showOnboardingNewChatGuide"
         @send="sendPrompt"
         @stop="cancelActiveRun"
         @submit-hitl="submitHitl"
@@ -657,6 +702,15 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
       @resize-start="startTaskMonitorResize"
       @resize-step="resizeTaskMonitorBy"
       @toggle-group="toggleTaskGroup"
+    />
+
+    <SelectWindowGuide
+      callout-below-target
+      interactive-target
+      :label="$t('点击新对话继续体验')"
+      :target="onboardingNewChatGuideTarget"
+      :visible="onboardingNewChatGuideVisible"
+      @dismiss="dismissOnboardingNewChatGuide"
     />
   </div>
 </template>

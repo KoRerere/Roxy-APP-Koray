@@ -65,6 +65,10 @@ const props = withDefaults(defineProps<{
   outline: 0;
   text-align: center;
   white-space: nowrap;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
 
   &:hover:not(:disabled) {
     background: var(--agent-button-bg-hover);
@@ -99,8 +103,8 @@ const props = withDefaults(defineProps<{
 
 .agent-button--secondary {
   --agent-button-bg: var(--color-bg-primary);
-  --agent-button-bg-hover: var(--color-bg-secondary-hover);
-  --agent-button-border: var(--color-border-secondary);
+  --agent-button-bg-hover: var(--color-bg-primary-hover);
+  --agent-button-border: var(--color-border-primary, var(--color-border-secondary));
   --agent-button-color: var(--color-text-primary);
 }
 

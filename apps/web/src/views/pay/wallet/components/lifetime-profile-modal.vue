@@ -10,6 +10,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { getImage } from '/@/utils'
 import { API } from '/@/api'
+import { useFirstConsumeReferralPopup } from '/@/views/referral-program/useFirstConsumeReferralPopup'
 
 const { onCancel } = defineProps<Props>()
 const emit = defineEmits<{
@@ -30,6 +31,7 @@ const [_, onlyErrorToast] = useResponseToast()
 const [showModal] = useDialog()
 const { getUserPayInfo } = useUserStore()
 const { isDarkTheme } = storeToRefs(useThemeStore())
+const { maybeShowFirstConsumeReferralPopup } = useFirstConsumeReferralPopup()
 
 const purchaseCount = ref(MIN_COUNT)
 
@@ -77,10 +79,11 @@ function showSuccess(count: number) {
     showHeader: false,
     modal: true,
     blockScroll: true,
+    handleCancel: () => maybeShowFirstConsumeReferralPopup(),
     slots: {
-      container: ({ hideModal }) => h(LifetimeProfileSuccess, {
+      container: ({ handleCancel }) => h(LifetimeProfileSuccess, {
         purchaseCount: count,
-        onClose: hideModal,
+        onClose: handleCancel,
       }),
     },
   })

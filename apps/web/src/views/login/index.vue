@@ -20,7 +20,7 @@ import RightIntro from './components/right-intro/index.vue'
 import { RxSvgIcon } from '/@/components/rx-icon'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { getWorkspaceTypeLandingRoute } from '/@/utils/workspace-mode'
-import { ensureBeforeEnterStep, markBeforeEnterSession, needsBeforeEnter } from '/@/domain/before-enter'
+// import { ensureBeforeEnterStep, markBeforeEnterSession, needsBeforeEnter } from '/@/domain/before-enter'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { markNewUserBenefitShowOnLogin } from '/@/views/campaign/new-user/useNewUserBenefitModal'
@@ -95,8 +95,9 @@ async function decryptPassword() {
 
 async function getInviteDiscount() {
   const inviteCode = await getInviteCode()
-  if (!inviteCode)
+  if (!inviteCode) {
     return
+  }
 
   signFormData.value.inviteCode = inviteCode
   const { code, data } = await API.base.getPromotionLinkDiscountAndUsernameList({})
@@ -211,8 +212,9 @@ async function handleSubmitBy2fa(faCode: string) {
 
   const { code: code2, data, msg: msg2 } = await API.base.get2FaLoginInfoList({ temp_token: tempToken.value, type: '2fa_code' })
   onlyErrorToast(code2, msg2)
-  if (code2 !== 0)
+  if (code2 !== 0) {
     return
+  }
   afterLogin(data)
 }
 
@@ -234,8 +236,9 @@ async function afterLogin(loginData: LoginCreateData['data']) {
 
 async function checkWorkspaceInvitation() {
   const { code, data } = await API.base.userGetInviteNotifyList()
-  if (code !== 0 || !data)
+  if (code !== 0 || !data) {
     return jumpHome()
+  }
 
   setCurrentComponent('inviteIntoWorkspace', {
     inviteInfo: data.paramData,
@@ -254,17 +257,18 @@ async function jumpHome(intoWorkspaceId?: number) {
   setLoginWay(loginWay.value)
   API.base.userSetUserConfigCreate({ language: simpleLocaleStore.currentLocale } as any)
 
-  if (needsBeforeEnter(userInfo.value, intoWorkspaceId)) {
-    await workspaceStore.prepareWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId!, { silent: true })
-    markBeforeEnterSession()
-    // 无进度时种子为 choose；已有 platform 等进度则保留以便恢复
-    if (userInfo.value.id != null)
-      ensureBeforeEnterStep(userInfo.value.id)
-    hidePageLoading()
-    await router.push({ name: 'before-enter' })
-    mixpanel.track('login', { method: loginWay.value, ...loginEventCommonParams })
-    return
-  }
+  // if (needsBeforeEnter(userInfo.value, intoWorkspaceId)) {
+  //   await workspaceStore.prepareWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId!, { silent: true })
+  //   markBeforeEnterSession()
+  //   // 无进度时种子为 choose；已有 platform 等进度则保留以便恢复
+  //   if (userInfo.value.id != null) {
+  //     ensureBeforeEnterStep(userInfo.value.id)
+  //   }
+  //   hidePageLoading()
+  //   await router.push({ name: 'before-enter' })
+  //   mixpanel.track('login', { method: loginWay.value, ...loginEventCommonParams })
+  //   return
+  // }
 
   await enterWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId)
   const name = getWorkspaceTypeLandingRoute(

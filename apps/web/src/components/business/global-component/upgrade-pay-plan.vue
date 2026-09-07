@@ -114,9 +114,10 @@ onUnmounted(() => {
       </div>
       <div class="upgrade-pay-plan-btn-group">
         <div class="relative w-full">
-          <div v-if="userPayInfo.discount > 0" class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">
+          <!-- 身份折扣文案暂不对外展示，折扣仍参与计价 -->
+          <!-- <div v-if="userPayInfo.discount > 0" class="absolute top-0 right-3 -translate-y-1/2 px-3 py-1 rounded-full z-1 discount">
             {{ $t('{discount}% Off', { discount: userPayInfo.discount }) }}
-          </div>
+          </div> -->
           <RxButton :label="$t('升级')" class="w-full" :size="userPayInfo.isTrial === 0 ? 'md' : 'lg'" @click="toUpgrade" />
         </div>
         <RxButton v-if="userPayInfo.isTrial === 0" severity="secondary" size="md" outlined class="w-full" @click="toFreeTrial">

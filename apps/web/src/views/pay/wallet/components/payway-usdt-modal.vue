@@ -33,19 +33,28 @@ const stopCountdown = ref()
 const countdown = ref()
 const checker = genCheckerOrderStatus()
 
-const bgColor = computed(() => {
-  return colorMap[props.chainAlias as keyof typeof colorMap] || colorMap['TRC-20']
+/** 地址上方展示的网络名称、图标与品牌色，字段来自结算接口 */
+const chainInfo = computed(() => {
+  const alias = props.chainAlias
+  const name = props.chainName
+  return {
+    label: name && alias && name !== alias ? `${name} (${alias})` : (name || alias || ''),
+    image: props.chainImage || '',
+    color: colorMap[alias as keyof typeof colorMap] || colorMap['TRC-20'],
+  }
 })
 
 const progress = computed(() => {
-  if (!countdown.value)
+  if (!countdown.value) {
     return 0
+  }
   return Number((countdown.value.timestamp / HOUR - 1).toFixed(2))
 })
 
 const countdownText = computed(() => {
-  if (!countdown.value)
+  if (!countdown.value) {
     return '--:--:--'
+  }
   const { hours, minutes, seconds } = countdown.value
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
@@ -84,8 +93,9 @@ async function genProxyQrcode() {
 async function checkStatus() {
   try {
     const isOK = await checker.check(props.orderNo)
-    if (isOK)
+    if (isOK) {
       confirm()
+    }
   }
   catch (error) {
     close(true)
@@ -107,8 +117,9 @@ async function confirm() {
 
 function close(isCancel: boolean) {
   emit('close')
-  if (isCancel)
+  if (isCancel) {
     onCancel?.()
+  }
 }
 </script>
 
@@ -123,13 +134,8 @@ function close(isCancel: boolean) {
       <div class="title">
         {{ $t('订单金额') }}
       </div>
-      <div class="flex items-center gap-4">
-        <div class="amount">
-          {{ props.realAmount }} {{ props.payType }}
-        </div>
-        <div class="py-1 px-2 tag">
-          {{ props.chainAlias }}
-        </div>
+      <div class="amount">
+        {{ props.realAmount }} {{ props.payType }}
       </div>
     </div>
 
@@ -139,13 +145,19 @@ function close(isCancel: boolean) {
       </div>
       <div class="flex gap-2.5 pa-3 bg-[var(--colors-background-bg-block)] rounded-lg">
         <img :src="qrcode" class="pointer-events-none w-26 h-26">
-        <div class="flex flex-col justify-center gap-2.5">
-          <div class="qrcode-desc">
-            {{ $t('复制地址或扫描二维码进行支付') }}
+        <div class="flex flex-col justify-center gap-4">
+          <div class="flex items-center gap-1.5">
+            <img v-if="chainInfo.image" :src="chainInfo.image" class="w-5 h-5 shrink-0">
+            <span class="tt-primary text-4 font-500 leading-normal" :style="{ color: chainInfo.color }">{{ chainInfo.label }}</span>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="chain">{{ props.payUrl }}</span>
-            <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" color="#7C8387" @click="copyLink" />
+          <div class="flex flex-col gap-1.5">
+            <div class="tt-tertiary text-3 leading-normal">
+              {{ $t('复制地址或扫描二维码进行支付') }}
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="chain">{{ props.payUrl }}</span>
+              <SvgIcon class="cursor-pointer" name="base/rx_ic_copy" color="#7C8387" @click="copyLink" />
+            </div>
           </div>
         </div>
       </div>
@@ -213,22 +225,6 @@ function close(isCancel: boolean) {
   color: #12a3fc;
   font-size: 32px;
   font-weight: 600;
-  line-height: normal;
-}
-
-.tag {
-  border-radius: 4px;
-  background: v-bind(bgColor);
-  color: #ffffff;
-  font-family: 'JetBrains Mono';
-  font-size: 20px;
-  font-weight: 700;
-  line-height: normal;
-}
-
-.qrcode-desc {
-  color: var(--colors-text-text-tertiary);
-  font-size: 12px;
   line-height: normal;
 }
 

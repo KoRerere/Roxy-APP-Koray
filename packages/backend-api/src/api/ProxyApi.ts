@@ -20,6 +20,8 @@ import {
   UserBatchCheckProxyImportCreatePayload,
   UserBatchMdfProxyModuleCheckCreateData,
   UserBatchMdfProxyModuleCheckCreatePayload,
+  UserBatchSetProxyAutoRenewalCreateData,
+  UserBatchSetProxyAutoRenewalCreatePayload,
   UserCheckProxyBindRiskCreateData,
   UserCheckProxyBindRiskCreatePayload,
   UserCheckProxyCreateData,
@@ -1176,6 +1178,27 @@ export class ProxyApi<SecurityDataType = unknown> {
     this.http.request<UserGetRandomAvailableProxyMergedListData, any>({
       path: `/user_get_random_available_proxy_merged`,
       method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserBatchSetProxyAutoRenewalCreate
+   * @summary 批量设置代理自动续费（开启/关闭）
+   * @request POST:/user_batch_set_proxy_auto_renewal
+   * @response `200` `UserBatchSetProxyAutoRenewalCreateData`
+   */
+  userBatchSetProxyAutoRenewalCreate = (
+    data: UserBatchSetProxyAutoRenewalCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserBatchSetProxyAutoRenewalCreateData, any>({
+      path: `/user_batch_set_proxy_auto_renewal`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

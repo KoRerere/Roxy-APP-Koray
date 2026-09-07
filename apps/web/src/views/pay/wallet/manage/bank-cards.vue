@@ -1,302 +1,75 @@
-<script setup lang="tsx">
-import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue'
-import RxCheckbox from '/@/components/rx-checkbox/index.vue'
-import { useDialog } from '/@/hooks/useDialog'
-import { useUserStore } from '/@/stores/user'
-import { RxSvgIcon } from '/@/components/rx-icon'
-import { API } from '/@/api'
-import { useResponseToast } from '/@/hooks/useResponseToast'
-import { AutoRechargeStatus } from '/@/enums/pay'
-import { useConfirm } from 'primevue/useconfirm'
-import { usePopupMenu } from '/@/hooks/usePopupMenu'
+<script setup lang="ts">
+import { useBankCards } from '/@/views/pay/wallet/hook.tsx'
 
-const confirm = useConfirm()
-const { userCards, userPayInfo } = storeToRefs(useUserStore())
-const { getUserCards, getUserPayInfo } = useUserStore()
-const { showMenu } = usePopupMenu()
-const [showModal] = useDialog()
-const [showToast, onlyErrorToast] = useResponseToast()
-
-const bindCss = useCssModule('bind')
-// const cardDefault = ref(false)
-const autoRecharge = ref(userPayInfo.value.autoRecharge?.toString?.())
-const cardTypeMap = {
-  amex: 'cards/american-express',
-  bc: 'cards/bc',
-  dinacard: 'cards/dinacard',
-  diners: 'cards/diners-club',
-  discover: 'cards/discover',
-  jcb: 'cards/jcb',
-  mastercard: 'cards/mastercard',
-  unionpay: 'cards/union-pay',
-  visa: 'cards/visa',
-}
-
-watch(() => userPayInfo.value.autoRecharge, (value) => {
-  autoRecharge.value = value.toString()
-})
-
-onBeforeMount(() => {
-  getUserCards()
-})
-
-function matchCard(type: string): any {
-  return cardTypeMap[type as keyof typeof cardTypeMap]
-}
-
-async function checkAutoRecharge() {
-  if (AutoRechargeStatus.Open === userPayInfo.value.autoRecharge) {
-    confirm.require({
-      header: $t('关闭组合支付'),
-      message: $t('关闭后，当剩余钱包余额不足以自动续订时，相关服务将会中断。'),
-      rejectProps: {
-        label: $t('取消'),
-        severity: 'secondary',
-        outlined: true,
-      },
-      acceptProps: {
-        label: $t('确认'),
-        severity: 'danger',
-      },
-      accept: () => {
-        enableAutoRecharge()
-      },
-      reject: () => {
-        autoRecharge.value = userPayInfo.value.autoRecharge.toString()
-      },
-      onHide: () => {
-        autoRecharge.value = userPayInfo.value.autoRecharge.toString()
-      },
-    })
-    return
-  }
-
-  if (!userCards.value?.length) {
-    bindCard(true)
-      .then(enableAutoRecharge)
-      .catch(() => {
-        autoRecharge.value = userPayInfo.value.autoRecharge.toString()
-      })
-    return
-  }
-
-  enableAutoRecharge()
-}
-
-async function enableAutoRecharge() {
-  const { code, msg } = await API.pay.userSetAutoRechargeStatusCreate({ status: Number(autoRecharge.value) })
-  onlyErrorToast(code, msg)
-  if (code !== 0) {
-    autoRecharge.value = userPayInfo.value.autoRecharge.toString()
-    return
-  }
-  getUserPayInfo()
-}
-
-function bindCard(defaultCard: boolean = false) {
-  const { promise, resolve, reject } = Promise.withResolvers<boolean>()
-
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    slots: {
-      container: ({ hideModal }) => {
-        const isDefault = ref(false)
-
-        return (
-          <div class="w-120 flex flex-col gap-4 pa-6 pt-4">
-            <div class="h-9 flex justify-between items-center">
-              <div>{$t('新增卡片')}</div>
-              <div
-                class="cursor-pointer"
-                onClick={
-                  () => {
-                    hideModal()
-                    reject(false)
-                  }
-                }
-              >
-                <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
-              </div>
-            </div>
-            <StripePay
-              class="w-full !min-w-auto"
-              bind={true}
-              onConfirm={async (card) => {
-                const { code, msg } = await API.pay.userBindCardCreate({ paymentMethodId: card.payment_method, cardDefault: defaultCard || isDefault.value })
-                onlyErrorToast(code, msg)
-                hideModal()
-                if (code !== 0) {
-                  reject(false)
-                  return
-                }
-                getUserCards(true)
-                resolve(true)
-              }}
-            >
-              {{
-                after: () => {
-                  return !defaultCard && (
-                    <div class="flex items-center gap-2.5">
-                      <RxCheckbox v-model={isDefault.value} input-id="wrap" binary />
-                      <label for="wrap" class={`select-none ${bindCss.default}`}>{$t('设置为默认卡片')}</label>
-                    </div>
-                  )
-                },
-              }}
-            </StripePay>
-          </div>
-        )
-      },
-    },
-  })
-
-  return promise
-}
-
-function onMenuCommand(event: MouseEvent, card: any) {
-  showMenu(event, {
-    model: [
-      {
-        label: $t('设置为默认卡片'),
-        icon: 'base/rx_ic_credit_card',
-        disabled: !!card.cardDefault,
-        command: () => {
-          setMainCard(card.cardId)
-        },
-      },
-      {
-        separator: true,
-      },
-      {
-        label: $t('删除'),
-        icon: 'base/rx_ic_bin_1',
-        command: () => {
-          deleteCard(card.cardId)
-        },
-      },
-    ],
-  })
-}
-
-async function setMainCard(cardId: number) {
-  const { code, msg } = await API.pay.userSetMainCardCreate({ cardId })
-  showToast(code, msg)
-  if (code !== 0)
-    return
-  getUserCards(true)
-}
-
-function deleteCard(cardId: number) {
-  confirm.require({
-    header: $t('删除卡片'),
-    message: $t('删除后，您将无法使用该卡片进行支付。'),
-    rejectProps: {
-      label: $t('取消'),
-      severity: 'secondary',
-      outlined: true,
-    },
-    acceptProps: {
-      label: $t('确认'),
-      severity: 'danger',
-    },
-    accept: async () => {
-      const { code, msg } = await API.pay.userUnbindCardCreate({ cardId })
-      showToast(code, msg)
-      if (code !== 0)
-        return
-      getUserCards(true)
-    },
-  })
-}
+const { userCards, autoRecharge, matchCard, checkAutoRecharge, bindCard, onMenuCommand } = useBankCards()
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 walllet-bank-cards">
-    <div class="flex flex-col gap-2">
+  <div class="h-full flex flex-col justify-between pa-2 bank-cards">
+    <div class="flex flex-col gap-2 pa-2.5">
       <div class="flex justify-between items-center">
-        <div class="title">
+        <div class="tt-primary text-3.5 font-600 leading-5">
           {{ $t('组合支付') }}
         </div>
         <RxToggleSwitch v-model="autoRecharge" true-value="1" false-value="0" @change="checkAutoRecharge" />
       </div>
-      <div class="desc">
-        {{ $t('当钱包余额不足以自动续订时，自动用卡片组合支付。') }}
+      <div class="tt-tertiary text-3.5 leading-5">
+        {{ $t('当钱包余额不足以自动续费时，自动用卡片组合支付。') }}
         {{ $t('（仅默认卡片会被用于组合支付）') }}
       </div>
     </div>
-    <div class="flex flex-col gap-2">
+
+    <div class="flex flex-col gap-2.5 pa-3 panel">
       <div class="flex justify-between items-center">
-        <div class="title">
+        <div class="tt-primary text-3.5 font-600 leading-5">
           {{ $t('卡片信息') }}
         </div>
-        <!-- <div class="add cursor-pointer" :class="{ 'p-disabled !cursor-not-allowed': userCards && userCards.length >= 4 }" @click="bindCard()">
-          + {{ $t('新增') }}
-        </div> -->
-        <RxButton class="add-card-button rounded-[4px] px-2 py-1 border-[0.5px]" :disabled="userCards && userCards.length >= 4" severity="info" variant="outlined" size="xxs" :label="`+ ${$t('新增')}`" @click="bindCard()" />
+        <RxButton variant="outlined" severity="info" size="xxs" :disabled="userCards && userCards.length >= 4" :label="`+ ${$t('新增')}`" @click="bindCard()" />
       </div>
-      <div v-if="!userCards?.length" class="desc">
+      <div v-if="!userCards?.length" class="tt-tertiary text-3.5 leading-5">
         {{ $t('暂无绑定卡片') }}
       </div>
-      <template v-if="!!userCards?.length">
-        <div v-for="card in userCards" :key="card.cardId" class="h-10 flex justify-between items-center">
-          <div class="flex items-center gap-2.5">
-            <SvgIcon :name="matchCard(card.brand!)" size="32" />
-            <span class="card-number">{{ `**** **** **** ${card.last4}` }}</span>
-            <span v-if="card.cardDefault" class="card-default">DEFAULT</span>
-          </div>
-          <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_more-v" @click="onMenuCommand($event, card)" />
+      <div v-else-if="userCards.length === 1" class="h-10 flex justify-between items-center">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <SvgIcon :name="matchCard(userCards[0].brand!)" size="32" />
+          <span class="card-number">{{ `**** **** **** ${userCards[0].last4}` }}</span>
+          <span v-if="userCards[0].cardDefault" class="card-default">DEFAULT</span>
         </div>
-      </template>
+        <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_more-v" @click="onMenuCommand($event, userCards[0])" />
+      </div>
+      <div v-else class="grid grid-cols-4 gap-1 min-w-0">
+        <div v-for="card in userCards" :key="card.cardId" class="h-10 flex items-center gap-1 px-2 rounded-1 min-w-0 overflow-hidden cursor-pointer"
+             :class="card.cardDefault ? 'card-chip--default' : 'card-chip'" @click="onMenuCommand($event, card)"
+        >
+          <SvgIcon :name="matchCard(card.brand!)" size="32" />
+          <span class="truncate text-3.5 font-500 font-['JetBrains_Mono']" :class="card.cardDefault ? 'color-white' : 'tt-primary'">{{ card.last4 }}</span>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<style module="bind">
-.default {
-  color: var(--colors-text-text-primary);
-  font-family: Inter;
-  font-size: 14px;
-  line-height: 20px;
-}
-</style>
-
-<style lang="scss">
-
-</style>
-
 <style lang="scss" scoped>
-.walllet-bank-cards {
-  --toggleswitch-width: 28px;
-  --toggleswitch-height: 16px;
-  --toggleswitch-handle-size: 12px;
-}
-.add-card-button {
-  --button-outlined-info-border-color: #11a3fd;
-  --button-outlined-secondary-color: #11a3fd;
-  --spacing-md: 8px;
-  color: #11a3fd;
-}
-.title {
-  color: var(--colors-text-text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 20px;
+.bank-cards {
+  border-radius: 12px;
+  border: 1px solid var(--colors-border-border-subtle, #c7d1d6);
+  background: var(--colors-background-bg-page, #fff);
 }
 
-.desc {
-  color: var(--colors-text-text-tertiary);
-  font-family: Inter;
-  font-size: 14px;
-  line-height: 20px;
+.panel {
+  border-radius: 8px;
+  border: 1px solid var(--colors-border-border-inactive, #e2e9ee);
+  background: var(--colors-background-bg-block, #f1f5f8);
 }
 
-.add {
-  color: var(--colors-text-text-brand);
-  font-family: Inter;
-  font-size: 14px;
-  line-height: 20px;
+.card-chip {
+  border: 0.5px solid var(--colors-border-border-inactive, #e2e9ee);
+  background: var(--colors-background-bg-page, #fff);
+}
+
+.card-chip--default {
+  border: 1px solid var(--colors-border-border-inactive, #e2e9ee);
+  background: linear-gradient(262deg, #34d0a0 -0.48%, #afe42c 100.91%);
 }
 
 .card {
@@ -315,7 +88,6 @@ function deleteCard(cardId: number) {
     border-radius: 2px;
     border: 1px solid var(--component-tag-border);
     background: var(--component-tag-bg);
-
     color: var(--component-tag-text);
     font-family: 'JetBrains Mono';
     font-size: 10px;

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TaskReportTemplateContextSchema } from '../task-report'
 import { AgentChannelMessageIdSchema } from './common'
 
 export const AgentConversationRunAttachmentSchema = z.strictObject({
@@ -17,6 +18,7 @@ export const AgentConversationRunStartCommandSchema = z.strictObject({
   message: z.string(),
   attachments: z.array(AgentConversationRunAttachmentSchema).optional(),
   localAttachments: z.array(AgentConversationRunLocalAttachmentSchema).optional(),
+  templateContext: TaskReportTemplateContextSchema.optional(),
   fullAccess: z.boolean().optional(),
 }).refine(data => Boolean(data.message.trim()) || Boolean(data.attachments?.length) || Boolean(data.localAttachments?.length))
 

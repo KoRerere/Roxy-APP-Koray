@@ -3,11 +3,12 @@ import type { ComponentPublicInstance } from 'vue'
 import { EditorContent } from '@tiptap/vue-3'
 import type { AgentAttachment, AgentFolderSelection, AgentHitlChoiceControl, AgentHitlChoiceOption, AgentHitlControlValue, AgentHitlRequest, AgentHitlSubmitPayload, AgentHitlTextControl, AgentPathSelection, AgentQueuedPrompt, AgentTodoProgress } from '../types'
 import type { AgentComposerItem } from './chat-composer/types'
+import type { ClipboardFileSource } from './chat-composer/clipboardFiles'
 import AgentTooltip from './AgentTooltip.vue'
 import ComposerToolbar from './ComposerToolbar.vue'
 import PromptQueue from './PromptQueue.vue'
 import SuggestionMenu from './chat-composer/SuggestionMenu.vue'
-import { getClipboardFiles } from './chat-composer/clipboardFiles'
+import { createClipboardPathAttachment, getClipboardFileSources, splitClipboardFilesByLocalPath } from './chat-composer/clipboardFiles'
 import { shouldConvertPastedTextToFile } from './chat-composer/pasteText'
 import {
   getInvalidTemplateReferenceLabels,
@@ -46,6 +47,7 @@ const emit = defineEmits<{
   send: []
   stop: []
   submitHitl: [payload: AgentHitlSubmitPayload]
+  officialTemplateTopChanged: []
 }>()
 
 const model = defineModel<string>({ required: true })
@@ -103,6 +105,7 @@ const {
   inputEditor,
   isEmpty,
   markSuggestionItemRead,
+  toggleSuggestionItemTop,
   navigateSuggestion,
   profileHasMore,
   profileLoadError,
@@ -125,6 +128,7 @@ const {
   editable: isEditable,
   contentKey: computed(() => props.contentKey),
   onSend: handleComposerSend,
+  onOfficialTemplateTopChanged: () => emit('officialTemplateTopChanged'),
   recommendedSlashItems: recommendedTemplateItems,
   submitOnEnter: !isPromptField.value,
 })
@@ -244,6 +248,51 @@ function addFiles(files: File[]) {
   emit('addAttachments', files)
 }
 
+function getPastedFileLocalPath(file: File) {
+  if (!globalThis.isElectron) {
+    return ''
+  }
+
+  try {
+    return globalThis.electronAPI.getPathForFile(file) || ''
+  }
+  catch (error) {
+    console.error('[agent-console] Failed to get pasted file path:', error)
+    return ''
+  }
+}
+
+function addPastedFiles(sources: ClipboardFileSource[]) {
+  if (!sources.length) {
+    return
+  }
+
+  const files = sources.map(source => source.file)
+  if (!globalThis.isElectron) {
+    emit('addAttachments', files)
+    return
+  }
+
+  const { localPathFiles, uploadFiles } = splitClipboardFilesByLocalPath(
+    files,
+    getPastedFileLocalPath,
+  )
+  const entryByFile = new Map(sources.map(source => [source.file, source.entry]))
+
+  const pathAttachments = localPathFiles.map(({ file, path }) => {
+    const entry = entryByFile.get(file) ?? null
+    return createClipboardPathAttachment(file.name, path, entry)
+  })
+
+  for (const attachment of pathAttachments) {
+    emit('addPathAttachment', attachment)
+  }
+
+  if (uploadFiles.length) {
+    emit('addAttachments', uploadFiles)
+  }
+}
+
 function createPastedTextFile(text: string) {
   pastedTextFileIndex.value += 1
   const suffix = pastedTextFileIndex.value === 1 ? '' : `-${pastedTextFileIndex.value}`
@@ -254,15 +303,15 @@ function createPastedTextFile(text: string) {
 }
 
 function handleComposerPaste(event: ClipboardEvent) {
-  const files = getClipboardFiles(event.clipboardData)
+  const sources = getClipboardFileSources(event.clipboardData)
   if (isPromptField.value || props.readonly) {
     return
   }
 
-  if (files.length) {
+  if (sources.length) {
     event.preventDefault()
     event.stopPropagation()
-    addFiles(files)
+    addPastedFiles(sources)
     return
   }
 
@@ -1439,6 +1488,7 @@ defineExpose({
       @retry="retryLoadProfiles"
       @search="updateSuggestionQuery"
       @toggle-all="toggleAllMentionItems"
+      @toggle-top="toggleSuggestionItemTop"
     />
 
     <Teleport to="body">

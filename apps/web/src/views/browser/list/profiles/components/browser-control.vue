@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { isChromiumCoreUnsupported } from '@roxy/shared'
+import { getCommonHeaders } from '/@/api/util'
 import RxTooltip from '/@/components/rx-tooltip'
 import { usePermission } from '/@/hooks/usePermission'
 import { navigateToPersonalUpgrade, navigateToWorkspaceUpgrade } from '/@/hooks/useResponseToast/handleBusinessCode'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import type { SvgNames } from '/@/components/rx-icon'
 import { CoreType } from '/@/enums'
 import { SubLevelEnum } from '/@/enums/pay'
@@ -47,6 +50,7 @@ const { isPublicMember } = useRouteContext()
 const profileLabels = useProfileEntityLabels()
 const shopLabels = useProxyShopLabels()
 const { check } = usePermission()
+const [, onlyErrorToast] = useResponseToast()
 
 const openButtonText = computed(() => text ?? profileLabels.value.open)
 
@@ -70,12 +74,23 @@ const {
   onOpen: row => emits('open', row),
 })
 
+async function openBrowserWithCompatibilityCheck() {
+  const { osVersion, 'R-OS': os } = await getCommonHeaders()
+  if (isChromiumCoreUnsupported(os, osVersion, data.coreType, data.coreVersion)) {
+    onlyErrorToast(-1, $t('当前系统不支持使用{version}内核', { version: data.coreVersion }))
+    return
+  }
+  openBrowser()
+}
+
 const upgradeLinkText = computed(() => {
   const { subLevel } = userPayInfo.value
-  if (subLevel === SubLevelEnum.Expired)
+  if (subLevel === SubLevelEnum.Expired) {
     return $t('续费套餐')
-  if ([SubLevelEnum.Free, SubLevelEnum.Trial].includes(subLevel as SubLevelEnum))
+  }
+  if ([SubLevelEnum.Free, SubLevelEnum.Trial].includes(subLevel as SubLevelEnum)) {
     return $t('购买套餐')
+  }
   return $t('升级套餐')
 })
 
@@ -97,7 +112,7 @@ function handlePersonalUpgradeClick(hide?: () => void) {
     <RxTooltip>
       <template #default>
         <div class="control-group flex items-center gap-2" :class="{ 'control-group--limited': isOpenLimitReached }">
-          <RxButton :id="btnId" class="control" :class="browser.classes" :disabled="isButtonDisabled || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowser">
+          <RxButton :id="btnId" class="control" :class="browser.classes" :disabled="isButtonDisabled || disabled" size="xxs" outlined severity="secondary" @click.stop="openBrowserWithCompatibilityCheck">
             <div v-if="!browser.percent || browser.completed" v-tooltip.top="{ value: isOpenLimitReached ? undefined : coreInfo, showDelay: 300 }" class="flex items-center justify-center">
               <SvgIcon v-if="isOpenLimitReached" class="control-icon pointer-events-none" name="base/rx_ic_lock" />
               <SvgIcon v-else class="control-icon pointer-events-none" :name="(icon as SvgNames)" :class="{ firefox: data.coreType === CoreType.Firefox }" />

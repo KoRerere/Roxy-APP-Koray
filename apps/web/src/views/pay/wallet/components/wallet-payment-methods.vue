@@ -2,7 +2,7 @@
 import { getImage } from '/@/utils/basic'
 import StripePay from '/@/views/pay/wallet/components/stripe-pay.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
-import { PayWay } from '/@/enums/pay'
+import { AutoRechargeStatus, isCardPayWay, PayWay } from '/@/enums/pay'
 import RxToolTip from '/@/components/rx-tooltip'
 import { PAYWAY_ALL_CATEGORY } from '/@/views/pay/wallet/components/payway-category'
 
@@ -23,9 +23,11 @@ interface AvailableMethods {
   label: string
   value: PayWay[]
   image: string
-  discount: number
-  disabled: boolean
+  discount?: number
+  disabled?: boolean
   category?: string
+  desc?: string
+  tip?: string
   getValue?: () => PayWay
   [key: string]: any
 }
@@ -39,10 +41,12 @@ const { rechargeAmount, methods, disabledMethods = [], addFundsAndPay = false, c
   category?: string
   onConfirm: (params?: any) => any | Promise<any>
 }>()
+
 const emit = defineEmits<{
   /** 其它支付方式面板是否展开，父级据此显示分类下拉 */
   otherPayOpen: [open: boolean]
 }>()
+
 /** 3 列 × 4 行；超出时最后一格留给「更多」所以默认只露出 11 个 */
 const GRID_COLUMNS = 3
 const MAX_COLLAPSED_ROWS = 4
@@ -52,7 +56,8 @@ const COLLAPSED_ITEM_COUNT = COLLAPSED_SLOTS - 1
 const $rechargeModal = inject<{ preventModalClose: (value?: boolean) => void }>('$rechargeModal')
 
 const [showToast, onlyErrorToast] = useResponseToast()
-const { getUserCards } = useUserStore()
+const { userPayInfo } = storeToRefs(useUserStore())
+const { getUserCards, getUserPayInfo } = useUserStore()
 const { isDarkTheme } = storeToRefs(useThemeStore())
 const confirm = useConfirm()
 
@@ -87,7 +92,7 @@ const activeCard = ref()
 const openOther = ref(false)
 const genStripe = ref(false)
 const loading = ref(false)
-const saveCard = ref(false)
+const saveCard = ref(true)
 
 const cardTypeMap = {
   amex: 'cards/american-express',
@@ -103,7 +108,7 @@ const cardTypeMap = {
 
 const cryptoCoins = ref()
 
-const defaultMethods = [
+const defaultMethods: AvailableMethods[] = [
   {
     label: $t('Roxy 钱包'),
     value: [PayWay.Balance],
@@ -113,6 +118,11 @@ const defaultMethods = [
     label: $t('银行卡'),
     value: [PayWay.Card],
     ...themedPayIcon('payment_icon_cards.svg'),
+  },
+  {
+    label: $t('信用卡'),
+    value: [PayWay.Credit],
+    ...themedPayIcon('payment_icon_mastercard.svg'),
   },
   {
     label: $t('支付宝'),
@@ -277,6 +287,7 @@ const availableMethods = computed(() => {
     }
 
     const found = defaultMethods.find(item => item.value.includes(payway))
+
     if (found) {
       acc.push({
         label: found?.label ?? '',
@@ -462,6 +473,20 @@ function toggleOtherPay() {
   showOtherPay()
 }
 
+/** 组合支付未开时自动开启：勾选保存卡片即视为开通快捷支付，余额不足自动续费时用默认卡补足 */
+async function ensureAutoRechargeEnabled() {
+  if (userPayInfo.value.autoRecharge === AutoRechargeStatus.Open) {
+    return
+  }
+
+  const { code, msg } = await API.pay.userSetAutoRechargeStatusCreate({ status: AutoRechargeStatus.Open })
+  onlyErrorToast(code, msg)
+  if (code !== 0) {
+    return
+  }
+  await getUserPayInfo()
+}
+
 async function newCardConfirm(stripeResult: any) {
   if (!saveCard.value) {
     await onConfirm(stripeResult)
@@ -475,6 +500,8 @@ async function newCardConfirm(stripeResult: any) {
     return
   }
   await onConfirm({ ...stripeResult, ...data })
+  // 默认勾选时用户可能从未触发 checkbox change；绑卡成功后再补开，后端也要求先有卡
+  await ensureAutoRechargeEnabled()
   getCardList()
 }
 
@@ -541,16 +568,16 @@ async function payConfirm() {
       <RxButton v-if="showMoreButton" class="w-full" outlined size="lg" :label="$t('更多支付方式')" @click="expandCurrentCategory" />
     </div>
     <div v-if="genStripe" class="w-full">
-      <StripePay v-show="openOther && selectedPayway === PayWay.Card" v-model:bind="saveCard" class="w-full" :recharge-amount="rechargeAmount" :confirm-text="confirmText" :on-confirm="newCardConfirm">
+      <StripePay v-show="openOther && isCardPayWay(selectedPayway)" v-model:bind="saveCard" class="w-full" :pay-type="selectedPayway" :recharge-amount="rechargeAmount" :confirm-text="confirmText" :on-confirm="newCardConfirm">
         <template v-if="cardList.length < 4" #after>
           <div class="flex items-center gap-2.5">
             <RxCheckbox v-model="saveCard" input-id="wrap" binary />
-            <label for="wrap" class="select-none default">{{ $t('保存卡片') }}</label>
+            <label for="wrap" class="select-none default">{{ $t('保存并开通快捷支付') }}</label>
           </div>
         </template>
       </StripePay>
 
-      <div v-show="openOther && selectedPayway !== PayWay.Card" class="flex flex-col gap-3">
+      <div v-show="openOther && !isCardPayWay(selectedPayway)" class="flex flex-col gap-3">
         <div v-if="[PayWay.USDT, PayWay.USDC].includes(selectedPayway!) && cryptoCoins.length" class="flex gap-2.5">
           <div v-for="item in cryptoCoins" :key="item.name" class="flex-1 flex flex-col gap-1.5">
             <div class="label">
@@ -559,7 +586,7 @@ async function payConfirm() {
             <TsFormSelect v-model="item.value" v-bind="item.props" size="lg" />
           </div>
         </div>
-        <div class="flex flex-col gap-2.5 pa-4 rounded-md extend">
+        <div v-if="chooseMethod" class="flex flex-col gap-2.5 pa-4 rounded-md extend">
           <div class="flex flex-col items-start gap-1.5">
             <img class="h-8" :src="chooseMethod.image">
             <div class="extend-desc">
@@ -576,7 +603,7 @@ async function payConfirm() {
         </div>
       </div>
     </div>
-    <RxButton v-if="!openOther || (openOther && selectedPayway !== PayWay.Card)" class="w-full" size="lg" :label="confirmText" @click="payConfirm" />
+    <RxButton v-if="!openOther || (openOther && !isCardPayWay(selectedPayway))" class="w-full" size="lg" :label="confirmText" @click="payConfirm" />
   </div>
 </template>
 

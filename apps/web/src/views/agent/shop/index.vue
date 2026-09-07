@@ -4,7 +4,6 @@ import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 // import CustomFilter from '/@/views/browser/list/profiles/components/custom-filters.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
 import BandwidthCell from '/@/views/agent/shop/components/bandwidth-cell.vue'
-import AutoRenewModal from '/@/views/agent/shop/components/auto-renew-modal.vue'
 import HelpModal from '/@/views/agent/shop/components/help-modal.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import ProviderSimpleList from '/@/views/agent/shop/components/provider-simple-list.vue'
@@ -36,6 +35,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { BuyProxyListType, ProxyAutoRenewalStatus, ProxyCheckStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyReqType, ProxyType } from '/@/enums'
 import { usePermission } from '/@/hooks/usePermission'
 import { useEmitterEvent } from '/@/utils/eventBus'
+import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 import type { ProxyItem } from './operation'
 import type { ConcurrentProxyTestResults, ConcurrentProxyTestRun, ConcurrentProxyValidResult } from '/@/views/agent/hooks'
 import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
@@ -47,6 +47,7 @@ const drawerInstance = useDrawer()
 const { showProxyFormDrawer } = useProxyFormDrawer(drawerInstance)
 const { updateProxyModules } = useProxyModuleCreate()
 const [showModal] = useDialog()
+const { confirmEnableAutoRenew } = useConfirmAutoRenew()
 const [showToast, onlyErrorToast] = useResponseToast()
 const { userConfig } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
@@ -499,38 +500,14 @@ async function autoRenewChange(data: ProxyItem) {
     return false
   }
 
-  const notShowAgain = localStorage.getItem('autoRenewModalNotShowAgain')
-
-  if (!!notShowAgain || data.autoRenew === ProxyAutoRenewalStatus.Enabled) {
-    return toggleAutoRenew(data)
+  if (data.autoRenew !== ProxyAutoRenewalStatus.Enabled) {
+    const confirmed = await confirmEnableAutoRenew()
+    if (!confirmed) {
+      return false
+    }
   }
 
-  const { promise, resolve } = Promise.withResolvers<boolean>()
-  showModal({
-    showHeader: false,
-    modal: true,
-    blockScroll: true,
-    slots: {
-      container: ({ hideModal }) => (
-        <AutoRenewModal
-          onClose={
-            () => {
-              hideModal()
-              resolve(false)
-            }
-          }
-          onConfirm={
-            async () => {
-              const isOK = await toggleAutoRenew(data)
-              resolve(isOK)
-              hideModal()
-            }
-          }
-        />
-      ),
-    },
-  })
-  return promise
+  return toggleAutoRenew(data)
 }
 
 async function toggleAutoRenew(data: ProxyItem) {

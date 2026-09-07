@@ -43,9 +43,10 @@ const profileLabels = useProfileEntityLabels()
 const menuRef = useTemplateRef('menu')
 
 const avatarProps = computed(() => {
-  const { workspacePicture, workspaceName } = currentWorkspace.value || {}
+  const { workspacePicture, workspacePictureUrl, workspaceName } = currentWorkspace.value || {}
   return getWorkspaceAvatarProps({
     workspacePicture,
+    workspacePictureUrl,
     workspaceName,
     size: 26,
     emojiFontSize: 18,

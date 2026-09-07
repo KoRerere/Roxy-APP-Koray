@@ -81,8 +81,8 @@ export class McpManager {
     return this.playwright.createProfileBinding(options)
   }
 
-  releaseProfileBinding(bindingId: string): void {
-    this.playwright.releaseProfileBinding(bindingId)
+  releaseProfileBinding(bindingId: string): Promise<void> {
+    return this.playwright.releaseProfileBinding(bindingId)
   }
 
   forgetConversation(conversationId: string): void {

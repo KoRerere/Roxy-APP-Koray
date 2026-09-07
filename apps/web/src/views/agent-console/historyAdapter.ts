@@ -16,11 +16,14 @@ import type {
   AgentRetryProcessEvent,
   AgentScriptLogProcessEvent,
   AgentSkillLoadProcessEvent,
+  AgentTaskReportProcessEvent,
   AgentThinkingProcessEvent,
   AgentToolCallProcessEvent,
 } from './types'
 import type { AgentConsoleConversationDetailDTO, AgentConsoleConversationDTO, AgentConsoleConversationMessageDTO } from './api'
+import type { TaskReportInput } from '@roxy/shared'
 import type { AgentConversationRunEventDTO } from '@roxy/shared/channel'
+import { TaskReportInputSchema } from '@roxy/shared'
 import type { AgentErrorData } from './utils/agent-error'
 import { toRaw } from 'vue'
 import { getMemoryToolPresentation } from './memoryToolPresentation'
@@ -36,6 +39,7 @@ export interface ProcessBuildContext {
   activeRetriesByScope: Map<string, AgentRetryProcessEvent>
   agentByPath: Map<string, AgentLifecycleProcessEvent>
   hitlByApprovalId: Map<string, AgentHitlProcessEvent>
+  pendingTaskReports: Map<string, { sourceReportId: string, report: TaskReportInput }>
   finalAnswer?: AgentFinalAnswerProcessEvent
   firstTimestamp?: number
   lastTimestamp?: number
@@ -243,6 +247,23 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
 }
 
+function parseSerializedToolInput(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value
+  }
+  try {
+    return JSON.parse(value) as unknown
+  }
+  catch {
+    return value
+  }
+}
+
+function parseTaskReportInput(value: unknown): TaskReportInput | undefined {
+  const parsed = TaskReportInputSchema.safeParse(parseSerializedToolInput(value))
+  return parsed.success ? parsed.data : undefined
+}
+
 export function formatTime(value?: string | number) {
   if (!value) {
     return ''
@@ -368,6 +389,31 @@ function getOrCreateTool(
       : undefined,
     input: data.input,
     status: 'running',
+  }
+  eventByKey.set(key, event)
+  targetEvents.push(event)
+  return event
+}
+
+function getOrCreateTaskReport(
+  targetEvents: AgentProcessEvent[],
+  eventByKey: Map<string, AgentProcessEvent>,
+  key: string,
+  id: string,
+  sourceReportId: string,
+  report: TaskReportInput,
+): AgentTaskReportProcessEvent {
+  const existing = eventByKey.get(key)
+  if (existing?.type === 'task_report') {
+    return existing
+  }
+
+  const event: AgentTaskReportProcessEvent = {
+    id,
+    type: 'task_report',
+    sourceReportId,
+    report,
+    status: 'success',
   }
   eventByKey.set(key, event)
   targetEvents.push(event)
@@ -856,6 +902,14 @@ function handleToolCall(context: ProcessBuildContext, data: Record<string, unkno
   const toolId = asString(data.toolId) || `${toolName}-${context.eventByKey.size}`
   const scope = eventScope(context, data)
   const targetEvents = agentEventsFor(context, data)
+  if (toolName === 'roxy_task_report') {
+    const report = parseTaskReportInput(data.input ?? data.args)
+    if (!report) {
+      return
+    }
+    context.pendingTaskReports.set(`task-report:${scope}:${toolId}`, { sourceReportId: toolId, report })
+    return
+  }
   const memoryPresentation = getMemoryToolPresentation(toolName, data.input ?? data.args, {
     patchType: data.patchType === 'create' || data.patchType === 'update' || data.patchType === 'delete' || data.patchType === 'mixed'
       ? data.patchType
@@ -918,6 +972,27 @@ function handleToolResult(context: ProcessBuildContext, data: Record<string, unk
   const toolName = asString(data.toolName) || 'tool'
   const toolId = asString(data.toolId) || `${toolName}-${context.eventByKey.size}`
   const scope = eventScope(context, data)
+  const taskReportKey = `task-report:${scope}:${toolId}`
+  const pendingTaskReport = context.pendingTaskReports.get(taskReportKey)
+  if (pendingTaskReport) {
+    context.pendingTaskReports.delete(taskReportKey)
+    if (data.status === 'success') {
+      const taskReport = getOrCreateTaskReport(
+        agentEventsFor(context, data),
+        context.eventByKey,
+        taskReportKey,
+        `task-report-${scope}-${toolId}`,
+        pendingTaskReport.sourceReportId,
+        pendingTaskReport.report,
+      )
+      for (const event of agentEventsFor(context, data)) {
+        if (event.type === 'task_report' && event !== taskReport) {
+          event.superseded = true
+        }
+      }
+    }
+    return
+  }
   const skillEvent = context.eventByKey.get(`skill:${scope}:${toolId}`)
   if (skillEvent?.type === 'skill_load') {
     skillEvent.status = normalizeStatus(data.status)
@@ -1145,6 +1220,7 @@ function createProcessBuildContext(messageId: string, events: AgentConversationR
     activeRetriesByScope: new Map(),
     agentByPath: new Map(),
     hitlByApprovalId: new Map(),
+    pendingTaskReports: new Map(),
   }
 }
 

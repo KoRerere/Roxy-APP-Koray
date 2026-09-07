@@ -12,8 +12,9 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
 import { applyPriceDiscount, discountCalculate, durationAmountFromMonthly, hasVisiblePriceDiscount } from '/@/views/pay/subscribe/util.ts'
-import { SubLevelEnum } from '/@/enums/pay'
+import { AutoRenewalStatus, SubLevelEnum } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 
 const dialogRef = inject<any>('dialogRef')
 const router = useRouter()
@@ -27,6 +28,9 @@ const billingLabels = useBillingEntityLabels()
 const selectedDuration = ref()
 const monthAmount = ref(0)
 const loading = ref(false)
+/** 窗口订阅自动续费状态唯一，跟随当前账户状态 */
+const autoRenew = ref(userPayInfo.value.isAuto)
+const { beforeToggleAutoRenew } = useConfirmAutoRenew()
 /** 活动入口可指定默认续费天数，缺档时 Duration 仍回落到第一项 */
 const defaultDays = dialogRef.value?.data?.defaultDays as number | undefined
 
@@ -56,7 +60,7 @@ const discountAmount = computed(() => currency(originalAmount.value, { precision
 
 const detail = computed(() => {
   const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
-  const { discount, firstPurchaseDiscount, durationDiscount } = allDiscount.value
+  const { /* discount, */ firstPurchaseDiscount, durationDiscount } = allDiscount.value
 
   const profileCount = currency(purchaseWindowCount, { precision: 0, symbol: '' })
   const freeCount = currency(freeWindowCount, { precision: 0, symbol: '' })
@@ -85,6 +89,10 @@ const detail = computed(() => {
           label: $t('到期时间'),
           value: selectedDuration.value?.due,
         },
+        {
+          label: $t('自动续费'),
+          slot: 'autoRenew',
+        },
       ],
     },
     {
@@ -95,12 +103,13 @@ const detail = computed(() => {
           value: `-${firstPurchaseDiscount}%`,
           visible: !!firstPurchaseDiscount,
         },
-        {
-          label: $t('专属折扣'),
-          class: '!color-[#FC9D12]',
-          value: `-${discount}%`,
-          visible: !!discount,
-        },
+        // 身份折扣文案暂不对外展示，折扣仍参与计价
+        // {
+        //   label: $t('专属折扣'),
+        //   class: '!color-[#FC9D12]',
+        //   value: `-${discount}%`,
+        //   visible: !!discount,
+        // },
         {
           label: selectedDuration.value?.discountStr || $t('订阅折扣'),
           class: '!color-[#FC9D12]',
@@ -160,11 +169,11 @@ async function confirm() {
         originalAmount: originalAmount.value,
         discountAmount: discountAmount.value,
         onClose: hideModal,
-        onConfirm: async ({ payType, isAuto }) => {
+        onConfirm: async ({ payType }) => {
           mixpanelTrack('click_pay_renew_order')
           await _onConfirm.value?.({
             payType,
-            isAuto,
+            isAuto: autoRenew.value === AutoRenewalStatus.Open,
             orderNo: userPayInfo.value!.orderNo,
             subscriptionDays: selectedDuration.value.day,
           })
@@ -178,8 +187,9 @@ async function confirm() {
 
 function close(isCancel = false) {
   dialogRef.value.close()
-  if (isCancel)
+  if (isCancel) {
     _onCancel.value?.()
+  }
 }
 
 function onUpgradePlan() {
@@ -235,6 +245,14 @@ function onUpgradePlan() {
                 <span>{{ selectedDuration?.title }}</span>
                 <span v-if="selectedDuration?.giftDays" class="duration-gift">{{ $t('{day} 天', { day: `+ ${selectedDuration.giftDays}` }) }}</span>
               </div>
+            </div>
+          </template>
+          <template #autoRenew="{ classes }">
+            <div class="flex items-center justify-between">
+              <div :class="classes">
+                {{ $t('自动续费') }}
+              </div>
+              <RxToggleSwitch v-model="autoRenew" :true-value="AutoRenewalStatus.Open" :false-value="AutoRenewalStatus.Close" :before-change="beforeToggleAutoRenew" />
             </div>
           </template>
           <template #oldprice="{ item }">

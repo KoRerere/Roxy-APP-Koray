@@ -96,6 +96,31 @@ describe('taskScheduler', () => {
     await scheduler.stop()
   })
 
+  it('fires hourly schedules through the existing cron trigger', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(START)
+    const config = deps([
+      task({
+        planType: 'cron',
+        cron: '15 * * * *',
+        timezone: 'UTC',
+        executeAt: null,
+        nextExecuteAt: '2026-07-23T01:00:01.000Z',
+      }),
+    ], () => Date.now())
+    const scheduler = new TaskScheduler(config)
+
+    await scheduler.sync()
+    await vi.advanceTimersByTimeAsync(1_000)
+
+    assert.deepEqual(vi.mocked(config.startTask).mock.calls[0], [
+      1,
+      { triggerType: 'cron', scheduledAt: '2026-07-23T01:00:01.000Z' },
+    ])
+    assert.equal(vi.mocked(config.setEnabled).mock.calls.length, 0)
+    await scheduler.stop()
+  })
+
   it('does not disable a once task before its runner completes', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(START)

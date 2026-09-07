@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { extractAgentProfileDirIds } from '@roxy/shared'
 
 export const PROFILE_TOKEN_VISIBLE_LIMIT = 3
 
@@ -71,18 +72,7 @@ export function formatAgentProfileDetails(
 }
 
 export function getAgentProfileIdsFromPrompt(prompt: string) {
-  const ids: string[] = []
-  const pattern = /\[@profile:[^\]]*\]\(([^)]*)\)/g
-
-  for (const match of prompt.matchAll(pattern)) {
-    match[1]
-      .split(',')
-      .map(id => id.trim())
-      .filter(Boolean)
-      .forEach(id => ids.push(id))
-  }
-
-  return Array.from(new Set(ids))
+  return extractAgentProfileDirIds(prompt)
 }
 
 export async function ensureAgentProfileLabelsForPrompt(

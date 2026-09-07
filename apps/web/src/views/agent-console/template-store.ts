@@ -44,6 +44,9 @@ export interface OfficialTemplate {
   iconInfo: TemplateIconInfo | null
   sortOrder: number
   isHot: boolean
+  isTopped?: boolean
+  toppedAt?: string | null
+  approxPoints?: number | null
   metadata: Record<string, unknown>
   labels: TemplateLabel[]
   labelIds: number[]
@@ -71,6 +74,8 @@ export interface TemplateStoreItem {
   iconInfo: TemplateIconInfo | null
   labels: TemplateStoreTag[]
   isHot: boolean
+  approxPoints?: number | null
+  version?: string
   official: boolean
 }
 
@@ -130,25 +135,49 @@ export function isTemplateImageIconSource(value: string): boolean {
 /**
  * 与官方脚本列表保持一致：按站点语言取 i18n 对象，并兼容后端历史 cn 与当前 zh 键。
  */
-export function pickLocalized(value: unknown, locale?: string): string {
-  if (typeof value === 'string')
-    return value
-  if (!isRecord(value))
+function normalizeLocalizedText(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.trim() ? value : ''
+  }
+  if (!Array.isArray(value)) {
     return ''
+  }
+
+  return value
+    .filter((item): item is string => typeof item === 'string' && Boolean(item.trim()))
+    .join('\n\n')
+}
+
+export function pickLocalized(value: unknown, locale?: string): string {
+  const directValue = normalizeLocalizedText(value)
+  if (directValue) {
+    return directValue
+  }
+  if (!isRecord(value)) {  
+    return ''
+  }
 
   const primaryLanguage = locale?.split('-')[0]?.toLowerCase()
   const preferredKeys = primaryLanguage === 'zh'
     ? ['zh', 'cn']
-    : [primaryLanguage, 'en', 'zh', 'cn', 'ru']
+    : [primaryLanguage, primaryLanguage === 'en' ? 'us' : undefined, 'en', 'zh', 'cn', 'ru']
 
   for (const key of preferredKeys) {
     const candidate = key ? value[key] : undefined
-    if (typeof candidate === 'string' && candidate.trim())
-      return candidate
+    const normalizedCandidate = normalizeLocalizedText(candidate)
+    if (normalizedCandidate) {
+      return normalizedCandidate
+    }
   }
 
-  const fallback = Object.values(value).find(candidate => typeof candidate === 'string' && candidate.trim())
-  return typeof fallback === 'string' ? fallback : ''
+  for (const candidate of Object.values(value)) {
+    const normalizedCandidate = normalizeLocalizedText(candidate)
+    if (normalizedCandidate) {
+      return normalizedCandidate
+    }  
+  }
+
+  return ''
 }
 
 export function pickOfficialTemplatePrompt(template: OfficialTemplate | undefined, locale?: string): string {
@@ -172,6 +201,24 @@ export function readCatalogList<T>(response: unknown, fallbackMessage: string): 
     throw new Error(fallbackMessage)
 
   return response.data as T[]
+}
+
+export interface OfficialTemplatePage {
+  items: OfficialTemplate[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export function readOfficialTemplatePage(response: unknown, fallbackMessage: string): OfficialTemplatePage {
+  if (!isRecord(response) || response.code !== 0 || !isRecord(response.data))
+    throw new Error(isRecord(response) && typeof response.message === 'string' ? response.message : fallbackMessage)
+
+  const { items, total, limit, offset } = response.data
+  if (!Array.isArray(items) || typeof total !== 'number' || typeof limit !== 'number' || typeof offset !== 'number')
+    throw new Error(fallbackMessage)
+
+  return response.data as unknown as OfficialTemplatePage
 }
 
 export function serializeTemplateQuery(params: Record<string, unknown>): string {
@@ -215,6 +262,10 @@ export function mapTemplateStoreItem(row: OfficialTemplate, locale?: string): Te
       label: pickLocalized(label.name, locale) || label.slug,
     })),
     isHot: row.isHot,
+    approxPoints: typeof row.approxPoints === 'number' && Number.isFinite(row.approxPoints)
+      ? row.approxPoints
+      : undefined,
+    version: typeof row.metadata.version === 'string' ? row.metadata.version : undefined,
     official: true,
   }
 }

@@ -356,7 +356,6 @@ export function createProfileSchedulerPlugin(
               throw new Error(message)
             }
           }
-
           if (dirIds.length > 0) {
             try {
               scheduler.acquire(options.ownerId, dirIds)

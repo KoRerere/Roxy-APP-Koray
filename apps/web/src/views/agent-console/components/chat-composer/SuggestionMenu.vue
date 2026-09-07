@@ -33,6 +33,7 @@ const emit = defineEmits<{
   retry: []
   search: [query: string]
   toggleAll: []
+  toggleTop: [item: AgentComposerItem]
 }>()
 
 const popoverRef = useTemplateRef<HTMLElement>('popoverRef')
@@ -232,6 +233,7 @@ onBeforeUnmount(() => {
             @navigate="emit('navigate', $event)"
             @read="emit('read', $event)"
             @search="emit('search', $event)"
+            @toggle-top="emit('toggleTop', $event)"
           />
 
           <div v-else-if="!hasItems" class="suggestion-state">

@@ -60,6 +60,7 @@ vi.mock('@/core/storage/agentPaths', () => ({
   agentPaths: {
     memoryDir: `${testRoot}/memory`,
     memoryIndexFile: `${testRoot}/memory/MEMORY.md`,
+    skillsBuiltinDir: `${testRoot}/library/skills/builtin`,
     sessionDir: (sessionId: string) => `${testRoot}/sessions/${sessionId}`,
     sessionBrowserDir: (sessionId: string) => `${testRoot}/sessions/${sessionId}/browser`,
     sessionRecordingLog: (sessionId: string) => `${testRoot}/sessions/${sessionId}/recording.jsonl`,
@@ -135,6 +136,38 @@ describe('runtime chat agent Skills wiring', () => {
     await instance.destroy()
   })
 
+  it('does not force-select the template creator for a report-backed save turn', async () => {
+    // Regression: report-card saves force-loaded roxy-template-creator even
+    // when the model should decide whether the matching skill applies.
+    // Fixed by: template context only provides report data and leaves selection
+    // to the Skills catalog plus the system prompt.
+    const creator: SkillManifest = {
+      name: 'roxy-template-creator',
+      description: 'Create reusable Skill templates.',
+      sourcePath: `${testRoot}/library/skills/builtin/roxy-template-creator`,
+      bodyPath: `${testRoot}/library/skills/builtin/roxy-template-creator/SKILL.md`,
+      frontmatter: {
+        name: 'roxy-template-creator',
+        description: 'Create reusable Skill templates.',
+      },
+    }
+    listRuntimeSkillManifestsMock.mockResolvedValue([creator])
+    runtimeCreateMock.mockResolvedValue(fakeAgent())
+
+    const { createRuntimeChatAgent } = await import('./chat-agent')
+    const instance = await createRuntimeChatAgent({
+      conversationId: 'conversation-template',
+      executionId: 'run-template',
+      turnId: 'turn-template',
+    })
+
+    const input = instance.createInput('请你将刚才的任务保存为模板')
+    expect(Array.isArray(input)).toBe(true)
+    expect(!Array.isArray(input) && typeof input !== 'string' ? input.skills : undefined).toBeUndefined()
+
+    await instance.destroy()
+  })
+
   it('enables metrics in development and test environments but not production', async () => {
     // Regression: metrics were gated to development only, so automated tests
     // exercised a different runtime plugin set than non-production product runs.
@@ -203,7 +236,7 @@ describe('runtime chat agent Skills wiring', () => {
     await instance.destroy()
   })
 
-  it('does not require approval for stdin polling or script tools', async () => {
+  it('applies the expected approval policy to stdin, scripts, and template tools', async () => {
     // Regression: write_stdin and roxy_script_run inherited their conservative
     // tool annotations and interrupted Agent automation with approval dialogs.
     // Fixed by: declaring those tools as read-only and closed-world through
@@ -222,15 +255,24 @@ describe('runtime chat agent Skills wiring', () => {
     const writeStdin = definition?.tools.resolve('write_stdin')
     const scriptDescribe = definition?.tools.resolve('roxy_script_describe')
     const scriptRun = definition?.tools.resolve('roxy_script_run')
+    const listTemplates = definition?.tools.resolve('roxy_list_templates')
+    const readTemplateInfo = definition?.tools.resolve('roxy_read_template_info')
+    const deleteUserTemplate = definition?.tools.resolve('roxy_delete_user_template')
 
     expect(writeStdin).toBeDefined()
     expect(scriptDescribe).toBeDefined()
     expect(scriptRun).toBeDefined()
+    expect(listTemplates).toBeDefined()
+    expect(readTemplateInfo).toBeDefined()
+    expect(deleteUserTemplate).toBeDefined()
     expect(definition?.hitl.needsApproval(writeStdin!.descriptor, { session_id: 1 })).toBe(false)
     expect(definition?.hitl.needsApproval(scriptDescribe!.descriptor, { scriptPath: 'official:demo' })).toBe(false)
     expect(
       definition?.hitl.needsApproval(scriptRun!.descriptor, { scripts: [{ scriptPath: 'official:demo', dirIds: ['dir-1'] }] }),
     ).toBe(false)
+    expect(definition?.hitl.needsApproval(listTemplates!.descriptor, { scope: 'official' })).toBe(false)
+    expect(definition?.hitl.needsApproval(readTemplateInfo!.descriptor, { scope: 'user', id: 1 })).toBe(false)
+    expect(definition?.hitl.needsApproval(deleteUserTemplate!.descriptor, { id: 1 })).toBe(true)
 
     await instance.destroy()
   })

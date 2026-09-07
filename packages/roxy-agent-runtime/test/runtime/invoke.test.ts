@@ -109,6 +109,159 @@ describe('AgentImpl.invoke', () => {
     expect(res.messages[2]?.role).toBe('assistant')
   })
 
+  it('ends the turn after one successful returnDirect tool call', async () => {
+    // Regression: report-style tools always triggered another model request after
+    // their successful result, even when that result was the final visible output.
+    // Fixed by: persist the tool result and end the loop when its descriptor opts in.
+    let modelCalls = 0
+    const { agent, provider, registry } = buildTestAgent({
+      handler: () => {
+        modelCalls++
+        if (modelCalls === 1) {
+          return toolCallResponse('report-1', 'task_report', { text: 'accepted' })
+        }
+        return endTurnResponse('this call must not happen')
+      },
+    })
+    registry.add(
+      {
+        name: 'task_report',
+        description: 'save a task report',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        returnDirect: true,
+      },
+      async () => ({ content: 'accepted', isError: false }),
+    )
+
+    const response = await agent.invoke('report the task result')
+
+    expect(provider.calls).toHaveLength(1)
+    expect(response.messages).toHaveLength(2)
+    expect(response.messages[0]?.role).toBe('assistant')
+    expect(response.messages[1]?.role).toBe('user')
+  })
+
+  it('continues after a failed returnDirect tool call so the model can correct it', async () => {
+    // Regression: a direct-return marker could end the loop after validation
+    // errors, leaving the model no chance to repair the tool arguments.
+    // Fixed by: only stop directly after a successful tool result.
+    let modelCalls = 0
+    const { agent, provider, registry } = buildTestAgent({
+      handler: () => {
+        modelCalls++
+        if (modelCalls === 1) {
+          return toolCallResponse('report-1', 'task_report', { text: 'invalid' })
+        }
+        return endTurnResponse('corrected')
+      },
+    })
+    registry.add(
+      {
+        name: 'task_report',
+        description: 'save a task report',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        returnDirect: true,
+      },
+      async () => ({ content: 'fix the report input', isError: true }),
+    )
+
+    const response = await agent.invoke('report the task result')
+
+    expect(provider.calls).toHaveLength(2)
+    expect(response.messages.at(-1)?.content).toBe('corrected')
+  })
+
+  it('does not end directly when a response includes multiple tool calls', async () => {
+    // Regression: a returnDirect tool could skip sibling tool calls from the
+    // same provider response and leave unmatched tool_use blocks in history.
+    // Fixed by: direct completion only applies to a single resolved tool call.
+    let modelCalls = 0
+    const { agent, provider, registry } = buildTestAgent({
+      handler: () => {
+        modelCalls++
+        if (modelCalls === 1) {
+          return chatResponse(
+            {
+              role: 'assistant',
+              content: [
+                toolUse('report-1', 'task_report', { text: 'accepted' }),
+                toolUse('echo-1', 'echo', { text: 'done' }),
+              ],
+            },
+            'tool_use',
+          )
+        }
+        return endTurnResponse('completed')
+      },
+    })
+    registry.add(
+      {
+        name: 'task_report',
+        description: 'save a task report',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        returnDirect: true,
+      },
+      async () => ({ content: 'accepted', isError: false }),
+    )
+    registry.add(
+      {
+        name: 'echo',
+        description: 'echo',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+      },
+      async () => ({ content: 'done', isError: false }),
+    )
+
+    const response = await agent.invoke('run both tools')
+
+    expect(provider.calls).toHaveLength(2)
+    expect(response.messages.at(-1)?.content).toBe('completed')
+  })
+
+  it('does not end directly when a report call accompanies an unresolvable tool', async () => {
+    // Regression: after unknown tools were stripped, a sibling returnDirect
+    // tool looked like a single-tool response and skipped the repair turn.
+    // Fixed by: count the provider's original tool blocks before enabling direct completion.
+    let modelCalls = 0
+    const { agent, provider, registry } = buildTestAgent({
+      handler: () => {
+        modelCalls++
+        if (modelCalls === 1) {
+          return chatResponse(
+            {
+              role: 'assistant',
+              content: [
+                toolUse('report-1', 'task_report', { text: 'accepted' }),
+                toolUse('unknown-1', 'provider_internal_tool', {}),
+              ],
+            },
+            'tool_use',
+          )
+        }
+        return endTurnResponse('completed')
+      },
+    })
+    registry.add(
+      {
+        name: 'task_report',
+        description: 'save a task report',
+        inputSchema: testToolInputSchema,
+        source: 'builtin',
+        returnDirect: true,
+      },
+      async () => ({ content: 'accepted', isError: false }),
+    )
+
+    const response = await agent.invoke('run the report')
+
+    expect(provider.calls).toHaveLength(2)
+    expect(response.messages.at(-1)?.content).toBe('completed')
+  })
+
   it('two sequential tool calls then end_turn', async () => {
     let n = 0
     const { agent, registry } = buildTestAgent({

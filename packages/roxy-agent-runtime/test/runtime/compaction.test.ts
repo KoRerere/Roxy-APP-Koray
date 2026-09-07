@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { buildTestAgent, chatResponse, endTurnResponse, toolCallResponse } from '../helpers/buildTestAgent.ts'
+import { InMemoryProvider } from '../../src/memory/memory.ts'
+import { replayIntoMemory } from '../../src/memory/replay.ts'
 import type { ChatResponse, ContentBlock, ISessionStore, Message, RolloutEvent } from '../../src/core/interfaces.ts'
 import { testToolInputSchema } from '../helpers/toolSchema.ts'
 
@@ -13,7 +15,7 @@ function endTurnWithUsage(text: string, inputTokens: number): ChatResponse {
 
 function metadataMessage(label: string): Message {
   return {
-    role: 'user',
+    role: 'developer',
     content: `<metadata><os>${label}</os></metadata>`,
     visible: false,
     compactionKey: 'metadata',
@@ -23,7 +25,7 @@ function metadataMessage(label: string): Message {
 
 function memoryMessage(): Message {
   return {
-    role: 'user',
+    role: 'developer',
     content: '<memory-md># Roxy Agent Memory Index</memory-md>',
     visible: false,
     compactionKey: 'memory-md',
@@ -37,7 +39,7 @@ function recordingStore(events: RolloutEvent[]): ISessionStore {
       events.push(event)
     },
     async read() {
-      return []
+      return events
     },
     async list() {
       return []
@@ -410,22 +412,60 @@ describe('compaction-retained context', () => {
       (event): event is Extract<RolloutEvent, { type: 'compaction' }> => event.type === 'compaction',
     )
     expect(compaction?.keptMessages?.slice(0, 3).map((message) => message.content)).toEqual([
-      expect.stringContaining('<summary>\nmemento\n</summary>'),
       currentMetadata.content,
       memoryMessage().content,
+      'continue',
     ])
+  })
+
+  it('invoke(): replays one summary when keptMessages comes from the live memory snapshot', async () => {
+    // Regression: invoke inserted the summary before capturing keptMessages,
+    // so replay appended the summary twice after reconstructing the snapshot.
+    // Fixed by: persisting keptMessages without the synthetic summary and
+    // letting replay construct the single canonical summary message.
+    const rolloutEvents: RolloutEvent[] = []
+    const { agent, provider, memory } = buildTestAgent({
+      handler: () => endTurnResponse('done'),
+      trimPolicy: { mode: 'turns', keep: 1 },
+      triggerTokens: 10,
+      tokenCounter: (messages) => (messages.length >= 3 ? 100 : 1),
+      summarizer: { summarize: async () => 'memento' },
+      sessionStore: recordingStore(rolloutEvents),
+    })
+    await memory.append(agent.sessionId, { role: 'user', content: 'old request' })
+    await memory.append(agent.sessionId, { role: 'assistant', content: 'old answer' })
+
+    await agent.invoke('continue')
+
+    const live = await memory.getAll(agent.sessionId)
+    const replayedMemory = new InMemoryProvider()
+    await replayIntoMemory(recordingStore(rolloutEvents), replayedMemory, agent.sessionId)
+    const replayed = await replayedMemory.getAll(agent.sessionId)
+    const summaryText = 'Previous conversation summary:\n<summary>\nmemento\n</summary>'
+
+    expect(provider.calls[0]?.messages[0]?.content).toContain(summaryText)
+    expect(live.filter((message) => message.content === summaryText)).toHaveLength(1)
+    expect(replayed.filter((message) => message.content === summaryText)).toHaveLength(1)
+    expect(replayed.slice(0, -1)).toEqual(live.slice(0, -1))
+    expect(replayed.at(-1)).toMatchObject({
+      role: 'assistant',
+      content: [{ type: 'text', text: 'done' }],
+      transcriptItems: live.at(-1)?.transcriptItems,
+    })
   })
 
   it('stream(): restores compaction context without duplicating retained keys', async () => {
     // Regression: invoke and stream have separate compaction loops, so context
     // restoration could work in one mode while disappearing or duplicating in the other.
     // Fixed by: both loops rely on the same memory trim retention contract.
+    const rolloutEvents: RolloutEvent[] = []
     const { agent, provider, memory } = buildTestAgent({
       handler: () => endTurnResponse('done'),
       trimPolicy: { mode: 'turns', keep: 1 },
       triggerTokens: 10,
       tokenCounter: (messages) => (messages.length >= 4 ? 100 : 1),
       summarizer: { summarize: async () => 'memento' },
+      sessionStore: recordingStore(rolloutEvents),
     })
     await memory.append(agent.sessionId, metadataMessage('old'))
     await memory.append(agent.sessionId, memoryMessage())
@@ -438,15 +478,29 @@ describe('compaction-retained context', () => {
     }
 
     const request = provider.calls[0]?.messages ?? []
+    expect(request.slice(0, 4).map((message) => message.content)).toEqual([
+      expect.stringContaining('<summary>\nmemento\n</summary>'),
+      currentMetadata.content,
+      memoryMessage().content,
+      'continue',
+    ])
     expect(request.filter((message) => message.compactionKey === 'metadata')).toEqual([currentMetadata])
     expect(request.filter((message) => message.compactionKey === 'memory-md')).toEqual([memoryMessage()])
     expect(request.indexOf(request.find((message) => message.compactionKey === 'metadata')!)).toBeLessThan(
       request.indexOf(request.find((message) => message.compactionKey === 'memory-md')!),
     )
+    const compaction = rolloutEvents.find(
+      (event): event is Extract<RolloutEvent, { type: 'compaction' }> => event.type === 'compaction',
+    )
+    expect(compaction?.keptMessages?.map((message) => message.content)).toEqual([
+      currentMetadata.content,
+      memoryMessage().content,
+      'continue',
+    ])
   })
 
   it('excludes automatic hidden context from the compaction summary and restores it after the summary', async () => {
-    // Regression: metadata and startup Skill/memory messages were serialized
+    // Regression: metadata and startup memory messages were serialized
     // into the text sent to the summarizer, then could be lost or duplicated.
     // Fixed by: trimming excludes keyed context and re-inserts the latest keyed
     // snapshots after the new summary message.
@@ -459,33 +513,23 @@ describe('compaction-retained context', () => {
         summarize: async (text) => {
           expect(text).not.toContain('<metadata>')
           expect(text).not.toContain('<memory-md>')
-          expect(text).not.toContain('<skills_instructions>')
           return 'memento'
         },
       },
     })
     const metadata = metadataMessage('current')
     const memorySnapshot = memoryMessage()
-    const skillSnapshot = {
-      role: 'user' as const,
-      content: '<skills_instructions>catalog</skills_instructions>',
-      visible: false,
-      compactionKey: 'skill-catalog',
-      compactionOrder: 2,
-    }
     await memory.append(agent.sessionId, metadata)
     await memory.append(agent.sessionId, memorySnapshot)
-    await memory.append(agent.sessionId, skillSnapshot)
     await memory.append(agent.sessionId, { role: 'user', content: 'old request' })
     await memory.append(agent.sessionId, { role: 'assistant', content: 'old answer' })
 
     await agent.invoke([metadata, { role: 'user', content: 'continue' }])
 
-    expect(provider.calls[0]?.messages.slice(0, 5).map((message) => message.content)).toEqual([
+    expect(provider.calls[0]?.messages.slice(0, 4).map((message) => message.content)).toEqual([
       expect.stringContaining('<summary>\nmemento\n</summary>'),
       metadata.content,
       memorySnapshot.content,
-      skillSnapshot.content,
       'continue',
     ])
   })

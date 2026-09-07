@@ -12,7 +12,16 @@ import { store } from '/@/modules/store'
 import { handleWindowMove } from '/@/modules/sync-control/actionBar'
 import { request } from '/@/utils'
 import { createWindow } from '/@/utils/browser-window'
-import { getProdWebDomain } from '/@/utils/getProdWebDomain'
+import {
+  getProdWebDomain,
+  getRemainingProdWebOrigins,
+  markProdWebDomainFailed,
+  rememberProdWebDomain,
+  replaceWebOrigin,
+} from '/@/utils/getProdWebDomain'
+
+/** 主框架 failover 进行中，避免 did-fail-load 与 loadURL reject 重复切入 */
+let mainFrameFailoverInFlight = false
 
 /** 获取 web 入口地址 */
 export async function getWebEntryUrl(path: string) {
@@ -24,6 +33,60 @@ export async function getWebEntryUrl(path: string) {
 /** 获取本地 web 版本 */
 export async function getLocalWebVersion() {
   return request.get<string>(await getWebEntryUrl('version')).then(response => response.data).catch(() => '0.0.0')
+}
+
+/** 内置连接异常页（file://），主框架远程加载全部失败后使用 */
+function getBuiltinErrorPageUrl() {
+  return pathToFileURL(join(appConfig.buildInWebDir, '500.html')).href
+}
+
+/** 当前导航是否已经是内置 500 页，避免失败回调再次切入 failover */
+function isBuiltinErrorPage(url: string) {
+  return url.startsWith('file:') && url.includes('500.html')
+}
+
+/**
+ * Chromium 主框架加载失败后依次尝试其它 Web 域名。
+ * axios 探测成功不代表 Chromium（QUIC/HTTP2/证书）也能连上，所以必须用 loadURL 本身做 failover。
+ */
+async function handleMainFrameLoadFailure(mainWin: BrowserWindow, failedUrl: string) {
+  if (mainWin.isDestroyed() || isBuiltinErrorPage(failedUrl) || mainFrameFailoverInFlight) {
+    return
+  }
+
+  mainFrameFailoverInFlight = true
+  try {
+    if (isPackaged && failedUrl.startsWith('http')) {
+      const origins = getRemainingProdWebOrigins(failedUrl)
+      for (const origin of origins) {
+        if (mainWin.isDestroyed()) {
+          return
+        }
+        const nextUrl = replaceWebOrigin(failedUrl, origin)
+        console.log('[MainWindow] Chromium load failed, try next web domain', { failedUrl, nextUrl })
+        try {
+          await mainWin.loadURL(nextUrl)
+          rememberProdWebDomain(origin)
+          return
+        }
+        catch (error) {
+          console.warn('[MainWindow] next web domain also failed', { nextUrl, error })
+          markProdWebDomainFailed(origin)
+        }
+      }
+    }
+
+    if (!mainWin.isDestroyed()) {
+      console.log('[MainWindow] all web domains failed, show 500', { failedUrl })
+      await mainWin.loadURL(getBuiltinErrorPageUrl())
+    }
+  }
+  catch (error) {
+    console.error('[MainWindow] failed to show 500 page', error)
+  }
+  finally {
+    mainFrameFailoverInFlight = false
+  }
 }
 
 /** 创建窗口 */
@@ -100,14 +163,17 @@ export async function intoMainPage() {
     if (!isMainFrame)
       return
 
+    // ERR_ABORTED：后续 loadURL 取消了当前导航，不是真正的线路失败
+    if (errorCode === -3)
+      return
+
     console.log('页面加载失败：', {
       errorCode,
       errorDescription,
       url: validatedURL,
     })
 
-    // 典型失败：DNS / 超时 / 断网 / SSL
-    mainWin.loadURL(pathToFileURL(join(appConfig.buildInWebDir, '500.html')).href)
+    void handleMainFrameLoadFailure(mainWin, validatedURL)
   })
 
   try {
@@ -124,8 +190,8 @@ export async function intoMainPage() {
   }
 
   await mainWin.loadURL(webUrl).catch((error) => {
+    // did-fail-load 会走域名 failover / 500 页；这里只记日志，避免重复导航打断正在进行的切线
     console.error('intoMainPage error', error)
-    mainWin.loadURL(join(appConfig.buildInWebDir, '500.html'))
   })
   await updateMainWindowPageTitle()
   // 禁用 document.title 的影响

@@ -6,7 +6,7 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import RxAvatar from '/@/components/rx-avatar'
 import { getWorkspaceAvatarProps } from '/@/utils/workspace'
 
-type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'endTime' | 'data' | 'workspaceId', any>
+type InviteInfo = Record<'workspaceName' | 'workspacePicture' | 'workspacePictureUrl' | 'endTime' | 'data' | 'workspaceId', any>
 
 const props = defineProps<{
   inviteInfo?: InviteInfo
@@ -16,11 +16,11 @@ const props = defineProps<{
 const toast = useToast()
 const workspaceStore = useWorkspaceStore()
 
-
 const isInWorkspace = computed(() => workspaceStore.workspaceList.some(item => item.id === props.inviteInfo?.workspaceId))
 
 const workspaceAvatarProps = computed(() => getWorkspaceAvatarProps({
   workspacePicture: props.inviteInfo?.workspacePicture,
+  workspacePictureUrl: props.inviteInfo?.workspacePictureUrl,
   workspaceName: props.inviteInfo?.workspaceName,
   size: 48,
   emojiFontSize: 28,
@@ -62,9 +62,9 @@ async function skipInvitation(intoWorkspaceId?: number) {
           {{ $t('您被邀请至团队 {workspaceName}', { workspaceName: inviteInfo?.workspaceName }) }}
         </div>
       </div>
-      <RxButton class="w-full capitalize" size="lg" :disabled="isInWorkspace" :label="isInWorkspace ? $t('已加入') : $t('加入团队')" @click="acceptInvitation"></RxButton>
+      <RxButton class="w-full capitalize" size="lg" :disabled="isInWorkspace" :label="isInWorkspace ? $t('已加入') : $t('加入团队')" @click="acceptInvitation" />
       <RxDivider />
-      <RxButton class="w-full" size="lg" outlined :label="$t('忽略')" @click="skipInvitation()"></RxButton>
+      <RxButton class="w-full" size="lg" outlined :label="$t('忽略')" @click="skipInvitation()" />
     </div>
   </div>
 </template>
@@ -93,7 +93,7 @@ async function skipInvitation(intoWorkspaceId?: number) {
     }
 
     .workspace-name {
-      color: var(--colors-text-text-primary, #FAFAFA);
+      color: var(--colors-text-text-primary, #fafafa);
       text-align: center;
       font-family: Inter;
       font-size: 16px;

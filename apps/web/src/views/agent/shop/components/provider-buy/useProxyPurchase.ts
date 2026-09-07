@@ -29,8 +29,9 @@ export function useProxyPurchaseApi(options: {
       ...(workspaceType != null ? { workspaceType: String(workspaceType) } : {}),
     })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return []
+    }
 
     return data.map(item => ({
       image: item.sceneIcon,
@@ -45,10 +46,12 @@ export function useProxyPurchaseApi(options: {
       isSpecialOffer: item.isSpecialOffer,
     })).filter((item) => {
       // 电商设备模式已隐藏大陆直连等 badge，无需按语言过滤 Direct 用途
-      if (mode === 'device')
+      if (mode === 'device') {
         return true
-      if (item.badgeType === ProxyUseType.Direct)
+      }
+      if (item.badgeType === ProxyUseType.Direct) {
         return isZh.value
+      }
       return true
     })
   }
@@ -61,8 +64,9 @@ export function useProxyPurchaseApi(options: {
       ...(workspaceType != null ? { workspaceType: String(workspaceType) } : {}),
     })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return []
+    }
 
     return data.map(item => ({
       ...item,
@@ -80,8 +84,9 @@ export function useProxyPurchaseApi(options: {
       entryType: options.entryType.toString(),
     })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return []
+    }
 
     return data.map(item => ({
       ...item,
@@ -110,8 +115,9 @@ export function createProxyPurchaseCountryCache(options: {
   async function getCountryOptions(sceneId: number) {
     const k = joinKey([options.vendorId() ?? '', sceneId])
     const hit = countriesByScene.get(k)
-    if (hit)
+    if (hit) {
       return snapshot(hit)
+    }
     const data = await options.fetchCountryList(sceneId)
     countriesByScene.set(k, snapshot(data))
     return snapshot(data)
@@ -125,8 +131,9 @@ export function createProxyPurchaseCountryCache(options: {
   async function preloadCountryOptions(sceneIds: number[]) {
     for (const sceneId of sceneIds) {
       const k = joinKey([options.vendorId() ?? '', sceneId])
-      if (countriesByScene.has(k))
+      if (countriesByScene.has(k)) {
         continue
+      }
       try {
         await getCountryOptions(sceneId)
       }
@@ -148,6 +155,8 @@ export function useProxyPurchaseForm(options: {
   countryCache: ProxyPurchaseCountryCache
   /** 活动入口指定机房/住宅时，列表就绪后优先选中对应类型 */
   preferredProxyType?: MaybeRefOrGetter<ProxyIpType | string | undefined>
+  /** 检测失败引导购买传入的国家码；只在 init 匹配一次，切换业务用途不用 */
+  preferredCountry?: MaybeRefOrGetter<string | undefined>
 }) {
   const loading = ref(false)
   const loadingProxyType = ref(false)
@@ -201,16 +210,31 @@ export function useProxyPurchaseForm(options: {
     syncProxySpeedFromProxyType(selected)
   }
 
-  function applyPurchaseCountryList(list: CountryOption[]) {
+  /** 按国家码大小写不敏感匹配；对不上返回 undefined，由调用方回落第一项 */
+  function matchPreferredCountry(list: CountryOption[], preferred?: string) {
+    const code = preferred?.trim()
+    if (!code) {
+      return undefined
+    }
+    const upper = code.toLocaleUpperCase()
+    return list.find(item =>
+      item.country_code?.toLocaleUpperCase() === upper
+      || item.value?.toLocaleUpperCase() === upper,
+    )
+  }
+
+  /** preferred 仅 init 传入；切换业务用途不传，保持选 list[0] */
+  function applyPurchaseCountryList(list: CountryOption[], preferred?: string) {
     countryOptions.value = list
-    purchaseCountry.value = list[0]
+    purchaseCountry.value = matchPreferredCountry(list, preferred) ?? list[0]
     countryDisabled.value = list.length === 1
   }
 
   async function refreshFromScene(sceneId: number) {
     const countryCached = options.countryCache.hasCountryOptions(sceneId)
-    if (!countryCached)
+    if (!countryCached) {
       loadingPurchaseCountry.value = true
+    }
 
     loadingProxyType.value = true
     try {
@@ -232,8 +256,9 @@ export function useProxyPurchaseForm(options: {
 
   async function refreshProxyTypesForCountry(countryCode: string) {
     const sceneId = businessUse.value?.value
-    if (sceneId == null)
+    if (sceneId == null) {
       return
+    }
 
     loadingProxyType.value = true
     try {
@@ -268,26 +293,28 @@ export function useProxyPurchaseForm(options: {
 
     businessUse.value = firstScene
     const list = await options.countryCache.getCountryOptions(firstScene.value)
-    applyPurchaseCountryList(list)
+    applyPurchaseCountryList(list, toValue(options.preferredCountry))
 
     void options.countryCache.preloadCountryOptions(
       businessOptions.slice(1).map(option => option.value),
     )
 
-    const firstCountryCode = list[0]?.value ?? ''
-    const typeOptions = firstCountryCode
-      ? await options.getProxyTypeList(firstScene.value, firstCountryCode)
+    const selectedCountryCode = purchaseCountry.value?.value ?? ''
+    const typeOptions = selectedCountryCode
+      ? await options.getProxyTypeList(firstScene.value, selectedCountryCode)
       : []
     applyProxyTypeRadios(typeOptions)
     loading.value = false
   }
 
   watch(proxyTypeValue, (id) => {
-    if (id == null)
+    if (id == null) {
       return
+    }
     const row = proxyTypeOptions.value.find(item => item.id === id)
-    if (!row)
+    if (!row) {
       return
+    }
     syncSubscriptionMonthsFromProxyType(row)
     syncQuantityFromProxyType(row)
     syncProxySpeedFromProxyType(row)
@@ -345,15 +372,17 @@ export function useProxyPurchasePricing(options: {
 
   const selectedUnit = computed(() => {
     const proxyType = options.proxyTypeOptions.value.find(item => item.id === options.proxyTypeValue.value)
-    if (!proxyType)
+    if (!proxyType) {
       return undefined
+    }
     return getProxyTypePriceForSelectedDuration(proxyType, options.subscriptionMonths.value?.value)
   })
 
   const originalBandwidthPrice = computed(() => {
     const proxySpeed = options.proxySpeedOptions.value.find(item => item.value === options.proxySpeedValue.value)
-    if (!proxySpeed)
+    if (!proxySpeed) {
       return 0
+    }
     const proxyPurchaseMonths = selectedUnit.value?.proxyPurchaseMonths ?? 1
     const selectedBandwidthPrice = proxySpeed.bandwidthPriceMonths[proxyPurchaseMonths] ?? 0
     return currency(selectedBandwidthPrice, { precision: 6 }).multiply(options.purchaseMember.value).value
@@ -362,20 +391,24 @@ export function useProxyPurchasePricing(options: {
   /** 当前选中类型是否走 30 天新人首条价 */
   const newUserIpKind = computed(() => {
     const proxyType = options.proxyTypeOptions.value.find(item => item.id === options.proxyTypeValue.value)?.proxyType
-    if (proxyType === ProxyIpType.Residential)
+    if (proxyType === ProxyIpType.Residential) {
       return 'residential' as const
-    if (proxyType === ProxyIpType.Datacenter)
+    }
+    if (proxyType === ProxyIpType.Datacenter) {
       return 'datacenter' as const
+    }
     return undefined
   })
 
   const newUserIpOfferActive = computed(() => {
     // 电商设备购买不套用窗口/代理新人活动
-    if (options.labels.value.mode === 'device')
+    if (options.labels.value.mode === 'device') {
       return false
+    }
     const kind = newUserIpKind.value
-    if (!kind)
+    if (!kind) {
       return false
+    }
     return useNewUserBenefitStore().isNewUserIpOffer(
       kind,
       options.subscriptionMonths.value?.day ?? 0,
@@ -401,8 +434,9 @@ export function useProxyPurchasePricing(options: {
   const details = computed(() => {
     const purchaseCountry = options.purchaseCountry.value
     const subscriptionMonths = options.subscriptionMonths.value
-    const businessUse = options.businessUse.value
-    const { proxyDiscount = 0 } = options.userPayInfo.value ?? {}
+    // 身份折扣文案暂不对外展示，折扣仍参与计价
+    // const businessUse = options.businessUse.value
+    // const { proxyDiscount = 0 } = options.userPayInfo.value ?? {}
     const currentProxyType = options.proxyTypeOptions.value.find(item => item.id === options.proxyTypeValue.value)
     const { entityType, entityBandwidth, entityQuantity, entityPrice } = options.labels.value
     const unitPrice = selectedUnit.value
@@ -432,24 +466,27 @@ export function useProxyPurchasePricing(options: {
           { label: entityQuantity, value: options.purchaseMember.value },
           { label: $t('国家/地区'), value: purchaseCountry?.label },
           { label: $t('订阅天数'), value: subscriptionMonths?.label },
+          { label: $t('自动续费'), slot: 'autoRenew' },
         ].filter(item => item.visible !== false),
       },
       {
         items: [
-          {
-            label: $t('专属折扣'),
-            value: `-${proxyDiscount}%`,
-            class: '!color-[#FC9D12]',
-            // 新人 30 天且只买 1 条：首条不叠专属折扣，整单也没有可展示的专属折扣
-            visible: !!proxyDiscount && !businessUse?.isSpecialOffer && !(newUserIpOfferActive.value && options.purchaseMember.value <= 1),
-          },
+          // 身份折扣文案暂不对外展示，折扣仍参与计价
+          // {
+          //   label: $t('专属折扣'),
+          //   value: `-${proxyDiscount}%`,
+          //   class: '!color-[#FC9D12]',
+          //   // 新人 30 天且只买 1 条：首条不叠专属折扣，整单也没有可展示的专属折扣
+          //   visible: !!proxyDiscount && !businessUse?.isSpecialOffer && !(newUserIpOfferActive.value && options.purchaseMember.value <= 1),
+          // },
           {
             label: $t('Roxy 独家特惠'),
             value: currency(finalResult.value.amount).format(),
             diffValue: currency(finalResult.value.diffAmount).value,
             slot: 'price',
           },
-        ].filter(item => item.visible !== false),
+          // 身份折扣项注释后本组已无 visible 字段，过滤同步注释
+        ], // .filter(item => item.visible !== false),
       },
     ]
   })

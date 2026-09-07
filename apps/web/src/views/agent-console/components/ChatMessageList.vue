@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AgentMessage } from '../types'
+import type { AgentMessage, AgentTaskReportSaveRequest } from '../types'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/basic'
 import AgentCopyNotification from './AgentCopyNotification.vue'
@@ -19,6 +19,7 @@ const emit = defineEmits<{
   addToChat: [text: string]
   loadEarlierMessages: []
   saveAsPrompt: [text: string]
+  saveTemplate: [payload: AgentTaskReportSaveRequest]
 }>()
 
 interface SelectionMenuState {
@@ -440,7 +441,13 @@ onBeforeUnmount(() => {
       @wheel.passive="handleWheel"
     >
       <div ref="innerRef" class="message-list__inner">
-        <ChatMessage v-for="message in messages" :key="message.id" :message="message" @copy="handleCopyUserMessage" />
+        <ChatMessage
+          v-for="message in messages"
+          :key="message.id"
+          :message="message"
+          @copy="handleCopyUserMessage"
+          @save-template="emit('saveTemplate', $event)"
+        />
       </div>
     </div>
 

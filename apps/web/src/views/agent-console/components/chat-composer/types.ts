@@ -4,6 +4,7 @@ export type AgentComposerTokenKind = 'profile' | 'skill' | 'script' | 'input' | 
 export type AgentComposerItemKind = AgentComposerTokenKind | 'template'
 
 export type AgentComposerSuggestionKind = 'mention' | 'slash'
+export type AgentComposerTemplateSource = 'official' | 'user'
 
 export interface AgentComposerItem {
   id: string
@@ -14,6 +15,11 @@ export interface AgentComposerItem {
   iconName: string
   isOpen?: boolean
   unread?: boolean
+  isTopped?: boolean
+  toppedAt?: string | null
+  isTopping?: boolean
+  templateId?: number
+  templateSource?: AgentComposerTemplateSource
   group: string
   payload: Record<string, string>
   template?: {

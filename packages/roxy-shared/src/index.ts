@@ -1,4 +1,6 @@
 export * from './agent-composer-protocol'
+export * from './task-report'
+export * from './browser-core-compatibility'
 export * from './fonts'
 export * from './getGatewayConfig'
 export * from './randomFingerprint'

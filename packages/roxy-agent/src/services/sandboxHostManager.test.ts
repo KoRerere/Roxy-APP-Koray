@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import { PassThrough } from 'node:stream'
-import { beforeEach, it, vi } from 'vitest'
+import { beforeEach, expect, it, vi } from 'vitest'
 
 const fork = vi.fn()
 const ask = vi.fn()
@@ -178,6 +178,63 @@ it('settles active runs as killed when the Host exits', async () => {
     assert.match(result.error ?? '', /exited/)
   }
   finally {
+    await manager.shutdown()
+  }
+})
+
+it('retains phase and recent log diagnostics for active runs', async () => {
+  const child = installHost()
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+  const debug = vi.spyOn(console, 'debug').mockImplementation(() => {})
+  const managerModule = await import('./sandboxHostManager')
+  const manager = new managerModule.SandboxHostManager(1, () => ({ ask }))
+  try {
+    const reservation = await manager.reserve()
+    const starting = reservation.start('run-diagnostics', payload, {
+      onLog: () => {},
+    })
+    await new Promise(resolve => setImmediate(resolve))
+    child.emit('message', { type: 'run.started', protocolVersion: 1, generation: child.generation, runId: 'run-diagnostics' })
+    await starting
+    child.emit('message', {
+      type: 'run.phase',
+      protocolVersion: 1,
+      generation: child.generation,
+      runId: 'run-diagnostics',
+      phase: 'playwright_connect_start',
+      timestamp: Date.now(),
+    })
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('phase=playwright_connect_start'))
+    child.emit('message', {
+      type: 'run.log',
+      protocolVersion: 1,
+      generation: child.generation,
+      runId: 'run-diagnostics',
+      level: 'info',
+      message: 'connect pending',
+    })
+    ;(manager as any).checkHealth()
+    expect(error).not.toHaveBeenCalled()
+    child.emit('message', {
+      type: 'host.heartbeat',
+      protocolVersion: 1,
+      generation: child.generation,
+      pid: 1234,
+      timestamp: Date.now(),
+      activeRuns: 1,
+      memory: { rss: 10, heapUsed: 5, external: 1 },
+      eventLoopDelayMs: 321,
+    })
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('eventLoopDelayMs=321'))
+    ;(manager as any).host.lastSeen = Date.now() - 70_000
+    ;(manager as any).checkHealth()
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('phase=playwright_connect_start'))
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('lastLog="connect pending"'))
+    await starting.then(run => run.finished)
+  }
+  finally {
+    debug.mockRestore()
+    error.mockRestore()
     await manager.shutdown()
   }
 })

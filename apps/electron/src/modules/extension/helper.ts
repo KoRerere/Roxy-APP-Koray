@@ -1,12 +1,13 @@
+import { generateKeyPairSync } from 'node:crypto'
 import { access, readdir, readFile } from 'node:fs/promises'
-import path, { join } from 'node:path'
-import url from 'node:url'
-import crypto from 'node:crypto'
+import path from 'node:path'
 import { mediaProtocolName, ossObject } from '/@/constants'
 import { fileExists } from '/@/utils'
-import { generateKeyPairSync } from 'crypto';
+import { genExtensionID } from './extensionId'
 
 export type PluginMeta = Awaited<ReturnType<typeof getPluginMeta>>
+
+export { genExtensionID } from './extensionId'
 
 /** 递归获取 manifest.json 所在目录 */
 export async function getPluginDir(dir: string, level = 3): Promise<string> {
@@ -123,53 +124,19 @@ export async function getPluginMeta(pluginDir: string) {
     throw new Error($t('manifest.json 文件不存在或格式有误'))
   }
 }
-
-
-/** 计算插件 ID */
-export function genExtensionID(options: { type: 'path' | 'key', input: string }) {
-  // First 16 bytes of SHA-256 hashed input.
-  const kIdSize = 16;
-  let input = ''
-  const isPath = options.type === 'path'
-  if (isPath) {
-    const inputPath = options.input;
-    for (let i = 0; i < inputPath.length; i++) {
-      input += inputPath[i] + "\0";
-    }
-  } else {
-    input = options.input
-  }
-
-  const encoding = isPath ? 'utf8' : 'base64'
-  // SHA-256 hash.
-  const hash = crypto.createHash('sha256').update(Buffer.from(input, encoding)).digest();
-  const hashString = hash.subarray(0, kIdSize).toString('hex');
-  const IDAlphabet = hashString.replace(/[0-9a-f]/g, (char) => {
-    const val = parseInt(char, 16); // Convert hex char to integer.
-    return String.fromCharCode('a'.charCodeAt(0) + val); // Convert to 'a'-'p'.
-  });
-
-  console.log('genExtensionID:', IDAlphabet);
-
-  return IDAlphabet
-}
-
 /** 根据插件路径获取插件 ID */
 export async function getExtensionIDByPath(pluginDir: string) {
   const { manifestInfo, targetPluginDir } = await getPluginManifestInfo(pluginDir)
   console.log('getExtensionIDByPath', targetPluginDir, manifestInfo.key)
   const extensionID = genExtensionID({
     type: manifestInfo.key ? 'key' : 'path',
-    input: manifestInfo.key || targetPluginDir
+    input: manifestInfo.key || targetPluginDir,
   })
   return extensionID
 }
-
-
-
 /**
  * 生成 RSA 密钥对
- * @returns {Object} - 包含公钥和私钥的对象
+ * @returns {object} - 包含公钥和私钥的对象
  */
 function generateRSAKeyPair() {
   const { publicKey, privateKey } = generateKeyPairSync('rsa', {
@@ -182,9 +149,9 @@ function generateRSAKeyPair() {
       type: 'pkcs8',
       format: 'pem',
     },
-  });
+  })
 
-  return { publicKey, privateKey };
+  return { publicKey, privateKey }
 }
 
 /**
@@ -196,18 +163,18 @@ function extractBase64PublicKey(publicKey) {
   const base64PublicKey = publicKey
     .replace('-----BEGIN PUBLIC KEY-----', '')
     .replace('-----END PUBLIC KEY-----', '')
-    .replace(/\n/g, '');
-  return base64PublicKey;
+    .replace(/\n/g, '')
+  return base64PublicKey
 }
 
 /** 生成插件公钥，在 manifest.json 的 key 字段中会用到 */
 export function genExtensionKey() {
   // 生成 RSA 密钥对
-  const { publicKey, privateKey } = generateRSAKeyPair();
+  const { publicKey } = generateRSAKeyPair()
 
   // 提取公钥的 Base64 编码
-  const base64PublicKey = extractBase64PublicKey(publicKey);
+  const base64PublicKey = extractBase64PublicKey(publicKey)
 
-  console.log('Base64 encoded public key:', base64PublicKey);
+  console.log('Base64 encoded public key:', base64PublicKey)
   return base64PublicKey
 }

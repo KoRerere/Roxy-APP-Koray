@@ -36,7 +36,7 @@ const emit = defineEmits(['close', 'success'])
 const styles = useCssModule()
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
-const { openProcessing } = usePay()
+const { openProcessing, maybeShowFirstConsumeReferralPopup } = usePay()
 const { getOfficialWebsite } = useSimpleLocale()
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -113,7 +113,8 @@ const ipUnitDisplay = computed(() => {
 
 const details = computed(() => {
   const { purchaseCountry, subscriptionMonths, purchaseMember } = configValue.value
-  const { proxyDiscount } = userPayInfo.value!
+  // 身份折扣文案暂不对外展示，折扣仍参与计价
+  // const { proxyDiscount } = userPayInfo.value!
 
   return [
     {
@@ -159,19 +160,21 @@ const details = computed(() => {
     },
     {
       items: [
-        {
-          label: $t('专属折扣'),
-          value: `-${proxyDiscount}%`,
-          class: '!color-[#FC9D12]',
-          visible: !!proxyDiscount && !(newUserIpOfferActive.value && purchaseMember <= 1),
-        },
+        // 身份折扣文案暂不对外展示，折扣仍参与计价
+        // {
+        //   label: $t('专属折扣'),
+        //   value: `-${proxyDiscount}%`,
+        //   class: '!color-[#FC9D12]',
+        //   visible: !!proxyDiscount && !(newUserIpOfferActive.value && purchaseMember <= 1),
+        // },
         {
           label: $t('Roxy 独家特惠'),
           value: currency(payResult.value.amount).format(),
           diffValue: payResult.value.diffAmount,
           slot: 'price',
         },
-      ].filter(item => item.visible !== false),
+        // 身份折扣项注释后本组已无 visible 字段，过滤同步注释
+      ], // .filter(item => item.visible !== false),
     },
   ]
 })
@@ -296,6 +299,7 @@ async function onPay() {
       .then(() => {
         void newUserBenefitStore.refreshBenefitIfEligible()
         buySuccess(data)
+        maybeShowFirstConsumeReferralPopup()
       })
   }
 }

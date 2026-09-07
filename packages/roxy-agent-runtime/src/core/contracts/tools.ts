@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod'
+import type { ZodError, ZodType } from 'zod'
 import type { AgentPath, IAgentManager } from './agent-manager.ts'
 import type { ToolCallNormalizer } from './provider.ts'
 import type { ToolEvent } from './todo.ts'
@@ -37,6 +37,14 @@ export interface ToolDescriptor {
    */
   inputSchema: ZodType
   source: ToolSource
+  /**
+   * End the current Agent turn after this tool succeeds as the only resolved
+   * tool call in a model response. The marker is runtime-local and is never
+   * projected into a provider-facing tool schema.
+   */
+  returnDirect?: boolean
+  /** Runtime-local formatter for strict Zod input failures. */
+  formatInputError?: (input: unknown, error: ZodError) => string
   /** Standard MCP-style tool annotations. For MCP tools this is copied from tools/list. */
   annotations?: ToolAnnotations
   /** Runtime-local free-form metadata. This is not an MCP field and does not drive HITL. */

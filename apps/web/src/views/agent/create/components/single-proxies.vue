@@ -37,8 +37,8 @@ const {
 }>()
 
 const emit = defineEmits<{
-  /** 点击广告「立即购买」；双抽屉聚焦购买区，全页弹出购买菜单 */
-  buy: []
+  /** 点击广告「立即购买」；失败引导时带上检测前国家码，供购买弹窗初始化 */
+  buy: [preferredCountry?: string]
 }>()
 
 // 显式 mode 时自提供文案；否则读全页 create/index 的 inject
@@ -76,8 +76,9 @@ const inputs = computed(() => [
       size: 'md',
       onBlur: (event: Event) => {
         const result = parseProxyUrl((event.target as HTMLTextAreaElement).value)
-        if (isEmptyValue(Object.values(result).filter(Boolean)))
+        if (isEmptyValue(Object.values(result).filter(Boolean))) {
           return
+        }
 
         const { protocol, host, port, proxyUserName, proxyPassword, refreshUrl, remark } = result
 
@@ -102,8 +103,9 @@ const inputs = computed(() => [
     resolver: (zod: any) => zod
       .string()
       .refine((value: string) => {
-        if (isEmptyValue(value))
+        if (isEmptyValue(value)) {
           return true
+        }
         return !isEmptyValue(Object.values(parseProxyUrl(value)).filter(Boolean))
       }, { message: $t('解析错误,请检查格式') }),
   },
@@ -183,8 +185,9 @@ const inputs = computed(() => [
         resolver: (zod: any) => zod
           .string()
           .refine((value: string) => {
-            if (isEmptyValue(value))
+            if (isEmptyValue(value)) {
               return false
+            }
             return Number(value) >= 1 || Number(value) <= 65535
           }, { message: $t('端口范围 1~65535') }),
       },
@@ -304,15 +307,22 @@ async function onCheckProxyStatus() {
   }
 
   await formRef.value?.instance!.validate()
-  if (!formRef.value?.instance!.valid)
+  if (!formRef.value?.instance!.valid) {
     return
+  }
 
   const formData = getFormData()
   alertVisible.value = false
   lastTestResult.value = null
   loading.value = true
-  // 直连白名单用户标记
-  const result = await testProxy({ ...formData, isDirect: userPayInfo.value.isDirectWhitelist })
+  const lastCountry = typeof original.value.lastCountry === 'string' ? original.value.lastCountry.trim() : ''
+  // 表单没有 lastCountry，测速入参带上当前值；失败购买只在有国家时匹配
+  const result = await testProxy({
+    ...formData,
+    isDirect: userPayInfo.value.isDirectWhitelist,
+    proxyType: data.proxyType ?? data.buyProxyType ?? ProxyType.resource,
+    ...(lastCountry ? { lastCountry } : {}),
+  })
   loading.value = false
   lastTestResult.value = result
   original.value = { ...original.value, ...result }
@@ -333,6 +343,11 @@ async function onCheckProxyStatus() {
 
 function addRemark(platformRemarks: string) {
   original.value.remark = platformRemarks
+}
+
+/** 失败横幅点购买：有 lastCountry 才传给弹窗匹配国家 */
+function emitBuy() {
+  emit('buy', lastTestResult.value?.preDetectLastCountry)
 }
 
 function buildSubmitPayload(formData: Record<string, any>, checkResult?: CheckResult) {
@@ -366,8 +381,9 @@ function showDeviceDetectModal(formData: Record<string, any>) {
 
 async function onSubmit() {
   await formRef.value?.instance!.validate()
-  if (!formRef.value?.instance!.valid)
+  if (!formRef.value?.instance!.valid) {
     return
+  }
 
   const formData = getFormData()
 
@@ -392,7 +408,7 @@ defineExpose({
 
 <template>
   <div class="flex flex-col gap-4 min-w-96 h-full min-h-0 overflow-hidden pa-4 pb-5">
-    <ProxyAdvertiseBanner v-if="showAdvertise" @buy="emit('buy')" />
+    <ProxyAdvertiseBanner v-if="showAdvertise" @buy="emitBuy" />
     <TutorialVideo v-if="!isDeviceMode && !onboardingTaskStatus?.createProxyVideoEntryStatus" class="shrink-0" video-type="proxy_management" :autoplay="false">
       <template #default="{ onPlay }">
         <div class="flex items-center justify-start pa-3 gap-2.5 rounded-xl video" @click="onPlay">
@@ -422,7 +438,7 @@ defineExpose({
           />
         </template>
       </RxAlert>
-      <ProxyAdvertiseBanner v-if="showAdvertise && lastTestResult?.error" ref="advertiseFail" variant="fail" @buy="emit('buy')" />
+      <ProxyAdvertiseBanner v-if="showAdvertise && lastTestResult?.error" ref="advertiseFail" variant="fail" @buy="emitBuy" />
     </div>
     <div class="shrink-0">
       <slot name="footer" :submit="onSubmit">

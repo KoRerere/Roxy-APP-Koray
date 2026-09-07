@@ -1,4 +1,5 @@
 import type { Browser, BrowserType, RoxyConnectOptions } from '@roxybrowser/playwright'
+import type { SandboxRunPhase } from './host-protocol'
 import { chromium, firefox } from '@roxybrowser/playwright'
 
 export interface SandboxPlaywrightFacade {
@@ -11,6 +12,7 @@ export interface CreateSandboxPlaywrightOptions {
   browserUrl: string
   browserOutputDir: string
   isActive: () => boolean
+  onPhase?: (phase: Extract<SandboxRunPhase, 'playwright_connect_start' | 'playwright_connect_end'>) => void
 }
 
 export function createSandboxPlaywrightFacade(opts: CreateSandboxPlaywrightOptions): SandboxPlaywrightFacade {
@@ -26,6 +28,7 @@ export function createSandboxPlaywrightFacade(opts: CreateSandboxPlaywrightOptio
           if (endpointURL !== opts.browserUrl) {
             throw new Error(`[sandbox] ${browserName} can only connect to the browser assigned to this run`)
           }
+          opts.onPhase?.('playwright_connect_start')
           const browser = await target.connect(endpointURL, {
             ...options,
             artifactsDir: opts.browserOutputDir,
@@ -39,6 +42,7 @@ export function createSandboxPlaywrightFacade(opts: CreateSandboxPlaywrightOptio
             scriptsDir: opts.browserOutputDir,
             tempDir: opts.browserOutputDir,
           })
+          opts.onPhase?.('playwright_connect_end')
           browsers.add(browser)
           browser.once('disconnected', () => browsers.delete(browser))
           return browser

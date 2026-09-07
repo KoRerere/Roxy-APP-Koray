@@ -78,6 +78,23 @@ export interface BrowserCacheRootDirFallbackPayload {
   reason: BrowserCacheRootDirFallbackReason
 }
 
+export interface WorkspaceSelectRequestPayload {
+  requestId: string
+  workspaceId: string | number
+}
+
+export interface WorkspaceSelectCompletedPayload {
+  requestId: string
+  workspaceId: string | number
+}
+
+export interface WorkspaceSelectResultPayload {
+  requestId: string
+  workspaceId: string | number
+  success: boolean
+  error?: string
+}
+
 /** MCP 错误类型 */
 export type McpFailureType = 'script_repair_failed'
   | 'agent_update_in_progress'
@@ -100,6 +117,10 @@ export interface MainMessage {
   'browser:network-intercepted': () => void
   /** 用户被挤号 */
   'user:kicked-out': (params: { deviceName: string, createTime: string }) => void
+  /** OpenAPI 请求前端切换空间 */
+  'user:workspace-select-requested': (payload: WorkspaceSelectRequestPayload) => void
+  /** OpenAPI 已完成空间切换响应，前端可重启服务 */
+  'user:workspace-select-completed': (payload: WorkspaceSelectCompletedPayload) => void
   /** google 授权登录 */
   'oauth2:google-callback': (payload: string) => void
   /** 邀请用户进入项目 */

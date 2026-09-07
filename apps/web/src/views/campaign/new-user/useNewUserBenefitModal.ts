@@ -234,7 +234,7 @@ export function useNewUserBenefitModal() {
 
   /**
    * 窗口订阅入口：已有付费套餐走侧栏续订同一套续费弹窗；
-   * 自动续订去钱包管理；免费/试用才进新购页。
+   * 自动续费去钱包管理；免费/试用才进新购页。
    */
   function openWindowSubscribe() {
     const subLevel = userPayInfo.value?.subLevel as SubLevelEnum

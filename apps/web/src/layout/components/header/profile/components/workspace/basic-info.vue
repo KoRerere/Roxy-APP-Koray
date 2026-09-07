@@ -18,9 +18,10 @@ const profileLabels = useProfileEntityLabels()
 const roleStr = getRoleLabelMap()
 
 const avatarProps = computed(() => {
-  const { workspacePicture, workspaceName } = currentWorkspace.value || {}
+  const { workspacePicture, workspacePictureUrl, workspaceName } = currentWorkspace.value || {}
   return getWorkspaceAvatarProps({
     workspacePicture,
+    workspacePictureUrl,
     workspaceName,
     size: 32,
     emojiFontSize: 22,

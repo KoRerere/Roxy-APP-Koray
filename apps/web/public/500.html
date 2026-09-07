@@ -111,10 +111,9 @@
       }
 
       .btn-reload {
-        display: inline-flex;
+        display: grid;
         align-items: center;
-        justify-content: center;
-        gap: 8px;
+        justify-items: center;
         width: fit-content;
         padding: 5px 15px;
         font-size: 14px;
@@ -147,25 +146,36 @@
         color: #606266;
       }
 
-      .btn-reload.is-loading {
+      .btn-reload.is-loading,
+      .btn-reload:disabled {
         cursor: not-allowed;
         opacity: 0.92;
       }
 
-      .btn-reload.is-loading:hover {
+      .btn-reload.is-loading:hover,
+      .btn-reload:disabled:hover {
         border-color: #d9d9d9;
       }
 
       .btn-reload-normal,
       .btn-reload-busy {
+        grid-area: 1 / 1;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
       }
 
-      .btn-reload-busy[hidden] {
-        display: none !important;
+      .btn-reload-busy {
+        visibility: hidden;
+      }
+
+      .btn-reload.is-loading .btn-reload-normal {
+        visibility: hidden;
+      }
+
+      .btn-reload.is-loading .btn-reload-busy {
+        visibility: visible;
       }
 
       .btn-spinner {
@@ -238,12 +248,13 @@
           <div class="empty-info">
             <div id="i18n-heading" class="empty-info-title">连接异常</div>
             <div class="error-help">
-              <div id="i18n-lead" class="lead">RoxyBrowser 的响应时间过长。</div>
+              <div id="i18n-lead" class="lead">当前线路无法连接到服务器。</div>
               <div id="i18n-hint">请尝试以下方法：</div>
-              <div id="i18n-item1">1.检查网络连接状态</div>
-              <div id="i18n-item2">2.同步当前系统时间</div>
+              <div id="i18n-item1">1.检查网络连接是否正常</div>
+              <div id="i18n-item2">2.点击系统托盘图标，手动切换线路后再刷新</div>
+              <div id="i18n-item3">3.同步当前系统时间</div>
               <div>
-                <span id="live-chat-trigger" class="error-link" role="button" tabindex="0">3.联系技术支持</span>
+                <span id="live-chat-trigger" class="error-link" role="button" tabindex="0">4.联系技术支持</span>
               </div>
             </div>
             <div class="actions">
@@ -267,7 +278,7 @@
                   </svg>
                   <span id="i18n-refresh">刷新页面</span>
                 </span>
-                <span class="btn-reload-busy" hidden>
+                <span class="btn-reload-busy" aria-hidden="true">
                   <svg
                     class="btn-spinner"
                     xmlns="http://www.w3.org/2000/svg"
@@ -306,21 +317,23 @@
         var I18N = {
           zh: {
             连接异常: '连接异常',
-            'RoxyBrowser 的响应时间过长。': 'RoxyBrowser 的响应时间过长。',
+            '当前线路无法连接到服务器。': '当前线路无法连接到服务器。',
             '请尝试以下方法：': '请尝试以下方法：',
-            '1.检查网络连接状态': '1.检查网络连接状态',
-            '2.同步当前系统时间': '2.同步当前系统时间',
-            '3.联系技术支持': '3.联系技术支持',
+            '1.检查网络连接是否正常': '1.检查网络连接是否正常',
+            '2.点击系统托盘图标，手动切换线路后再刷新': '2.点击系统托盘图标，手动切换线路后再刷新',
+            '3.同步当前系统时间': '3.同步当前系统时间',
+            '4.联系技术支持': '4.联系技术支持',
             刷新页面: '刷新页面',
             '加载中...': '加载中...',
           },
           en: {
             连接异常: 'Connection Error',
-            'RoxyBrowser 的响应时间过长。': 'RoxyBrowser response time is too long.',
-            '请尝试以下方法：': 'Please try the following methods:',
-            '1.检查网络连接状态': '1. Check network connection status',
-            '2.同步当前系统时间': '2. Synchronize current system time',
-            '3.联系技术支持': '3. Contact support',
+            '当前线路无法连接到服务器。': 'The current line cannot connect to the server.',
+            '请尝试以下方法：': 'Please try the following:',
+            '1.检查网络连接是否正常': '1. Check your network connection',
+            '2.点击系统托盘图标，手动切换线路后再刷新': '2. Click the system tray icon, switch line, then refresh',
+            '3.同步当前系统时间': '3. Synchronize your system time',
+            '4.联系技术支持': '4. Contact support',
             刷新页面: 'Refresh page',
             '加载中...': 'Loading...',
           },
@@ -354,15 +367,17 @@
           var heading = document.getElementById('i18n-heading')
           if (heading) heading.textContent = pack['连接异常']
           var lead = document.getElementById('i18n-lead')
-          if (lead) lead.textContent = pack['RoxyBrowser 的响应时间过长。']
+          if (lead) lead.textContent = pack['当前线路无法连接到服务器。']
           var hint = document.getElementById('i18n-hint')
           if (hint) hint.textContent = pack['请尝试以下方法：']
           var item1 = document.getElementById('i18n-item1')
-          if (item1) item1.textContent = pack['1.检查网络连接状态']
+          if (item1) item1.textContent = pack['1.检查网络连接是否正常']
           var item2 = document.getElementById('i18n-item2')
-          if (item2) item2.textContent = pack['2.同步当前系统时间']
+          if (item2) item2.textContent = pack['2.点击系统托盘图标，手动切换线路后再刷新']
+          var item3 = document.getElementById('i18n-item3')
+          if (item3) item3.textContent = pack['3.同步当前系统时间']
           var chatTrigger = document.getElementById('live-chat-trigger')
-          if (chatTrigger) chatTrigger.textContent = pack['3.联系技术支持']
+          if (chatTrigger) chatTrigger.textContent = pack['4.联系技术支持']
           var refreshSpan = document.getElementById('i18n-refresh')
           if (refreshSpan) refreshSpan.textContent = pack['刷新页面']
           var loadingSpan = document.getElementById('i18n-loading')
@@ -379,17 +394,16 @@
           btnReload.disabled = loading
           btnReload.classList.toggle('is-loading', loading)
           btnReload.setAttribute('aria-busy', loading ? 'true' : 'false')
-          reloadNormal.hidden = loading
-          reloadBusy.hidden = !loading
+          reloadNormal.setAttribute('aria-hidden', loading ? 'true' : 'false')
+          reloadBusy.setAttribute('aria-hidden', loading ? 'false' : 'true')
         }
 
         btnReload.addEventListener('click', function () {
           var api = globalThis.electronAPI
           if (!api || typeof api.send !== 'function') return
+          // send 是 fire-and-forget，成功会整页导航离开；失败回到 500.html 会重新加载文档
           setReloadLoading(true)
-          Promise.resolve(api.send('app:testWebDomain')).finally(function () {
-            setReloadLoading(false)
-          })
+          api.send('app:testWebDomain')
         })
 
         function openLiveChat() {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AgentScriptLogProcessEvent } from '../types'
+import AgentCopyControl from './AgentCopyControl.vue'
 
 const props = withDefaults(defineProps<{
   event: AgentScriptLogProcessEvent
@@ -85,8 +86,9 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="script-log-panel" :class="{ 'script-log-panel--compact': compact }">
-    <header class="script-log-panel__title" :title="windowLabel">
-      <span>{{ windowLabel }}</span>
+    <header class="script-log-panel__title">
+      <span class="script-log-panel__window-label" :title="windowLabel">{{ windowLabel }}</span>
+      <AgentCopyControl :text="outputText" />
     </header>
     <pre
       ref="outputElement"
@@ -107,7 +109,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .script-log-panel {
   --script-log-body-bg: var(--color-bg-secondary, #fafafa);
-  --script-log-title-bg: #ededed;
+  --script-log-title-bg: var(--color-bg-tertiary, #f5f5f5);
+  --script-log-text: var(--color-text-secondary, #424242);
   display: flex;
   min-width: 0;
   max-width: 100%;
@@ -118,12 +121,6 @@ onBeforeUnmount(() => {
   background: var(--script-log-body-bg);
 }
 
-:global(html[data-theme='dark'] body.agent-console-window) .script-log-panel,
-:global(html.app-dark body.agent-console-window) .script-log-panel {
-  --script-log-body-bg: #1b1b1b;
-  --script-log-title-bg: #111;
-}
-
 .script-log-panel__title {
   display: flex;
   min-width: 0;
@@ -131,15 +128,16 @@ onBeforeUnmount(() => {
   flex: 0 0 28px;
   align-items: center;
   padding: 0 10px;
-  color: var(--color-text-secondary, #424242);
+  color: var(--script-log-text);
   background: var(--script-log-title-bg);
   font-size: 12px;
   font-weight: 500;
   line-height: 18px;
 }
 
-.script-log-panel__title span {
+.script-log-panel__window-label {
   min-width: 0;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -156,7 +154,7 @@ onBeforeUnmount(() => {
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   background: var(--script-log-body-bg);
-  color: var(--color-text-secondary, #525252);
+  color: var(--script-log-text);
   font:
     12px/18px ui-monospace,
     SFMono-Regular,

@@ -7,6 +7,20 @@ const nonEmptyString = z.string().min(1)
 const generationSchema = nonEmptyString
 const runIdSchema = nonEmptyString
 
+export const sandboxRunPhaseSchema = z.enum([
+  'run_received',
+  'sandbox_execute_start',
+  'filesystem_ready',
+  'script_loaded',
+  'vm_ready',
+  'playwright_connect_start',
+  'playwright_connect_end',
+  'script_entry_start',
+  'run_finished',
+  'run_failed',
+])
+export type SandboxRunPhase = z.infer<typeof sandboxRunPhaseSchema>
+
 export const sandboxStorageOperationSchema = z.object({
   action: nonEmptyString,
   count: z.number().int().nonnegative(),
@@ -100,6 +114,7 @@ export const sandboxHostToAgentMessageSchema = z.discriminatedUnion('type', [
       heapUsed: z.number().int().nonnegative(),
       external: z.number().int().nonnegative(),
     }),
+    eventLoopDelayMs: z.number().nonnegative().optional(),
   }),
   baseHostMessageSchema.extend({
     type: z.literal('run.started'),
@@ -110,6 +125,12 @@ export const sandboxHostToAgentMessageSchema = z.discriminatedUnion('type', [
     runId: runIdSchema,
     level: nonEmptyString,
     message: z.string(),
+  }),
+  baseHostMessageSchema.extend({
+    type: z.literal('run.phase'),
+    runId: runIdSchema,
+    phase: sandboxRunPhaseSchema,
+    timestamp: z.number().int().nonnegative(),
   }),
   baseHostMessageSchema.extend({
     type: z.literal('run.finished'),

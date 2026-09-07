@@ -15,7 +15,7 @@ export class ToolExecutor implements IToolExecutor {
       return { toolUseId, content: `tool not found: ${name}`, isError: true, errorKind: 'not_found' }
     }
 
-    const parsed = await parseToolInput(entry.descriptor.inputSchema, input, name)
+    const parsed = await parseToolInput(entry.descriptor.inputSchema, input, name, entry.descriptor.formatInputError)
     if (!parsed.success) {
       return {
         toolUseId,

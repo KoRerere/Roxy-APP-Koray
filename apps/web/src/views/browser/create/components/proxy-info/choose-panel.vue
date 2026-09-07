@@ -216,10 +216,11 @@ async function onTestProxy() {
   const payload = deepClone(currentProxy.value)
   const proxyType = payload.proxyType ?? payload.buyProxyType
   testing.value = true
-  // 即将用于创建窗口，统一走本地检测以拿到最新出口 IP
+  // 即将用于创建窗口，统一走本地检测；第三方失败时用当前项 lastCountry 给 toast 购买默认国家
   const result = await testProxy({
     ...payload,
     apiCheck: false,
+    proxyType,
   })
   testing.value = false
   batchTestShowToast({ ...result, proxyType }, {

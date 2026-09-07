@@ -55,7 +55,7 @@ const advanced = computed(() => [
     <span v-if="props.showText" class="desc">{{ isLocked ? $t('成为付费用户，解锁所有 Prime 会员功能') : $t('您已解锁所有会员功能') }}</span> -->
     <RxTooltip class="flex items-center">
       <template #default>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="#fff" size="14" />
+        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
       </template>
       <template #content>
         <div class="w-75 flex flex-col gap-2">

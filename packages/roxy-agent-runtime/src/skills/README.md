@@ -6,8 +6,8 @@ Skills 是 `SKILL.md` 驱动的 prompt package，不是获得额外权限的工�
 
 Progressive disclosure 分三层：
 
-1. 隐藏的 `<skills_instructions>` 提供 name、description、`SKILL.md` locator 和 Skills 使用规则。
-2. 隐式匹配时，模型通过 `read_file` 按需读取 `SKILL.md`。
+1. 顶层 system prompt 的 `## Skills` 区块以 `<skills>` XML 提供 name、description、`SKILL.md` locator 和 Skills 使用规则。
+2. 隐式匹配时，模型使用对应 Skill，并按需加载 `SKILL.md`。
 3. 显式 `SkillSelection { name, path }` 在当前 turn 注入 user-role `<skill>`，references/scripts/assets 仍按需访问。
 
 ## 2. 公开接口
@@ -15,7 +15,7 @@ Progressive disclosure 分三层：
 - `SkillRegistry`：`scan` / `reload` / `list` / `get` / `diagnostics`。
 - `validateSkillFile(path)`：供 authoring/CI 使用的单文件严格校验。
 - `scanSkillsWithDiagnostics(root)`：返回 `{ skills, errors, warnings }`。
-- `renderSkillCatalog(skills, options)`：渲染带总字符预算的“XML 外壳 + Markdown 内容”Catalog。
+- `renderSkillCatalog(skills)`：渲染包含全部有效 Skill 的 XML 渐进披露 Catalog。
 - `SkillSelection` / `AgentTurnInput`：显式选择的稳定 `name + path` identity。
 
 严格约束：
@@ -28,22 +28,21 @@ Progressive disclosure 分三层：
 
 ## 3. Prompt 结构
 
-Catalog 在 Responses 请求中是 developer input；不支持 developer message role 的 provider
-会把它适配到自己的 top-level system 字段：
+Catalog 是 `ChatRequest.system` 的顶层 system block，provider 将其映射到各自的 system/instructions 字段：
 
 ```xml
-<skills_instructions>
 ## Skills
 
-### Available skills
-- git-helper: Common git workflows. (file: /abs/skills/git-helper/SKILL.md)
-
-### How to use skills
-...
-</skills_instructions>
+<skills>
+  <skill>
+    <name>git-helper</name>
+    <description>Common git workflows.</description>
+    <path>/abs/skills/git-helper/SKILL.md</path>
+  </skill>
+</skills>
 ```
 
-显式选择正文是仅用于当前 turn 的临时 user message，不写入 memory 或 rollout：
+显式选择正文是当前 turn 的隐藏 user message，并随该 turn 写入 memory 与 rollout：
 
 ```xml
 <skill>

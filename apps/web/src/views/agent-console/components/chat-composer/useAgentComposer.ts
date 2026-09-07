@@ -5,6 +5,8 @@ import { useEditor } from '@tiptap/vue-3'
 import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { API } from '/@/api'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useSimpleLocale } from '/@/stores/locale'
+import { useResponseToast } from '/@/hooks/useResponseToast'
 import {
   ensureAgentProfileLabelsForPrompt,
   getAgentProfileIdsFromPrompt,
@@ -33,15 +35,19 @@ import {
 import type { SuggestionNavigationDirection } from './selection'
 import {
   getAgentSkillInstalledRoot,
+  mapOfficialTemplateComposerItem,
   mapUserTemplateComposerItem,
   mergeTemplateComposerItems,
+  selectTemplateDrawerOfficialItems,
   setAgentSkillInstalledRoot,
+  TEMPLATE_DRAWER_OFFICIAL_LIMIT,
 } from './templateItems'
 import type { AgentComposerItem, AgentComposerProjectOption, AgentComposerSuggestionKind, AgentComposerSuggestionState } from './types'
 import { fetchAgentComposerWindowsPage, fetchAllAgentComposerWindows } from './windowItems'
 import { useAgentConsoleApi } from '../../api'
 import type { UserTemplateDTO } from '../../my-templates'
 import { readUserTemplatePage } from '../../my-templates'
+import { readOfficialTemplatePage } from '../../template-store'
 import {
   isTemplateUnread,
   markTemplateDrawerRead,
@@ -57,12 +63,15 @@ export function useAgentComposer(options: {
   editable?: Readonly<Ref<boolean>>
   contentKey?: Readonly<Ref<number | string | undefined>>
   onChooseItem?: (item: AgentComposerItem) => boolean | AgentComposerItem | Promise<boolean | AgentComposerItem>
+  onOfficialTemplateTopChanged?: () => void
   onSend: () => void
   recommendedSlashItems?: Readonly<Ref<AgentComposerItem[]>>
   submitOnEnter?: boolean
 }) {
   const agentApi = useAgentConsoleApi()
   const workspaceStore = useWorkspaceStore()
+  const localeStore = useSimpleLocale()
+  const [, onlyErrorToast] = useResponseToast()
   const profileItems = ref<AgentComposerItem[]>([])
   const profileItemCache = new Map<string, AgentComposerItem>()
   const projectOptions = ref<AgentComposerProjectOption[]>([{ label: $t('全部项目'), value: ALL_PROJECTS_VALUE }])
@@ -70,15 +79,16 @@ export function useAgentComposer(options: {
     readProjectSelection(workspaceStore.currentWorkspace?.id) ?? ALL_PROJECTS_VALUE,
   )
   const userSlashItems = ref<AgentComposerItem[]>([])
+  const officialSlashItems = ref<AgentComposerItem[]>([])
   const unreadTemplateDrawerKeys = ref(readUnreadTemplateDrawerKeys())
+  const loaded = reactive({ profile: false, slash: false })
   const slashItems = computed(() => mergeTemplateComposerItems(
-    options.recommendedSlashItems?.value ?? [],
+    loaded.slash ? officialSlashItems.value : options.recommendedSlashItems?.value ?? [],
     userSlashItems.value,
   ).map(item => ({
     ...item,
     unread: isComposerTemplateUnread(unreadTemplateDrawerKeys.value, item),
   })))
-  const loaded = reactive({ profile: false, slash: false })
   const preserveMentionSuggestion = ref(false)
   const pendingMentionIds = ref<Set<string>>(new Set())
   const profileQuery = ref('')
@@ -105,6 +115,7 @@ export function useAgentComposer(options: {
   let slashItemsPromise: Promise<void> | undefined
   let projectOptionsPromise: Promise<void> | undefined
   let promptRenderSequence = 0
+  let templateTopMutationPending = false
 
   const suggestion = reactive<AgentComposerSuggestionState>({
     open: false,
@@ -582,6 +593,62 @@ export function useAgentComposer(options: {
     const identity = readComposerTemplateIdentity(item)
     if (identity) {
       unreadTemplateDrawerKeys.value = markTemplateDrawerRead(identity)
+    }
+  }
+
+  function patchTemplateTopItem(
+    source: 'official' | 'user',
+    templateId: number,
+    patch: Pick<AgentComposerItem, 'isTopped' | 'isTopping' | 'toppedAt'>,
+  ) {
+    const items = source === 'official' ? officialSlashItems : userSlashItems
+    items.value = items.value.map(item => item.templateId === templateId
+      ? { ...item, ...patch }
+      : item)
+  }
+
+  async function toggleSuggestionItemTop(item: AgentComposerItem) {
+    const source = item.templateSource
+    const templateId = item.templateId
+    if (!source || !templateId || item.isTopping || templateTopMutationPending) {
+      return
+    }
+
+    const previousOfficialItems = officialSlashItems.value.slice()
+    const previousUserItems = userSlashItems.value.slice()
+    const nextTopped = !item.isTopped
+    const optimisticToppedAt = nextTopped ? new Date().toISOString() : null
+    templateTopMutationPending = true
+    patchTemplateTopItem(source, templateId, {
+      isTopped: nextTopped,
+      isTopping: true,
+      toppedAt: optimisticToppedAt,
+    })
+    try {
+      const result = source === 'official'
+        ? nextTopped
+          ? await agentApi.templates.topOfficialTemplate(templateId)
+          : await agentApi.templates.untopOfficialTemplate(templateId)
+        : nextTopped
+          ? await agentApi.userTemplates.topUserTemplate(templateId)
+          : await agentApi.userTemplates.untopUserTemplate(templateId)
+      patchTemplateTopItem(source, templateId, {
+        isTopped: result.isTopped,
+        isTopping: false,
+        toppedAt: result.isTopped ? result.toppedAt ?? optimisticToppedAt : null,
+      })
+      if (source === 'official') {
+        options.onOfficialTemplateTopChanged?.()
+      }
+    }
+    catch (error) {
+      console.error('Failed to update template top state', error)
+      officialSlashItems.value = previousOfficialItems
+      userSlashItems.value = previousUserItems
+      onlyErrorToast(-1, error instanceof Error ? error.message : $t('模板置顶操作失败'))
+    }
+    finally {
+      templateTopMutationPending = false
     }
   }
 
@@ -1094,33 +1161,12 @@ export function useAgentComposer(options: {
           }
         }
 
-        const rows: UserTemplateDTO[] = []
-        let offset = 0
-        let total = 0
-
-        do {
-          const response = await agentApi.userTemplates.listUserTemplates({
-            limit: USER_TEMPLATE_PAGE_SIZE,
-            offset,
-            sortBy: 'updated_at',
-            sortOrder: 'desc',
-          })
-          const page = readUserTemplatePage(response, '加载用户模板失败')
-
-          rows.push(...page.items)
-          total = page.total
-          offset += page.items.length
-
-          if (page.items.length === 0) {
-            break
-          }
-        } while (offset < total)
-
-        userSlashItems.value = rows.map(row => mapUserTemplateComposerItem(row))
+        await refreshSlashItems()
         loaded.slash = true
       }
       catch (error) {
-        console.error('Failed to load user templates', error)
+        console.error('Failed to load templates', error)
+        officialSlashItems.value = []
         userSlashItems.value = []
         loaded.slash = true
       }
@@ -1137,13 +1183,84 @@ export function useAgentComposer(options: {
     }
   }
 
+  async function refreshSlashItems(options: { preserveOnFailure?: boolean } = {}) {
+    const [officialResult, userResult] = await Promise.allSettled([
+      loadOfficialTemplatesForDrawer(),
+      loadAllUserTemplates(),
+    ])
+
+    if (officialResult.status === 'fulfilled') {
+      officialSlashItems.value = officialResult.value.map(row => mapOfficialTemplateComposerItem(
+        row,
+        localeStore.currentLocale,
+      ))
+    }
+    else {
+      console.error('Failed to load official templates', officialResult.reason)
+      if (!options.preserveOnFailure) {
+        officialSlashItems.value = []
+      }
+    }
+
+    if (userResult.status === 'fulfilled') {
+      userSlashItems.value = userResult.value.map(row => mapUserTemplateComposerItem(row))
+    }
+    else {
+      console.error('Failed to load user templates', userResult.reason)
+      if (!options.preserveOnFailure) {
+        userSlashItems.value = []
+      }
+    }
+  }
+
+  async function loadOfficialTemplatesForDrawer() {
+    const response = await agentApi.templates.listOfficialTemplates({
+      limit: TEMPLATE_DRAWER_OFFICIAL_LIMIT,
+      offset: 0,
+    })
+    const page = readOfficialTemplatePage(response, '加载官方模板失败')
+    return selectTemplateDrawerOfficialItems(page.items)
+  }
+
+  async function loadAllUserTemplates() {
+    const rows: UserTemplateDTO[] = []
+    let offset = 0
+    let total = 0
+
+    do {
+      const response = await agentApi.userTemplates.listUserTemplates({
+        limit: USER_TEMPLATE_PAGE_SIZE,
+        offset,
+        sortBy: 'updated_at',
+        sortOrder: 'desc',
+      })
+      const page = readUserTemplatePage(response, '加载用户模板失败')
+      rows.push(...page.items)
+      total = page.total
+      offset += page.items.length
+
+      if (page.items.length === 0) {
+        break
+      }
+    } while (offset < total)
+
+    return rows
+  }
+
   watch(slashItems, (items) => {
     if (!suggestion.open || suggestion.kind !== 'slash') {
       return
     }
 
-    suggestion.items = searchComposerItems(items, suggestion.query)
-    suggestion.activeIndex = Math.min(suggestion.activeIndex, Math.max(0, suggestion.items.length - 1))
+    const activeItemId = suggestion.items[suggestion.activeIndex]?.id
+    const nextItems = searchComposerItems(items, suggestion.query)
+    const nextActiveIndex = activeItemId
+      ? nextItems.findIndex(item => item.id === activeItemId)
+      : -1
+    suggestion.items = nextItems
+    suggestion.activeIndex = nextActiveIndex >= 0
+      ? nextActiveIndex
+      : Math.min(suggestion.activeIndex, Math.max(0, nextItems.length - 1))
   })
 
   onBeforeUnmount(() => {
@@ -1293,6 +1410,7 @@ export function useAgentComposer(options: {
     inputEditor,
     isEmpty,
     markSuggestionItemRead,
+    toggleSuggestionItemTop,
     navigateSuggestion,
     profileHasMore,
     profileLoadError,

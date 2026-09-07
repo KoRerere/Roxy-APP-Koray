@@ -17,7 +17,7 @@ const { getOfficialWebsite } = useSimpleLocale()
   <div class="select-none">
     <label class="flex items-center gap-2" for="auto">
       <RxCheckbox inputId="auto" v-model="isAuto" binary />
-      <i18n-t tag="div" class="discount" :keypath="$t('允许自动续订 {discount}', { discount: '{discount}' })" scope="global">
+      <i18n-t tag="div" class="discount" :keypath="$t('允许自动续费 {discount}', { discount: '{discount}' })" scope="global">
         <template #discount>
           <span class="discount-value"> {{ $t('{amount} /月', {
             amount: currency(discountAmount, {
@@ -29,7 +29,7 @@ const { getOfficialWebsite } = useSimpleLocale()
     </label>
     <i18n-t tag="div" class="mt-2.5 pl-7 terms" :keypath="$t('选择即代表您接受 Roxy浏览器{terms}', { terms: '{terms}' })" scope="global">
       <template #terms>
-        <a class="terms-link" :href="getOfficialWebsite('/copyright/renewal')" target="_blank">{{ $t('自动续订协议') }}</a>
+        <a class="terms-link" :href="getOfficialWebsite('/copyright/renewal')" target="_blank">{{ $t('自动续费协议') }}</a>
       </template>
     </i18n-t>
   </div>
