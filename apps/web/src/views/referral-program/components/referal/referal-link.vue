@@ -56,6 +56,7 @@ const bonusList = computed(() => {
       id: 1,
       icon: 'referral-program/rx_illustration_coin2',
       title: $t('您将获得'),
+      tooltip: $t('好友通过您的分享注册并消费后，您可在 {months} 个月内持续获得其消费返利。', { months: 24 }),
       class: 'flex-3/4 get',
       isNew: true,
       items: [

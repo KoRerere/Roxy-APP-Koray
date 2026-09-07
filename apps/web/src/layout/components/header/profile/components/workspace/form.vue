@@ -3,6 +3,7 @@ import type { UnwrapRowType, UserGetWorkspaceListListData } from '@roxy/backend-
 import { z } from 'zod'
 import WorkspaceIconPicker from '/@/layout/components/header/profile/components/workspace/icon-picker.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { getFirstZodIssueMessage } from '/@/utils/zod-error'
 import { copyText } from '/@/utils/'
 import { Role } from '/@/enums/role'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
@@ -31,8 +32,8 @@ function onInput() {
     .max(20, $t('团队名称最多 20 个字符'))
     .safeParse(workspaceInfo.value.workspaceName)
 
-  if (result.error) {
-    errorMessage.value = result.error.errors[0].message
+  if (!result.success) {
+    errorMessage.value = getFirstZodIssueMessage(result.error)
   }
   else {
     errorMessage.value = ''

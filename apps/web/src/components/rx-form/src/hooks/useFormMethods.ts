@@ -2,6 +2,7 @@ import { isFunction, isPlainObject, isString, merge, uniqBy } from 'es-toolkit'
 import type { RxFormEmits } from '/@/components/rx-form/src/form'
 import type { FormSchema } from '/@/components/rx-form/src/types/form'
 import { useFormContext } from '/@/components/rx-form/src/hooks/useFormContext'
+import { getZodIssues } from '/@/utils/zod-error'
 
 interface UseFormMethodsParams {
   emit: RxFormEmits
@@ -164,7 +165,7 @@ export function useFormMethods({ emit }: UseFormMethodsParams) {
     // 表单验证失败，更新错误信息
     if (!result.success) {
       // 遍历错误并更新错误信息
-      result.error.errors.forEach((error) => {
+      getZodIssues(result.error).forEach((error) => {
         const field = error.path[0]
         errors.value[field] = error.message
       })
