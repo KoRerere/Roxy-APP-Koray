@@ -176,12 +176,18 @@ describe('local task execution replay', () => {
       conversation_id: 'conversation-1',
       file_ids: ['file-1'],
     })
+    const getConversationMessages = vi.fn((_conversationId: string, _taskLogId?: string): Array<{
+      id: string
+      role: 'user' | 'assistant' | 'system'
+      content?: string
+      created_at: string
+    }> => [
+      { id: 'system-1', role: 'system', content: 'hidden', created_at: '2026-07-24T01:00:00.000Z' },
+      { id: 'user-1', role: 'user', content: '开始任务', created_at: '2026-07-24T01:00:01.000Z' },
+      { id: 'assistant-1', role: 'assistant', content: '任务完成', created_at: '2026-07-24T01:00:02.000Z' },
+    ])
     const replay = replayTaskExecutionFromLocalStorage(log, {
-      getConversationMessages: () => [
-        { id: 'system-1', role: 'system', content: 'hidden', created_at: '2026-07-24T01:00:00.000Z' },
-        { id: 'user-1', role: 'user', content: '开始任务', created_at: '2026-07-24T01:00:01.000Z' },
-        { id: 'assistant-1', role: 'assistant', content: '任务完成', created_at: '2026-07-24T01:00:02.000Z' },
-      ],
+      getConversationMessages,
       readScriptRunLog: () => '',
       describeArtifacts: fileIds => fileIds.map(fileId => ({
         fileId,
@@ -203,5 +209,6 @@ describe('local task execution replay', () => {
     assert.equal(replay.events[1]?.payload.type === 'agent.message.upsert'
       ? replay.events[1].payload.message.content
       : undefined, '任务完成')
+    assert.deepEqual(getConversationMessages.mock.calls, [['conversation-1', 'log-1']])
   })
 })

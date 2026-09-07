@@ -935,6 +935,67 @@ describe('rollout history projector', () => {
     )
   })
 
+  it('keeps a task replay isolated when the task conversation later receives chat', () => {
+    const conversationId = 'task-conversation-with-follow-up'
+    writeRollout(conversationId, [
+      {
+        type: 'user_input',
+        message: {
+          role: 'user',
+          content: 'scheduled task input',
+          metadata: { source: 'task-run', taskLogId: 'task-log-1' },
+        },
+        ts: 1000,
+      },
+      {
+        type: 'assistant_turn',
+        items: [{
+          type: 'message',
+          id: 'task-answer',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'task answer' }],
+        }],
+        stopReason: 'end_turn',
+        ts: 2000,
+      },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 2100 },
+      {
+        type: 'user_input',
+        message: { role: 'user', content: 'follow-up chat' },
+        ts: 3000,
+      },
+      {
+        type: 'assistant_turn',
+        items: [{
+          type: 'message',
+          id: 'chat-answer',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'chat answer' }],
+        }],
+        stopReason: 'end_turn',
+        ts: 4000,
+      },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 4100 },
+    ])
+
+    const taskMessages = projectMessagesFromRollout(conversationId, {
+      source: 'scheduled_task',
+      taskLogId: 'task-log-1',
+    })
+    assert.deepEqual(taskMessages.map(message => [message.role, message.content]), [
+      ['user', 'scheduled task input'],
+      ['assistant', 'task answer'],
+    ])
+
+    const allMessages = projectMessagesFromRollout(conversationId)
+    assert.deepEqual(allMessages.map(message => [message.role, message.content]), [
+      ['user', 'scheduled task input'],
+      ['assistant', 'task answer'],
+      ['user', 'follow-up chat'],
+      ['assistant', 'chat answer'],
+    ])
+  })
+
   it('projects completed web search and open-page items into tool lifecycles', () => {
     const conversationId = 'conversation-web-search-history'
     writeRollout(conversationId, [

@@ -144,4 +144,21 @@ describe('roxy_save_user_template', () => {
     expect(result.content).toContain('browser-window selection')
     expect(mocks.uploadSkill).not.toHaveBeenCalled()
   })
+
+  it('rejects the complete prompt when its target URL is unfilled', async () => {
+    const { createSaveUserTemplateTool } = await import('./save-user-template')
+    const tool = createSaveUserTemplateTool({ workspaceDir })
+
+    const result = await tool.handler({
+      skillPath: 'batch-nurture',
+      name: '官网 FAQ 总结',
+      description: '提取并总结官网常见问题',
+      prompt: '在用户选定的浏览器窗口中打开 [url:目标官网]() 的常见问题（FAQ）页面，提取页面上的全部问题与答案，按网站自身的分类结构做一份口语化、亲切的中文总结，保留网站自己承认的限制（如“无法保证 100% 不被封号”、“不能完全防止追踪”等），并注明内容来源的页面链接。',
+    }, context)
+
+    expect(result.isError).toBe(true)
+    expect(result.content).toContain('non-empty values: 目标官网')
+    expect(mocks.uploadSkill).not.toHaveBeenCalled()
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
 })

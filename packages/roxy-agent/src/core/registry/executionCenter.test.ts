@@ -16,6 +16,22 @@ describe('executionCenter', () => {
     ])
   })
 
+  it('binds a background execution to its conversation after creation', async () => {
+    const center = new ExecutionCenter()
+    const cancel = vi.fn(() => true)
+    center.register({ id: 'run-task', source: 'scheduled_task', cancel })
+    center.start('run-task')
+
+    center.register({
+      id: 'run-task',
+      source: 'scheduled_task',
+      conversationId: 'task-conversation',
+    })
+
+    expect(center.get('run-task')?.conversationId).toBe('task-conversation')
+    await expect(center.cancelByConversation('task-conversation')).resolves.toBe(1)
+  })
+
   it('cancels through the registered owner and does not invoke it twice', async () => {
     const center = new ExecutionCenter()
     const cancel = vi.fn(() => true)

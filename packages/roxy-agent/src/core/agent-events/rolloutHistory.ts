@@ -86,6 +86,7 @@ interface RolloutProjectedEvent {
 interface RolloutTurn {
   userContent: string
   userTimestamp?: number
+  userMetadata?: unknown
   attachments: AgentRunAttachmentDTO[]
   events: RolloutProjectedEvent[]
   terminal?: RolloutTurnTerminal
@@ -134,6 +135,8 @@ export interface RolloutHistoryOptions {
   latestRunStatus?: Conversation['latest_run_status']
   source?: 'user' | 'scheduled_task'
   excludeActiveTurn?: boolean
+  /** Limit task execution replay to the turn that started this task log. */
+  taskLogId?: string
 }
 
 function contentBlockText(block: unknown): string {
@@ -925,6 +928,7 @@ function readRolloutTurns(
       current = {
         userContent: rolloutMessageText(message),
         userTimestamp: rolloutEventTimestamp(event),
+        userMetadata: message?.metadata,
         attachments: rolloutMessageAttachments(message),
         events: [],
       }
@@ -1147,6 +1151,14 @@ export function projectMessagesFromRollout(conversationId: string, options: Roll
   let turns = readRolloutTurns(conversationId)
   if (options.excludeActiveTurn && turns.at(-1)?.terminal === undefined) {
     turns = turns.slice(0, -1)
+  }
+  if (options.taskLogId) {
+    const taskTurns = turns.filter((turn) => {
+      const metadata = asRecord(turn.userMetadata)
+      return metadata.taskLogId === options.taskLogId
+    })
+    // 旧任务未把 taskLogId 写入 user_input 元数据，兼容时取首轮任务执行。
+    turns = taskTurns.length > 0 ? taskTurns : turns.slice(0, 1)
   }
   if (turns.length === 0) {
     return []
