@@ -7,6 +7,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useAgentConsoleApi } from '../api'
 import { useAgentChannel } from '../composables/useAgentChannel'
 import { useAgentConsole } from '../composables/useAgentConsole'
+import { isTrackedOnboardingRunTerminal } from '../onboarding-run-completion'
 import { provideProfileMonitorContext } from '../composables/useProfileMonitorContext'
 import AgentDeleteConfirmDialog from './AgentDeleteConfirmDialog.vue'
 import AgentSidebar from './AgentSidebar.vue'
@@ -71,6 +72,7 @@ const {
   deleteConversation,
   selectConversation,
   sendPrompt,
+  state: agentConsoleState,
   startNewChat,
   submitHitl,
   toggleTaskGroup,
@@ -96,6 +98,9 @@ const agentSidebarWidth = ref(AGENT_SIDEBAR_DEFAULT_WIDTH)
 const agentSidebarRef = ref<AgentSidebarExpose | null>(null)
 const onboardingNewChatGuideVisible = ref(false)
 const onboardingNewChatGuideTarget = shallowRef<HTMLElement | null>(null)
+const onboardingCompletionVisible = ref(false)
+const onboardingTrackedRunId = ref<string>()
+let onboardingRunRequestVersion = 0
 const agentConsoleLayoutStyle = computed(() => ({
   '--agent-sidebar-width': `${agentSidebarWidth.value}px`,
   '--task-monitor-width': `${taskMonitorWidth.value}px`,
@@ -465,6 +470,45 @@ function dismissOnboardingNewChatGuide() {
   onboardingNewChatGuideTarget.value = null
 }
 
+function resetOnboardingRunTracking() {
+  onboardingRunRequestVersion += 1
+  onboardingTrackedRunId.value = undefined
+  onboardingCompletionVisible.value = false
+}
+
+async function handleOnboardingRun() {
+  const requestVersion = ++onboardingRunRequestVersion
+  onboardingTrackedRunId.value = undefined
+  onboardingCompletionVisible.value = false
+
+  const started = await sendPrompt({
+    onRunStarted: ({ runId }) => {
+      if (requestVersion === onboardingRunRequestVersion) {
+        onboardingTrackedRunId.value = runId
+      }
+    },
+  })
+
+  if (!started && requestVersion === onboardingRunRequestVersion) {
+    onboardingTrackedRunId.value = undefined
+  }
+}
+
+watch(
+  () => onboardingTrackedRunId.value
+    ? agentConsoleState.runsById[onboardingTrackedRunId.value]?.status
+    : undefined,
+  () => {
+    if (!isTrackedOnboardingRunTerminal(onboardingTrackedRunId.value, agentConsoleState.runsById)) {
+      return
+    }
+
+    onboardingTrackedRunId.value = undefined
+    onboardingCompletionVisible.value = true
+  },
+  { flush: 'sync' },
+)
+
 async function showOnboardingNewChatGuide() {
   await nextTick()
   const target = agentSidebarRef.value?.getNewChatElement() ?? null
@@ -651,6 +695,7 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
         :composer-focus-key="newChatFocusKey"
         :hitl-request="activeHitlRequest"
         :messages="messageList"
+        :onboarding-completion-visible="onboardingCompletionVisible"
         :has-earlier-messages="messageHistoryHasMore"
         :loading-earlier-messages="messageHistoryLoading"
         :pending-attachments="pendingAttachments"
@@ -668,6 +713,9 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
         @load-earlier-messages="loadEarlierMessages"
         @save-template="saveTaskReportTemplate"
         @onboarding-complete="showOnboardingNewChatGuide"
+        @onboarding-completion-dismiss="onboardingCompletionVisible = false"
+        @onboarding-reset="resetOnboardingRunTracking"
+        @onboarding-run="handleOnboardingRun"
         @send="sendPrompt"
         @stop="cancelActiveRun"
         @submit-hitl="submitHitl"

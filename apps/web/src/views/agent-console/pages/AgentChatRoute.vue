@@ -10,6 +10,7 @@ defineProps<{
   hasEarlierMessages: boolean
   loadingEarlierMessages: boolean
   messages: AgentMessage[]
+  onboardingCompletionVisible?: boolean
   pendingAttachments: AgentAttachment[]
   queuedPrompts: AgentQueuedPrompt[]
   routeTitle?: string | symbol
@@ -23,6 +24,9 @@ const emit = defineEmits<{
   addPathAttachment: [selection: AgentPathSelection]
   loadEarlierMessages: []
   onboardingComplete: []
+  onboardingCompletionDismiss: []
+  onboardingReset: []
+  onboardingRun: []
   removeAttachment: [fileId: string]
   removeQueuedPrompt: [promptId: string]
   reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
@@ -47,6 +51,7 @@ const prompt = defineModel<string>('prompt', { required: true })
       :has-earlier-messages="hasEarlierMessages"
       :loading-earlier-messages="loadingEarlierMessages"
       :messages="messages"
+      :onboarding-completion-visible="onboardingCompletionVisible"
       :pending-attachments="pendingAttachments"
       :queued-prompts="queuedPrompts"
       :thinking="thinking"
@@ -56,6 +61,9 @@ const prompt = defineModel<string>('prompt', { required: true })
       @add-path-attachment="emit('addPathAttachment', $event)"
       @load-earlier-messages="emit('loadEarlierMessages')"
       @onboarding-complete="emit('onboardingComplete')"
+      @onboarding-completion-dismiss="emit('onboardingCompletionDismiss')"
+      @onboarding-reset="emit('onboardingReset')"
+      @onboarding-run="emit('onboardingRun')"
       @remove-attachment="emit('removeAttachment', $event)"
       @remove-queued-prompt="emit('removeQueuedPrompt', $event)"
       @reorder-queued-prompt="emit('reorderQueuedPrompt', $event)"

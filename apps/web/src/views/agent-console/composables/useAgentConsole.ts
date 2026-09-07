@@ -83,6 +83,7 @@ interface PendingRunDraft extends PendingRunPresentation {
 }
 
 interface PendingRunStart extends PendingRunDraft {
+  onRunStarted?: (run: { conversationId: string, runId: string }) => void
   requestId: string
 }
 
@@ -91,6 +92,7 @@ interface SendPromptOptions {
   content?: string
   conversationId?: string
   fromQueue?: boolean
+  onRunStarted?: (run: { conversationId: string, runId: string }) => void
   templateContext?: TaskReportTemplateContext
 }
 
@@ -1719,6 +1721,10 @@ export function useAgentConsole() {
           startedPending,
           item,
         )
+        startedPending.onRunStarted?.({
+          conversationId: item.conversationId,
+          runId: item.runId,
+        })
       }
 
       const conversation = consoleState.conversationsById[item.conversationId]
@@ -2425,6 +2431,7 @@ export function useAgentConsole() {
       requestId,
       content,
       attachments: displayAttachments,
+      onRunStarted: options.onRunStarted,
     }
     const optimisticUserMessage = consoleState.messagesByConversationId[conversationId]?.find(message => message.id === preparing.userMessageId)
     if (optimisticUserMessage) {

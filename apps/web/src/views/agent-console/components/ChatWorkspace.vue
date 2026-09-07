@@ -95,6 +95,7 @@ const props = defineProps<{
   hasEarlierMessages: boolean
   loadingEarlierMessages: boolean
   messages: AgentMessage[]
+  onboardingCompletionVisible?: boolean
   pendingAttachments: AgentAttachment[]
   queuedPrompts: AgentQueuedPrompt[]
   thinking: boolean
@@ -107,6 +108,9 @@ const emit = defineEmits<{
   addPathAttachment: [selection: AgentPathSelection]
   loadEarlierMessages: []
   onboardingComplete: []
+  onboardingCompletionDismiss: []
+  onboardingReset: []
+  onboardingRun: []
   removeAttachment: [fileId: string]
   removeQueuedPrompt: [promptId: string]
   reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
@@ -186,11 +190,6 @@ const newTemplateGuideVisible = ref(false)
 const newTemplateGuideTarget = shallowRef<HTMLElement | null>(null)
 const newTemplateGuideLabel = ref('')
 const onboardingVisible = ref(false)
-const onboardingCompletionVisible = ref(false)
-const onboardingRunPending = ref(false)
-const onboardingAssistantMessageId = ref<string>()
-const onboardingAssistantRunId = ref<string>()
-const onboardingAssistantBaselineIds = new Set<string>()
 const onboardingSessionKey = ref(0)
 const onboardingScenarioTemplates = ref<Partial<Record<OnboardingScenarioId, OfficialTemplate | null>>>({})
 const onboardingTemplateCache = new Map<OnboardingScenarioId, OfficialTemplate | null>()
@@ -775,23 +774,18 @@ function dismissAllGuides() {
 
 function openOnboarding() {
   dismissAllGuides()
-  onboardingCompletionVisible.value = false
-  onboardingRunPending.value = false
-  onboardingAssistantMessageId.value = undefined
-  onboardingAssistantRunId.value = undefined
-  onboardingAssistantBaselineIds.clear()
+  emit('onboardingReset')
   onboardingSessionKey.value += 1
   onboardingVisible.value = true
   void preloadOnboardingTemplates()
 }
 
 function continueAfterOnboardingCompletion() {
-  onboardingCompletionVisible.value = false
+  emit('onboardingCompletionDismiss')
   emit('onboardingComplete')
 }
 
 function restartOnboardingFromCompletion() {
-  onboardingCompletionVisible.value = false
   openOnboarding()
 }
 
@@ -881,68 +875,14 @@ async function handleOnboardingExperience(scenario: OnboardingScenarioId) {
       scenario,
       localeStore.currentLocale,
     ))
-    onboardingCompletionVisible.value = false
-    onboardingRunPending.value = true
-    onboardingAssistantMessageId.value = undefined
-    onboardingAssistantRunId.value = undefined
-    onboardingAssistantBaselineIds.clear()
-    props.messages.forEach(message => onboardingAssistantBaselineIds.add(message.id))
     await nextTick()
-    emit('send')
+    emit('onboardingRun')
   }
   catch (error) {
-    onboardingRunPending.value = false
-    onboardingAssistantMessageId.value = undefined
-    onboardingAssistantRunId.value = undefined
-    onboardingAssistantBaselineIds.clear()
     console.error(`[agent-console] Failed to run onboarding scenario: ${scenario}`, error)
     onlyErrorToast(-1, error instanceof Error ? error.message : $t('加载官方模板失败'))
   }
 }
-
-watch(
-  () => props.messages.map(message => ({
-    id: message.id,
-    role: message.role,
-    runId: message.runId,
-    status: message.status,
-  })),
-  (messages) => {
-    if (!onboardingRunPending.value) {
-      return
-    }
-
-    let assistantMessage = onboardingAssistantRunId.value
-      ? messages.find(message => message.role === 'assistant' && message.runId === onboardingAssistantRunId.value)
-      : undefined
-
-    if (!assistantMessage && onboardingAssistantMessageId.value) {
-      assistantMessage = messages.find(message => message.role === 'assistant' && message.id === onboardingAssistantMessageId.value)
-    }
-
-    if (!assistantMessage) {
-      assistantMessage = messages.findLast(message =>
-        message.role === 'assistant' && !onboardingAssistantBaselineIds.has(message.id),
-      )
-    }
-
-    if (assistantMessage) {
-      onboardingAssistantMessageId.value = assistantMessage.id
-      onboardingAssistantRunId.value = assistantMessage.runId
-    }
-
-    if (!assistantMessage || assistantMessage.status === 'thinking' || assistantMessage.status === 'streaming') {
-      return
-    }
-
-    onboardingRunPending.value = false
-    onboardingAssistantMessageId.value = undefined
-    onboardingAssistantRunId.value = undefined
-    onboardingAssistantBaselineIds.clear()
-    onboardingCompletionVisible.value = true
-  },
-  { flush: 'sync' },
-)
 
 function isFileDrag(event: DragEvent) {
   return Array.from(event.dataTransfer?.types ?? []).some(type => type === 'Files')
@@ -1433,7 +1373,7 @@ onBeforeUnmount(() => {
       />
 
       <AgentOnboarding
-        :completion-visible="onboardingCompletionVisible"
+        :completion-visible="props.onboardingCompletionVisible"
         :scenario-templates="onboardingScenarioTemplates"
         :session-key="onboardingSessionKey"
         :visible="onboardingVisible"
