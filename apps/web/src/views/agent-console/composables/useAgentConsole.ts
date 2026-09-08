@@ -75,6 +75,7 @@ interface ConversationMessagePaginationState {
 }
 
 const conversationMessagePaginationById = reactive<Record<string, ConversationMessagePaginationState>>({})
+const pendingAttachmentUploadPromises = new Map<string, Promise<AgentAttachment[]>>()
 
 interface PendingRunDraft extends PendingRunPresentation {
   content: string
@@ -2105,9 +2106,16 @@ export function useAgentConsole() {
       return
     }
 
-    void uploadPendingAttachmentsForConversation(conversationId, sourceAttachments, [attachment]).catch((error) => {
+    const uploadKey = attachment.fileId
+    const uploadPromise = uploadPendingAttachmentsForConversation(conversationId, sourceAttachments, [attachment])
+    pendingAttachmentUploadPromises.set(uploadKey, uploadPromise)
+    void uploadPromise.catch((error) => {
       console.error('[agent-console] Failed to upload attachment:', error)
       onlyErrorToast(-1, error instanceof Error ? error.message : $t('文件上传失败'))
+    }).finally(() => {
+      if (pendingAttachmentUploadPromises.get(uploadKey) === uploadPromise) {
+        pendingAttachmentUploadPromises.delete(uploadKey)
+      }
     })
   }
 
@@ -2159,6 +2167,12 @@ export function useAgentConsole() {
 
     for (const attachment of attachments) {
       if (!sourceAttachments.includes(attachment)) {
+        continue
+      }
+
+      const pendingUpload = pendingAttachmentUploadPromises.get(attachment.fileId)
+      if (pendingUpload) {
+        uploadedAttachments.push(...await pendingUpload)
         continue
       }
 
@@ -2271,7 +2285,6 @@ export function useAgentConsole() {
     const sourceAttachments = options.attachments ?? (options.content === undefined ? pendingAttachments.value : [])
     if (
       (!content && sourceAttachments.length === 0)
-      || sourceAttachments.some(attachment => attachment.uploadStatus !== 'uploaded')
     ) {
       return false
     }
@@ -2383,49 +2396,6 @@ export function useAgentConsole() {
       touchConversationCache(consoleState, conversationId)
     }
 
-    let uploadedAttachments: AgentAttachment[] = []
-    try {
-      uploadedAttachments = await uploadPendingAttachmentsForConversation(conversationId, sourceAttachments)
-    }
-    catch (error) {
-      removePreparingMessages()
-      console.error('[agent-console] Failed to upload attachments:', error)
-      onlyErrorToast(-1, error instanceof Error ? error.message : $t('文件上传失败'))
-      return false
-    }
-
-    const localAttachments = collectLocalPathAttachments(uploadedAttachments)
-    const displayAttachments = uploadedAttachments.filter((attachment) => {
-      if (attachment.kind === 'folder') {
-        return true
-      }
-
-      return !attachment.fileName.includes('/')
-    })
-    const chatAttachments = uploadedAttachments.filter(attachment => attachment.kind === 'file' && !attachment.localPath)
-    try {
-      await agentApi.prepareConversationRun({
-        conversationId,
-        turnId: preparing.userMessageId,
-        message: content,
-        attachments: displayAttachments.map(attachment => ({
-          fileId: attachment.fileId,
-          fileName: attachment.fileName,
-          mimeType: attachment.mimeType,
-          ...(attachment.size !== undefined ? { size: attachment.size } : {}),
-          ...(attachment.url ? { url: attachment.url } : {}),
-          ...(attachment.localUrl ? { localUrl: attachment.localUrl } : {}),
-          ...(attachment.remoteUrl ? { remoteUrl: attachment.remoteUrl } : {}),
-          ...(attachment.fileUrl ? { fileUrl: attachment.fileUrl } : {}),
-        })),
-      })
-    }
-    catch (error) {
-      removePreparingMessages()
-      console.error('[agent-console] Failed to persist user message:', error)
-      onlyErrorToast(-1, $t('消息保存失败'))
-      return false
-    }
     try {
       await agentChannel.waitUntilConnected()
     }
@@ -2435,12 +2405,29 @@ export function useAgentConsole() {
       onlyErrorToast(-1, $t('Agent 连接尚未就绪'))
       return false
     }
+    const displayAttachments = sourceAttachments.filter((attachment) => {
+      if (attachment.kind === 'folder') {
+        return true
+      }
+
+      return !attachment.fileName.includes('/')
+    })
+    const pendingAttachmentMetadata = displayAttachments.map(attachment => ({
+      fileId: attachment.fileId,
+      fileName: attachment.fileName,
+      mimeType: attachment.mimeType,
+      ...(attachment.size !== undefined ? { size: attachment.size } : {}),
+      ...(attachment.url ? { url: attachment.url } : {}),
+      ...(attachment.localUrl ? { localUrl: attachment.localUrl } : {}),
+      ...(attachment.remoteUrl ? { remoteUrl: attachment.remoteUrl } : {}),
+      ...(attachment.fileUrl ? { fileUrl: attachment.fileUrl } : {}),
+    }))
     const requestId = agentChannel.send('conversation.run.start', {
       conversationId,
       turnId: preparing.userMessageId,
       message: content,
-      attachments: chatAttachments.map(attachment => ({ fileId: attachment.fileId })),
-      ...(localAttachments.length > 0 ? { localAttachments } : {}),
+      ...(sourceAttachments.length > 0 ? { attachmentsPending: true } : {}),
+      ...(pendingAttachmentMetadata.length > 0 ? { pendingAttachments: pendingAttachmentMetadata } : {}),
       ...(options.templateContext ? { templateContext: options.templateContext } : {}),
       fullAccess: fullAccess.value,
     })
@@ -2490,6 +2477,33 @@ export function useAgentConsole() {
       draft.prompt = ''
       draft.attachments = []
     }
+
+    let uploadedAttachments: AgentAttachment[] = []
+    try {
+      uploadedAttachments = await uploadPendingAttachmentsForConversation(conversationId, sourceAttachments)
+    }
+    catch (error) {
+      console.error('[agent-console] Failed to upload attachments:', error)
+      onlyErrorToast(-1, error instanceof Error ? error.message : $t('文件上传失败'))
+      agentChannel.send('conversation.run.stop', { conversationId })
+      return true
+    }
+
+    if (sourceAttachments.length > 0) {
+      const localAttachments = collectLocalPathAttachments(uploadedAttachments)
+      const chatAttachments = uploadedAttachments.filter(attachment => attachment.kind === 'file' && !attachment.localPath)
+      const readyRequestId = agentChannel.send('conversation.run.attachments.ready', {
+        conversationId,
+        turnId: preparing.userMessageId,
+        attachments: chatAttachments.map(attachment => ({ fileId: attachment.fileId })),
+        ...(localAttachments.length > 0 ? { localAttachments } : {}),
+      })
+      if (!readyRequestId) {
+        onlyErrorToast(-1, $t('Agent 连接尚未就绪'))
+        agentChannel.send('conversation.run.stop', { conversationId })
+      }
+    }
+
     return true
   }
 

@@ -310,10 +310,12 @@ describe('agentChannelServer', () => {
       },
     }
     let stopBeforeReady = false
+    const completeRunAttachments = vi.fn()
     const commands: AgentChannelCommands = {
       startRun: vi.fn(async () => {
         throw new Error('start failed')
       }),
+      completeRunAttachments,
       stopRun: vi.fn(() => {
         stopBeforeReady = true
       }),
@@ -457,6 +459,15 @@ describe('agentChannelServer', () => {
         fullAccess: true,
       },
     }))
+    client.send(JSON.stringify({
+      id: 'request-attachments-ready',
+      type: 'conversation.run.attachments.ready',
+      data: {
+        conversationId: 'conversation-1',
+        turnId: 'turn-2',
+        attachments: [{ fileId: 'file-2' }],
+      },
+    }))
     client.send('{')
     client.send(JSON.stringify({
       id: 'invalid-empty-message',
@@ -479,6 +490,8 @@ describe('agentChannelServer', () => {
     assert.equal(vi.mocked(commands.stopRun).mock.calls.length, 1)
     assert.equal(vi.mocked(commands.submitApproval).mock.calls.length, 1)
     assert.equal(vi.mocked(commands.submitApproval).mock.calls[0]?.[0].data.fullAccess, true)
+    assert.equal(completeRunAttachments.mock.calls.length, 1)
+    assert.deepEqual(completeRunAttachments.mock.calls[0]?.[0].data.attachments, [{ fileId: 'file-2' }])
     assert.equal(warn.mock.calls.some(call => String(call[0]).includes('conversation.run.start')), true)
   })
 })

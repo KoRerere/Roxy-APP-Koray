@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
   getConversationDetail: vi.fn(),
   listConversations: vi.fn(),
   markConversationRead: vi.fn(),
-  prepareConversationRun: vi.fn(),
   updateConversation: vi.fn(),
 }))
 
@@ -66,7 +65,6 @@ beforeEach(async () => {
   })
   mocks.listConversations.mockReturnValue([conversation])
   mocks.markConversationRead.mockReturnValue(conversation)
-  mocks.prepareConversationRun.mockResolvedValue({ turnId: 'message-1', preparedAt: 1000 })
   mocks.updateConversation.mockReturnValue(true)
   mocks.deleteConversation.mockResolvedValue(true)
 
@@ -102,33 +100,6 @@ afterEach(async () => {
 })
 
 describe('fixed conversation routes', () => {
-  it('durably prepares a user input before websocket run submission', async () => {
-    // Regression: 用户输入持久化前就发送 conversation.run.start，早期准备阶段中断会丢失消息。
-    // Fixed by: 增加必须先完成的 HTTP 持久化准备步骤。
-    const response = await fetch(`${baseUrl}/api/conversations/prepare-run`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        conversationId: 'conversation-1',
-        turnId: 'message-1',
-        message: 'keep me',
-        attachments: [],
-      }),
-    })
-
-    assert.equal(response.status, 201)
-    assert.deepEqual(await response.json(), {
-      code: 0,
-      data: { turnId: 'message-1', preparedAt: 1000 },
-    })
-    assert.deepEqual(mocks.prepareConversationRun.mock.calls[0], [{
-      conversationId: 'conversation-1',
-      turnId: 'message-1',
-      message: 'keep me',
-      attachments: [],
-    }])
-  })
-
   it('creates and lists conversations with the roxy-agent-app DTO', async () => {
     const createResponse = await fetch(`${baseUrl}/api/conversations/create`, {
       method: 'POST',

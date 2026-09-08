@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { TaskReportTemplateContextSchema } from '../task-report'
 import { AgentChannelMessageIdSchema } from './common'
+import { AgentRunAttachmentDTOSchema } from './conversation-events'
 
 export const AgentConversationRunAttachmentSchema = z.strictObject({
   fileId: z.string().min(1),
@@ -18,12 +19,23 @@ export const AgentConversationRunStartCommandSchema = z.strictObject({
   turnId: z.string().min(1).optional(),
   message: z.string(),
   attachments: z.array(AgentConversationRunAttachmentSchema).optional(),
+  pendingAttachments: z.array(AgentRunAttachmentDTOSchema).optional(),
   localAttachments: z.array(AgentConversationRunLocalAttachmentSchema).optional(),
+  attachmentsPending: z.boolean().optional(),
   templateContext: TaskReportTemplateContextSchema.optional(),
   fullAccess: z.boolean().optional(),
-}).refine(data => Boolean(data.message.trim()) || Boolean(data.attachments?.length) || Boolean(data.localAttachments?.length))
+}).refine(data => Boolean(data.message.trim()) || Boolean(data.attachments?.length) || Boolean(data.localAttachments?.length) || data.attachmentsPending === true)
 
 export type AgentConversationRunStartCommand = z.infer<typeof AgentConversationRunStartCommandSchema>
+
+export const AgentConversationRunAttachmentsReadyCommandSchema = z.strictObject({
+  conversationId: z.string().min(1),
+  turnId: z.string().min(1),
+  attachments: z.array(AgentConversationRunAttachmentSchema).optional(),
+  localAttachments: z.array(AgentConversationRunLocalAttachmentSchema).optional(),
+})
+
+export type AgentConversationRunAttachmentsReadyCommand = z.infer<typeof AgentConversationRunAttachmentsReadyCommandSchema>
 
 export const AgentConversationRunStopCommandSchema = z.strictObject({
   conversationId: z.string().min(1),
@@ -55,6 +67,12 @@ export const AgentConversationRunStartMessageSchema = z.strictObject({
   data: AgentConversationRunStartCommandSchema,
 })
 
+export const AgentConversationRunAttachmentsReadyMessageSchema = z.strictObject({
+  id: AgentChannelMessageIdSchema,
+  type: z.literal('conversation.run.attachments.ready'),
+  data: AgentConversationRunAttachmentsReadyCommandSchema,
+})
+
 export const AgentConversationRunStopMessageSchema = z.strictObject({
   id: AgentChannelMessageIdSchema,
   type: z.literal('conversation.run.stop'),
@@ -75,6 +93,7 @@ export const AgentExecutionControlMessageSchema = z.strictObject({
 
 export const AgentChannelClientMessageSchema = z.discriminatedUnion('type', [
   AgentConversationRunStartMessageSchema,
+  AgentConversationRunAttachmentsReadyMessageSchema,
   AgentConversationRunStopMessageSchema,
   AgentConversationApprovalSubmitMessageSchema,
   AgentExecutionControlMessageSchema,
@@ -82,6 +101,7 @@ export const AgentChannelClientMessageSchema = z.discriminatedUnion('type', [
 
 export interface AgentChannelClientMessageMap {
   'conversation.run.start': AgentConversationRunStartCommand
+  'conversation.run.attachments.ready': AgentConversationRunAttachmentsReadyCommand
   'conversation.run.stop': AgentConversationRunStopCommand
   'conversation.approval.submit': AgentConversationApprovalSubmitCommand
   'execution.control': AgentExecutionControlCommand

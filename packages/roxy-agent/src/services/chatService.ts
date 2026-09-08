@@ -2,7 +2,7 @@ import type { AttachmentRef } from './fileService'
 import type { RunEventPublisher } from '@/core/agent-events/runEventHub'
 import type { RuntimeCollectedFile } from '@/runtime/file-collector'
 import type { TaskReportTemplateContext } from '@roxy/shared'
-import type { AgentConversationRunStartCommand, AgentRunAttachmentDTO, AgentRunEvent } from '@roxy/shared/channel'
+import type { AgentConversationRunAttachmentsReadyCommand, AgentConversationRunStartCommand, AgentRunAttachmentDTO, AgentRunEvent } from '@roxy/shared/channel'
 import type { RolloutArtifact, RolloutArtifactSource, RolloutEvent } from 'roxy-agent-runtime'
 import { extractAgentProfileDirIds } from '@roxy/shared'
 import { randomUUID } from 'node:crypto'
@@ -64,7 +64,7 @@ export interface ListConversationsOptions {
   offset: number
 }
 
-export interface PrepareConversationRunInput {
+interface PersistConversationRunInput {
   conversationId: string
   turnId: string
   message: string
@@ -83,10 +83,10 @@ interface PreparedUserInputRolloutEvent {
 }
 
 /**
- * 在 WebSocket run 命令发送前持久化可见用户输入。
+ * Agent 收到 WebSocket 消息后立即记录可见用户输入。
  * Runtime 随后会使用同一 turnId 追加标准 user_input 事件，rollout 投影会合并两条记录。
  */
-export async function prepareConversationRun(input: PrepareConversationRunInput): Promise<{ turnId: string, preparedAt: number }> {
+async function persistConversationRunReceipt(input: PersistConversationRunInput): Promise<{ turnId: string, preparedAt: number }> {
   const preparedAt = Date.now()
   const rollout = new RoxyRolloutStore(
     path.dirname(agentPaths.sessionDir(input.conversationId)),
@@ -123,6 +123,78 @@ export async function prepareConversationRun(input: PrepareConversationRunInput)
     ts: preparedAt,
   } as unknown as RolloutEvent)
   return { turnId: input.turnId, preparedAt }
+}
+
+interface PendingRunAttachments {
+  conversationId: string
+  turnId: string
+  promise: Promise<Pick<AgentConversationRunAttachmentsReadyCommand, 'attachments' | 'localAttachments'>>
+  resolve: (value: Pick<AgentConversationRunAttachmentsReadyCommand, 'attachments' | 'localAttachments'>) => void
+  reject: (error: unknown) => void
+}
+
+const pendingRunAttachments = new Map<string, PendingRunAttachments>()
+
+function pendingRunAttachmentsKey(conversationId: string, turnId: string): string {
+  return `${conversationId}:${turnId}`
+}
+
+function createPendingRunAttachments(
+  conversationId: string,
+  turnId: string,
+  signal: AbortSignal,
+): PendingRunAttachments {
+  const key = pendingRunAttachmentsKey(conversationId, turnId)
+  let resolvePromise: PendingRunAttachments['resolve'] = () => {}
+  let rejectPromise: PendingRunAttachments['reject'] = () => {}
+  const promise = new Promise<Pick<AgentConversationRunAttachmentsReadyCommand, 'attachments' | 'localAttachments'>>((resolve, reject) => {
+    resolvePromise = resolve
+    rejectPromise = reject
+  })
+  let pending: PendingRunAttachments
+  const onAbort = () => {
+    pending.reject(new AbortError('User cancelled'))
+  }
+  pending = {
+    conversationId,
+    turnId,
+    promise,
+    resolve: (value) => {
+      if (pendingRunAttachments.get(key) !== pending) {
+        return
+      }
+      pendingRunAttachments.delete(key)
+      signal.removeEventListener('abort', onAbort)
+      resolvePromise(value)
+    },
+    reject: (error) => {
+      if (pendingRunAttachments.get(key) !== pending) {
+        return
+      }
+      pendingRunAttachments.delete(key)
+      signal.removeEventListener('abort', onAbort)
+      rejectPromise(error)
+    },
+  }
+  pendingRunAttachments.set(key, pending)
+  if (signal.aborted) {
+    onAbort()
+  }
+  else {
+    signal.addEventListener('abort', onAbort, { once: true })
+  }
+  return pending
+}
+
+export function completeConversationRunAttachments(command: AgentConversationRunAttachmentsReadyCommand): void {
+  const pending = pendingRunAttachments.get(pendingRunAttachmentsKey(command.conversationId, command.turnId))
+  if (!pending) {
+    return
+  }
+  pending.resolve({
+    attachments: command.attachments,
+    localAttachments: command.localAttachments,
+  })
 }
 
 export function listConversations(options: ListConversationsOptions) {
@@ -439,23 +511,13 @@ export async function startConversationRun(
   requestId: string,
 ): Promise<void> {
   const { conversationId } = command
-  if (runEventHub.isActive(conversationId)) {
-    return Promise.resolve()
-  }
-
   const conversation = getConversation(conversationId)
   if (!conversation) {
-    return Promise.resolve()
+    return
   }
 
   const suffix = `${Date.now()}_${randomUUID().slice(0, 8)}`
   const turnId = command.turnId ?? `msg_${suffix}`
-  await prepareConversationRun({
-    conversationId,
-    turnId,
-    message: command.message,
-    attachments: (command.attachments ?? []).map(attachment => ({ fileId: attachment.fileId })),
-  })
   const runId = `run_${suffix}`
   const assistantMessageId = `msg_${Date.now()}_${randomUUID().slice(0, 8)}`
   const publisher = runEventHub.tryBegin({
@@ -465,9 +527,9 @@ export async function startConversationRun(
     assistantMessageId,
     requestId,
     source: 'user',
-  })
+  }, { announceStarted: false })
   if (!publisher) {
-    return Promise.resolve()
+    return
   }
 
   const abortController = createAbort(runId)
@@ -481,12 +543,54 @@ export async function startConversationRun(
       return true
     },
   })
+
+  const pendingAttachments = command.attachmentsPending === true
+    ? createPendingRunAttachments(conversationId, turnId, abortController.signal)
+    : undefined
+  // 回执仍在写入时可能先收到取消，队列还没来得及等待该 Promise；这里先附加吞异常处理，
+  // 避免取消触发未处理 rejection，队列启动后仍会等待原始 Promise 并观察其结果。
+  if (pendingAttachments) {
+    void pendingAttachments.promise.catch(() => {})
+  }
+  try {
+    await persistConversationRunReceipt({
+      conversationId,
+      turnId,
+      message: command.message,
+      attachments: command.pendingAttachments ?? (command.attachments ?? []).map(attachment => ({ fileId: attachment.fileId })),
+    })
+  }
+  catch (error) {
+    pendingAttachments?.reject(error)
+    if (!publisher.isTerminal) {
+      publisher.publish(withAgentPath(isAbortLike(error)
+        ? streamEvents.cancelled({ message: 'Agent stopped: User cancelled' })
+        : streamEvents.error(normalizeAgentError(error)), '/root'))
+    }
+    executionCenter.finish(runId, publisher.terminalStatus ?? (abortController.signal.aborted ? 'cancelled' : 'failed'))
+    cleanupRun(runId, abortController)
+    return
+  }
+
+  if (!runEventHub.publishStarted(publisher, { requestId, source: 'user' })) {
+    pendingAttachments?.reject(new AbortError('User cancelled'))
+    executionCenter.finish(runId, publisher.terminalStatus ?? 'cancelled')
+    cleanupRun(runId, abortController)
+    return
+  }
   executionCenter.start(runId)
+
   return conversationRunQueue.enqueue(conversationId, async () => {
     try {
+      const attachmentPayload = pendingAttachments
+        ? await pendingAttachments.promise
+        : {
+            attachments: command.attachments,
+            localAttachments: command.localAttachments,
+          }
       const [attachmentList, materializedLocal] = await Promise.all([
-        hydrateAttachmentFileUrls(command.attachments ?? [], abortController.signal),
-        materializeLocalAttachments(command.localAttachments ?? [], conversationId),
+        hydrateAttachmentFileUrls(attachmentPayload.attachments ?? [], abortController.signal),
+        materializeLocalAttachments(attachmentPayload.localAttachments ?? [], conversationId),
       ])
       await runConversationTurn({
         message: command.message,
@@ -735,6 +839,7 @@ export async function runConversationTurn(opts: RunConversationTurnOptions): Pro
     ]
     const inputMetadata = {
       ...userMessageMetadata,
+      turnId: userMessageId,
       attachments: projectedAttachments,
     }
     for await (const event of agent.stream(createInput(
