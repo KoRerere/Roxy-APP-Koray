@@ -30,7 +30,7 @@ import { RuntimeEventPublisher } from '../runtime/event-publisher'
 import { createRuntimeProvider } from '../runtime/provider'
 import { RoxyRolloutStore } from '../runtime/rollout'
 import { paginateConversationMessages } from './conversationMessagePagination'
-import { buildConversationTitlePrompt } from './conversationTitle'
+import { buildConversationTitlePrompt, generateConversationTitleWithRetry } from './conversationTitle'
 import {
   buildLocalAttachmentContent,
   buildMessageContentAsPlainText,
@@ -150,7 +150,11 @@ export async function deleteConversation(conversationId: string): Promise<boolea
 // ---------------------------------------------------------------------------
 
 const TitleOutputSchema = z.object({
-  title: z.string().max(20, 'Title must not exceed 20 characters').describe('Conversation title, concise and accurate, no more than 20 characters'),
+  title: z.string().max(40, 'Title must not exceed 40 characters').describe('Conversation title, concise and accurate, no more than 40 characters'),
+})
+
+const TitleCandidateSchema = z.object({
+  title: z.string().describe('Generated conversation title'),
 })
 
 export async function generateConversationTitle(
@@ -178,18 +182,22 @@ export async function generateConversationTitle(
 
   const messageContent = buildMessageContentAsPlainText(userMessage, attachments)
 
-  const structuredLlm = provider.withStructuredOutput(TitleOutputSchema, { name: 'generate_title', method: 'jsonSchema' })
-
-  const result = await structuredLlm(buildConversationTitlePrompt({
+  const structuredLlm = provider.withStructuredOutput(TitleCandidateSchema, { name: 'generate_title', method: 'jsonSchema' })
+  const originalPrompt = buildConversationTitlePrompt({
     messageContent,
     systemLanguage: env.SYSTEM_LANGUAGE,
-  }), signal)
+  })
+  const title = await generateConversationTitleWithRetry({
+    originalPrompt,
+    generate: prompt => structuredLlm(prompt, signal),
+    validate: candidate => TitleOutputSchema.parse(candidate).title.trim(),
+    shouldRetry: error => !isAbortLike(error) && !signal?.aborted,
+  })
 
   if (signal?.aborted) {
     throw new AbortError('User cancelled')
   }
 
-  const title = result.title.trim()
   streamCallback(streamEvents.title(title))
   return title
 }
