@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 // eslint-disable-next-line test/no-import-node-test
 import { describe, it } from 'node:test'
 import type { AgentRunStatus } from './types'
-import { isTrackedOnboardingRunTerminal } from './onboarding-run-completion'
+import { isTrackedOnboardingRunTerminal, sendOnboardingPromptInNewConversation } from './onboarding-run-completion'
 
 describe('Agent onboarding run completion', () => {
   it('waits for the original onboarding run after the user switches conversations', () => {
@@ -24,4 +24,24 @@ describe('Agent onboarding run completion', () => {
       }), true)
     })
   }
+
+  it('starts every onboarding prompt in a fresh conversation', async () => {
+    const calls: string[] = []
+    const onRunStarted = () => {}
+
+    const started = await sendOnboardingPromptInNewConversation('filled onboarding prompt', {
+      async startNewChat() {
+        calls.push('new-chat')
+      },
+      async sendPrompt(options) {
+        calls.push(`send:${options.content}`)
+        assert.equal(options.onRunStarted, onRunStarted)
+        return true
+      },
+      onRunStarted,
+    })
+
+    assert.equal(started, true)
+    assert.deepEqual(calls, ['new-chat', 'send:filled onboarding prompt'])
+  })
 })

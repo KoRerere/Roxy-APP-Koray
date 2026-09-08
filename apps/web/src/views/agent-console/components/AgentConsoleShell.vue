@@ -7,7 +7,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useAgentConsoleApi } from '../api'
 import { useAgentChannel } from '../composables/useAgentChannel'
 import { useAgentConsole } from '../composables/useAgentConsole'
-import { isTrackedOnboardingRunTerminal } from '../onboarding-run-completion'
+import { isTrackedOnboardingRunTerminal, sendOnboardingPromptInNewConversation } from '../onboarding-run-completion'
 import { provideProfileMonitorContext } from '../composables/useProfileMonitorContext'
 import AgentDeleteConfirmDialog from './AgentDeleteConfirmDialog.vue'
 import AgentSidebar from './AgentSidebar.vue'
@@ -476,12 +476,14 @@ function resetOnboardingRunTracking() {
   onboardingCompletionVisible.value = false
 }
 
-async function handleOnboardingRun() {
+async function handleOnboardingRun(content: string) {
   const requestVersion = ++onboardingRunRequestVersion
   onboardingTrackedRunId.value = undefined
   onboardingCompletionVisible.value = false
 
-  const started = await sendPrompt({
+  const started = await sendOnboardingPromptInNewConversation(content, {
+    startNewChat,
+    sendPrompt,
     onRunStarted: ({ runId }) => {
       if (requestVersion === onboardingRunRequestVersion) {
         onboardingTrackedRunId.value = runId

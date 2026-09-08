@@ -110,7 +110,7 @@ const emit = defineEmits<{
   onboardingComplete: []
   onboardingCompletionDismiss: []
   onboardingReset: []
-  onboardingRun: []
+  onboardingRun: [content: string]
   removeAttachment: [fileId: string]
   removeQueuedPrompt: [promptId: string]
   reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
@@ -870,13 +870,13 @@ async function handleOnboardingExperience(scenario: OnboardingScenarioId) {
       throw new Error($t('Skill 路径加载失败'))
     }
 
-    updatePromptAndFocus(fillOnboardingScenarioInputs(
+    const filledPrompt = fillOnboardingScenarioInputs(
       onboardingPrompt,
       scenario,
       localeStore.currentLocale,
-    ))
+    )
     await nextTick()
-    emit('onboardingRun')
+    emit('onboardingRun', filledPrompt)
   }
   catch (error) {
     console.error(`[agent-console] Failed to run onboarding scenario: ${scenario}`, error)

@@ -26,7 +26,7 @@ const emit = defineEmits<{
   onboardingComplete: []
   onboardingCompletionDismiss: []
   onboardingReset: []
-  onboardingRun: []
+  onboardingRun: [content: string]
   removeAttachment: [fileId: string]
   removeQueuedPrompt: [promptId: string]
   reorderQueuedPrompt: [payload: { promptId: string, targetIndex: number }]
@@ -63,7 +63,7 @@ const prompt = defineModel<string>('prompt', { required: true })
       @onboarding-complete="emit('onboardingComplete')"
       @onboarding-completion-dismiss="emit('onboardingCompletionDismiss')"
       @onboarding-reset="emit('onboardingReset')"
-      @onboarding-run="emit('onboardingRun')"
+      @onboarding-run="emit('onboardingRun', $event)"
       @remove-attachment="emit('removeAttachment', $event)"
       @remove-queued-prompt="emit('removeQueuedPrompt', $event)"
       @reorder-queued-prompt="emit('reorderQueuedPrompt', $event)"
