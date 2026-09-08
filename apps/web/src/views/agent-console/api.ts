@@ -2,6 +2,7 @@ import { FeedbackApi, FilesApi, HttpClient, OfficialScriptsApi, TemplatesApi, Us
 import type { ListOfficialTemplatesParams } from '@roxy/agent-api'
 import type {
   AgentConversationRunEventDTO,
+  AgentRunAttachmentDTO,
   AgentTaskLogStatus,
 } from '@roxy/shared/channel'
 import { API, createHttpClient } from '/@/api'
@@ -403,6 +404,18 @@ export function useAgentConsoleApi() {
     })
   }
 
+  function prepareConversationRun(payload: {
+    conversationId: string
+    turnId: string
+    message: string
+    attachments: AgentRunAttachmentDTO[]
+  }) {
+    return request<{ turnId: string, preparedAt: number }>('/api/conversations/prepare-run', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  }
+
   function deleteConversation(conversationId: string) {
     return request<{ deleted: true }>('/api/conversations/delete', {
       method: 'POST',
@@ -520,6 +533,7 @@ export function useAgentConsoleApi() {
     files,
     initializeAgentBackendAuth,
     markConversationRead,
+    prepareConversationRun,
     officialScripts,
     fileToBase64,
     getFileUrl,

@@ -15,6 +15,7 @@ export const AgentConversationRunLocalAttachmentSchema = z.strictObject({
 
 export const AgentConversationRunStartCommandSchema = z.strictObject({
   conversationId: z.string().min(1),
+  turnId: z.string().min(1).optional(),
   message: z.string(),
   attachments: z.array(AgentConversationRunAttachmentSchema).optional(),
   localAttachments: z.array(AgentConversationRunLocalAttachmentSchema).optional(),

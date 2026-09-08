@@ -2404,6 +2404,29 @@ export function useAgentConsole() {
     })
     const chatAttachments = uploadedAttachments.filter(attachment => attachment.kind === 'file' && !attachment.localPath)
     try {
+      await agentApi.prepareConversationRun({
+        conversationId,
+        turnId: preparing.userMessageId,
+        message: content,
+        attachments: displayAttachments.map(attachment => ({
+          fileId: attachment.fileId,
+          fileName: attachment.fileName,
+          mimeType: attachment.mimeType,
+          ...(attachment.size !== undefined ? { size: attachment.size } : {}),
+          ...(attachment.url ? { url: attachment.url } : {}),
+          ...(attachment.localUrl ? { localUrl: attachment.localUrl } : {}),
+          ...(attachment.remoteUrl ? { remoteUrl: attachment.remoteUrl } : {}),
+          ...(attachment.fileUrl ? { fileUrl: attachment.fileUrl } : {}),
+        })),
+      })
+    }
+    catch (error) {
+      removePreparingMessages()
+      console.error('[agent-console] Failed to persist user message:', error)
+      onlyErrorToast(-1, $t('消息保存失败'))
+      return false
+    }
+    try {
       await agentChannel.waitUntilConnected()
     }
     catch (error) {
@@ -2414,6 +2437,7 @@ export function useAgentConsole() {
     }
     const requestId = agentChannel.send('conversation.run.start', {
       conversationId,
+      turnId: preparing.userMessageId,
       message: content,
       attachments: chatAttachments.map(attachment => ({ fileId: attachment.fileId })),
       ...(localAttachments.length > 0 ? { localAttachments } : {}),

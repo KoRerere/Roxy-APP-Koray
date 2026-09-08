@@ -3,7 +3,7 @@ import type { RunEventPublisher } from '@/core/agent-events/runEventHub'
 import type { RuntimeCollectedFile } from '@/runtime/file-collector'
 import type { TaskReportTemplateContext } from '@roxy/shared'
 import type { AgentConversationRunStartCommand, AgentRunAttachmentDTO, AgentRunEvent } from '@roxy/shared/channel'
-import type { RolloutArtifact, RolloutArtifactSource } from 'roxy-agent-runtime'
+import type { RolloutArtifact, RolloutArtifactSource, RolloutEvent } from 'roxy-agent-runtime'
 import { extractAgentProfileDirIds } from '@roxy/shared'
 import { randomUUID } from 'node:crypto'
 import fsPromises from 'node:fs/promises'
@@ -62,6 +62,67 @@ export function createConversation() {
 export interface ListConversationsOptions {
   limit: number
   offset: number
+}
+
+export interface PrepareConversationRunInput {
+  conversationId: string
+  turnId: string
+  message: string
+  attachments: AgentRunAttachmentDTO[]
+}
+
+interface PreparedUserInputRolloutEvent {
+  type: 'user_input_prepared'
+  turnId: string
+  message: {
+    role: 'user'
+    content: string
+    metadata: Record<string, unknown>
+  }
+  ts: number
+}
+
+/**
+ * 在 WebSocket run 命令发送前持久化可见用户输入。
+ * Runtime 随后会使用同一 turnId 追加标准 user_input 事件，rollout 投影会合并两条记录。
+ */
+export async function prepareConversationRun(input: PrepareConversationRunInput): Promise<{ turnId: string, preparedAt: number }> {
+  const preparedAt = Date.now()
+  const rollout = new RoxyRolloutStore(
+    path.dirname(agentPaths.sessionDir(input.conversationId)),
+    sessionId => agentPaths.sessionRollout(sessionId),
+  )
+  const existing = await rollout.read(input.conversationId) as Array<RolloutEvent | PreparedUserInputRolloutEvent>
+  const alreadyPrepared = existing.find((event) => {
+    if (event.type !== 'user_input_prepared' && event.type !== 'user_input') {
+      return false
+    }
+    const metadata = event.message && typeof event.message === 'object'
+      ? (event.message as { metadata?: unknown }).metadata
+      : undefined
+    return metadata && typeof metadata === 'object'
+      && (metadata as { turnId?: unknown }).turnId === input.turnId
+  })
+  if (alreadyPrepared) {
+    const timestamp = typeof alreadyPrepared.ts === 'number' ? alreadyPrepared.ts : preparedAt
+    return { turnId: input.turnId, preparedAt: timestamp }
+  }
+
+  await rollout.append(input.conversationId, {
+    type: 'user_input_prepared',
+    turnId: input.turnId,
+    message: {
+      role: 'user',
+      content: input.message,
+      metadata: {
+        turnId: input.turnId,
+        prepared: true,
+        ...(input.attachments.length > 0 ? { attachments: input.attachments } : {}),
+      },
+    },
+    ts: preparedAt,
+  } as unknown as RolloutEvent)
+  return { turnId: input.turnId, preparedAt }
 }
 
 export function listConversations(options: ListConversationsOptions) {
@@ -373,7 +434,7 @@ function projectRunAttachments(attachments: AttachmentRef[]): AgentRunAttachment
   }))
 }
 
-export function startConversationRun(
+export async function startConversationRun(
   command: AgentConversationRunStartCommand,
   requestId: string,
 ): Promise<void> {
@@ -388,7 +449,13 @@ export function startConversationRun(
   }
 
   const suffix = `${Date.now()}_${randomUUID().slice(0, 8)}`
-  const turnId = `msg_${suffix}`
+  const turnId = command.turnId ?? `msg_${suffix}`
+  await prepareConversationRun({
+    conversationId,
+    turnId,
+    message: command.message,
+    attachments: (command.attachments ?? []).map(attachment => ({ fileId: attachment.fileId })),
+  })
   const runId = `run_${suffix}`
   const assistantMessageId = `msg_${Date.now()}_${randomUUID().slice(0, 8)}`
   const publisher = runEventHub.tryBegin({

@@ -84,6 +84,7 @@ interface RolloutProjectedEvent {
 }
 
 interface RolloutTurn {
+  turnId?: string
   userContent: string
   userTimestamp?: number
   userMetadata?: unknown
@@ -180,6 +181,11 @@ function asRolloutMessage(value: unknown): RolloutMessage | undefined {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function rolloutMessageTurnId(message: RolloutMessage | undefined): string | undefined {
+  const metadata = asRecord(message?.metadata)
+  return typeof metadata.turnId === 'string' && metadata.turnId ? metadata.turnId : undefined
 }
 
 function recoveredAttachment(upstreamFileId: string): AgentRunAttachmentDTO | undefined {
@@ -917,15 +923,25 @@ function readRolloutTurns(
   }
 
   for (const event of rolloutEvents) {
-    if (event.type === 'user_input') {
+    if (event.type === 'user_input_prepared' || event.type === 'user_input') {
       const message = asRolloutMessage(event.message)
       if (message?.visible === false) {
+        continue
+      }
+      const eventTurnId = (event as unknown as { turnId?: unknown }).turnId
+      const turnId = rolloutMessageTurnId(message)
+        ?? (typeof eventTurnId === 'string' ? eventTurnId : undefined)
+      if (event.type === 'user_input' && current?.turnId && current.turnId === turnId) {
+        current.userContent = rolloutMessageText(message)
+        current.userTimestamp = rolloutEventTimestamp(event) ?? current.userTimestamp
+        current.attachments = rolloutMessageAttachments(message)
         continue
       }
       if (current) {
         turns.push(current)
       }
       current = {
+        ...(turnId ? { turnId } : {}),
         userContent: rolloutMessageText(message),
         userTimestamp: rolloutEventTimestamp(event),
         userMetadata: message?.metadata,
@@ -1169,7 +1185,7 @@ export function projectMessagesFromRollout(conversationId: string, options: Roll
 
   turns.forEach((turn, index) => {
     const user: Message = {
-      id: `${conversationId}-rollout-user-${index + 1}`,
+      id: turn.turnId ?? `${conversationId}-rollout-user-${index + 1}`,
       conversation_id: conversationId,
       role: 'user',
       content: turn.userContent,

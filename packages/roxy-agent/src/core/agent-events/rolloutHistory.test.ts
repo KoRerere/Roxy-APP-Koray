@@ -48,6 +48,42 @@ describe('rollout history projector', () => {
     assert.equal(messages.filter(message => message.role === 'user').length, 1)
     assert.ok(!JSON.stringify(messages).includes('roxy_window_used'))
     assert.ok(!JSON.stringify(messages).includes('profile-1'))
+  it('keeps a prepared user input visible after an interruption and replaces it when runtime persistence completes', () => {
+    // Regression: UI 在用户输入持久化前发送 conversation.run.start，过早中断后无法恢复消息。
+    // Fixed by: 投影 HTTP 预存输入，并与 Runtime 随后写入的正式记录合并。
+    const conversationId = 'conversation-prepared-input'
+    const prepared = {
+      type: 'user_input_prepared',
+      turnId: 'message-1',
+      message: {
+        role: 'user',
+        content: 'keep me',
+        metadata: { turnId: 'message-1', prepared: true },
+      },
+      ts: 1000,
+    }
+
+    writeRollout(conversationId, [prepared])
+    let messages = projectMessagesFromRollout(conversationId)
+    assert.equal(messages.length, 2)
+    assert.equal(messages[0]?.content, 'keep me')
+
+    writeRollout(conversationId, [
+      prepared,
+      {
+        type: 'user_input',
+        message: {
+          role: 'user',
+          content: 'keep me',
+          metadata: { turnId: 'message-1' },
+        },
+        ts: 1100,
+      },
+      { type: 'turn_completed', stopReason: 'end_turn', ts: 1200 },
+    ])
+    messages = projectMessagesFromRollout(conversationId)
+    assert.equal(messages.filter(message => message.role === 'user').length, 1)
+    assert.equal(messages[0]?.content, 'keep me')
   })
 
   it('restores attachment cards from visible user-input metadata after reload', () => {

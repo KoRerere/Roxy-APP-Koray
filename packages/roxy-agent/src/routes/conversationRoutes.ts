@@ -1,4 +1,5 @@
 import type { Conversation, Message } from '@/database/conversations'
+import { AgentRunAttachmentDTOSchema } from '@roxy/shared/channel'
 import type { Request, Response } from 'express'
 import { Router } from 'express'
 import { z } from 'zod'
@@ -31,6 +32,12 @@ const FixedUpdateConversationSchema = FixedConversationIdSchema.extend({
 const FixedMarkConversationReadSchema = FixedConversationIdSchema.extend({
   runId: z.string().trim().min(1).max(128),
 })
+
+const FixedPrepareConversationRunSchema = FixedConversationIdSchema.extend({
+  turnId: z.string().trim().min(1).max(128),
+  message: z.string(),
+  attachments: z.array(AgentRunAttachmentDTOSchema).default([]),
+}).refine(data => Boolean(data.message.trim()) || data.attachments.length > 0)
 
 const terminalRunStatuses = new Set(['completed', 'failed', 'cancelled'])
 
@@ -167,6 +174,24 @@ router.get('/conversations/detail', async (req: Request, res: Response) => {
   }
   catch (error) {
     return internalError(res, 'read', error)
+  }
+})
+
+router.post('/conversations/prepare-run', async (req: Request, res: Response) => {
+  const parsed = FixedPrepareConversationRunSchema.safeParse(req.body ?? {})
+  if (!parsed.success) {
+    return invalidRequest(res, 'Invalid request body')
+  }
+
+  try {
+    if (!chatService.getConversation(parsed.data.conversationId)) {
+      return conversationNotFound(res)
+    }
+    const prepared = await chatService.prepareConversationRun(parsed.data)
+    return res.status(201).json({ code: 0, data: prepared })
+  }
+  catch (error) {
+    return internalError(res, 'prepare run for', error)
   }
 })
 

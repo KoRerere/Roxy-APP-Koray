@@ -24,7 +24,7 @@ const commandCases: Array<{
     type: 'conversation.run.start',
     commandSchema: AgentConversationRunStartCommandSchema,
     messageSchema: AgentConversationRunStartMessageSchema,
-    data: { conversationId: 'conversation-1', message: 'Run it', fullAccess: true },
+    data: { conversationId: 'conversation-1', turnId: 'message-1', message: 'Run it', fullAccess: true },
   },
   {
     type: 'conversation.run.stop',
