@@ -1,6 +1,5 @@
 import { join } from 'node:path'
 import { appConfig } from '/@/constants'
-import { isPackaged } from '/@/constants/common'
 import { store } from '/@/modules/store'
 
 /**
@@ -21,9 +20,11 @@ export const ossObject = {
   get userPluginDataDir() {
     return `/groupdata/workspace/${store.workspaceId}/plugin`
   },
-  /** 默认插件图标本地路径 */
+  /**
+   * 默认插件图标本地路径
+   * 该文件不随 Web 热更新走完整 dist，需由 electron 打包白名单拷入 dist/web
+   */
   get defaultPluginIconPath() {
-    const icon = 'images/default-plugin-icon.png'
-    return isPackaged ? join(appConfig.unpackedFilePath, `./dist/web/${icon}`) : join(import.meta.dirname, `../../web/public/${icon}`)
+    return join(appConfig.currentWebDir, 'images/default-plugin-icon.png')
   },
 } as const

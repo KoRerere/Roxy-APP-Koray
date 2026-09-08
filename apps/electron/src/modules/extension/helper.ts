@@ -1,5 +1,5 @@
 import { generateKeyPairSync } from 'node:crypto'
-import { access, readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { mediaProtocolName, ossObject } from '/@/constants'
 import { fileExists } from '/@/utils'
@@ -101,13 +101,17 @@ export async function getPluginMeta(pluginDir: string) {
     try {
       const iconPath = manifestInfo.icons?.['128'] || Object.values(manifestInfo.icons || {})[0]
       const iconPathExist = iconPath ? await fileExists(path.join(targetPluginDir, iconPath)) : false
-      /** 插件图标所在路径 */
+      /** 插件自身无图标时回退到内置默认图 */
       const pluginIconPath = iconPathExist ? path.join(targetPluginDir, iconPath) : ossObject.defaultPluginIconPath
-      await access(pluginIconPath)
-      pluginIcon = `${mediaProtocolName}:${pluginIconPath}`
+      if (await fileExists(pluginIconPath)) {
+        pluginIcon = `${mediaProtocolName}:${pluginIconPath}`
+      }
+      else {
+        console.warn('[extension] plugin icon missing', pluginIconPath)
+      }
     }
     catch (error) {
-      console.log('pluginIcon error', error)
+      console.warn('[extension] pluginIcon error', error)
     }
 
     return {

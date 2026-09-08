@@ -35,11 +35,28 @@ const copySyncOptions: CopySyncOptions = {
   filter: src => !src.endsWith('.map') && !src.endsWith('.d.ts'),
 }
 
+// 主进程只拷贝白名单资源，不会带上整个 web/dist 或 public/images
 // cpSync(path.join(workDir, '../web/dist'), path.join(workDir, './dist/web'), copySyncOptions)
 cpSync(path.join(workDir, '../web/src/locales/langs'), path.join(workDir, './dist/web/locales'), copySyncOptions)
-const webPublicAssets = ['html-template', 'electron', 'config.json', 'blockDomain.html', 'fonts', '500.html', 'launch.html']
+const webPublicAssets = [
+  'html-template',
+  'electron',
+  'config.json',
+  'blockDomain.html',
+  'fonts',
+  '500.html',
+  'launch.html',
+  // 本地扩展无 icons 时主进程回退图，必须随 dist/web asarUnpack
+  'images/default-plugin-icon.png',
+]
 for (const p of webPublicAssets) {
-  cpSync(path.join(workDir, `../web/public/${p}`), path.join(workDir, `./dist/web/${p}`), copySyncOptions)
+  const from = path.join(workDir, `../web/public/${p}`)
+  const to = path.join(workDir, `./dist/web/${p}`)
+  if (!existsSync(from)) {
+    throw new Error(`打包缺少 web 静态资源: ${from}`)
+  }
+  mkdirSync(path.dirname(to), { recursive: true })
+  cpSync(from, to, copySyncOptions)
 }
 cpSync(path.join(workDir, '../preload/dist'), path.join(workDir, './dist/preload'), copySyncOptions)
 isWindows && cpSync(path.join(workDir, './bin'), path.join(workDir, './dist/bin'), copySyncOptions)
@@ -295,6 +312,17 @@ const options: Configuration = {
     )
     if (!existsSync(extensionManifest)) {
       throw new Error(`自动化控制扩展未被解包到安装包: ${extensionManifest}`)
+    }
+    const defaultPluginIcon = path.join(
+      context.packager.getResourcesDir(context.appOutDir),
+      'app.asar.unpacked',
+      'dist',
+      'web',
+      'images',
+      'default-plugin-icon.png',
+    )
+    if (!existsSync(defaultPluginIcon)) {
+      throw new Error(`默认插件图标未被解包到安装包: ${defaultPluginIcon}`)
     }
   },
   files: [
