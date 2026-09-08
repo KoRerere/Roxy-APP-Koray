@@ -2,6 +2,7 @@
 import type { ZodObject } from 'zod'
 import { isFunction, isPlainObject, isString } from 'es-toolkit'
 import { isVNode } from 'vue'
+import { getFirstZodIssueMessage } from '/@/utils/zod-error'
 import type { CustomRenderFn, FormSchema, RenderCallbackParams } from './types/form'
 import { componentMap } from './componentMap'
 import { useFormContext } from './hooks'
@@ -115,6 +116,11 @@ const getPlaceholder = computed(() => {
  */
 function validateField() {
   const field = props.schema.field
+  // 未配置 rule 的字段不在 object schema 里；Zod 4 对 pick 未知 key 会抛错
+  if (!props.validationSchema.shape?.[field]) {
+    return
+  }
+
   /**
    * 提取单字段的 schema
    */
@@ -126,7 +132,7 @@ function validateField() {
 
   // 如果验证失败，保存错误消息
   if (!result.success) {
-    errors.value[field] = result.error.errors[0].message
+    errors.value[field] = getFirstZodIssueMessage(result.error)
   }
 }
 
