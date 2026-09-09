@@ -44,7 +44,7 @@ export function inspectAgentComposerTemplateInputs(prompt: string): {
   missingInputLabels: string[]
 } {
   const missingInputLabels = new Set<string>()
-  const pattern = /\[(?:input|textarea|url):([^\]]+)\](?:\(([^)]*)\))?/g
+  const pattern = /\[(?:input|textarea|url|project):([^\]]+)\](?:\(([^)]*)\))?/g
   for (const match of prompt.matchAll(pattern)) {
     if (!match[2]?.trim()) {
       missingInputLabels.add(match[1])
@@ -93,10 +93,10 @@ export function validateAgentComposerTemplatePrompt(
     issues.push('Composer prompt must not retain a local filesystem path.')
   }
 
-  const marker = /\[(?:input|textarea|url):/g
+  const marker = /\[(?:input|textarea|url|project):/g
   for (const match of value.matchAll(marker)) {
     const fragment = value.slice(match.index)
-    if (!/^\[(?:input|url):[^\]\r\n]+\]\([^\r\n)]*\)|^\[textarea:[^\]\r\n]+\]\([^)]*\)/.test(fragment)) {
+    if (!/^\[(?:input|url|project):[^\]\r\n]+\]\([^\r\n)]*\)|^\[textarea:[^\]\r\n]+\]\([^)]*\)/.test(fragment)) {
       issues.push('Composer prompt contains an unsupported or malformed Composer token.')
       break
     }

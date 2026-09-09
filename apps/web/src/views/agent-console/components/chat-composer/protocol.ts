@@ -8,7 +8,7 @@ import type { AgentComposerDoc, AgentComposerItem, AgentComposerTokenKind } from
 import { cacheAgentProfileLabels, getCachedAgentProfileLabels, normalizeAgentProfileLabel } from '../../profile-token-display'
 
 function createProtocolTokenPattern() {
-  return /\[(@profile|@script):([^\]]*)\]\(([^)]*)\)|\[(input|textarea|url):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]*)\)/g
+  return /\[(@profile|@script):([^\]]*)\]\(([^)]*)\)|\[(input|textarea|url|project):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]*)\)/g
 }
 
 const MARKDOWN_LINK_PATTERN = /\[((?:\\.|[^\]\\\n])*)\]\(((?:\\.|[^)\\\n])*)\)/g
@@ -50,7 +50,7 @@ function parseProtocolToken(match: RegExpMatchArray): ComposerProtocolToken {
     ? 'profile'
     : match[1] === '@script'
       ? 'script'
-      : match[4] === 'input' || match[4] === 'textarea' || match[4] === 'url'
+      : match[4] === 'input' || match[4] === 'textarea' || match[4] === 'url' || match[4] === 'project'
         ? match[4]
         : 'skill'
   const title = match[2] || match[5] || match[7] || ''
@@ -84,7 +84,13 @@ export function scanComposerProtocolTokens(prompt: string): ComposerProtocolToke
 
 export function hasComposerProtocolTokens(prompt: string) {
   return scanComposerProtocolTokens(prompt).some((token) => {
-    return token.kind === 'profile' || token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url' || Boolean(token.templateRef)
+    return token.kind === 'profile'
+      || token.kind === 'input'
+      || token.kind === 'textarea'
+      || token.kind === 'url'
+      || token.kind === 'project'
+      || Boolean(token.templateRef)
+      || Boolean(token.skillPath)
   })
 }
 
@@ -99,7 +105,7 @@ export function getMissingComposerTokenLabels(prompt: string) {
   const labels: string[] = []
 
   for (const token of tokens) {
-    if ((token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url') && !token.target.trim()) {
+    if ((token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url' || token.kind === 'project') && !token.target.trim()) {
       labels.push(token.title)
     }
   }
@@ -139,7 +145,7 @@ export function searchComposerItems(items: AgentComposerItem[], query: string) {
 }
 
 export function tokenToProtocol(item: AgentComposerItem) {
-  if (item.kind === 'input' || item.kind === 'textarea' || item.kind === 'url') {
+  if (item.kind === 'input' || item.kind === 'textarea' || item.kind === 'url' || item.kind === 'project') {
     return inputTokenToProtocol(item)
   }
 
@@ -188,6 +194,10 @@ function inputTokenToProtocol(item: AgentComposerItem) {
 
   if (item.kind === 'textarea') {
     return `[textarea:${item.title || item.id}](${value ?? ''})`
+  }
+
+  if (item.kind === 'project') {
+    return `[project:${item.title || item.id}](${value ?? ''})`
   }
 
   return `[input:${item.title || item.id}](${value ?? ''})`
@@ -277,7 +287,7 @@ export function findStoredComposerItem(options: {
 }): AgentComposerItem | undefined {
   const { kind, title, target, profiles, slashItems } = options
 
-  if (kind === 'input' || kind === 'textarea' || kind === 'url') {
+  if (kind === 'input' || kind === 'textarea' || kind === 'url' || kind === 'project') {
     return createInputTokenItem(title, target, kind)
   }
 
@@ -359,7 +369,7 @@ function createTemplateReferenceItem(options: {
 export function createInputTokenItem(
   title: string,
   value = '',
-  kind: Extract<AgentComposerTokenKind, 'input' | 'textarea' | 'url'> = 'input',
+  kind: Extract<AgentComposerTokenKind, 'input' | 'textarea' | 'url' | 'project'> = 'input',
 ): AgentComposerItem {
   const normalizedValue = kind === 'url' ? normalizeUrlValue(value) : value
   return {
@@ -403,7 +413,7 @@ export function updateInputTokenValue(
   doc: AgentComposerDoc | undefined,
   title: string,
   value: string,
-  kind: Extract<AgentComposerTokenKind, 'input' | 'textarea' | 'url'> = 'input',
+  kind: Extract<AgentComposerTokenKind, 'input' | 'textarea' | 'url' | 'project'> = 'input',
 ) {
   if (!doc) {
     return doc
@@ -717,7 +727,7 @@ function parsePromptLine(
       const token = parseProtocolToken(tokenMatch)
       const targets = token.kind === 'profile' ? splitProfileDirIds(token.target) : [token.target]
 
-      if (token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url') {
+      if (token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url' || token.kind === 'project') {
         const value = token.kind === 'input'
           ? resolveInputDefaultValue(token.target)
           : token.target

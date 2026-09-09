@@ -2,6 +2,7 @@
 import type { AgentConversationProcess, AgentMessage, AgentProcessEvent, AgentTaskReportSaveRequest } from '../types'
 import { useAgentStore } from '/@/stores/agent'
 import AgentCopyControl from './AgentCopyControl.vue'
+import AgentFileCard from './AgentFileCard.vue'
 import AgentProcessTimeline from './AgentProcessTimeline.vue'
 import AgentStatusMessage from './AgentStatusMessage.vue'
 import MarkdownContent from './MarkdownContent.vue'
@@ -141,15 +142,6 @@ function isImageAttachment(attachment: MessageAttachment) {
     && Boolean(getAttachmentPreview(attachment))
 }
 
-function getFileExtension(fileName: string) {
-  const ext = fileName.split('.').pop()
-  return ext && ext !== fileName ? ext.toUpperCase() : $t('文件')
-}
-
-function getAttachmentTypeLabel(attachment: MessageAttachment) {
-  return attachment.kind === 'folder' ? 'Folder' : getFileExtension(attachment.fileName)
-}
-
 function openImagePreview(attachment: MessageAttachment) {
   if (!isImageAttachment(attachment)) {
     return
@@ -220,34 +212,15 @@ onUnmounted(() => document.removeEventListener('keydown', handlePreviewKeydown))
       />
 
       <div v-if="message.role === 'user' && message.attachments?.length" class="message-attachments">
-        <article v-for="attachment in message.attachments" :key="attachment.fileId" class="message-attachment">
-          <button
-            v-if="isImageAttachment(attachment)"
-            type="button"
-            class="message-attachment__card message-attachment__card--previewable"
-            :aria-label="$t('预览')"
-            @click="openImagePreview(attachment)"
-          >
-            <span class="message-attachment__preview">
-              <img :src="getAttachmentPreview(attachment)" :alt="attachment.fileName">
-            </span>
-            <span class="message-attachment__meta">
-              <span class="message-attachment__name">{{ attachment.fileName }}</span>
-              <span class="message-attachment__type">{{ getAttachmentTypeLabel(attachment) }}</span>
-            </span>
-          </button>
-
-          <div v-else class="message-attachment__card">
-            <span class="message-attachment__preview">
-              <SvgIcon v-if="attachment.kind === 'folder'" name="base/rx_ic_folder" size="20" color="var(--color-text-disabled)" />
-              <SvgIcon v-else name="base/rx_ic_doc_article" size="20" color="var(--color-text-disabled)" />
-            </span>
-            <span class="message-attachment__meta">
-              <span class="message-attachment__name">{{ attachment.fileName }}</span>
-              <span class="message-attachment__type">{{ getAttachmentTypeLabel(attachment) }}</span>
-            </span>
-          </div>
-        </article>
+        <AgentFileCard
+          v-for="attachment in message.attachments"
+          :key="attachment.fileId"
+          :attachment="attachment"
+          :preview-url="getAttachmentPreview(attachment)"
+          :previewable="isImageAttachment(attachment)"
+          size="message"
+          @preview="openImagePreview(attachment)"
+        />
       </div>
 
       <div
@@ -398,90 +371,6 @@ onUnmounted(() => document.removeEventListener('keydown', handlePreviewKeydown))
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
-}
-
-.message-attachment {
-  display: flex;
-  width: 160px;
-  max-width: 100%;
-}
-
-.message-attachment__card {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--color-border-secondary);
-  border-radius: 8px;
-  background: var(--color-bg-primary);
-  box-sizing: border-box;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-}
-
-button.message-attachment__card {
-  appearance: none;
-}
-
-.message-attachment__card--previewable {
-  cursor: zoom-in;
-  transition:
-    border-color 0.16s ease,
-    box-shadow 0.16s ease,
-    transform 0.16s ease;
-
-  &:hover,
-  &:focus-visible {
-    border-color: var(--color-border-primary);
-    box-shadow: 0 4px 12px rgb(24 24 27 / 8%);
-    outline: none;
-    transform: translateY(-1px);
-  }
-}
-
-.message-attachment__preview {
-  display: grid;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 4px;
-  background: var(--color-bg-tertiary);
-
-  img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.message-attachment__meta {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  font-size: 13px;
-  line-height: 18px;
-}
-
-.message-attachment__name,
-.message-attachment__type {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.message-attachment__name {
-  color: var(--color-text-primary);
-  font-weight: 500;
-}
-
-.message-attachment__type {
-  color: var(--color-text-disabled);
 }
 
 .attachment-image-preview {

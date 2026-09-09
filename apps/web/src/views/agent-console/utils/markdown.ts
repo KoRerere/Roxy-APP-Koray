@@ -6,14 +6,14 @@ import { getUrlFaviconUrl } from './urlFavicon'
 
 interface AgentMarkdownToken {
   raw?: string
-  kind: 'profile' | 'script' | 'skill' | 'input' | 'textarea' | 'url'
+  kind: 'profile' | 'script' | 'skill' | 'input' | 'textarea' | 'url' | 'project'
   marker: '@' | '/' | ''
   title: string
   target: string
 }
 
-const AGENT_TOKEN_START_PATTERN = /\[(@profile|@script|input|textarea|url):|\[\$/
-const AGENT_PROTOCOL_TOKEN_PATTERN = /\[(@profile|@script):([^\]]+)\]\(([^)]*)\)|\[(input|textarea|url):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]+)\)/g
+const AGENT_TOKEN_START_PATTERN = /\[(@profile|@script|input|textarea|url|project):|\[\$/
+const AGENT_PROTOCOL_TOKEN_PATTERN = /\[(@profile|@script):([^\]]+)\]\(([^)]*)\)|\[(input|textarea|url|project):([^\]]+)\](?:\(([^)]*)\))?|\[\$([^\]]+)\]\(([^)]+)\)/g
 const defaultRenderer = new Renderer()
 
 marked.use({
@@ -94,7 +94,7 @@ function tokenFromProtocolMatch(match: RegExpExecArray): AgentMarkdownToken {
     }
   }
 
-  if (match[4] === 'input' || match[4] === 'textarea' || match[4] === 'url') {
+  if (match[4] === 'input' || match[4] === 'textarea' || match[4] === 'url' || match[4] === 'project') {
     return {
       kind: match[4],
       marker: '',
@@ -273,7 +273,7 @@ function normalizeWindowsDriveLocalPath(filePath: string) {
 function getAgentTokenDisplay(
   token: Pick<AgentMarkdownToken, 'kind' | 'title' | 'target'>,
 ): { title: string, count: string, details: string } {
-  if (token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url')
+  if (token.kind === 'input' || token.kind === 'textarea' || token.kind === 'url' || token.kind === 'project')
     return { title: token.target.trim() || token.title, count: '', details: '' }
 
   if (token.kind !== 'profile')

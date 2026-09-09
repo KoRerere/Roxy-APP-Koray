@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { AgentConversationProcess, AgentFileArtifact, AgentFileProcessEvent, AgentMessageStatus, AgentTaskReportSaveRequest } from '../types'
+import type { AgentAttachment, AgentConversationProcess, AgentFileArtifact, AgentFileProcessEvent, AgentMessageStatus, AgentTaskReportSaveRequest } from '../types'
 import type { TaskReportWindowInfo } from '../task-report-window-info'
 import { useAgentConsoleApi } from '../api'
 import { splitProcessEventBlocks } from '../processEventGrouping'
 import { fetchTaskReportWindowInfo } from '../task-report-window-info'
 import { shouldCollapseProcessBeforeTaskReport } from '../task-report-presentation'
 import AgentCollapse from './AgentCollapse.vue'
+import AgentFileCard from './AgentFileCard.vue'
 import AgentLifecycleTree from './AgentLifecycleTree.vue'
 import AgentProcessEventList from './AgentProcessEventList.vue'
 import AgentTaskReportCard from './AgentTaskReportCard.vue'
@@ -69,6 +70,17 @@ function toggleProcess() {
 
 function fileUrl(file: AgentFileArtifact) {
   return api.getFileUrl(file.fileId, { download: true, fileName: file.fileName })
+}
+
+function fileAttachment(file: AgentFileArtifact): AgentAttachment {
+  return {
+    fileId: file.fileId,
+    kind: 'file',
+    fileName: file.fileName,
+    mimeType: file.mimeType,
+    size: file.size,
+    uploadStatus: 'uploaded',
+  }
 }
 
 function syncTimer() {
@@ -178,15 +190,14 @@ onBeforeUnmount(() => {
     />
 
     <div v-if="files.length" class="agent-file-list">
-      <article v-for="file in files" :key="file.fileId" class="agent-file-card">
-        <div class="agent-file-main">
-          <span class="agent-file-icon" aria-hidden="true">
-            <SvgIcon name="base/rx_ic_doc_line" size="24" />
-          </span>
-          <span class="agent-file-name" :title="file.fileName">{{ file.fileName }}</span>
-        </div>
-        <a class="agent-file-download" :href="fileUrl(file)" :download="file.fileName">{{ $t('下载') }}</a>
-      </article>
+      <AgentFileCard
+        v-for="file in files"
+        :key="file.fileId"
+        :attachment="fileAttachment(file)"
+        :download-label="$t('下载')"
+        :download-url="fileUrl(file)"
+        size="reply"
+      />
     </div>
   </section>
 </template>
@@ -261,75 +272,9 @@ onBeforeUnmount(() => {
 .agent-file-list {
   display: flex;
   min-width: 0;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 8px;
-}
-.agent-file-card {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border: 1px solid var(--color-border-secondary, #e5e5e5);
-  border-radius: 8px;
-  color: var(--color-text-primary, #141414);
-  background: var(--color-bg-primary, #fcfcfc);
-}
-.agent-file-main {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  align-items: center;
-  gap: 4px;
-}
-.agent-file-icon {
-  display: inline-flex;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 4px;
-  color: var(--colors-icon-icon-tertiary, #737373);
-  background: var(--color-bg-tertiary, #f5f5f5);
-}
-.agent-file-name {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  color: var(--color-text-primary, #141414);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.agent-file-download {
-  display: inline-flex;
-  min-height: 34px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 10px;
-  border: 1px solid var(--color-border-primary, #d6d6d6);
-  border-radius: 10px;
-  color: var(--color-text-primary, #141414);
-  background: var(--color-bg-primary, #fcfcfc);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-.agent-file-download:hover {
-  border-color: var(--color-border-primary-hover, var(--color-border-primary, #d6d6d6));
-  background: var(--color-bg-tertiary, #f5f5f5);
-}
-.agent-file-download:focus-visible {
-  outline: 2px solid var(--color-border-primary-inverse, #141414);
-  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
