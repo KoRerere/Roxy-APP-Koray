@@ -10,6 +10,22 @@ export type RoxyRolloutEvent = RolloutEvent | {
   ts: number
 }
 
+function isLegacyRuntimeMetadataMessage(message: Message): boolean {
+  return message.visible === false
+    && typeof message.content === 'string'
+    && message.content.trimStart().startsWith('<metadata>')
+}
+
+function isReplayableRoxyEvent(event: RoxyRolloutEvent): event is RolloutEvent {
+  if (event.type === 'roxy_window_used') {
+    return false
+  }
+  if (event.type === 'user_input' && isLegacyRuntimeMetadataMessage(event.message)) {
+    return false
+  }
+  return true
+}
+
 /** Roxy-owned append-only rollout store used by runtime-backed conversations. */
 export class RoxyRolloutStore implements ISessionStore {
   constructor(
@@ -53,7 +69,7 @@ export class RoxyRolloutStore implements ISessionStore {
   }
 
   async read(sessionId: SessionId): Promise<RolloutEvent[]> {
-    return (await this.readEvents(sessionId)).filter((event): event is RolloutEvent => event.type !== 'roxy_window_used')
+    return (await this.readEvents(sessionId)).filter(isReplayableRoxyEvent)
   }
 
   async readEvents(sessionId: SessionId): Promise<RoxyRolloutEvent[]> {

@@ -39,7 +39,7 @@ import {
   getHostToolCapabilities,
 } from '../host-tools'
 import { createRuntimeFilesystemMiddleware } from '../middleware/filesystem'
-import { createGeneralPurposeAgentContextMessage, createRuntimeContextMessages } from '../prompt-context'
+import { detectRuntimeMetadata } from '../prompt-context'
 import { withRuntimeNetworkRetry } from '../retrying-provider'
 import { RoxyRolloutStore } from '../rollout'
 import { createGeneralPurposeSystemPrompt } from '../system-prompt'
@@ -298,6 +298,12 @@ export async function createGeneralPurposeAgent(
         apiFormat: options.apiFormat,
         enableApplyPatch: useApplyPatch,
         hasRipgrep: hostToolCapabilities.hasRipgrep,
+        runtimeContext: {
+          workingDirectory: workspaceDir,
+          metadata: detectRuntimeMetadata(),
+          launchToolName: childLaunchToolName,
+          assignedDirIds: allowedDirIds,
+        },
       }),
       provider: withRuntimeNetworkRetry(
         new OpenAIResponsesProvider({
@@ -358,14 +364,7 @@ export async function createGeneralPurposeAgent(
       ],
     })
 
-    const createInput = () => [
-      ...createRuntimeContextMessages({ workingDirectory: workspaceDir }),
-      createGeneralPurposeAgentContextMessage({
-        launchToolName: childLaunchToolName,
-        assignedDirIds: allowedDirIds,
-      }),
-      { role: 'user' as const, content: task },
-    ]
+    const createInput = () => [{ role: 'user' as const, content: task }]
 
     return {
       resourceKey,

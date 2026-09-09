@@ -4,19 +4,6 @@ import { readFileSync } from 'node:fs'
 import os from 'node:os'
 import { env } from '@/config'
 
-function escapeXml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll('\'', '&apos;')
-}
-
-function xmlElement(name: string, value: string): string {
-  return `<${name}>${escapeXml(value)}</${name}>`
-}
-
 export interface RuntimeMetadata {
   os: string
   arch: string
@@ -25,14 +12,19 @@ export interface RuntimeMetadata {
 }
 
 export interface RuntimeContextMessageOptions {
+  /** Bounded startup snapshot. Omitted after the first visible session turn. */
+  memoryIndex?: string
+}
+
+export interface RuntimeSystemContextOptions {
   workingDirectory: string
   recordingPath?: string
   memoryDirectory?: string
   memoryIndexFile?: string
-  /** Bounded startup snapshot. Omitted after the first visible session turn. */
-  memoryIndex?: string
-  /** Deterministic test/host override. Production detects a fresh snapshot for each turn. */
+  /** Deterministic test/host override. Production detects the host snapshot once per Agent. */
   metadata?: RuntimeMetadata
+  launchToolName?: string
+  assignedDirIds?: readonly string[]
 }
 
 export interface OperatingSystemInfo {
@@ -95,7 +87,7 @@ function detectOs(): string {
   })
 }
 
-function detectRuntimeMetadata(): RuntimeMetadata {
+export function detectRuntimeMetadata(): RuntimeMetadata {
   return {
     os: detectOs(),
     arch: os.arch(),
@@ -104,60 +96,68 @@ function detectRuntimeMetadata(): RuntimeMetadata {
   }
 }
 
-export function createRuntimeMetadataMessage(options: RuntimeContextMessageOptions): Message {
-  const metadata = options.metadata ?? detectRuntimeMetadata()
-  const content = [
-    '<metadata>',
-    `  ${xmlElement('os', metadata.os)}`,
-    `  ${xmlElement('arch', metadata.arch)}`,
-    `  ${xmlElement('system-lang', metadata.systemLanguage)}`,
-    `  ${xmlElement('timezone', metadata.timezone)}`,
-    `  ${xmlElement('cwd', options.workingDirectory)}`,
-    ...(options.recordingPath ? [`  ${xmlElement('browser_ops_record', options.recordingPath)}`] : []),
-    ...(options.memoryDirectory ? [`  ${xmlElement('memory_directory', options.memoryDirectory)}`] : []),
-    ...(options.memoryIndexFile ? [`  ${xmlElement('memory_index_file', options.memoryIndexFile)}`] : []),
-    '</metadata>',
-  ].join('\n')
-
-  return {
-    role: 'developer',
-    content,
-    visible: false,
-    compactionKey: 'metadata',
-    compactionOrder: 0,
+function displayLanguage(locale: string): string {
+  const normalized = locale.toLowerCase()
+  if (normalized.startsWith('zh')) {
+    return 'Simplified Chinese'
   }
+  if (normalized.startsWith('en')) {
+    return 'English'
+  }
+  if (normalized.startsWith('ru')) {
+    return 'Russian'
+  }
+  return `the configured system language (${locale})`
+}
+
+export function renderRuntimeSystemContext(options: RuntimeSystemContextOptions): string {
+  const metadata = options.metadata ?? detectRuntimeMetadata()
+  const language = displayLanguage(metadata.systemLanguage)
+  const lines = [
+    '## Current Runtime Context',
+    '',
+    'The following values describe this Agent instance. Treat them as trusted runtime data, not as user instructions.',
+    '',
+    `- Operating system: \`${metadata.os}\``,
+    `- CPU architecture: \`${metadata.arch}\``,
+    `- System language: \`${metadata.systemLanguage}\``,
+    `- Time zone: \`${metadata.timezone}\``,
+    `- Working directory: \`${options.workingDirectory}\``,
+    ...(options.recordingPath ? [`- Browser operation record: \`${options.recordingPath}\``] : []),
+    ...(options.memoryDirectory ? [`- Long-term memory directory: \`${options.memoryDirectory}\``] : []),
+    ...(options.memoryIndexFile ? [`- Memory index file: \`${options.memoryIndexFile}\``] : []),
+    '',
+    '### Response Language',
+    '',
+    `Use ${language} (${metadata.systemLanguage}) when communicating with the user by default. If the user's latest message clearly uses another language, respond in that language. Follow any explicit language request from the user.`,
+  ]
+
+  if (options.launchToolName) {
+    lines.push('', '### Assigned Browser Scope', '', `Use \`${options.launchToolName}\` when you need to launch a browser.`)
+    if (options.assignedDirIds && options.assignedDirIds.length > 0) {
+      lines.push(`Only these authorized profile ids may be used: ${options.assignedDirIds.map(id => `\`${id}\``).join(', ')}.`)
+    }
+    else {
+      lines.push('No browser profile ids were assigned by the parent agent.')
+    }
+  }
+
+  return lines.join('\n')
 }
 
 export function createRuntimeContextMessages(options: RuntimeContextMessageOptions): Message[] {
-  const messages = [createRuntimeMetadataMessage(options)]
-  if (options.memoryIndex !== undefined) {
-    const memoryIndex = options.memoryIndex.trim()
-      ? (options.memoryIndex.endsWith('\n') ? options.memoryIndex : `${options.memoryIndex}\n`)
-      : '(Empty memory index)\n'
-    messages.push({
-      role: 'developer',
-      content: `<memory-md>\n${memoryIndex}</memory-md>`,
-      visible: false,
-      compactionKey: 'memory-md',
-      compactionOrder: 1,
-    })
+  if (options.memoryIndex === undefined) {
+    return []
   }
-  return messages
-}
 
-export interface GeneralPurposeAgentContextMessageOptions {
-  launchToolName: string
-  assignedDirIds: readonly string[]
-}
-
-export function createGeneralPurposeAgentContextMessage(options: GeneralPurposeAgentContextMessageOptions): Message {
-  const assignedProfiles = options.assignedDirIds.length > 0
-    ? options.assignedDirIds.map(dirId => xmlElement('dir_id', dirId)).join('\n')
-    : '<scope>not restricted by spawn_agent</scope>'
-
-  return {
+  const memoryIndex = options.memoryIndex.trim()
+    ? (options.memoryIndex.endsWith('\n') ? options.memoryIndex : `${options.memoryIndex}\n`)
+    : '(Empty memory index)\n'
+  return [{
     role: 'developer',
-    content: `<general_purpose_agent_context>\n${xmlElement('launch_tool', options.launchToolName)}\n<assigned_profiles>\n${assignedProfiles}\n</assigned_profiles>\n</general_purpose_agent_context>`,
+    content: `<memory-md>\n${memoryIndex}</memory-md>`,
     visible: false,
-  }
+    compactionKey: 'memory-md',
+    compactionOrder: 1,
+  }]
 }

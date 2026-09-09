@@ -1,4 +1,6 @@
 import type { AiAgentModelApiFormat } from '@/api/agentApiClient'
+import type { RuntimeSystemContextOptions } from '../prompt-context'
+import { renderRuntimeSystemContext } from '../prompt-context'
 import roxyPrompt from './roxy-prompt.md?raw'
 
 const APPLY_PATCH_START = '<!-- ROXY_APPLY_PATCH_START -->'
@@ -97,10 +99,11 @@ export interface RuntimeSystemPromptOptions {
   includeSubagentInstructions?: boolean
   includeGeneralPurposeInstructions?: boolean
   hasRipgrep?: boolean
+  runtimeContext?: RuntimeSystemContextOptions
 }
 
 export function createRuntimeSystemPrompt(options: RuntimeSystemPromptOptions = {}): string {
-  return renderHostToolPrompt(renderRoxyPrompt([
+  const prompt = renderHostToolPrompt(renderRoxyPrompt([
     {
       start: APPLY_PATCH_START,
       end: APPLY_PATCH_END,
@@ -117,12 +120,16 @@ export function createRuntimeSystemPrompt(options: RuntimeSystemPromptOptions = 
       include: options.includeGeneralPurposeInstructions === true,
     },
   ]), options)
+  return options.runtimeContext
+    ? `${prompt}\n\n${renderRuntimeSystemContext(options.runtimeContext)}`
+    : prompt
 }
 
 export interface GeneralPurposeSystemPromptOptions {
   apiFormat?: AiAgentModelApiFormat
   enableApplyPatch?: boolean
   hasRipgrep?: boolean
+  runtimeContext?: RuntimeSystemContextOptions
 }
 
 export function createGeneralPurposeSystemPrompt(options: GeneralPurposeSystemPromptOptions = {}): string {
@@ -132,5 +139,6 @@ export function createGeneralPurposeSystemPrompt(options: GeneralPurposeSystemPr
     includeSubagentInstructions: false,
     includeGeneralPurposeInstructions: true,
     hasRipgrep: options.hasRipgrep,
+    runtimeContext: options.runtimeContext,
   })
 }

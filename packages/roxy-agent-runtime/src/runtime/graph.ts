@@ -35,7 +35,7 @@ export interface AgentGraphDeps {
   model: string
   /** Optional token budget forwarded to ChatRequest.maxTokens. */
   maxTokens?: number
-  /** Stable base system prompt. Its discovered Skill catalog is appended as a system block; turn-varying host context uses developer messages. */
+  /** Stable base system prompt. Its discovered Skill catalog and host runtime context are system blocks; turn-varying context uses developer messages. */
   systemPrompt?: string
   provider: IModelProvider
   tools: IToolRegistry

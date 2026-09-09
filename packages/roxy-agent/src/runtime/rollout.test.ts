@@ -49,4 +49,27 @@ describe('RoxyRolloutStore', () => {
     assert.equal(fs.existsSync(path.join(root, 'sharded', `${sessionId}.jsonl`)), true)
     assert.equal((await store.read(sessionId))[0]?.type, 'session_start')
   })
+
+  it('keeps legacy metadata in the raw rollout but excludes it from replay', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'roxy-rollout-store-legacy-metadata-'))
+    roots.push(root)
+    const store = new RoxyRolloutStore(root)
+    const sessionId = 'conversation-legacy-metadata'
+    const legacyMetadata = {
+      role: 'developer' as const,
+      content: '<metadata><system-lang>en-US</system-lang><cwd>/old</cwd></metadata>',
+      visible: false,
+      compactionKey: 'metadata',
+      compactionOrder: 0,
+    }
+
+    await store.append(sessionId, { type: 'session_start', sessionId, createdAt: 1 })
+    await store.append(sessionId, { type: 'user_input', message: legacyMetadata })
+    await store.append(sessionId, { type: 'user_input', message: { role: 'user', content: 'continue' } })
+
+    assert.equal((await store.readEvents(sessionId)).filter(event => event.type === 'user_input').length, 2)
+    const replayableInputs = (await store.read(sessionId)).filter(event => event.type === 'user_input')
+    assert.equal(replayableInputs.length, 1)
+    assert.equal(replayableInputs[0]?.message.content, 'continue')
+  })
 })
