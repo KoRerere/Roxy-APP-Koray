@@ -137,6 +137,20 @@ const {
   submitOnEnter: !isPromptField.value,
 })
 
+const inputProjectOptions = computed(() => {
+  const seen = new Set<string>()
+
+  return projectOptions.value.flatMap((option) => {
+    const projectName = option.projectName?.trim() ?? ''
+    if (option.value === '__all__' || !projectName || seen.has(projectName)) {
+      return []
+    }
+
+    seen.add(projectName)
+    return [{ label: projectName, value: projectName }]
+  })
+})
+
 const hasAttachmentUploading = computed(() => props.pendingAttachments.some(attachment => attachment.uploadStatus === 'uploading'))
 const composerCanSubmit = computed(() => {
   return canSubmit.value || props.pendingAttachments.length > 0
@@ -372,6 +386,12 @@ function submitInputTokenEdit() {
     value = `${hasExplicitProtocol ? parts.protocol : inputUrlProtocol.value}${parts.value}`
   }
   confirmInputTokenEdit(value)
+  missingPromptWarning.value = ''
+}
+
+function selectInputProject(projectName: string) {
+  inputTokenValue.value = projectName
+  confirmInputTokenEdit(projectName)
   missingPromptWarning.value = ''
 }
 
@@ -1528,6 +1548,29 @@ defineExpose({
           {{ inputEditor.label }}
         </div>
         <div
+          v-if="inputEditor.kind === 'project'"
+          class="input-token-popover__project-list"
+          role="listbox"
+          :aria-label="inputEditor.label"
+        >
+          <button
+            v-for="option in inputProjectOptions"
+            :key="option.value"
+            type="button"
+            class="input-token-popover__project-option"
+            :class="{ 'input-token-popover__project-option--selected': option.value === inputEditor.value }"
+            role="option"
+            :aria-selected="option.value === inputEditor.value"
+            @click="selectInputProject(option.value)"
+          >
+            {{ option.label }}
+          </button>
+          <div v-if="!inputProjectOptions.length" class="input-token-popover__project-empty">
+            {{ $t('暂无项目') }}
+          </div>
+        </div>
+        <div
+          v-else
           class="input-token-popover__row"
           :class="{
             'input-token-popover__row--textarea': inputEditor.kind === 'textarea',
@@ -2402,7 +2445,8 @@ defineExpose({
 
 :deep(.agent-token--input),
 :deep(.agent-token--textarea),
-:deep(.agent-token--url) {
+:deep(.agent-token--url),
+:deep(.agent-token--project) {
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
 }
@@ -2411,6 +2455,42 @@ defineExpose({
   border: 1px dashed currentColor;
   color: #c2410c;
   background: rgba(251, 146, 60, 0.12);
+}
+
+.input-token-popover__project-list {
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.input-token-popover__project-option {
+  width: 100%;
+  min-height: 36px;
+  flex: none;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible,
+  &--selected {
+    outline: none;
+    background: var(--color-bg-quaternary);
+  }
+}
+
+.input-token-popover__project-empty {
+  padding: 16px 10px;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  text-align: center;
 }
 
 .input-token-popover {

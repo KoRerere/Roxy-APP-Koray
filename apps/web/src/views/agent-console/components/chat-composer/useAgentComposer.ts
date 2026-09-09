@@ -102,7 +102,7 @@ export function useAgentComposer(options: {
   const completeProfileItems = ref<AgentComposerItem[] | undefined>()
   const inputEditor = reactive({
     open: false,
-    kind: 'input' as 'input' | 'textarea' | 'url',
+    kind: 'input' as 'input' | 'textarea' | 'url' | 'project',
     label: '',
     value: '',
     nodePos: 0,
@@ -311,7 +311,7 @@ export function useAgentComposer(options: {
           return true
         }
 
-        if (node.type.name === 'agentToken' && (node.attrs.kind === 'input' || node.attrs.kind === 'textarea' || node.attrs.kind === 'url')) {
+        if (node.type.name === 'agentToken' && (node.attrs.kind === 'input' || node.attrs.kind === 'textarea' || node.attrs.kind === 'url' || node.attrs.kind === 'project')) {
           event.preventDefault()
           openInputTokenEditor(node, nodePos, target?.closest('.agent-token, .mention') as HTMLElement | null)
           return true
@@ -558,7 +558,13 @@ export function useAgentComposer(options: {
   function openInputTokenEditor(node: any, nodePos: number, anchorEl?: HTMLElement | null) {
     closeSuggestion()
     inputEditor.open = true
-    inputEditor.kind = node.attrs.kind === 'url' ? 'url' : node.attrs.kind === 'textarea' ? 'textarea' : 'input'
+    inputEditor.kind = node.attrs.kind === 'url'
+      ? 'url'
+      : node.attrs.kind === 'textarea'
+        ? 'textarea'
+        : node.attrs.kind === 'project'
+          ? 'project'
+          : 'input'
     inputEditor.label = node.attrs.title || node.attrs.label || node.attrs.id
     inputEditor.value = node.attrs.payload?.value || ''
     inputEditor.nodePos = nodePos
@@ -788,6 +794,7 @@ export function useAgentComposer(options: {
               return [{
                 label: item.projectName || (item.projectDefault ? $t('默认项目') : value),
                 value,
+                projectName: item.projectName?.trim(),
               }]
             }),
         ]
