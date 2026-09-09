@@ -109,5 +109,13 @@ describe('memory index loading', () => {
 
     expect(shouldLoadMemoryIndex(sessionOnly)).toBe(true)
     expect(shouldLoadMemoryIndex(withUser)).toBe(false)
+    expect(shouldLoadMemoryIndex([
+      ...sessionOnly,
+      { type: 'user_input', message: { role: 'user', content: 'received', metadata: { turnId: 'turn-1' } } },
+    ], 'turn-1')).toBe(true)
+    expect(shouldLoadMemoryIndex([
+      ...withUser,
+      { type: 'user_input', message: { role: 'user', content: 'received', metadata: { turnId: 'turn-1' } } },
+    ], 'turn-1')).toBe(false)
   })
 })

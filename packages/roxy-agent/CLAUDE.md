@@ -258,6 +258,8 @@ WS     /api/events             # 双向会话、任务日志与 task-monitor 统
 
 **WebSocket 事件信道**：双方 envelope 均为 `{ id, type, data }`，完整协议按发送方和消息类型拆分在 `@roxy/shared/channel`，Zod schema 是运行时校验和 TypeScript 类型的唯一来源；Agent 校验入站命令和出站消息，Web 校验出站命令和入站消息。服务端消息 `id` 使用 UUIDv7。连接后先发送完整 `task_logs.snapshot` 和 `task_monitor.snapshot`，再发送 `channel.ready`；运行期广播 `task_log.changed`、`task_log.deleted`、`task_execution.event`、`task_monitor.snapshot` 和 `conversation.run.event`。服务端使用 ping/pong 保活，前端断线后指数退避重连并以快照/会话详情校准；不再提供独立 `/health`、会话日志读取 HTTP 或 conversation SSE。
 
+用户消息在现有会话队列内直接保存为正式 `user_input`，落盘后广播 `run_started`，再等待附件、生成标题和执行 Agent。Runtime 根据已有 `metadata.turnId` 复用重放输入，不重复写正文；附件沿用隐藏上下文并关联同轮消息。旧 prepared 事件读取时忽略。前端等待开始事件 20 秒，超时按原有逻辑回填正文及附件，并显示 `$t('Agent 响应超时，请稍后重试')`。
+
 前端入站命令只有三类：
 
 - `conversation.run.start`：`{ conversationId, message, attachments?, fullAccess? }`

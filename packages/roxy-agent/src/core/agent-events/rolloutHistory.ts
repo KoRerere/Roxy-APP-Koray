@@ -923,20 +923,16 @@ function readRolloutTurns(
   }
 
   for (const event of rolloutEvents) {
-    if (event.type === 'user_input_prepared' || event.type === 'user_input') {
+    if (event.type === 'user_input') {
       const message = asRolloutMessage(event.message)
       if (message?.visible === false) {
+        if (current?.turnId && rolloutMessageTurnId(message) === current.turnId
+          && Array.isArray(asRecord(message.metadata).attachments)) {
+          current.attachments = rolloutMessageAttachments(message)
+        }
         continue
       }
-      const eventTurnId = (event as unknown as { turnId?: unknown }).turnId
       const turnId = rolloutMessageTurnId(message)
-        ?? (typeof eventTurnId === 'string' ? eventTurnId : undefined)
-      if (event.type === 'user_input' && current?.turnId && current.turnId === turnId) {
-        current.userContent = rolloutMessageText(message)
-        current.userTimestamp = rolloutEventTimestamp(event) ?? current.userTimestamp
-        current.attachments = rolloutMessageAttachments(message)
-        continue
-      }
       if (current) {
         turns.push(current)
       }

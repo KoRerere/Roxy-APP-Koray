@@ -158,7 +158,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
     })
     try {
       await ensureMemoryIndex(agentPaths.memoryIndexFile)
-      if (shouldLoadMemoryIndex(existingRollout)) {
+      if (shouldLoadMemoryIndex(existingRollout, options.turnId)) {
         pendingMemoryIndex = await loadMemoryIndex(agentPaths.memoryIndexFile)
       }
     }

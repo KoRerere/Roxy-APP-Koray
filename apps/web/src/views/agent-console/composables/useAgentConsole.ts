@@ -97,7 +97,7 @@ interface SendPromptOptions {
   templateContext?: TaskReportTemplateContext
 }
 
-const PENDING_RUN_START_TIMEOUT_MS = 15_000
+const PENDING_RUN_START_TIMEOUT_MS = 20_000
 const pendingRunStarts = new PendingConversationRunRegistry<PendingRunStart>()
 const pendingRunPayloads = new Map<string, PendingRunStart>()
 const preparingRunStarts = new Map<string, PendingRunDraft>()
@@ -2467,6 +2467,7 @@ export function useAgentConsole() {
         if (draft.attachments.length === 0) {
           draft.attachments = expired.attachments
         }
+        onlyErrorToast(-1, $t('Agent 响应超时，请稍后重试'))
         touchConversationCache(consoleState, conversationId)
         pendingRunVersion.value++
       },

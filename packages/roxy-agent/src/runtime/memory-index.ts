@@ -1,5 +1,5 @@
-import type { RolloutEvent } from 'roxy-agent-runtime'
 import type { FileHandle } from 'node:fs/promises'
+import type { RolloutEvent } from 'roxy-agent-runtime'
 import { Buffer } from 'node:buffer'
 import { mkdir, open } from 'node:fs/promises'
 import path from 'node:path'
@@ -116,6 +116,7 @@ export async function loadMemoryIndex(indexFile: string): Promise<string | undef
 }
 
 /** A session remains new until its rollout contains one user-visible request. */
-export function shouldLoadMemoryIndex(events: readonly RolloutEvent[]): boolean {
-  return !events.some(event => event.type === 'user_input' && event.message.visible !== false)
+export function shouldLoadMemoryIndex(events: readonly RolloutEvent[], receivedTurnId?: string): boolean {
+  return !events.some(event => event.type === 'user_input' && event.message.visible !== false
+    && (!receivedTurnId || event.message.metadata?.turnId !== receivedTurnId))
 }

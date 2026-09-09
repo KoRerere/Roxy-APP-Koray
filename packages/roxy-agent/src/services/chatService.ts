@@ -3,7 +3,7 @@ import type { RunEventPublisher } from '@/core/agent-events/runEventHub'
 import type { RuntimeCollectedFile } from '@/runtime/file-collector'
 import type { TaskReportTemplateContext } from '@roxy/shared'
 import type { AgentConversationRunAttachmentsReadyCommand, AgentConversationRunStartCommand, AgentRunAttachmentDTO, AgentRunEvent } from '@roxy/shared/channel'
-import type { RolloutArtifact, RolloutArtifactSource, RolloutEvent } from 'roxy-agent-runtime'
+import type { RolloutArtifact, RolloutArtifactSource } from 'roxy-agent-runtime'
 import { extractAgentProfileDirIds } from '@roxy/shared'
 import { randomUUID } from 'node:crypto'
 import fsPromises from 'node:fs/promises'
@@ -62,67 +62,6 @@ export function createConversation() {
 export interface ListConversationsOptions {
   limit: number
   offset: number
-}
-
-interface PersistConversationRunInput {
-  conversationId: string
-  turnId: string
-  message: string
-  attachments: AgentRunAttachmentDTO[]
-}
-
-interface PreparedUserInputRolloutEvent {
-  type: 'user_input_prepared'
-  turnId: string
-  message: {
-    role: 'user'
-    content: string
-    metadata: Record<string, unknown>
-  }
-  ts: number
-}
-
-/**
- * Agent 收到 WebSocket 消息后立即记录可见用户输入。
- * Runtime 随后会使用同一 turnId 追加标准 user_input 事件，rollout 投影会合并两条记录。
- */
-async function persistConversationRunReceipt(input: PersistConversationRunInput): Promise<{ turnId: string, preparedAt: number }> {
-  const preparedAt = Date.now()
-  const rollout = new RoxyRolloutStore(
-    path.dirname(agentPaths.sessionDir(input.conversationId)),
-    sessionId => agentPaths.sessionRollout(sessionId),
-  )
-  const existing = await rollout.read(input.conversationId) as Array<RolloutEvent | PreparedUserInputRolloutEvent>
-  const alreadyPrepared = existing.find((event) => {
-    if (event.type !== 'user_input_prepared' && event.type !== 'user_input') {
-      return false
-    }
-    const metadata = event.message && typeof event.message === 'object'
-      ? (event.message as { metadata?: unknown }).metadata
-      : undefined
-    return metadata && typeof metadata === 'object'
-      && (metadata as { turnId?: unknown }).turnId === input.turnId
-  })
-  if (alreadyPrepared) {
-    const timestamp = typeof alreadyPrepared.ts === 'number' ? alreadyPrepared.ts : preparedAt
-    return { turnId: input.turnId, preparedAt: timestamp }
-  }
-
-  await rollout.append(input.conversationId, {
-    type: 'user_input_prepared',
-    turnId: input.turnId,
-    message: {
-      role: 'user',
-      content: input.message,
-      metadata: {
-        turnId: input.turnId,
-        prepared: true,
-        ...(input.attachments.length > 0 ? { attachments: input.attachments } : {}),
-      },
-    },
-    ts: preparedAt,
-  } as unknown as RolloutEvent)
-  return { turnId: input.turnId, preparedAt }
 }
 
 interface PendingRunAttachments {
@@ -547,41 +486,35 @@ export async function startConversationRun(
   const pendingAttachments = command.attachmentsPending === true
     ? createPendingRunAttachments(conversationId, turnId, abortController.signal)
     : undefined
-  // 回执仍在写入时可能先收到取消，队列还没来得及等待该 Promise；这里先附加吞异常处理，
-  // 避免取消触发未处理 rejection，队列启动后仍会等待原始 Promise 并观察其结果。
+  // 队列尚未等待附件时也可能先取消，提前观察 rejection。
   if (pendingAttachments) {
     void pendingAttachments.promise.catch(() => {})
   }
-  try {
-    await persistConversationRunReceipt({
-      conversationId,
-      turnId,
-      message: command.message,
-      attachments: command.pendingAttachments ?? (command.attachments ?? []).map(attachment => ({ fileId: attachment.fileId })),
-    })
-  }
-  catch (error) {
-    pendingAttachments?.reject(error)
-    if (!publisher.isTerminal) {
-      publisher.publish(withAgentPath(isAbortLike(error)
-        ? streamEvents.cancelled({ message: 'Agent stopped: User cancelled' })
-        : streamEvents.error(normalizeAgentError(error)), '/root'))
-    }
-    executionCenter.finish(runId, publisher.terminalStatus ?? (abortController.signal.aborted ? 'cancelled' : 'failed'))
-    cleanupRun(runId, abortController)
-    return
-  }
-
-  if (!runEventHub.publishStarted(publisher, { requestId, source: 'user' })) {
-    pendingAttachments?.reject(new AbortError('User cancelled'))
-    executionCenter.finish(runId, publisher.terminalStatus ?? 'cancelled')
-    cleanupRun(runId, abortController)
-    return
-  }
-  executionCenter.start(runId)
-
+  // 接收落盘也串行化，避免取消后的上一轮仍向新输入之后追加事件。
   return conversationRunQueue.enqueue(conversationId, async () => {
+    const rollout = new RoxyRolloutStore(
+      path.dirname(agentPaths.sessionDir(conversationId)),
+      sessionId => agentPaths.sessionRollout(sessionId),
+    )
     try {
+      const received = await rollout.receiveInput(conversationId, {
+        role: 'user',
+        content: buildUserMessageContent(command.message, []),
+        metadata: {
+          turnId,
+          attachments: command.pendingAttachments ?? (command.attachments ?? []).map(attachment => ({ fileId: attachment.fileId })),
+        },
+      })
+      if (!received) {
+        pendingAttachments?.reject(new AbortError('Duplicate turn'))
+        runEventHub.finish(publisher)
+        return
+      }
+      if (!runEventHub.publishStarted(publisher, { requestId, source: 'user' })) {
+        pendingAttachments?.reject(new AbortError('User cancelled'))
+        return
+      }
+      executionCenter.start(runId)
       const attachmentPayload = pendingAttachments
         ? await pendingAttachments.promise
         : {
@@ -605,6 +538,7 @@ export async function startConversationRun(
       })
     }
     catch (error) {
+      pendingAttachments?.reject(error)
       if (!publisher.isTerminal) {
         publisher.publish(withAgentPath(isAbortLike(error)
           ? streamEvents.cancelled({ message: 'Agent stopped: User cancelled' })
@@ -785,7 +719,7 @@ export async function runConversationTurn(opts: RunConversationTurnOptions): Pro
     destroy = instance.destroy
 
     const messageContent = buildMessageContentAsPlainText(message || '', attachmentList)
-    const userMessageContent = buildUserMessageContent(message || '', attachmentList)
+    const userMessageContent = buildUserMessageContent(message || '', [])
     const attachmentContent = [
       buildNonImageAttachmentContent(attachmentList),
       buildLocalAttachmentContent(localAttachments),
@@ -818,8 +752,16 @@ export async function runConversationTurn(opts: RunConversationTurnOptions): Pro
     // Publish the terminal event only after post-stream artifacts are flushed.
     // No event may arrive after run_completed/run_failed/run_cancelled.
     const trailingMessages = [
-      ...(attachmentContent
-        ? [{ role: 'user' as const, content: attachmentContent, visible: false }]
+      ...(attachmentContent || attachmentList.length > 0
+        ? [{
+            role: 'user' as const,
+            content: [
+              ...buildUserMessageContent('', attachmentList),
+              ...(attachmentContent ? [{ type: 'text' as const, text: attachmentContent }] : []),
+            ],
+            visible: false,
+            metadata: { turnId: userMessageId, attachments: projectedAttachments },
+          }]
         : []),
       ...(templateContext
         ? [{

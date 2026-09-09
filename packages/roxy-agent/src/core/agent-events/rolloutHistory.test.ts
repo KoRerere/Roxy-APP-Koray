@@ -50,9 +50,9 @@ describe('rollout history projector', () => {
     assert.ok(!JSON.stringify(messages).includes('profile-1'))
   })
 
-  it('keeps a prepared user input visible after an interruption and replaces it when runtime persistence completes', () => {
-    // Regression: UI 在用户输入持久化前发送 conversation.run.start，过早中断后无法恢复消息。
-    // 修复：Agent 在 WebSocket 接收边界预存输入，并与 Runtime 随后写入的正式记录合并。
+  it('ignores obsolete prepared inputs including those without a formal input', () => {
+    // Regression: obsolete receipts appeared as additional user messages.
+    // Fixed by: only projecting formal user inputs.
     const conversationId = 'conversation-prepared-input'
     const prepared = {
       type: 'user_input_prepared',
@@ -67,8 +67,7 @@ describe('rollout history projector', () => {
 
     writeRollout(conversationId, [prepared])
     let messages = projectMessagesFromRollout(conversationId)
-    assert.equal(messages.length, 2)
-    assert.equal(messages[0]?.content, 'keep me')
+    assert.equal(messages.length, 0)
 
     writeRollout(conversationId, [
       prepared,
@@ -86,6 +85,22 @@ describe('rollout history projector', () => {
     messages = projectMessagesFromRollout(conversationId)
     assert.equal(messages.filter(message => message.role === 'user').length, 1)
     assert.equal(messages[0]?.content, 'keep me')
+  })
+
+  it('attaches late file context to the received message without another visible input', () => {
+    // Regression: uploaded files required a second copy of the visible input.
+    // Fixed by: projecting attachment metadata from the same turn's hidden context.
+    const conversationId = 'late-attachments'
+    const attachments = [{ fileId: 'uploaded-1', fileName: 'image.png' }]
+    writeRollout(conversationId, [
+      { type: 'user_input', message: { role: 'user', content: 'inspect', metadata: { turnId: 'turn-1' } }, ts: 1 },
+      { type: 'user_input', message: { role: 'user', visible: false, content: [{ type: 'file', fileId: 'upstream-1' }], metadata: { turnId: 'turn-1', attachments } }, ts: 2 },
+      { type: 'turn_completed', ts: 3 },
+    ])
+    const users = projectMessagesFromRollout(conversationId).filter(message => message.role === 'user')
+    assert.equal(users.length, 1)
+    assert.deepEqual(users[0].metadata?.attachments, attachments)
+    assert.equal(users[0].created_at, new Date(1).toISOString())
   })
 
   it('restores attachment cards from visible user-input metadata after reload', () => {

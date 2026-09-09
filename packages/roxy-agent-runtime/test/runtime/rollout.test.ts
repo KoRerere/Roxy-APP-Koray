@@ -6,7 +6,7 @@ import { buildTestAgent, endTurnResponse, chatResponse, toolCallResponse } from 
 import { JsonlSessionStore } from '../../src/memory/session_store.ts'
 import { InMemoryProvider } from '../../src/memory/memory.ts'
 import { replayIntoMemory } from '../../src/memory/replay.ts'
-import type { AgentStreamEvent, RolloutEvent } from '../../src/core/interfaces.ts'
+import type { AgentStreamEvent, Message, RolloutEvent } from '../../src/core/interfaces.ts'
 import { testToolInputSchema } from '../helpers/toolSchema.ts'
 
 function tmpDir() {
@@ -23,6 +23,66 @@ async function streamTurn(agent: { stream(input: string): AsyncIterable<AgentStr
 }
 
 describe('agent loop rollout double-write', () => {
+  it.each(['invoke', 'stream'] as const)(
+    'reuses a received input in %s without duplicating disk or model history',
+    async (mode) => {
+      // Regression: replaying an input received before runtime creation appended it twice.
+      // Fixed by: reusing the received turnId from history and only appending its context.
+      const store = new JsonlSessionStore({ dir: tmpDir() })
+      const sessionId = `received-${mode}`
+      const input: Message = { role: 'user', content: 'inspect', metadata: { turnId: 'received-1' } }
+      await store.append(sessionId, { type: 'user_input', message: input, ts: 100 })
+      const { agent, memory } = buildTestAgent({ sessionId, sessionStore: store, responses: [endTurnResponse('done')] })
+      await replayIntoMemory(store, memory, sessionId)
+      const turn = {
+        input: [input],
+        trailingMessages: [
+          {
+            role: 'user' as const,
+            content: [{ type: 'file' as const, fileId: 'upstream-1' }],
+            metadata: { turnId: 'received-1', attachments: [{ fileId: 'local-1' }] },
+          },
+        ],
+      }
+      if (mode === 'invoke') {
+        await agent.invoke(turn)
+      } else {
+        for await (const event of agent.stream(turn)) {
+          expect(event.type).toBeTruthy()
+        }
+      }
+      const events = await store.read(sessionId)
+      expect(events.filter((event) => event.type === 'user_input' && event.message.visible !== false)).toHaveLength(1)
+      expect((await memory.getAll(sessionId)).filter((message) => message.content === 'inspect')).toHaveLength(1)
+      const recovered = new InMemoryProvider()
+      await replayIntoMemory(store, recovered, sessionId)
+      expect((await recovered.getAll(sessionId)).filter((message) => message.role === 'user')).toEqual(
+        (await memory.getAll(sessionId)).filter((message) => message.role === 'user'),
+      )
+      expect(events).toContainEqual(
+        expect.objectContaining({
+          type: 'user_input',
+          message: expect.objectContaining({ visible: false, metadata: turn.trailingMessages[0].metadata }),
+        }),
+      )
+      await expect(agent.invoke(turn)).rejects.toThrow(/persisted/i)
+    },
+  )
+
+  it('ignores obsolete receipts when replaying a stored session', async () => {
+    // Regression: obsolete receipt events must never enter model history.
+    // Fixed by: replay continues to consume only standard user_input events.
+    const store = new JsonlSessionStore({ dir: tmpDir() })
+    await store.append('old', {
+      type: 'user_input_prepared',
+      message: { role: 'user', content: 'obsolete' },
+    } as unknown as RolloutEvent)
+    await store.append('old', { type: 'user_input', message: { role: 'user', content: 'formal' } })
+    const memory = new InMemoryProvider()
+    await replayIntoMemory(store, memory, 'old')
+    expect(await memory.getAll('old')).toEqual([{ role: 'user', content: 'formal' }])
+  })
+
   it('replays trailing hidden attachment context after the visible request', async () => {
     const dir = tmpDir()
     const store = new JsonlSessionStore({ dir })

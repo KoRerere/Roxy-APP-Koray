@@ -1,4 +1,4 @@
-import type { ISessionStore, RolloutEvent, SessionId, SessionMeta } from 'roxy-agent-runtime'
+import type { ISessionStore, Message, RolloutEvent, SessionId, SessionMeta } from 'roxy-agent-runtime'
 import { sanitizeId } from '@roxy/shared/agent-paths'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -26,6 +26,20 @@ export class RoxyRolloutStore implements ISessionStore {
 
   async append(sessionId: SessionId, event: RolloutEvent): Promise<void> {
     this.appendEvent(sessionId, withTimestamp(event))
+  }
+
+  async receiveInput(sessionId: SessionId, message: Message): Promise<boolean> {
+    const turnId = message.metadata?.turnId
+    if (typeof turnId !== 'string' || !turnId) {
+      throw new Error('Received input requires a turnId')
+    }
+    const events = await this.read(sessionId)
+    if (events.some(event => event.type === 'user_input' && event.message.visible !== false
+      && event.message.metadata?.turnId === turnId)) {
+      return false
+    }
+    await this.append(sessionId, { type: 'user_input', message })
+    return true
   }
 
   recordWindowUsed(sessionId: SessionId, turnId: string, dirId: string): void {
