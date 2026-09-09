@@ -388,7 +388,7 @@ export class RunEventHub {
   private readonly activeByConversation = new Map<string, RunEventPublisher>()
   private readonly listeners = new Set<RunEventListener>()
 
-  tryBegin(input: BeginRunInput): RunEventPublisher | null {
+  tryBegin(input: BeginRunInput, options: { announceStarted?: boolean } = {}): RunEventPublisher | null {
     if (this.activeByConversation.has(input.conversationId)) {
       return null
     }
@@ -401,16 +401,26 @@ export class RunEventHub {
     }
     const publisher = new RunEventPublisher(identity, this)
     this.activeByConversation.set(input.conversationId, publisher)
-    publisher.publish({
+    if (options.announceStarted !== false) {
+      this.publishStarted(publisher, input)
+    }
+    return publisher
+  }
+
+  publishStarted(publisher: RunEventPublisher, input: Pick<BeginRunInput, 'requestId' | 'source' | 'startedAt'>): boolean {
+    if (this.activeByConversation.get(publisher.identity.conversationId) !== publisher || publisher.isTerminal) {
+      return false
+    }
+
+    return Boolean(publisher.publish({
       type: 'run_started',
       data: {
         requestId: input.requestId,
         source: input.source,
-        assistantMessageId: input.assistantMessageId,
+        assistantMessageId: publisher.identity.assistantMessageId,
         startedAt: input.startedAt ?? Date.now(),
       },
-    })
-    return publisher
+    }))
   }
 
   isActive(conversationId: string): boolean {

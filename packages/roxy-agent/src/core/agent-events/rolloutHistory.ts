@@ -84,8 +84,10 @@ interface RolloutProjectedEvent {
 }
 
 interface RolloutTurn {
+  turnId?: string
   userContent: string
   userTimestamp?: number
+  userMetadata?: unknown
   attachments: AgentRunAttachmentDTO[]
   events: RolloutProjectedEvent[]
   terminal?: RolloutTurnTerminal
@@ -134,6 +136,8 @@ export interface RolloutHistoryOptions {
   latestRunStatus?: Conversation['latest_run_status']
   source?: 'user' | 'scheduled_task'
   excludeActiveTurn?: boolean
+  /** Limit task execution replay to the turn that started this task log. */
+  taskLogId?: string
 }
 
 function contentBlockText(block: unknown): string {
@@ -177,6 +181,11 @@ function asRolloutMessage(value: unknown): RolloutMessage | undefined {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function rolloutMessageTurnId(message: RolloutMessage | undefined): string | undefined {
+  const metadata = asRecord(message?.metadata)
+  return typeof metadata.turnId === 'string' && metadata.turnId ? metadata.turnId : undefined
 }
 
 function recoveredAttachment(upstreamFileId: string): AgentRunAttachmentDTO | undefined {
@@ -914,17 +923,28 @@ function readRolloutTurns(
   }
 
   for (const event of rolloutEvents) {
-    if (event.type === 'user_input') {
+    if (event.type === 'user_input_prepared' || event.type === 'user_input') {
       const message = asRolloutMessage(event.message)
       if (message?.visible === false) {
+        continue
+      }
+      const eventTurnId = (event as unknown as { turnId?: unknown }).turnId
+      const turnId = rolloutMessageTurnId(message)
+        ?? (typeof eventTurnId === 'string' ? eventTurnId : undefined)
+      if (event.type === 'user_input' && current?.turnId && current.turnId === turnId) {
+        current.userContent = rolloutMessageText(message)
+        current.userTimestamp = rolloutEventTimestamp(event) ?? current.userTimestamp
+        current.attachments = rolloutMessageAttachments(message)
         continue
       }
       if (current) {
         turns.push(current)
       }
       current = {
+        ...(turnId ? { turnId } : {}),
         userContent: rolloutMessageText(message),
         userTimestamp: rolloutEventTimestamp(event),
+        userMetadata: message?.metadata,
         attachments: rolloutMessageAttachments(message),
         events: [],
       }
@@ -1148,6 +1168,14 @@ export function projectMessagesFromRollout(conversationId: string, options: Roll
   if (options.excludeActiveTurn && turns.at(-1)?.terminal === undefined) {
     turns = turns.slice(0, -1)
   }
+  if (options.taskLogId) {
+    const taskTurns = turns.filter((turn) => {
+      const metadata = asRecord(turn.userMetadata)
+      return metadata.taskLogId === options.taskLogId
+    })
+    // 旧任务未把 taskLogId 写入 user_input 元数据，兼容时取首轮任务执行。
+    turns = taskTurns.length > 0 ? taskTurns : turns.slice(0, 1)
+  }
   if (turns.length === 0) {
     return []
   }
@@ -1157,7 +1185,7 @@ export function projectMessagesFromRollout(conversationId: string, options: Roll
 
   turns.forEach((turn, index) => {
     const user: Message = {
-      id: `${conversationId}-rollout-user-${index + 1}`,
+      id: turn.turnId ?? `${conversationId}-rollout-user-${index + 1}`,
       conversation_id: conversationId,
       role: 'user',
       content: turn.userContent,

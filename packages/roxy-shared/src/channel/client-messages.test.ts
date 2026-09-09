@@ -5,6 +5,8 @@ import {
   AgentConversationApprovalSubmitCommandSchema,
   AgentConversationApprovalSubmitMessageSchema,
   AgentConversationRunAttachmentSchema,
+  AgentConversationRunAttachmentsReadyCommandSchema,
+  AgentConversationRunAttachmentsReadyMessageSchema,
   AgentConversationRunLocalAttachmentSchema,
   AgentConversationRunStartCommandSchema,
   AgentConversationRunStartMessageSchema,
@@ -15,7 +17,7 @@ import {
 } from './client-messages'
 
 const commandCases: Array<{
-  type: 'conversation.run.start' | 'conversation.run.stop' | 'conversation.approval.submit' | 'execution.control'
+  type: 'conversation.run.start' | 'conversation.run.attachments.ready' | 'conversation.run.stop' | 'conversation.approval.submit' | 'execution.control'
   commandSchema: z.ZodType
   messageSchema: z.ZodType
   data: Record<string, unknown>
@@ -24,7 +26,13 @@ const commandCases: Array<{
     type: 'conversation.run.start',
     commandSchema: AgentConversationRunStartCommandSchema,
     messageSchema: AgentConversationRunStartMessageSchema,
-    data: { conversationId: 'conversation-1', message: 'Run it', fullAccess: true },
+    data: { conversationId: 'conversation-1', turnId: 'message-1', message: 'Run it', fullAccess: true },
+  },
+  {
+    type: 'conversation.run.attachments.ready',
+    commandSchema: AgentConversationRunAttachmentsReadyCommandSchema,
+    messageSchema: AgentConversationRunAttachmentsReadyMessageSchema,
+    data: { conversationId: 'conversation-1', turnId: 'message-1', attachments: [{ fileId: 'file-1' }] },
   },
   {
     type: 'conversation.run.stop',
@@ -87,6 +95,12 @@ describe('client channel message schemas', () => {
         mimeType: 'inode/directory',
         localPath: '/tmp/work',
       }],
+    }).success).toBe(true)
+    expect(AgentConversationRunStartCommandSchema.safeParse({
+      conversationId: 'conversation-1',
+      turnId: 'message-1',
+      message: '   ',
+      attachmentsPending: true,
     }).success).toBe(true)
     expect(AgentConversationRunStartCommandSchema.safeParse({
       conversationId: 'conversation-1',

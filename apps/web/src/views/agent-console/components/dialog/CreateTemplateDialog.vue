@@ -11,6 +11,7 @@ import type {
 } from '../../my-templates'
 import type { ScriptParamsSchema } from '../../script-template-params'
 import type { OfficialTemplate } from '../../template-store'
+import { inspectAgentComposerTemplateInputs } from '@roxy/shared'
 import { useDialog } from 'primevue/usedialog'
 import { useAgentConsoleApi } from '../../api'
 import {
@@ -509,6 +510,19 @@ async function saveTemplate(saveAndRun: boolean) {
   if (templateType.value === 'prompt' && !prompt.value.trim()) {
     formError.value = $t('请输入提示词内容')
     return
+  }
+  if (templateType.value === 'skill' || templateType.value === 'prompt') {
+    const inputs = inspectAgentComposerTemplateInputs(prompt.value)
+    if (inputs.hasProfileSelection) {
+      formError.value = $t('模板提示词不能包含浏览器选择，请移除后保存。浏览器可在使用模板时选择。')
+      return
+    }
+    if (inputs.missingInputLabels.length) {
+      formError.value = $t('请填写以下提示词参数后再保存：{items}', {
+        items: inputs.missingInputLabels.join('、'),
+      })
+      return
+    }
   }
   if (templateType.value !== 'prompt' && !isEditing.value && sourceValue.value == null) {
     if (templateType.value !== 'script')

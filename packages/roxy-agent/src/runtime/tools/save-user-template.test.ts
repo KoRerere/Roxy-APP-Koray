@@ -1,7 +1,7 @@
 import type { ToolContext } from 'roxy-agent-runtime'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   create: vi.fn(),
@@ -129,7 +129,13 @@ describe('roxy_save_user_template', () => {
     expect(mocks.uploadSkill).not.toHaveBeenCalled()
   })
 
-  it('rejects a companion prompt that embeds a browser-window selection', async () => {
+  it.each([
+    ['在 [@profile:0]() 窗口执行任务。', 'browser-window selection'],
+    ['在 [@profile:1](01a8e607e20e9b53fdaed89aaa890886) 窗口执行任务。', 'browser-window selection'],
+    ['搜索 [input:关键词]()。', 'non-empty values: 关键词'],
+    ['访问 [url:网址](   )。', 'non-empty values: 网址'],
+    ['补充 [textarea:备注](\n)。', 'non-empty values: 备注'],
+  ])('rejects invalid companion prompt before upload: %s', async (prompt, message) => {
     const { createSaveUserTemplateTool } = await import('./save-user-template')
     const tool = createSaveUserTemplateTool({ workspaceDir })
 
@@ -137,11 +143,29 @@ describe('roxy_save_user_template', () => {
       skillPath: 'batch-nurture',
       name: '批量养号',
       description: '重复执行养号任务',
-      prompt: '在 [@profile:0]() 窗口执行任务。',
+      prompt,
     }, context)
 
     expect(result.isError).toBe(true)
-    expect(result.content).toContain('browser-window selection')
+    expect(result.content).toContain(message)
     expect(mocks.uploadSkill).not.toHaveBeenCalled()
+    expect(mocks.create).not.toHaveBeenCalled()
+  })
+
+  it('rejects the complete prompt when its target URL is unfilled', async () => {
+    const { createSaveUserTemplateTool } = await import('./save-user-template')
+    const tool = createSaveUserTemplateTool({ workspaceDir })
+
+    const result = await tool.handler({
+      skillPath: 'batch-nurture',
+      name: '官网 FAQ 总结',
+      description: '提取并总结官网常见问题',
+      prompt: '在用户选定的浏览器窗口中打开 [url:目标官网]() 的常见问题（FAQ）页面，提取页面上的全部问题与答案，按网站自身的分类结构做一份口语化、亲切的中文总结，保留网站自己承认的限制（如“无法保证 100% 不被封号”、“不能完全防止追踪”等），并注明内容来源的页面链接。',
+    }, context)
+
+    expect(result.isError).toBe(true)
+    expect(result.content).toContain('non-empty values: 目标官网')
+    expect(mocks.uploadSkill).not.toHaveBeenCalled()
+    expect(mocks.create).not.toHaveBeenCalled()
   })
 })

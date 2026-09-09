@@ -11,8 +11,47 @@ const templateServiceMocks = vi.hoisted(() => ({
   ensureResolvedTemplateSkillInstalled: vi.fn(),
 }))
 
+const conversationExecutionMocks = vi.hoisted(() => ({
+  runConversationTurn: vi.fn(),
+  createConversation: vi.fn(),
+  addMessage: vi.fn(),
+  tryBegin: vi.fn(),
+}))
+
+const runtimeMocks = vi.hoisted(() => ({
+  createRuntimeChatAgent: vi.fn(),
+}))
+
 vi.mock('@/services/templateService', () => ({
   ensureResolvedTemplateSkillInstalled: templateServiceMocks.ensureResolvedTemplateSkillInstalled,
+}))
+
+vi.mock('@/services/chatService', () => ({
+  generateConversationTitle: vi.fn().mockResolvedValue(''),
+  runConversationTurn: conversationExecutionMocks.runConversationTurn,
+}))
+
+vi.mock('@/database/conversations', () => ({
+  ChatContextAPI: {
+    createConversation: conversationExecutionMocks.createConversation,
+    addMessage: conversationExecutionMocks.addMessage,
+  },
+}))
+
+vi.mock('@/core/agent-events/runEventHub', () => ({
+  runEventHub: {
+    tryBegin: conversationExecutionMocks.tryBegin,
+  },
+}))
+
+vi.mock('@/runtime', () => ({
+  createRuntimeChatAgent: runtimeMocks.createRuntimeChatAgent,
+  RuntimeEventPublisher: class {
+    handle() {}
+    getFinalAnswer() {
+      return ''
+    }
+  },
 }))
 
 function createResolvedTemplate(): ResolvedTemplate {
@@ -30,6 +69,34 @@ function createResolvedTemplate(): ResolvedTemplate {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  conversationExecutionMocks.runConversationTurn.mockResolvedValue({
+    status: 'success',
+    conversationId: 'task-conversation-1',
+    fileIds: [],
+    failedFiles: [],
+    finalContent: 'completed',
+  })
+  conversationExecutionMocks.createConversation.mockReturnValue(undefined)
+  conversationExecutionMocks.addMessage.mockReturnValue(undefined)
+  conversationExecutionMocks.tryBegin.mockReturnValue({
+    identity: {
+      conversationId: 'task-conversation-1',
+      runId: 'task-log-1',
+      turnId: 'task-turn-1',
+      assistantMessageId: 'task-assistant-1',
+    },
+    isTerminal: false,
+    terminalStatus: undefined,
+    publish: vi.fn(),
+  })
+  runtimeMocks.createRuntimeChatAgent.mockResolvedValue({
+    agent: {
+      async* stream() {},
+    },
+    createInput: vi.fn(),
+    consumeFiles: vi.fn(() => []),
+    destroy: vi.fn(),
+  })
 })
 
 describe('prepareTaskSkill', () => {
@@ -151,5 +218,39 @@ describe('collectTaskAssistantMessages', () => {
       { contentId: 'content-1', content: 'First part.' },
       { contentId: 'content-2', content: 'second block.' },
     ])
+  })
+})
+
+describe('executeAgentTask', () => {
+  it('delegates the background run to chatService with the same conversation flow', async () => {
+    // Regression: scheduled tasks used a second Agent stream loop, so a
+    // clarification answer had no interrupt gate to resume the task.
+    // Fixed by: routing the task-created conversation through chatService's
+    // shared runConversationTurn implementation.
+    const result = await (await import('./agent')).executeAgentTask({
+      taskName: 'Daily report',
+      templateName: 'Prompt template',
+      taskLogId: 'task-log-1',
+      prompt: 'Summarize the report.',
+      windows: [{ id: 1, dirId: 'window-1' }],
+      signal: new AbortController().signal,
+    })
+
+    assert.equal(result.status, 'success')
+    assert.equal(conversationExecutionMocks.runConversationTurn.mock.calls.length, 1)
+    const options = conversationExecutionMocks.runConversationTurn.mock.calls[0]?.[0]
+    assert.equal(options.activateConversation, false)
+    assert.equal(options.persistUserMessage, true)
+    assert.deepEqual(options.taskMonitor, {
+      taskId: 'task-log-1',
+      title: 'Daily report',
+      sourceType: 'task',
+    })
+    assert.deepEqual(options.runtime, {
+      executionId: 'task-log-1',
+      taskMonitorTaskId: 'task-log-1',
+      allowedDirIds: ['window-1'],
+    })
+    assert.equal(options.artifactSource, 'task')
   })
 })

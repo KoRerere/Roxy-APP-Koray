@@ -82,6 +82,9 @@ export function validateComposerPrompt(prompt: string): ComposerPromptValidation
     const kind = match[4] ?? ''
     const label = match[5] ?? ''
     const target = match[6]
+    if (!target?.trim()) {
+      errors.push(`Composer ${kind || 'input'} token must have a non-empty value: ${label}.`)
+    }
     if (!label.trim()) {
       errors.push(`Composer ${kind || 'input'} token must have a non-empty label.`)
     }

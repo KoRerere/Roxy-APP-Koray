@@ -134,11 +134,8 @@ const {
 })
 
 const hasAttachmentUploading = computed(() => props.pendingAttachments.some(attachment => attachment.uploadStatus === 'uploading'))
-const areAttachmentsReady = computed(() => props.pendingAttachments.every((attachment) => {
-  return attachment.uploadStatus === 'uploaded'
-}))
 const composerCanSubmit = computed(() => {
-  return areAttachmentsReady.value && (canSubmit.value || props.pendingAttachments.length > 0)
+  return canSubmit.value || props.pendingAttachments.length > 0
 })
 const hasPromptContent = computed(() => Boolean(model.value.trim()))
 const hasComposerPayload = computed(() => hasPromptContent.value || props.pendingAttachments.length > 0)

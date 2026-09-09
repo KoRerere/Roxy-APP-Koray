@@ -2,31 +2,20 @@ import type { ResolvedTaskWindow, TaskExecutorResult } from '../types'
 import type { ResolvedTemplate } from '@/services/templateService'
 import type { AgentRunEvent } from '@roxy/shared/channel'
 import {
-  extractAgentProfileDirIds,
   serializeAgentProfileReference,
   serializeAgentSkillReference,
 } from '@roxy/shared'
 import { randomUUID } from 'node:crypto'
-import { withAgentPath } from '@/core/agent-events/events'
 import { runEventHub } from '@/core/agent-events/runEventHub'
-import { streamEvents } from '@/core/agent-events/streamEvents'
-import { normalizeAgentError } from '@/core/agentError'
-import { t } from '@/core/i18n'
 import { cleanupRun, createAbort } from '@/core/registry/abortRegistry'
-import { publishTaskMonitorTaskFinished, publishTaskMonitorTaskStarted } from '@/core/task-monitor'
 import { ChatContextAPI } from '@/database/conversations'
-import { createRuntimeChatAgent, RuntimeEventPublisher } from '@/runtime'
-import { generateConversationTitle } from '@/services/chatService'
-import { persistTaskArtifacts } from '@/services/taskArtifacts'
+import { runConversationTurn } from '@/services/chatService'
 import {
   recordTaskExecutionEvent,
   taskArtifacts,
 } from '@/services/taskExecutionDetails'
 import { ensureResolvedTemplateSkillInstalled } from '@/services/templateService'
 import { TASK_ERROR_CODES } from '../errorCodes'
-import { collectedFiles } from '../types'
-
-const TASK_AGENT_DESTROY_TIMEOUT_MS = 12_000
 
 export interface PreparedTaskSkill {
   skillMdPath: string
@@ -105,10 +94,7 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
   const threadId = `taskthread_${suffix}`
   const turnId = `taskmsg_${randomUUID()}`
   const initialUserMessage = buildTaskInitialUserMessage(input)
-  const userMessageCreatedAt = new Date().toISOString()
   const assistantMessageId = `taskmsg_${randomUUID()}`
-  const assistantMessageCreatedAt = new Date().toISOString()
-  let destroy: (() => Promise<void>) | undefined
 
   ChatContextAPI.createConversation({
     id: conversationId,
@@ -134,56 +120,7 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
     }
   }
 
-  ChatContextAPI.addMessage({
-    id: turnId,
-    conversation_id: conversationId,
-    role: 'user',
-    content: initialUserMessage,
-    content_type: 'text',
-    storage_type: 'inline',
-    metadata: { source: 'task-run', taskLogId: input.taskLogId },
-  })
-  ChatContextAPI.addMessage({
-    id: assistantMessageId,
-    conversation_id: conversationId,
-    role: 'assistant',
-    content: '',
-    content_type: 'text',
-    storage_type: 'inline',
-    metadata: {
-      source: 'conversation_run',
-      taskLogId: input.taskLogId,
-      runId: input.taskLogId,
-      turnId,
-    },
-  })
-  publisher.publish(withAgentPath({
-    type: 'user_message',
-    data: {
-      messageId: turnId,
-      content: initialUserMessage,
-      attachments: [],
-      createdAt: Date.now(),
-    },
-  }, '/root'))
   input.onConversationCreated?.(conversationId)
-  recordTaskExecutionEvent(input.taskLogId, {
-    type: 'agent.message.upsert',
-    conversationId,
-    message: {
-      id: turnId,
-      role: 'user',
-      content: initialUserMessage,
-      createdAt: userMessageCreatedAt,
-    },
-  })
-  publishTaskMonitorTaskStarted({
-    taskId: input.taskLogId,
-    title: input.taskName,
-    sourceType: 'task',
-    conversationId,
-    runId: input.taskLogId,
-  })
 
   const abortController = createAbort(input.taskLogId)
   const abortFromTask = () => abortController.abort(input.signal.reason ?? 'Task execution interrupted')
@@ -195,119 +132,101 @@ export async function executeAgentTask(input: AgentTaskExecutionInput): Promise<
   }
 
   try {
-    await generateConversationTitle(initialUserMessage, [], conversationId, turnId, event => publisher.publish(event), abortController.signal)
-      .then((title) => {
-        if (title) {
-          ChatContextAPI.updateConversation(conversationId, { title, is_title_set: 1 })
-        }
-      })
-      .catch((error) => {
-        if (!abortController.signal.aborted) {
-          console.warn(`[task] Failed to generate task conversation title ${input.taskLogId}:`, error)
-        }
-      })
-
-    const instance = await createRuntimeChatAgent({
+    const result = await runConversationTurn({
+      message: initialUserMessage,
       conversationId,
-      executionId: input.taskLogId,
-      runId: input.taskLogId,
-      turnId,
-      fullAccess: true,
+      attachmentList: [],
+      conversation: {
+        id: conversationId,
+        title: input.taskName,
+        is_title_set: 0,
+      },
       signal: abortController.signal,
-      taskMonitorTaskId: input.taskLogId,
-      allowedDirIds: input.windows.map(window => window.dirId),
-      reportAllowedDirIds: extractAgentProfileDirIds(initialUserMessage),
-    })
-    destroy = instance.destroy
-    const runtimePublisher = new RuntimeEventPublisher(event => publisher.publish(event), { emitDone: false, agentPath: '/root' })
-    for await (const event of instance.agent.stream(instance.createInput(initialUserMessage), abortController.signal)) {
-      runtimePublisher.handle(event)
-      if (event.type === 'text') {
+      publisher,
+      fullAccess: true,
+      activateConversation: false,
+      persistUserMessage: true,
+      userMessageMetadata: {
+        source: 'task-run',
+        taskLogId: input.taskLogId,
+      },
+      taskMonitor: {
+        taskId: input.taskLogId,
+        title: input.taskName,
+        sourceType: 'task',
+      },
+      runtime: {
+        executionId: input.taskLogId,
+        taskMonitorTaskId: input.taskLogId,
+        allowedDirIds: input.windows.map(window => window.dirId),
+      },
+      artifactSource: 'task',
+      onUserMessage: (message) => {
+        recordTaskExecutionEvent(input.taskLogId, {
+          type: 'agent.message.upsert',
+          conversationId,
+          message: {
+            id: message.id,
+            role: 'user',
+            content: message.content,
+            createdAt: new Date(message.createdAt).toISOString(),
+          },
+        })
+      },
+      onAssistantDelta: (delta, createdAt) => {
         recordTaskExecutionEvent(input.taskLogId, {
           type: 'agent.message.delta',
           conversationId,
           messageId: assistantMessageId,
-          delta: event.delta,
-          createdAt: assistantMessageCreatedAt,
+          delta,
+          createdAt: new Date(createdAt).toISOString(),
         })
-      }
-    }
-
-    if (abortController.signal.aborted) {
-      throw abortController.signal.reason instanceof Error
-        ? abortController.signal.reason
-        : new DOMException('Task execution was interrupted', 'AbortError')
-    }
-
-    const finalContent = runtimePublisher.getFinalAnswer().trim()
-    recordTaskExecutionEvent(input.taskLogId, {
-      type: 'agent.message.upsert',
-      conversationId,
-      message: {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: finalContent,
-        createdAt: assistantMessageCreatedAt,
+      },
+      onAssistantMessage: (message) => {
+        recordTaskExecutionEvent(input.taskLogId, {
+          type: 'agent.message.upsert',
+          conversationId,
+          message: {
+            id: message.id,
+            role: 'assistant',
+            content: message.content,
+            createdAt: new Date(message.createdAt).toISOString(),
+          },
+        })
+      },
+      onArtifacts: (artifacts) => {
+        recordTaskExecutionEvent(input.taskLogId, {
+          type: 'artifacts.updated',
+          artifacts: taskArtifacts(artifacts.artifacts.map(artifact => artifact.fileId)),
+        })
       },
     })
 
-    const artifacts = await persistTaskArtifacts(collectedFiles(instance.consumeFiles?.() ?? []))
-    recordTaskExecutionEvent(input.taskLogId, {
-      type: 'artifacts.updated',
-      artifacts: taskArtifacts(artifacts.fileIds),
-    })
-    if (artifacts.failedFiles.length > 0) {
-      publisher.publish(withAgentPath(streamEvents.done(finalContent), '/root'))
-      return {
-        status: 'partial_failed',
-        conversationId,
-        fileIds: artifacts.fileIds,
-        endReasonCode: TASK_ERROR_CODES.artifactUploadPartialFailure,
-      }
+    return {
+      status: result.status,
+      conversationId: result.conversationId,
+      fileIds: result.fileIds,
+      endReasonCode: result.status === 'partial_failed'
+        ? TASK_ERROR_CODES.artifactUploadPartialFailure
+        : result.status === 'interrupted'
+          ? TASK_ERROR_CODES.taskInterrupted
+          : result.status === 'failed'
+            ? TASK_ERROR_CODES.agentExecutionFailed
+            : undefined,
     }
-    publisher.publish(withAgentPath(streamEvents.done(finalContent), '/root'))
-    return { status: 'success', conversationId, fileIds: artifacts.fileIds }
   }
   catch (error) {
-    const interrupted = abortController.signal.aborted
-      || (error instanceof Error && error.name === 'AbortError')
     console.error(`[task] Agent task execution failed taskLogId=${input.taskLogId}:`, error)
-    const errorCode = interrupted
-      ? TASK_ERROR_CODES.taskInterrupted
-      : TASK_ERROR_CODES.agentExecutionFailed
-    const message = interrupted
-      ? t('任务执行已中断')
-      : t('任务执行失败，请稍后重试')
-
-    recordTaskExecutionEvent(input.taskLogId, {
-      type: 'agent.message.upsert',
-      conversationId,
-      message: {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: message,
-        createdAt: assistantMessageCreatedAt,
-      },
-    })
-    publisher.publish(withAgentPath(interrupted
-      ? streamEvents.cancelled({ message })
-      : streamEvents.error(normalizeAgentError(error)), '/root'))
+    const interrupted = abortController.signal.aborted || (error instanceof Error && error.name === 'AbortError')
     return {
       status: interrupted ? 'interrupted' : 'failed',
       conversationId,
       fileIds: [],
-      endReasonCode: errorCode,
+      endReasonCode: interrupted ? TASK_ERROR_CODES.taskInterrupted : TASK_ERROR_CODES.agentExecutionFailed,
     }
   }
   finally {
     input.signal.removeEventListener('abort', abortFromTask)
-    publishTaskMonitorTaskFinished(input.taskLogId)
-    if (destroy) {
-      await Promise.race([
-        destroy(),
-        new Promise<void>(resolve => setTimeout(resolve, TASK_AGENT_DESTROY_TIMEOUT_MS)),
-      ]).catch(error => console.warn(`[task] Failed to destroy task agent ${input.taskLogId}:`, error))
-    }
     cleanupRun(input.taskLogId, abortController)
   }
 }

@@ -28,7 +28,7 @@ import { cancelInterrupt, resolveInterrupt } from '@/core/registry/interruptRegi
 import { getMigrationStatus } from '@/core/storage/migrate'
 import { profileMonitorHub } from '@/core/task-monitor'
 import { taskLogStore } from '@/database/tasks'
-import { startConversationRun } from '@/services/chatService'
+import { completeConversationRunAttachments, startConversationRun } from '@/services/chatService'
 import { taskExecutionDetailHub } from '@/services/taskExecutionDetails'
 import { listAllTaskLogs, toTaskLogDTO } from '@/services/taskService'
 
@@ -93,6 +93,7 @@ export interface AgentChannelSources {
 
 export interface AgentChannelCommands {
   startRun: (command: AgentChannelClientMessage<'conversation.run.start'>) => void | Promise<void>
+  completeRunAttachments?: (command: AgentChannelClientMessage<'conversation.run.attachments.ready'>) => void | Promise<void>
   stopRun: (command: AgentChannelClientMessage<'conversation.run.stop'>) => void | Promise<void>
   submitApproval: (command: AgentChannelClientMessage<'conversation.approval.submit'>) => void | Promise<void>
   controlExecution?: (command: AgentChannelClientMessage<'execution.control'>) => void | Promise<void>
@@ -113,6 +114,7 @@ const defaultSources: AgentChannelSources = {
 
 const defaultCommands: AgentChannelCommands = {
   startRun: command => startConversationRun(command.data, command.id),
+  completeRunAttachments: command => completeConversationRunAttachments(command.data),
   stopRun: (command) => {
     const { conversationId } = command.data
     cancelInterrupt(conversationId)
@@ -330,6 +332,9 @@ export class AgentChannelServer {
 
     if (command.type === 'conversation.run.start') {
       this.runCommand(command.type, () => this.commands.startRun(command))
+    }
+    else if (command.type === 'conversation.run.attachments.ready') {
+      this.runCommand(command.type, () => (this.commands.completeRunAttachments ?? defaultCommands.completeRunAttachments!)(command))
     }
     else if (command.type === 'conversation.run.stop') {
       this.runCommand(command.type, () => this.commands.stopRun(command))

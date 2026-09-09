@@ -85,6 +85,34 @@ describe('runEventHub', () => {
     expect(publisher?.publish({ type: 'run_failed', data: { code: 'late', message: 'late', retryable: false } })).toBeNull()
   })
 
+  it('can reserve a run before announcing it to the client', () => {
+    // 回归：初始 rollout 回执写入期间也必须先占用 run，否则两个快速启动会同时通过活跃检查并发生竞态。
+    // 修复：将 run 占用与 run_started 广播拆开。
+    const hub = new RunEventHub()
+    const emitted: AgentConversationRunEventDTO[] = []
+    hub.subscribe(item => emitted.push(item))
+    const publisher = hub.tryBegin({
+      conversationId: 'conversation-1',
+      runId: 'run-1',
+      turnId: 'turn-1',
+      assistantMessageId: 'assistant-1',
+      requestId: 'request-1',
+      source: 'user',
+      startedAt: 100,
+    }, { announceStarted: false })
+
+    expect(publisher).not.toBeNull()
+    expect(hub.isActive('conversation-1')).toBe(true)
+    expect(emitted).toEqual([])
+
+    expect(hub.publishStarted(publisher!, {
+      requestId: 'request-1',
+      source: 'user',
+      startedAt: 100,
+    })).toBe(true)
+    expect(emitted.map(item => item.event.type)).toEqual(['run_started'])
+  })
+
   it('keeps active fragment replay compact while broadcasting raw increments', () => {
     const hub = new RunEventHub()
     const emitted: AgentConversationRunEventDTO[] = []

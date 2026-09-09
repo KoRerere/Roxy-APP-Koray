@@ -75,6 +75,9 @@ export class ExecutionCenter {
       if (input.title !== undefined) {
         existing.title = input.title
       }
+      if (input.conversationId !== undefined) {
+        existing.conversationId = input.conversationId
+      }
       if (input.metadata) {
         existing.metadata = { ...existing.metadata, ...input.metadata }
       }

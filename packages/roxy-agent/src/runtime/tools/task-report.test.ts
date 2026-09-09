@@ -29,7 +29,8 @@ describe('roxy_task_report', () => {
     expect(tool.descriptor.description).toContain('user\'s system language')
     expect(tool.descriptor.description).toContain('brief user-facing name')
     expect(tool.descriptor.description).toContain('Keep parameter keys and values concise')
-    expect(tool.descriptor.description).toContain('report admission set')
+    expect(tool.descriptor.description).toContain('current turn')
+    expect(tool.descriptor.description).toContain('regenerate')
     expect(tool.descriptor.description).toContain('status=unused')
     expect(result).toEqual({
       content: '## Task report result\n\n- status: accepted',
@@ -124,7 +125,7 @@ describe('roxy_task_report', () => {
     expect(result.content).toContain('Started windows cannot use status=unused: profile-1')
   })
 
-  it('rejects a report that adds a window outside the message scope', async () => {
+  it('rejects a report that adds a window outside the report scope', async () => {
     const tracker = createTaskReportWindowTracker()
     tracker.beginTurn(['profile-1'])
     tracker.record(['profile-1'])
@@ -139,6 +140,38 @@ describe('roxy_task_report', () => {
     }, context)
 
     expect(result.isError).toBe(true)
-    expect(result.content).toContain('Windows outside the message scope: profile-3')
+    expect(result.content).toContain('Windows outside the report scope: profile-3')
+  })
+
+  it('regenerates a previous report without new profile references or launches', async () => {
+    const tracker = createTaskReportWindowTracker()
+    tracker.beginTurn(['profile-1', 'never-started'])
+    tracker.record(['profile-1'])
+    tracker.beginTurn()
+    const tool = createTaskReportTool({ windowTracker: tracker })
+
+    expect((await tool.handler(validReport, context)).isError).toBe(false)
+    expect((await tool.handler({
+      ...validReport,
+      windows: [{ dirId: 'never-started', success: false, status: 'unused', failureReason: '' }],
+    }, context)).isError).toBe(true)
+  })
+
+  it('allows a requested historical subset without requiring all session or current windows', async () => {
+    const tracker = createTaskReportWindowTracker()
+    tracker.record(['profile-1', 'old-other'])
+    tracker.beginTurn(['current'])
+    tracker.record(['current'])
+    const tool = createTaskReportTool({ windowTracker: tracker })
+
+    expect((await tool.handler(validReport, context)).isError).toBe(false)
+  })
+
+  it('accepts a window actually launched without a current profile reference', async () => {
+    const tracker = createTaskReportWindowTracker()
+    tracker.beginTurn()
+    tracker.record(['profile-1'])
+
+    expect((await createTaskReportTool({ windowTracker: tracker }).handler(validReport, context)).isError).toBe(false)
   })
 })

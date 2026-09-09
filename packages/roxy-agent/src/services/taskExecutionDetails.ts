@@ -81,11 +81,12 @@ interface LocalReplayMessage {
   id: string
   role: 'user' | 'assistant' | 'system'
   content?: string
+  metadata?: unknown
   created_at: string
 }
 
 export interface LocalTaskExecutionReplayDependencies {
-  getConversationMessages: (conversationId: string) => LocalReplayMessage[]
+  getConversationMessages: (conversationId: string, taskLogId?: string) => LocalReplayMessage[]
   readScriptRunLog: (run: TaskScriptRun, startedAt: string) => string
   describeArtifacts: (fileIds: string[]) => AgentTaskArtifactDTO[]
 }
@@ -159,7 +160,10 @@ function scriptWindowStatus(
 }
 
 const localReplayDependencies: LocalTaskExecutionReplayDependencies = {
-  getConversationMessages: conversationId => projectMessagesFromRollout(conversationId, { source: 'scheduled_task' }),
+  getConversationMessages: (conversationId, taskLogId) => projectMessagesFromRollout(conversationId, {
+    source: 'scheduled_task',
+    taskLogId,
+  }),
   readScriptRunLog: readTaskScriptRunLog,
   describeArtifacts: taskArtifacts,
 }
@@ -212,7 +216,7 @@ export function replayTaskExecutionFromLocalStorage(
     }
   }
   else if (log.conversation_id) {
-    const messages = dependencies.getConversationMessages(log.conversation_id)
+    const messages = dependencies.getConversationMessages(log.conversation_id, log.id)
       .filter((message): message is LocalReplayMessage & { role: 'user' | 'assistant' } =>
         message.role === 'user' || message.role === 'assistant')
       .map<AgentTaskConversationMessageDTO>(message => ({

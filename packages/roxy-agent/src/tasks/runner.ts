@@ -499,6 +499,11 @@ export class TaskRunner {
           skill: preparedSkill,
           onConversationCreated: (conversationId) => {
             taskLogStore.updateAssociations(log.id, { conversationId })
+            executionCenter.register({
+              id: log.id,
+              source: 'scheduled_task',
+              conversationId,
+            })
           },
         })
       }
