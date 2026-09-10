@@ -15,6 +15,7 @@ import { createHitlRequestFromAgentEvent, createLegacyResumeDecisions } from '..
 import { resolveHitlActionTitles } from '../hitlResourcePresentation'
 import { buildProcessFromEvents, formatDuration, formatTime, mapHistoryConversation, mapHistoryMessages } from '../historyAdapter'
 import { IncrementalProcessUpdater } from '../incrementalProcess'
+import { markProcessEventsStopped } from '../processPresentationState'
 import { resolveScriptRunPresentationEvents } from '../scriptRunPresentation'
 import { createIdleAwareStreamTextEventBufferScheduler, StreamTextEventBuffer } from '../streamTextEventBuffer'
 import { createQueuedPrompt, reorderQueuedPrompt as movePromptInQueue, removeQueuedPrompt as removePromptFromQueue } from '../prompt-queue'
@@ -1829,19 +1830,6 @@ export function useAgentConsole() {
     const minutes = Math.floor(seconds / 60)
     const restSeconds = seconds % 60
     return restSeconds > 0 ? `${$t('任务耗时')} ${minutes}m${restSeconds}s` : `${$t('任务耗时')} ${minutes}m`
-  }
-
-  function markProcessEventsStopped(events: AgentProcessEvent[]) {
-    for (const event of events) {
-      if (event.status === 'running' || event.status === 'pending') {
-        event.status = 'failed'
-      }
-
-      if (event.type === 'agent_lifecycle') {
-        markProcessEventsStopped(event.events)
-        markProcessEventsStopped(event.children)
-      }
-    }
   }
 
   function finalizeCancelledRunMessage(conversationId: string, runId: string) {

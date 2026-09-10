@@ -539,6 +539,31 @@ it('network retry is a standalone process event and settles after replacement ou
   assert.deepEqual(parsed.process.events.map(event => event.type), ['retrying', 'final_answer'])
 })
 
+it('coalesces consecutive retry IDs until replacement output confirms reconnection', () => {
+  // 回归：每个重试事件都会先把上一条标为成功，再创建新事件，导致过程时间线留下多条“已重新连接”。
+  // 修复：同一 agent 范围内只保留一条活跃重试，直到新的输出实际到达。
+  const retrying = buildProcessFromEvents('message-retry-coalesced', [
+    runEvent(1, { type: 'run_retrying', data: { retryId: 'retry-1', attempt: 1, maxAttempts: 5 } }),
+    runEvent(2, { type: 'run_retrying', data: { retryId: 'retry-2', attempt: 2, maxAttempts: 5 } }),
+  ], { finalize: false })
+
+  const activeRetries = retrying.process.events.filter(event => event.type === 'retrying')
+  assert.equal(activeRetries.length, 1)
+  assert.equal(activeRetries[0]?.title, '正在重新连接 2/5')
+  assert.equal(activeRetries[0]?.status, 'running')
+
+  const reconnected = buildProcessFromEvents('message-retry-coalesced', [
+    runEvent(1, { type: 'run_retrying', data: { retryId: 'retry-1', attempt: 1, maxAttempts: 5 } }),
+    runEvent(2, { type: 'run_retrying', data: { retryId: 'retry-2', attempt: 2, maxAttempts: 5 } }),
+    runEvent(3, { type: 'content_delta', data: { contentId: 'answer', text: 'recovered' } }),
+  ], { finalize: false })
+
+  const completedRetries = reconnected.process.events.filter(event => event.type === 'retrying')
+  assert.equal(completedRetries.length, 1)
+  assert.equal(completedRetries[0]?.title, '已重新连接')
+  assert.equal(completedRetries[0]?.status, 'success')
+})
+
 it('run completion snapshot replaces the streamed final answer without rendering it twice', () => {
   const parsed = buildProcessFromEvents('message-completed-answer', [
     runEvent(1, { type: 'thinking_delta', data: { thinkingId: 'thinking-1', text: 'thinking' } }),
