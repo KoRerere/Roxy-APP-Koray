@@ -2097,7 +2097,6 @@
   "数量": "Quantity",
   "数量必须大于{min}": "Quantity must be greater than {min}",
   "整数": "Integer",
-  "文件": "File",
   "文件上传失败": "Failed to upload file",
   "文件不存在或已被移动": "The file does not exist or has been moved",
   "文件大小不能超过 5MB": "File size cannot exceed 5MB",
@@ -3992,5 +3991,8 @@
   "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)",
   "（可选）": "(Optional)",
   "（脚本日志文件不存在）": "(Script log file does not exist)",
-  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount"
+  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount",
+  "Agent 响应超时，请稍后重试": "Agent response timed out. Please try again later.",
+  "模板提示词不能包含浏览器选择，请移除后保存。浏览器可在使用模板时选择。": "Template prompts cannot include a browser selection. Remove it before saving. You can choose a browser when using the template.",
+  "请填写以下提示词参数后再保存：{items}": "Fill in the following prompt parameters before saving: {items}"
 }

@@ -4,6 +4,7 @@ import { EditorContent } from '@tiptap/vue-3'
 import type { AgentAttachment, AgentFolderSelection, AgentHitlChoiceControl, AgentHitlChoiceOption, AgentHitlControlValue, AgentHitlRequest, AgentHitlSubmitPayload, AgentHitlTextControl, AgentPathSelection, AgentQueuedPrompt, AgentTodoProgress } from '../types'
 import type { AgentComposerItem } from './chat-composer/types'
 import type { ClipboardFileSource } from './chat-composer/clipboardFiles'
+import AgentFileCard from './AgentFileCard.vue'
 import AgentTooltip from './AgentTooltip.vue'
 import ComposerToolbar from './ComposerToolbar.vue'
 import PromptQueue from './PromptQueue.vue'
@@ -62,6 +63,9 @@ const composerStyle = computed(() => isPromptField.value && props.promptMinHeigh
 const shellRef = ref<HTMLElement | null>(null)
 const composerShellRef = ref<HTMLElement | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const attachmentStripRef = ref<HTMLElement | null>(null)
+const attachmentScrollStart = ref(false)
+const attachmentScrollEnd = ref(false)
 const inputTokenInputRef = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
 const inputTokenPopoverRef = ref<HTMLElement | null>(null)
 const inputTokenActionsRef = ref<HTMLElement | null>(null)
@@ -133,6 +137,20 @@ const {
   submitOnEnter: !isPromptField.value,
 })
 
+const inputProjectOptions = computed(() => {
+  const seen = new Set<string>()
+
+  return projectOptions.value.flatMap((option) => {
+    const projectName = option.projectName?.trim() ?? ''
+    if (option.value === '__all__' || !projectName || seen.has(projectName)) {
+      return []
+    }
+
+    seen.add(projectName)
+    return [{ label: projectName, value: projectName }]
+  })
+})
+
 const hasAttachmentUploading = computed(() => props.pendingAttachments.some(attachment => attachment.uploadStatus === 'uploading'))
 const composerCanSubmit = computed(() => {
   return canSubmit.value || props.pendingAttachments.length > 0
@@ -145,6 +163,7 @@ let inputTokenPopoverFrame = 0
 let inputTokenActionsAnimationFrame = 0
 let inputTokenGlobalListenersBound = false
 let inputTokenPopoverResizeObserver: ResizeObserver | undefined
+let attachmentStripResizeObserver: ResizeObserver | undefined
 let stopInputTokenTextareaResize: (() => void) | undefined
 let clarificationDescriptionFrame = 0
 let clarificationDescriptionResizeObserver: ResizeObserver | undefined
@@ -171,39 +190,8 @@ function requestEditorFocus() {
   })
 }
 
-function getFileExtension(fileName: string) {
-  const ext = fileName.split('.').pop()
-  return ext && ext !== fileName ? ext.toUpperCase() : $t('文件')
-}
-
 function getAttachmentPreview(attachment: AgentAttachment) {
   return attachment.preview || attachment.url || attachment.localUrl || attachment.fileUrl || attachment.remoteUrl || ''
-}
-
-function isImageFileName(fileName: string) {
-  return /\.(?:png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(fileName)
-}
-
-function isImageAttachment(attachment: AgentAttachment) {
-  return attachment.kind === 'file'
-    && (attachment.mimeType.startsWith('image/') || isImageFileName(attachment.fileName))
-    && Boolean(getAttachmentPreview(attachment))
-}
-
-function getAttachmentTypeLabel(attachment: AgentAttachment) {
-  if (attachment.uploadStatus === 'uploading') {
-    return $t('上传中')
-  }
-
-  if (attachment.uploadStatus === 'error') {
-    return $t('上传失败')
-  }
-
-  if (attachment.kind === 'folder') {
-    return 'Folder'
-  }
-
-  return getFileExtension(attachment.fileName)
 }
 
 function getPathBaseName(value: string) {
@@ -398,6 +386,12 @@ function submitInputTokenEdit() {
     value = `${hasExplicitProtocol ? parts.protocol : inputUrlProtocol.value}${parts.value}`
   }
   confirmInputTokenEdit(value)
+  missingPromptWarning.value = ''
+}
+
+function selectInputProject(projectName: string) {
+  inputTokenValue.value = projectName
+  confirmInputTokenEdit(projectName)
   missingPromptWarning.value = ''
 }
 
@@ -1081,6 +1075,43 @@ function splitClarificationOptionLabel(label: string) {
   }
 }
 
+function updateAttachmentScrollState() {
+  const element = attachmentStripRef.value
+  if (!element) {
+    attachmentScrollStart.value = false
+    attachmentScrollEnd.value = false
+    return
+  }
+
+  const scrollLeft = Math.abs(element.scrollLeft)
+  attachmentScrollStart.value = scrollLeft >= 1
+  attachmentScrollEnd.value = element.scrollWidth - element.clientWidth - scrollLeft >= 1
+}
+
+function scrollAttachments(offset: -1 | 1) {
+  const element = attachmentStripRef.value
+  element?.scrollTo({
+    left: element.scrollLeft + offset * element.clientWidth,
+    behavior: 'smooth',
+  })
+}
+
+watch(attachmentStripRef, (element) => {
+  attachmentStripResizeObserver?.disconnect()
+  attachmentStripResizeObserver = undefined
+
+  if (element && typeof ResizeObserver !== 'undefined') {
+    attachmentStripResizeObserver = new ResizeObserver(updateAttachmentScrollState)
+    attachmentStripResizeObserver.observe(element)
+  }
+
+  void nextTick(updateAttachmentScrollState)
+}, { flush: 'post' })
+
+watch(() => props.pendingAttachments.length, () => {
+  void nextTick(updateAttachmentScrollState)
+}, { flush: 'post' })
+
 watch(() => props.hitlRequest?.id, () => {
   const values: Record<string, AgentHitlControlValue> = {
     ...(props.hitlRequest?.values ?? {}),
@@ -1195,6 +1226,7 @@ onBeforeUnmount(() => {
   unbindInputTokenGlobalListeners()
   stopInputTokenTextareaResize?.()
   inputTokenPopoverResizeObserver?.disconnect()
+  attachmentStripResizeObserver?.disconnect()
   clarificationDescriptionResizeObserver?.disconnect()
   stopObservingUrlFavicons()
 })
@@ -1392,32 +1424,47 @@ defineExpose({
       >
 
       <div class="composer-editor-area">
-        <div v-if="!isPromptField && pendingAttachments.length" class="attachment-strip">
-          <article v-for="attachment in pendingAttachments" :key="attachment.fileId" class="attachment-chip">
-            <div class="attachment-chip__preview">
-              <img v-if="isImageAttachment(attachment)" :src="getAttachmentPreview(attachment)" :alt="attachment.fileName">
-              <SvgIcon v-else-if="attachment.kind === 'folder'" name="roxy-agent/rx-ic-folder" size="24" color="var(--color-text-disabled)" />
-              <SvgIcon v-else name="roxy-agent/rx-ic-property" size="24" color="var(--color-text-disabled)" />
-            </div>
+        <div
+          v-if="!isPromptField && pendingAttachments.length"
+          class="attachment-strip-wrap"
+          :class="{
+            'attachment-strip-wrap--ping-start': attachmentScrollStart,
+            'attachment-strip-wrap--ping-end': attachmentScrollEnd,
+          }"
+        >
+          <div ref="attachmentStripRef" class="attachment-strip" @scroll="updateAttachmentScrollState">
+            <AgentFileCard
+              v-for="attachment in pendingAttachments"
+              :key="attachment.fileId"
+              :attachment="attachment"
+              :preview-url="getAttachmentPreview(attachment)"
+              removable
+              :remove-label="$t('移除附件')"
+              size="composer"
+              @remove="emit('removeAttachment', attachment.fileId)"
+            />
+          </div>
 
-            <div class="attachment-chip__meta">
-              <div class="attachment-chip__name">
-                {{ attachment.fileName }}
-              </div>
-              <div class="attachment-chip__type">
-                {{ getAttachmentTypeLabel(attachment) }}
-              </div>
-            </div>
-
-            <button
-              class="attachment-chip__remove"
-              type="button"
-              :aria-label="$t('移除附件')"
-              @click.stop="emit('removeAttachment', attachment.fileId)"
-            >
-              <SvgIcon name="roxy-agent/rx-ic-close2" size="14" color="currentColor" />
-            </button>
-          </article>
+          <button
+            type="button"
+            class="attachment-strip__scroll-button attachment-strip__scroll-button--prev"
+            :class="{ 'attachment-strip__scroll-button--visible': attachmentScrollStart }"
+            aria-label="Scroll attachments left"
+            :tabindex="attachmentScrollStart ? 0 : -1"
+            @click.stop="scrollAttachments(-1)"
+          >
+            <SvgIcon name="base/rx_ic_chevron_left" size="14" color="currentColor" />
+          </button>
+          <button
+            type="button"
+            class="attachment-strip__scroll-button attachment-strip__scroll-button--next"
+            :class="{ 'attachment-strip__scroll-button--visible': attachmentScrollEnd }"
+            aria-label="Scroll attachments right"
+            :tabindex="attachmentScrollEnd ? 0 : -1"
+            @click.stop="scrollAttachments(1)"
+          >
+            <SvgIcon name="base/rx_ic_chevron_right" size="14" color="currentColor" />
+          </button>
         </div>
 
         <div class="editor-wrap">
@@ -1501,6 +1548,29 @@ defineExpose({
           {{ inputEditor.label }}
         </div>
         <div
+          v-if="inputEditor.kind === 'project'"
+          class="input-token-popover__project-list"
+          role="listbox"
+          :aria-label="inputEditor.label"
+        >
+          <button
+            v-for="option in inputProjectOptions"
+            :key="option.value"
+            type="button"
+            class="input-token-popover__project-option"
+            :class="{ 'input-token-popover__project-option--selected': option.value === inputEditor.value }"
+            role="option"
+            :aria-selected="option.value === inputEditor.value"
+            @click="selectInputProject(option.value)"
+          >
+            {{ option.label }}
+          </button>
+          <div v-if="!inputProjectOptions.length" class="input-token-popover__project-empty">
+            {{ $t('暂无项目') }}
+          </div>
+        </div>
+        <div
+          v-else
           class="input-token-popover__row"
           :class="{
             'input-token-popover__row--textarea': inputEditor.kind === 'textarea',
@@ -2042,112 +2112,100 @@ defineExpose({
   display: none;
 }
 
-.attachment-strip {
-  display: flex;
+.attachment-strip-wrap {
+  position: relative;
   width: 100%;
   max-width: 100%;
   min-width: 0;
+
+  &::before,
+  &::after {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    content: '';
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  &::before {
+    left: 0;
+    background: linear-gradient(to right, rgb(0 0 0 / 6%), transparent);
+  }
+
+  &::after {
+    right: 0;
+    background: linear-gradient(to left, rgb(0 0 0 / 6%), transparent);
+  }
+
+  &--ping-start::before,
+  &--ping-end::after {
+    opacity: 1;
+  }
+}
+
+.attachment-strip {
+  display: flex;
+  width: 100%;
+  min-width: 0;
   align-items: flex-start;
+  flex-wrap: nowrap;
   gap: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 8px;
-  scrollbar-color: var(--color-border-secondary) transparent;
-  scrollbar-width: thin;
+  padding: 8px 16px;
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: var(--color-border-secondary);
+    display: none;
   }
 }
 
-.attachment-chip {
-  position: relative;
-  display: flex;
-  width: 128px;
-  max-width: 260px;
-  min-width: 128px;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 8px 33px 8px 8px;
-  border: 1px solid var(--color-border-secondary);
-  border-radius: 8px;
-  background: var(--color-bg-primary);
-  box-sizing: border-box;
-}
-
-.attachment-chip__preview {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  place-items: center;
-  overflow: hidden;
-  border-radius: 4px;
-  background: var(--color-bg-tertiary);
-
-  img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
-.attachment-chip__meta {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.attachment-chip__name {
-  width: 100%;
-  overflow: hidden;
-  color: var(--color-text-primary);
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attachment-chip__type {
-  width: 100%;
-  overflow: hidden;
-  color: var(--color-text-disabled);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attachment-chip__remove {
+.attachment-strip__scroll-button {
   position: absolute;
-  top: 7px;
-  right: 7px;
-  display: grid;
-  width: 14px;
-  height: 14px;
+  z-index: 2;
+  top: 50%;
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 999px;
-  appearance: none;
-  color: var(--color-fg-primary);
-  background: transparent;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 50%;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
   cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition:
+    opacity 0.3s,
+    background-color 0.2s;
 
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.45;
+  &:hover,
+  &:focus-visible {
+    background: var(--color-bg-tertiary-hover);
+    outline: none;
+  }
+
+  &--visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  &--prev {
+    left: 16px;
+  }
+
+  &--next {
+    right: 16px;
   }
 }
 
@@ -2387,7 +2445,8 @@ defineExpose({
 
 :deep(.agent-token--input),
 :deep(.agent-token--textarea),
-:deep(.agent-token--url) {
+:deep(.agent-token--url),
+:deep(.agent-token--project) {
   color: var(--color-text-primary);
   background: var(--color-bg-tertiary);
 }
@@ -2396,6 +2455,42 @@ defineExpose({
   border: 1px dashed currentColor;
   color: #c2410c;
   background: rgba(251, 146, 60, 0.12);
+}
+
+.input-token-popover__project-list {
+  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.input-token-popover__project-option {
+  width: 100%;
+  min-height: 36px;
+  flex: none;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+
+  &:hover,
+  &:focus-visible,
+  &--selected {
+    outline: none;
+    background: var(--color-bg-quaternary);
+  }
+}
+
+.input-token-popover__project-empty {
+  padding: 16px 10px;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+  text-align: center;
 }
 
 .input-token-popover {

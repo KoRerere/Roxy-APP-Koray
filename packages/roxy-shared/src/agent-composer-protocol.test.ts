@@ -8,9 +8,9 @@ describe('validateAgentComposerTemplatePrompt', () => {
     )).toEqual(['window-a', 'window-b', 'window-c'])
   })
 
-  it('accepts reusable input and URL tokens without a window token', () => {
+  it('accepts reusable input, URL, and project tokens without a window token', () => {
     expect(validateAgentComposerTemplatePrompt(
-      '在 [url:目标网址](https://example.com) 打开页面，搜索 [input:关键词](示例)。',
+      '在 [url:目标网址](https://example.com) 打开页面，搜索 [input:关键词](示例)，保存到 [project:项目名称](跨境电商)。',
     )).toEqual({ valid: true, issues: [] })
   })
 
@@ -20,6 +20,7 @@ describe('validateAgentComposerTemplatePrompt', () => {
     '[input:关键词](   )',
     '[url:关键词]()',
     '[textarea:关键词](\n  \n)',
+    '[project:关键词]()',
   ])('rejects unfilled template parameters: %s', (prompt) => {
     expect(validateAgentComposerTemplatePrompt(prompt).valid).toBe(false)
     expect(inspectAgentComposerTemplateInputs(prompt).missingInputLabels).toEqual(['关键词'])
@@ -35,11 +36,11 @@ describe('validateAgentComposerTemplatePrompt', () => {
   })
 
   it('deduplicates missing labels and keeps filled or plain content valid', () => {
-    expect(inspectAgentComposerTemplateInputs('[input:关键词]() [url:网址] [textarea:关键词]()')).toEqual({
+    expect(inspectAgentComposerTemplateInputs('[input:关键词]() [url:网址] [textarea:关键词]() [project:项目]()')).toEqual({
       hasProfileSelection: false,
-      missingInputLabels: ['关键词', '网址'],
+      missingInputLabels: ['关键词', '网址', '项目'],
     })
-    for (const prompt of ['', '普通提示词', '[input:数量](0) [textarea:备注](第一行\n第二行) [url:网址](https://example.com)']) {
+    for (const prompt of ['', '普通提示词', '[input:数量](0) [textarea:备注](第一行\n第二行) [url:网址](https://example.com) [project:项目](跨境电商)']) {
       expect(inspectAgentComposerTemplateInputs(prompt)).toEqual({
         hasProfileSelection: false,
         missingInputLabels: [],

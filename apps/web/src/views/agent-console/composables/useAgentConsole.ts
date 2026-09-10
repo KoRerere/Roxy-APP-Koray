@@ -15,6 +15,7 @@ import { createHitlRequestFromAgentEvent, createLegacyResumeDecisions } from '..
 import { resolveHitlActionTitles } from '../hitlResourcePresentation'
 import { buildProcessFromEvents, formatDuration, formatTime, mapHistoryConversation, mapHistoryMessages } from '../historyAdapter'
 import { IncrementalProcessUpdater } from '../incrementalProcess'
+import { markProcessEventsStopped } from '../processPresentationState'
 import { resolveScriptRunPresentationEvents } from '../scriptRunPresentation'
 import { createIdleAwareStreamTextEventBufferScheduler, StreamTextEventBuffer } from '../streamTextEventBuffer'
 import { createQueuedPrompt, reorderQueuedPrompt as movePromptInQueue, removeQueuedPrompt as removePromptFromQueue } from '../prompt-queue'
@@ -97,7 +98,7 @@ interface SendPromptOptions {
   templateContext?: TaskReportTemplateContext
 }
 
-const PENDING_RUN_START_TIMEOUT_MS = 15_000
+const PENDING_RUN_START_TIMEOUT_MS = 20_000
 const pendingRunStarts = new PendingConversationRunRegistry<PendingRunStart>()
 const pendingRunPayloads = new Map<string, PendingRunStart>()
 const preparingRunStarts = new Map<string, PendingRunDraft>()
@@ -1831,19 +1832,6 @@ export function useAgentConsole() {
     return restSeconds > 0 ? `${$t('任务耗时')} ${minutes}m${restSeconds}s` : `${$t('任务耗时')} ${minutes}m`
   }
 
-  function markProcessEventsStopped(events: AgentProcessEvent[]) {
-    for (const event of events) {
-      if (event.status === 'running' || event.status === 'pending') {
-        event.status = 'failed'
-      }
-
-      if (event.type === 'agent_lifecycle') {
-        markProcessEventsStopped(event.events)
-        markProcessEventsStopped(event.children)
-      }
-    }
-  }
-
   function finalizeCancelledRunMessage(conversationId: string, runId: string) {
     const message = getAssistantMessage(conversationId, runId)
     if (!message) {
@@ -2467,6 +2455,7 @@ export function useAgentConsole() {
         if (draft.attachments.length === 0) {
           draft.attachments = expired.attachments
         }
+        onlyErrorToast(-1, $t('Agent 响应超时，请稍后重试'))
         touchConversationCache(consoleState, conversationId)
         pendingRunVersion.value++
       },

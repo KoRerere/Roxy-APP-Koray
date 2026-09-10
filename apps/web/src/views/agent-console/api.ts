@@ -287,8 +287,6 @@ const agentBackendHttpClient = createHttpClient(
   },
 ) as unknown as HttpClient
 
-const presetInitializationByWorkspace = new Map<string, Promise<void>>()
-
 /**
  * 官方模板列表接口的本地扩展：后端的置顶排序开关在下一次 OpenAPI 刷新后
  * 会进入生成客户端；在此之前仍由生成方法透传这个查询字段。
@@ -299,7 +297,6 @@ type OfficialTemplateListQuery = ListOfficialTemplatesParams & {
 
 export function useAgentConsoleApi() {
   const agentStore = useAgentStore()
-  const workspaceStore = useWorkspaceStore()
   const feedback = new FeedbackApi(agentBackendHttpClient)
   const files = new FilesApi(agentBackendHttpClient)
   const officialScripts = new OfficialScriptsApi(agentBackendHttpClient)
@@ -480,35 +477,6 @@ export function useAgentConsoleApi() {
   function syncTasks() {
     return request<AgentTaskSyncResult>('/api/tasks/sync', { method: 'POST' })
   }
-
-  // function initializePresetTemplates() {
-  //   const workspaceId = workspaceStore.currentWorkspace?.id
-  //   if (!workspaceId) {
-  //     return Promise.resolve()
-  //   }
-
-  //   const key = String(workspaceId)
-  //   const pending = presetInitializationByWorkspace.get(key)
-  //   if (pending) {
-  //     return pending
-  //   }
-
-  //   const request = agentBackendHttpClient.request<AgentConsoleApiResponse<PresetTemplateInitialization>>({
-  //     path: '/v1/user/templates/initialize-presets',
-  //     method: 'POST',
-  //     format: 'json',
-  //   }).then((response) => {
-  //     if (response.code !== undefined && response.code !== 0) {
-  //       throw new Error(getResponseMessage(response))
-  //     }
-  //   }).catch((error) => {
-  //     presetInitializationByWorkspace.delete(key)
-  //     console.error('[agent-console] Failed to initialize preset templates:', error)
-  //   })
-
-  //   presetInitializationByWorkspace.set(key, request)
-  //   return request
-  // }
 
   return {
     createConversation,

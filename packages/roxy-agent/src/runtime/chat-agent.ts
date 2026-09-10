@@ -45,7 +45,7 @@ import { createRuntimeFileCollector } from './file-collector'
 import { filterBuiltinToolsForHostCapabilities, getHostToolCapabilities } from './host-tools'
 import { ensureMemoryIndex, loadMemoryIndex, shouldLoadMemoryIndex } from './memory-index'
 import { createRuntimeFilesystemMiddleware } from './middleware/filesystem'
-import { createRuntimeContextMessages } from './prompt-context'
+import { createRuntimeContextMessages, detectRuntimeMetadata } from './prompt-context'
 import { getRuntimeModel } from './provider'
 import { withRuntimeNetworkRetry } from './retrying-provider'
 import { RoxyRolloutStore } from './rollout'
@@ -158,7 +158,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
     })
     try {
       await ensureMemoryIndex(agentPaths.memoryIndexFile)
-      if (shouldLoadMemoryIndex(existingRollout)) {
+      if (shouldLoadMemoryIndex(existingRollout, options.turnId)) {
         pendingMemoryIndex = await loadMemoryIndex(agentPaths.memoryIndexFile)
       }
     }
@@ -383,12 +383,20 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
           },
         })]
       : []
+    const runtimeMetadata = detectRuntimeMetadata()
     const agent = await AgentRuntime.create({
       sessionId,
       model,
       systemPrompt: createRuntimeSystemPrompt({
         apiFormat: modelInfo.api_format,
         hasRipgrep: hostToolCapabilities.hasRipgrep,
+        runtimeContext: {
+          workingDirectory: workspaceDir,
+          recordingPath: agentPaths.sessionRecordingLog(options.conversationId),
+          memoryDirectory: agentPaths.memoryDir,
+          memoryIndexFile: agentPaths.memoryIndexFile,
+          metadata: runtimeMetadata,
+        },
       }),
       provider: runtimeProvider,
       contextWindowTokens: DEEPSEEK_CONTEXT_WINDOW_TOKENS,
@@ -439,13 +447,7 @@ export async function createRuntimeChatAgent(options: RuntimeChatAgentOptions): 
         const memoryIndex = pendingMemoryIndex
         pendingMemoryIndex = undefined
         const input: Message[] = [
-          ...createRuntimeContextMessages({
-            workingDirectory: workspaceDir,
-            recordingPath: agentPaths.sessionRecordingLog(options.conversationId),
-            memoryDirectory: agentPaths.memoryDir,
-            memoryIndexFile: agentPaths.memoryIndexFile,
-            ...(memoryIndex !== undefined ? { memoryIndex } : {}),
-          }),
+          ...createRuntimeContextMessages((memoryIndex !== undefined ? { memoryIndex } : {})),
           { role: 'user', content, ...(metadata ? { metadata } : {}) },
         ]
         return trailingMessages.length > 0 ? { input, trailingMessages } : input

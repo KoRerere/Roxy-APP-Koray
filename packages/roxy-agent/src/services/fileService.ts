@@ -1,12 +1,12 @@
+import type { RuntimeModelSelection } from '@/runtime/provider'
+import type { AgentConversationRunStartCommand } from '@roxy/shared/channel'
+import type { FileBlock, TextBlock } from 'roxy-agent-runtime'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
-import type { AgentConversationRunStartCommand } from '@roxy/shared/channel'
-import type { FileBlock, Message, TextBlock } from 'roxy-agent-runtime'
 import { fileManager, resolveFileMimeType } from '@/core/fileManager'
 import { agentPaths } from '@/core/storage/agentPaths'
 import { FileRecordStore } from '@/database/conversations'
-import type { RuntimeModelSelection } from '@/runtime/provider'
 import { getRuntimeModel } from '@/runtime/provider'
 import { env } from '../config'
 
@@ -164,7 +164,7 @@ function resolveImageMimeType(mimeType: string): string | undefined {
 export function buildUserMessageContent(
   message: string,
   attachments: AttachmentRef[],
-): Message['content'] {
+): Array<TextBlock | FileBlock> {
   const content: Array<TextBlock | FileBlock> = []
   if (message?.trim()) {
     content.push({ type: 'text', text: message.trim() })

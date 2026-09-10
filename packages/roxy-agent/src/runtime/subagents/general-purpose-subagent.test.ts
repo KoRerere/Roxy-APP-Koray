@@ -269,7 +269,7 @@ describe('general-purpose agent', () => {
     expect(definition?.tools.resolve('mcp_roxybrowser-openapi-mcp__roxy_workspace_list')?.handler).toBe(sharedOpenApiHandler)
     expect(definition?.tools.resolve(`mcp_roxybrowser_playwright_${child.resourceKey}__browser_snapshot`)?.handler).toBe(childSnapshotHandler)
     expect(definition?.tools.resolve('mcp_roxybrowser_playwright_chat_conversation-1__browser_snapshot')).toBeUndefined()
-    expect(definition?.systemPrompt).not.toContain(`mcp_roxybrowser_playwright_${child.resourceKey}__roxy_browser_launch`)
+    expect(definition?.systemPrompt).toContain(`mcp_roxybrowser_playwright_${child.resourceKey}__roxy_browser_launch`)
 
     const launch = definition!.tools.resolve(`mcp_roxybrowser_playwright_${child.resourceKey}__roxy_browser_launch`)!
     await expect(launch.handler({ dirId: 'dir-1' }, toolContext)).resolves.toMatchObject({ isError: false })
@@ -278,15 +278,7 @@ describe('general-purpose agent', () => {
 
     await child.invoke()
     const input = invoke.mock.calls[0]?.[0]
-    expect(input).toEqual([
-      expect.objectContaining({
-        role: 'developer',
-        visible: false,
-        content: expect.stringContaining(`<cwd>/tmp/roxy-general-purpose-agents/${child.resourceKey}</cwd>`),
-      }),
-      expect.objectContaining({ role: 'developer', visible: false, content: expect.stringContaining('<dir_id>dir-1</dir_id>') }),
-      { role: 'user', content: agentMessage },
-    ])
+    expect(input).toEqual([{ role: 'user', content: agentMessage }])
 
     await child.dispose()
     expect(releaseProfileBinding).toHaveBeenCalledWith(child.resourceKey)

@@ -198,6 +198,14 @@ test('renders url protocol tokens with their dedicated token kind', () => {
   assert.match(empty, /<roxy-agent-token kind="url" title="Website" target=""><\/roxy-agent-token>/)
 })
 
+test('renders project protocol tokens with the selected project name', () => {
+  const filled = renderMarkdown('Save to [project:Project](Roxy Store)')
+  const empty = renderMarkdown('Save to [project:Project]()')
+
+  assert.match(filled, /<roxy-agent-token kind="project" title="Roxy Store" target="Roxy Store"><\/roxy-agent-token>/)
+  assert.match(empty, /<roxy-agent-token kind="project" title="Project" target=""><\/roxy-agent-token>/)
+})
+
 test('renders profile references with the split profile badge details', () => {
   const originalTranslate = globalThis.$t
   globalThis.$t = (key, params) => key.replace('{count}', String(params?.count))

@@ -12,6 +12,7 @@ import type {
 import type { ProcessEventGroupItem, ProcessRenderItem, ProcessScriptLogGroupItem } from '../processEventGrouping'
 import type { SvgNames } from '/@/components/rx-icon'
 import { getProcessGroupPrimaryEvent, groupProcessEvents } from '../processEventGrouping'
+import { retryIconName } from '../processPresentationState'
 import { buildProcessScrollRevisions } from '../scrollRevisions'
 import { getMemoryToolPresentation } from '../memoryToolPresentation'
 import { agentProfileLabelVersion, getCachedAgentProfileLabels } from '../profile-token-display'
@@ -203,7 +204,7 @@ function eventIcon(event: AgentProcessEvent): SvgNames {
     return 'roxy-agent/rx-ic-skills'
   }
   if (event.type === 'retrying') {
-    return 'base/rx_ic_wifi2'
+    return retryIconName(event.status)
   }
   if (event.type === 'hitl') {
     return event.requestKind === 'clarification' ? 'base/rx_ic_ask' : 'roxy-agent/rx-ic-ask'
@@ -404,7 +405,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-else-if="item.event.type === 'context_compacted' || item.event.type === 'retrying'" class="inline-event">
-          <SvgIcon :name="item.event.type === 'retrying' ? 'base/rx_ic_wifi2' : 'base/rx_ic_doc_article'" size="16" />
+          <SvgIcon :name="eventIcon(item.event)" size="16" />
           <span :class="{ 'process-running-text': shouldHighlight(item) }">{{ (item.event as AgentContextCompactedProcessEvent | AgentRetryProcessEvent).title }}</span>
         </div>
 

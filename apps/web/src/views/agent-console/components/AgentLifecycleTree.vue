@@ -14,11 +14,31 @@ const MAX_VISIBLE_GROUP_ITEMS = 10
 const GROUP_SCROLL_MAX_HEIGHT = `${MAX_VISIBLE_GROUP_ITEMS * 20 + (MAX_VISIBLE_GROUP_ITEMS - 1) * 12}px`
 const expanded = ref(props.event.expanded === true)
 const bodyElement = ref<HTMLElement | null>(null)
+const contentElement = ref<HTMLElement | null>(null)
 const bodyScrollState = reactive({ scrollable: false, canScrollUp: false, canScrollDown: false })
 const hasDetails = computed(() => Boolean(props.event.events.length || props.event.children.length || props.event.report || props.event.error))
 const eventBlocks = computed(() => splitProcessEventBlocks(props.event.events, props.event.agentPath))
 const lastEventBlockId = computed(() => eventBlocks.value.filter(block => block.type === 'events').at(-1)?.id)
 let resizeObserver: ResizeObserver | undefined
+
+function bindResizeObserver(): void {
+  resizeObserver?.disconnect()
+  resizeObserver = undefined
+
+  if (typeof ResizeObserver === 'undefined') {
+    return
+  }
+
+  const elements = [bodyElement.value, contentElement.value].filter((element): element is HTMLElement => Boolean(element))
+  if (elements.length === 0) {
+    return
+  }
+
+  resizeObserver = new ResizeObserver(syncBodyScrollState)
+  for (const element of elements) {
+    resizeObserver.observe(element)
+  }
+}
 
 function syncBodyScrollState(): void {
   const element = bodyElement.value
@@ -32,16 +52,10 @@ function syncBodyScrollState(): void {
   bodyScrollState.canScrollDown = range > 1 && element.scrollTop < range - 1
 }
 
-onMounted(() => {
-  if (typeof ResizeObserver === 'undefined' || !bodyElement.value) {
-    return
-  }
-  resizeObserver = new ResizeObserver(syncBodyScrollState)
-  resizeObserver.observe(bodyElement.value)
-  nextTick(syncBodyScrollState)
-})
-
-watch(expanded, () => nextTick(syncBodyScrollState), { flush: 'post' })
+watch([bodyElement, contentElement], () => {
+  bindResizeObserver()
+  syncBodyScrollState()
+}, { flush: 'post' })
 
 watch(() => props.event.renderRevision, (revision, previousRevision) => {
   nextTick(() => {
@@ -94,7 +108,7 @@ function title(status: AgentLifecycleProcessEvent['lifecycleStatus'], name: stri
         :style="{ '--agent-group-max-height': GROUP_SCROLL_MAX_HEIGHT }"
         @scroll.passive="syncBodyScrollState"
       >
-        <div class="agent-node__content">
+        <div ref="contentElement" class="agent-node__content">
           <template v-for="block in eventBlocks" :key="block.id">
             <AgentProcessEventList
               v-if="block.type === 'events'"
@@ -189,6 +203,8 @@ function title(status: AgentLifecycleProcessEvent['lifecycleStatus'], name: stri
   max-height: min(var(--agent-group-max-height), 38vh);
   margin-left: 14px;
   padding-top: 18px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .agent-node__content {
@@ -201,9 +217,7 @@ function title(status: AgentLifecycleProcessEvent['lifecycleStatus'], name: stri
 }
 
 .agent-node__body--scrollable {
-  overflow-y: auto;
   padding-right: 8px;
-  scrollbar-gutter: stable;
   --mask-top: #000;
   --mask-bottom: #000;
   mask-image: linear-gradient(to bottom, var(--mask-top) 0, #000 20px, #000 calc(100% - 24px), var(--mask-bottom) 100%);

@@ -573,7 +573,7 @@ describe('textarea protocol tokens', () => {
 
   it('reports empty textarea fields when a skill is referenced', () => {
     assert.deepEqual(
-      getMissingComposerTokenLabels('[$总结](user:42) [textarea:备注]()'),
+      getMissingComposerTokenLabels(`[$总结](${skillRoot}/summary/SKILL.md) [textarea:备注]()`),
       ['备注'],
     )
   })
@@ -632,6 +632,32 @@ describe('url protocol tokens', () => {
     assert.deepEqual(
       getMissingComposerTokenLabels(`[$采集](${skillRoot}/collect/SKILL.md) [url:目标网站]()`),
       ['目标网站'],
+    )
+  })
+})
+
+describe('project protocol tokens', () => {
+  it('parses and serializes a project-name selection token', () => {
+    const doc = parsePromptString('目标项目：[project:项目名称]()', {
+      profiles: [],
+      slashItems: [],
+    })
+    const token = doc.content?.[0]?.content?.[1]
+
+    assert.equal(token?.attrs?.kind, 'project')
+    assert.equal(token?.attrs?.title, '项目名称')
+    assert.equal(token?.attrs?.payload?.value, '')
+    assert.equal(hasComposerProtocolTokens('[project:项目名称]()'), true)
+    assert.equal(
+      serializePromptDoc(updateInputTokenValue(doc, '项目名称', '跨境电商', 'project')),
+      '目标项目：[project:项目名称](跨境电商)',
+    )
+  })
+
+  it('reports an empty project field when a skill is referenced', () => {
+    assert.deepEqual(
+      getMissingComposerTokenLabels(`[$项目分析](${skillRoot}/project-analysis/SKILL.md) [project:项目名称]()`),
+      ['项目名称'],
     )
   })
 })

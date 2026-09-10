@@ -309,6 +309,16 @@ export class AgentImpl implements Agent {
       ...(rawUserMessage.transcriptItems ? { transcriptItems: rawUserMessage.transcriptItems } : {}),
     }
     const history = await this.deps.memory.getAll(this.sessionId)
+    const turnId = userMessage.metadata?.turnId
+    const receivedIndex =
+      typeof turnId === 'string' && turnId
+        ? history.findLastIndex(
+            (message) => message.role === 'user' && message.visible !== false && message.metadata?.turnId === turnId,
+          )
+        : -1
+    if (receivedIndex >= 0 && history.slice(receivedIndex + 1).some((message) => message.visible !== false)) {
+      throw new Error('Persisted input has already been executed')
+    }
     const summary = await this.deps.memory.getSummary(this.sessionId)
     const contributions = await runContributors(
       this.deps.contributors ?? [],
@@ -316,7 +326,7 @@ export class AgentImpl implements Agent {
         agentId: this.id,
         sessionId: this.sessionId,
         traceId,
-        recentMessages: [...history, userMessage].slice(-10),
+        recentMessages: (receivedIndex >= 0 ? history : [...history, userMessage]).slice(-10),
       },
       this.deps.logger,
     )
@@ -329,6 +339,7 @@ export class AgentImpl implements Agent {
         role: message.role,
         content: message.content,
         visible: false,
+        ...(message.metadata ? { metadata: message.metadata } : {}),
         ...(message.compactionKey ? { compactionKey: message.compactionKey } : {}),
         ...(message.compactionOrder !== undefined ? { compactionOrder: message.compactionOrder } : {}),
         ...(message.transcriptItems ? { transcriptItems: message.transcriptItems } : {}),
@@ -353,7 +364,11 @@ export class AgentImpl implements Agent {
       }
       return latestByKey.get(message.compactionKey)?.content !== message.content
     })
-    const turnMessages = [...internalMessages, userMessage, ...trailingInternalMessages]
+    const turnMessages = [
+      ...internalMessages,
+      ...(receivedIndex >= 0 ? [] : [userMessage]),
+      ...trailingInternalMessages,
+    ]
     for (const message of turnMessages) {
       await this.deps.memory.append(this.sessionId, message)
       await this.record({ type: 'user_input', message })

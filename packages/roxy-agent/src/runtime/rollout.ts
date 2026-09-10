@@ -1,4 +1,4 @@
-import type { ISessionStore, RolloutEvent, SessionId, SessionMeta } from 'roxy-agent-runtime'
+import type { ISessionStore, Message, RolloutEvent, SessionId, SessionMeta } from 'roxy-agent-runtime'
 import { sanitizeId } from '@roxy/shared/agent-paths'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -8,6 +8,22 @@ export type RoxyRolloutEvent = RolloutEvent | {
   dirId: string
   turnId: string
   ts: number
+}
+
+function isLegacyRuntimeMetadataMessage(message: Message): boolean {
+  return message.visible === false
+    && typeof message.content === 'string'
+    && message.content.trimStart().startsWith('<metadata>')
+}
+
+function isReplayableRoxyEvent(event: RoxyRolloutEvent): event is RolloutEvent {
+  if (event.type === 'roxy_window_used') {
+    return false
+  }
+  if (event.type === 'user_input' && isLegacyRuntimeMetadataMessage(event.message)) {
+    return false
+  }
+  return true
 }
 
 /** Roxy-owned append-only rollout store used by runtime-backed conversations. */
@@ -28,6 +44,20 @@ export class RoxyRolloutStore implements ISessionStore {
     this.appendEvent(sessionId, withTimestamp(event))
   }
 
+  async receiveInput(sessionId: SessionId, message: Message): Promise<boolean> {
+    const turnId = message.metadata?.turnId
+    if (typeof turnId !== 'string' || !turnId) {
+      throw new Error('Received input requires a turnId')
+    }
+    const events = await this.read(sessionId)
+    if (events.some(event => event.type === 'user_input' && event.message.visible !== false
+      && event.message.metadata?.turnId === turnId)) {
+      return false
+    }
+    await this.append(sessionId, { type: 'user_input', message })
+    return true
+  }
+
   recordWindowUsed(sessionId: SessionId, turnId: string, dirId: string): void {
     this.appendEvent(sessionId, { type: 'roxy_window_used', dirId, turnId, ts: Date.now() })
   }
@@ -39,7 +69,7 @@ export class RoxyRolloutStore implements ISessionStore {
   }
 
   async read(sessionId: SessionId): Promise<RolloutEvent[]> {
-    return (await this.readEvents(sessionId)).filter((event): event is RolloutEvent => event.type !== 'roxy_window_used')
+    return (await this.readEvents(sessionId)).filter(isReplayableRoxyEvent)
   }
 
   async readEvents(sessionId: SessionId): Promise<RoxyRolloutEvent[]> {

@@ -711,6 +711,16 @@ function getOrCreateRetry(
   id: string,
   data: Record<string, unknown>,
 ): AgentRetryProcessEvent {
+  const active = context.activeRetriesByScope.get(scope)
+  if (active) {
+    active.attempt = asNumber(data.attempt) ?? active.attempt
+    active.maxAttempts = asNumber(data.maxAttempts) ?? active.maxAttempts
+    active.reason = asString(data.reason) || active.reason
+    active.status = 'running'
+    active.title = retryTitle(data)
+    return active
+  }
+
   const existing = context.eventByKey.get(key)
   if (existing?.type === 'retrying') {
     existing.attempt = asNumber(data.attempt) ?? existing.attempt
@@ -1242,7 +1252,6 @@ function applyProcessRunEvent(context: ProcessBuildContext, item: AgentConversat
 
     case 'run_retrying': {
       const retryId = asString(data.retryId) || `sequence-${item.sequence}`
-      settleRetry(context, scope, 'success')
       const targetEvents = agentEventsFor(context, data)
       getOrCreateRetry(
         context,

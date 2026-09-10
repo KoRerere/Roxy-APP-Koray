@@ -12,8 +12,8 @@ import {
 import { filterBuiltinToolsForHostCapabilities } from './host-tools'
 import {
   createRuntimeContextMessages,
-  createRuntimeMetadataMessage,
   formatOperatingSystem,
+  renderRuntimeSystemContext,
 } from './prompt-context'
 import {
   createGeneralPurposeSystemPrompt,
@@ -87,7 +87,7 @@ describe('runtime chat agent tree configuration', () => {
     expect(ROXY_MAIN_SYSTEM_PROMPT).not.toMatch(/^# (Role|Personality|Working with the User|RoxyBrowser Work|Tool Use|Communication)$/m)
     expect(ROXY_MAIN_SYSTEM_PROMPT).not.toContain('<skills_instructions>')
     expect(ROXY_MAIN_SYSTEM_PROMPT).not.toContain('### File Editing with `apply_patch`')
-    expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('`<system-lang>` value from the latest metadata message')
+    expect(ROXY_MAIN_SYSTEM_PROMPT).not.toContain('<system-lang>')
     expect(createRuntimeSystemPrompt()).toBe(ROXY_MAIN_SYSTEM_PROMPT)
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Lead with the outcome')
     expect(ROXY_MAIN_SYSTEM_PROMPT).toContain('Templates are reusable Roxy Agent artifacts')
@@ -193,12 +193,12 @@ describe('runtime chat agent tree configuration', () => {
     expect(fallbackTools.map(tool => tool.descriptor.name)).toEqual(['read_file', 'grep'])
   })
 
-  it('renders basic dynamic information as a hidden metadata user message', () => {
-    const metadataMessage = createRuntimeMetadataMessage({
-      workingDirectory: '/tmp/work<&',
-      recordingPath: '/tmp/recording<&.jsonl',
-      memoryDirectory: '/tmp/memory<&',
-      memoryIndexFile: '/tmp/memory<&/MEMORY.md',
+  it('renders stable runtime information as a Markdown system context', () => {
+    const context = renderRuntimeSystemContext({
+      workingDirectory: '/tmp/work',
+      recordingPath: '/tmp/recording.jsonl',
+      memoryDirectory: '/tmp/memory',
+      memoryIndexFile: '/tmp/memory/MEMORY.md',
       metadata: {
         os: 'macOS 26.6',
         arch: 'arm64',
@@ -207,13 +207,12 @@ describe('runtime chat agent tree configuration', () => {
       },
     })
 
-    expect(metadataMessage).toEqual({
-      role: 'developer',
-      content: '<metadata>\n  <os>macOS 26.6</os>\n  <arch>arm64</arch>\n  <system-lang>zh-CN</system-lang>\n  <timezone>Asia/Shanghai</timezone>\n  <cwd>/tmp/work&lt;&amp;</cwd>\n  <browser_ops_record>/tmp/recording&lt;&amp;.jsonl</browser_ops_record>\n  <memory_directory>/tmp/memory&lt;&amp;</memory_directory>\n  <memory_index_file>/tmp/memory&lt;&amp;/MEMORY.md</memory_index_file>\n</metadata>',
-      visible: false,
-      compactionKey: 'metadata',
-      compactionOrder: 0,
-    })
+    expect(context).toContain('- Operating system: `macOS 26.6`')
+    expect(context).toContain('- System language: `zh-CN`')
+    expect(context).toContain('Use Simplified Chinese (zh-CN) when communicating with the user by default.')
+    expect(context).toContain("If the user's latest message clearly uses another language, respond in that language.")
+    expect(context).toContain('`/tmp/memory/MEMORY.md`')
+    expect(context).not.toContain('<metadata>')
   })
 
   it('formats macOS, Windows, and Linux metadata without platform-specific assumptions', () => {
@@ -241,60 +240,44 @@ describe('runtime chat agent tree configuration', () => {
     })).toBe('Linux 6.8.0-60-generic')
   })
 
-  it('keeps metadata and context files out of the system prompt', () => {
-    const systemPrompt = createRuntimeSystemPrompt()
-    const contextMessages = createRuntimeContextMessages({
-      workingDirectory: '/tmp/work<&',
-      recordingPath: '/tmp/recording<&.jsonl',
-      memoryDirectory: '/tmp/memory<&',
-      memoryIndexFile: '/tmp/memory<&/MEMORY.md',
-      metadata: {
-        os: 'macOS 26.6',
-        arch: 'arm64',
-        systemLanguage: 'zh-CN',
-        timezone: 'Asia/Shanghai',
+  it('keeps stable context in system prompt and only injects memory snapshots per turn', () => {
+    const systemPrompt = createRuntimeSystemPrompt({
+      runtimeContext: {
+        workingDirectory: '/tmp/work',
+        recordingPath: '/tmp/recording.jsonl',
+        memoryDirectory: '/tmp/memory',
+        memoryIndexFile: '/tmp/memory/MEMORY.md',
+        metadata: {
+          os: 'macOS 26.6',
+          arch: 'arm64',
+          systemLanguage: 'zh-CN',
+          timezone: 'Asia/Shanghai',
+        },
       },
     })
+    const contextMessages = createRuntimeContextMessages({
+      memoryIndex: undefined,
+    })
 
-    expect(systemPrompt).not.toContain('<os>macOS 26.6</os>')
-    expect(systemPrompt).not.toContain('Current date:')
-    expect(systemPrompt).not.toContain('/tmp/recording')
-    expect(contextMessages).toHaveLength(1)
-    expect(contextMessages[0]?.content).toContain('<metadata>')
-    expect(contextMessages[0]?.content).not.toContain('<current-date>')
-    expect(contextMessages[0]?.content).not.toContain('<current-time>')
-    expect(contextMessages[0]?.content).toContain('<cwd>/tmp/work&lt;&amp;</cwd>')
-    expect(contextMessages[0]?.content).toContain('<browser_ops_record>/tmp/recording&lt;&amp;.jsonl</browser_ops_record>')
-    expect(contextMessages[0]?.content).toContain('<memory_directory>/tmp/memory&lt;&amp;</memory_directory>')
-    expect(contextMessages[0]?.content).toContain('<memory_index_file>/tmp/memory&lt;&amp;/MEMORY.md</memory_index_file>')
-    expect(contextMessages.every(message => message.role === 'developer' && message.visible === false)).toBe(true)
+    expect(systemPrompt).toContain('- Operating system: `macOS 26.6`')
+    expect(systemPrompt).toContain('Use Simplified Chinese (zh-CN) when communicating with the user by default.')
+    expect(systemPrompt).toContain("If the user's latest message clearly uses another language, respond in that language.")
+    expect(systemPrompt).not.toContain('<metadata>')
+    expect(contextMessages).toHaveLength(0)
   })
 
-  it('places a wrapped memory index after metadata and before the real user message', () => {
-    // Regression: MEMORY.md was injected as unwrapped Markdown after a separate
-    // environment message instead of a self-contained memory user item.
-    // Fixed by: metadata owns runtime fields and memory uses a dedicated XML envelope.
+  it('places a wrapped memory index before the real user message', () => {
     const memoryIndex = '# Roxy Agent Memory Index\n\n- [Remember this](remember-this.md) - Full description'
     const contextMessages = createRuntimeContextMessages({
-      workingDirectory: '/tmp/work',
-      memoryDirectory: '/tmp/memory',
-      memoryIndexFile: '/tmp/memory/MEMORY.md',
       memoryIndex,
-      metadata: {
-        os: 'macOS 26.6',
-        arch: 'arm64',
-        systemLanguage: 'zh-CN',
-        timezone: 'Asia/Shanghai',
-      },
     })
     const input = [...contextMessages, { role: 'user' as const, content: 'real request' }]
 
     expect(input.map(message => message.content)).toEqual([
-      expect.stringContaining('<metadata>'),
       `<memory-md>\n${memoryIndex}\n</memory-md>`,
       'real request',
     ])
-    expect(input[1]).toEqual({
+    expect(input[0]).toEqual({
       role: 'developer',
       content: `<memory-md>\n${memoryIndex}\n</memory-md>`,
       visible: false,
@@ -306,19 +289,10 @@ describe('runtime chat agent tree configuration', () => {
 
   it('renders an explicit empty-memory sentinel inside the memory envelope', () => {
     const messages = createRuntimeContextMessages({
-      workingDirectory: '/tmp/work',
-      memoryDirectory: '/tmp/memory',
-      memoryIndexFile: '/tmp/memory/MEMORY.md',
       memoryIndex: '',
-      metadata: {
-        os: 'macOS 26.6',
-        arch: 'arm64',
-        systemLanguage: 'zh-CN',
-        timezone: 'Asia/Shanghai',
-      },
     })
 
-    expect(messages[1]?.content).toBe('<memory-md>\n(Empty memory index)\n</memory-md>')
+    expect(messages[0]?.content).toBe('<memory-md>\n(Empty memory index)\n</memory-md>')
   })
 
   it('requires reading relevant linked memory files before using index summaries', () => {

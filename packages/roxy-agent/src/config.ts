@@ -1,5 +1,23 @@
 import { getBundledAgentVersion } from './core/agentVersion'
 
+function normalizeSystemLanguage(language: string | undefined): string | undefined {
+  const normalized = language?.trim().replaceAll('_', '-').toLowerCase()
+  if (!normalized) {
+    return undefined
+  }
+
+  if (normalized.startsWith('zh')) {
+    return 'zh-CN'
+  }
+  if (normalized.startsWith('en')) {
+    return 'en'
+  }
+  if (normalized.startsWith('ru')) {
+    return 'ru'
+  }
+  return normalized
+}
+
 // type NodeEnv = 'production' | 'development' | 'staging'
 
 export const env = {
@@ -8,7 +26,7 @@ export const env = {
   // 当前账号的token
   ROXY_USER_TOKEN: process.env.ROXY_USER_TOKEN!,
 
-  SYSTEM_LANGUAGE: process.env.SYSTEM_LANGUAGE,
+  SYSTEM_LANGUAGE: normalizeSystemLanguage(process.env.SYSTEM_LANGUAGE),
   DEBUG: process.env.DEBUG === 'true' || process.env.DEBUG === '1',
   ROXY_API_KEY: process.env.ROXY_API_KEY,
   ROXY_API_HOST: process.env.ROXY_API_HOST,
