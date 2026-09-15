@@ -185,17 +185,23 @@ const subscribeInfo = computed(() => {
     return {}
   }
 
-  const profileCount = currency(userPayInfo.value.maxWindowCount, { symbol: '', precision: 0 })
-  const create = isPremiumPartner.value ? $t('无限用量') : profileCount.multiply(30).format()
-  const open = isPremiumPartner.value ? $t('无限用量') : profileCount.multiply(100).format()
+  const { maxWindowCount, createWindowTimes, openWindowTimes, totalCreateWindowTimes, totalOpenWindowTimes } = userPayInfo.value
+  const profileCount = currency(maxWindowCount, { symbol: '', precision: 0 })
+  const createRate = currency(totalCreateWindowTimes, { precision: 0, symbol: '' }).divide(profileCount.value).value
+  const openRate = currency(totalOpenWindowTimes, { precision: 0, symbol: '' }).divide(profileCount.value).value
+  const createTotal = isPremiumPartner.value ? $t('无限用量') : totalCreateWindowTimes
+  const openTotal = isPremiumPartner.value ? $t('无限用量') : totalOpenWindowTimes
 
   return {
     expireTime: isPremiumPartner.value ? $t('永久免费') : $t('到期时间: {value}', { value: format(userPayInfo.value.subEndDate, 'yyyy/MM/dd') }),
     profileCount: isPremiumPartner.value ? billingLabels.value.unlimitedEntities : billingLabels.value.countEntitiesShort(profileCount.format()),
-    // number type
     profileNumber: isPremiumPartner.value ? Infinity : profileCount.value,
-    profileCreate: create,
-    profileOpen: open,
+    createWindowTimes,
+    createTotal,
+    createTooltips: isPremiumPartner.value ? '' : $t('每日可创建数 = 窗口数 × {rate}', { rate: createRate }),
+    openWindowTimes,
+    openTotal,
+    openTooltips: isPremiumPartner.value ? '' : $t('每日可打开数 = 窗口数 × {rate}', { rate: openRate }),
   }
 })
 
@@ -353,21 +359,21 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
             <div class="h-1.5 rounded-full overflow-hidden bg-[var(--colors-background-bg-block,#eef1f4)]">
               <div class="h-full rounded-full bg-[var(--colors-background-bg-brand,#11a3fd)]" :style="{ width: `${profileUsagePercent}%` }" />
             </div>
-            <i18n-t tag="div" class="flex items-center tt-tertiary text-3 leading-normal"
-                    :keypath="$t('每日可创建数: {create} {line} 每日可打开数: {open}', { create: '{create}', open: '{open}', line: '{line}' })"
+            <i18n-t tag="div" class="flex items-center gap-0.5 tt-tertiary text-3 leading-normal select-none"
+                    :keypath="$t('每日可创建数：{create} {line} 每日可打开数：{open}', { create: '{create}', open: '{open}', line: '{line}' })"
             >
               <template #create>
-                <span>
-                  {{ subscribeInfo?.profileCreate }}
-                </span>
+                <span v-tooltip.top="subscribeInfo.createTooltips" class="tt-brand font-600 cursor-pointer">{{ subscribeInfo?.createWindowTimes }}</span>
+                <span>/</span>
+                <span>{{ subscribeInfo?.createTotal }}</span>
               </template>
               <template #open>
-                <span>
-                  {{ subscribeInfo?.profileOpen }}
-                </span>
+                <span v-tooltip.top="subscribeInfo.openTooltips" class="tt-brand font-600 cursor-pointer">{{ subscribeInfo?.openWindowTimes }}</span>
+                <span>/</span>
+                <span>{{ subscribeInfo?.openTotal }}</span>
               </template>
               <template #line>
-                <span class="line mx-3 inline-block w-[1px] h-[16px]" />
+                <RxDivider class="mx-3" vertical line-only />
               </template>
             </i18n-t>
           </div>

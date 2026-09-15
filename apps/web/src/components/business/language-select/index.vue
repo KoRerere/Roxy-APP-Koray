@@ -3,10 +3,8 @@ import LiveChat from '/@/components/business/live-chat/index.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { ISO639List } from '/@/constants/iso-639'
 import { useSimpleLocale } from '/@/stores/locale'
-import { useWindowSize } from '@vueuse/core'
 import { isMobile } from '/@/utils'
 
-const { width } = useWindowSize()
 const simpleLocale = useSimpleLocale()
 const ISO639 = ref(ISO639List)
 const currentLocale = ref(ISO639.value.find(item => item.locale === simpleLocale.currentLocale) || ISO639.value[0])
@@ -30,13 +28,6 @@ function toDownload() {
     </LiveChat>
 
     <TsFormSelect v-model="currentLocale" :options="ISO639" :filter="false" class="md:w-36" />
-
-    <component is="style" v-if="width > 768">
-      #chat-widget-container {
-      left: unset!important;
-      right: 30px;
-      }
-    </component>
   </div>
 </template>
 

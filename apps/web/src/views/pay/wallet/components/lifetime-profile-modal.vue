@@ -125,26 +125,51 @@ function close(isCancel: boolean) {
 </script>
 
 <template>
-  <div class="flex flex-col pt-4 gap-4 overflow-hidden w-140">
+  <div class="flex flex-col pt-4 gap-3 overflow-hidden w-140">
     <div class="h-10 relative flex justify-between items-center px-6">
       <span class="tt-primary text-4 font-600 leading-normal">{{ $t('购买终身窗口') }}</span>
       <SvgIcon class="cursor-pointer" size="20" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)" @click="close(true)" />
     </div>
 
-    <div class="flex flex-col gap-6 px-6 pb-6">
+    <div class="flex flex-col gap-4 px-6 pb-6">
+      <div class="w-full flex flex-col gap-1 pa-3 rounded-2 notes">
+        <div class="tt-primary text-3.5 font-500 leading-normal">
+          {{ $t('购买须知:') }}
+        </div>
+        <ol class="tt-tertiary text-3 leading-5 ma-0 pl-4">
+          <li>
+            <i18n-t class="first" tag="span" scope="global" :keypath="$t('一次购买永久有效，无需续费；环境稳定，运营无忧。')" />
+          </li>
+          <li>
+            <i18n-t tag="span" scope="global" :keypath="$t('可与现有的窗口订阅套餐{em}，互不影响，满足不同使用需求。', { em: '{em}' })">
+              <template #em>
+                <span class="tt-secondary font-500">{{ $t('叠加使用') }}</span>
+              </template>
+            </i18n-t>
+          </li>
+          <li>
+            <i18n-t tag="span" scope="global" :keypath="$t('购买成功后{em0}，已购买的订单{em1}。', { em0: '{em0}', em1: '{em1}' })">
+              <template #em0>
+                <span class="tt-secondary font-500">{{ $t('立即生效').toLowerCase() }}</span>
+              </template>
+              <template #em1>
+                <span class="tt-secondary font-500">{{ $t('不支持退款') }}</span>
+              </template>
+            </i18n-t>
+          </li>
+        </ol>
+      </div>
+
+      <RxDivider line-only line-style="dashed" line-color="var(--colors-border-border-base)" />
+
       <div class="relative flex flex-col gap-5 items-center overflow-hidden py-6 rounded-lg qty-panel">
         <!-- 设计稿顶部光晕：480×122 居中贴顶，圆角由 overflow-hidden 裁切 -->
-        <img
-          :src="qtyPanelGlowSrc"
-          alt=""
-          draggable="false"
-          class="absolute top-0 left-1/2 -translate-x-1/2 w-480px h-122px max-w-none pointer-events-none select-none"
-        >
+        <img :src="qtyPanelGlowSrc" alt="" draggable="false" class="absolute top-0 left-1/2 -translate-x-1/2 w-480px h-122px max-w-none pointer-events-none select-none">
         <p class="relative z-1 tt-primary text-3.5 font-500 text-center m-0">
           {{ $t('请选择要购买的窗口数量') }}
         </p>
-        <RxStepInput v-model="purchaseCount" class="relative z-1 !w-70 !h-18" size="lg" :min="MIN_COUNT" :max="MAX_COUNT" :step="1"
-                     :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @update:model-value="onCountUpdate"
+        <RxStepInput v-model="purchaseCount" class="relative z-1 !w-70 !h-18" size="lg" :min="MIN_COUNT" :max="MAX_COUNT" :step="1" :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }"
+                     @update:model-value="onCountUpdate"
         />
         <div class="relative z-1 flex gap-2 items-center justify-center">
           <div v-for="item in QUICK_COUNTS" :key="item" class="w-20 min-w-6 px-4 py-1.5 rounded-md text-center text-4 font-500 cursor-pointer select-none qty-tag" @click="quickSelect(item)">
@@ -153,7 +178,7 @@ function close(isCancel: boolean) {
         </div>
       </div>
 
-      <div class="flex flex-col gap-3 w-full">
+      <div class="mt-2 flex flex-col gap-3 w-full">
         <div class="flex items-center justify-between text-4">
           <span class="tt-primary font-500 leading-5">{{ $t('单价') }}</span>
           <span class="tt-primary text-right">{{ currency(UNIT_PRICE).format() }}</span>
@@ -170,38 +195,20 @@ function close(isCancel: boolean) {
 
       <div class="flex flex-col gap-4 w-full">
         <RxButton class="w-full" size="lg" :label="$t('确认付款')" @click="confirm" />
-        <!-- 设计稿：付款与须知之间用虚线隔开，避免须知被当成按钮附属文案 -->
-        <RxDivider line-only line-style="dashed" line-color="var(--colors-border-border-base)" />
-        <div class="flex flex-col gap-1 px-1.5 w-full">
-          <div class="tt-primary text-3.5 font-500 leading-normal">{{ $t('购买须知:') }}</div>
-          <div class="notes">
-            <!-- 关键词加中等字重，对应设计稿里比正文更醒目的说明片段 -->
-            <i18n-t tag="p" class="m-0" scope="global" :keypath="$t('1. {em}，无需手动续费', { em: '{em}' })">
-              <template #em>
-                <span class="notes-em">{{ $t('一次购买永久有效') }}</span>
-              </template>
-            </i18n-t>
-            <i18n-t tag="p" class="m-0" scope="global" :keypath="$t('2. {em}，互不影响，满足不同使用需求', { em: '{em}' })">
-              <template #em>
-                <span class="notes-em">{{ $t('可与现有的窗口订阅套餐叠加使用') }}</span>
-              </template>
-            </i18n-t>
-            <i18n-t tag="p" class="m-0" scope="global" :keypath="$t('3. {em0}，已购买的订单{em1}', { em0: '{em0}', em1: '{em1}' })">
-              <template #em0>
-                <span class="notes-em">{{ $t('购买成功后立即生效') }}</span>
-              </template>
-              <template #em1>
-                <span class="notes-em">{{ $t('不支持退款') }}</span>
-              </template>
-            </i18n-t>
-          </div>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
+.first {
+  font-family: 'DingTalk JinBuTi';
+  background: linear-gradient(90deg, #11a3fd 0%, #f047ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .qty-panel {
   /* 设计稿：页面底色上叠品牌蓝 0%→14% 纵向渐变，浅色呈淡蓝、深色叠暗底呈深蓝衬底 */
   background:
@@ -216,13 +223,7 @@ function close(isCancel: boolean) {
 }
 
 .notes {
-  color: var(--colors-text-text-tertiary, #575d60);
-  font-size: 12px;
-  line-height: 20px;
-
-  &-em {
-    color: var(--colors-text-text-secondary, #34393d);
-    font-weight: 500;
-  }
+  border-radius: 8px;
+  background: var(--colors-background-bg-action-hover, #f1f5f8);
 }
 </style>

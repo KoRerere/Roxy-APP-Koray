@@ -382,13 +382,13 @@ function handleRenew() {
                 <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ firstPurchaseDiscount }}%</span>off
               </div>
               <!-- 身份折扣文案暂不对外展示，折扣仍计入总折扣 -->
-              <!-- <div
+              <div
                 v-if="exclusiveDiscount > 0"
                 class="bg-[var(--colors-background-bg-page,#ffffff)] dark:bg-[#1f2429] px-2 py-1 rounded-1 shadow-[0px_1px_1px_rgba(16,24,40,0.05)] dark:shadow-none flex items-center gap-1"
               >
                 <span class="text-13px font-normal text-[var(--colors-text-text-primary,#111213)] leading-[18px]">{{ $t('专属折扣') }}</span>
                 <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ exclusiveDiscount }}%</span>off
-              </div> -->
+              </div>
               <div class="bg-[var(--colors-background-bg-page,#ffffff)] dark:bg-[#1f2429] px-2 py-1 rounded-1 shadow-[0px_1px_1px_rgba(16,24,40,0.05)] dark:shadow-none flex items-center gap-1">
                 <span class="text-13px font-normal text-[var(--colors-text-text-primary,#111213)] leading-[18px]">{{ $t('续费折扣') }}</span>
                 <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ RENEWAL_CAMPAIGN_DISCOUNT }}%</span>off

@@ -43,6 +43,8 @@ catalogs:
 overrides:
   '@electron/node-gyp': npm:node-gyp@^11.5.0
 
+packageExtensionsChecksum: sha256-+x5Vit8Tojlipa4BkkbKFEzl28lpLn8tBLAW08dq/JA=
+
 patchedDependencies:
   '@larksuiteoapi/node-sdk@1.70.0':
     hash: 5e29edce5010b4bdcb2aa4276bca9b8b613c041def1faf4b94a21dde3228c367
@@ -579,12 +581,6 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
-      '@livechat/widget-core':
-        specifier: ^1.4.1
-        version: 1.4.1
-      '@livechat/widget-vue':
-        specifier: ^1.4.1
-        version: 1.4.1(vue@3.5.40(typescript@7.0.2))
       '@number-flow/vue':
         specifier: ^0.5.2
         version: 0.5.2(vue@3.5.40(typescript@7.0.2))
@@ -2876,14 +2872,6 @@ packages:
 
   '@lezer/lr@1.4.10':
     resolution: {integrity: sha512-rnCpTIBafOx4mRp43xOxDJbFipJm/c0cia/V5TiGlhmMa+wsSdoGmUN3w5Bqrks/09Q/D4tNAmWaT8p6NRi77A==}
-
-  '@livechat/widget-core@1.4.1':
-    resolution: {integrity: sha512-ZD7Q5nhCImmyCmcu87g1emgnp7Ta/gM9bwWlc/ZhjPJvO4gOMzycEu97xtAY+w3X4Cw1KJ59WVi22xN1tQ9fYQ==}
-
-  '@livechat/widget-vue@1.4.1':
-    resolution: {integrity: sha512-QwlneI6zi7AShslFkW0FGZX1li81Nc2PPWf+zZrxp1vW2vUaVJw9S5JmZvvjtmLECFLOwLc/sjlBvfpY40zwOg==}
-    peerDependencies:
-      vue: 2 || 3
 
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
@@ -9878,9 +9866,6 @@ packages:
     resolution: {integrity: sha512-KZxYo1BUkWD2TVFLr0MQoM8vUUigWD3LlD83a/75BqC+4qE0Hb1Vo5v1FgcfaNXvfXzr+5EhQ6ing/CaBijTlw==}
     engines: {node: '>= 18'}
 
-  mitt@3.0.0:
-    resolution: {integrity: sha512-7dX2/10ITVyqh4aOSVI9gdape+t9l2/8QxHrFmUXu4EEUpdlxl6RudZUPZoc+zuY2hk1j7XxVroIVIan/pD/SQ==}
-
   mitt@3.0.1:
     resolution: {integrity: sha512-vKivATfr97l2/QBCYAkXYDbrIWPM2IIKEl7YPhjCvKlG3kE2gm+uBo6nEXK3M5/Ffh/FLpKExzOQ3JJoJGFKBw==}
 
@@ -14696,15 +14681,6 @@ snapshots:
   '@lezer/lr@1.4.10':
     dependencies:
       '@lezer/common': 1.5.2
-
-  '@livechat/widget-core@1.4.1':
-    dependencies:
-      mitt: 3.0.0
-
-  '@livechat/widget-vue@1.4.1(vue@3.5.40(typescript@7.0.2))':
-    dependencies:
-      '@livechat/widget-core': 1.4.1
-      vue: 3.5.40(typescript@7.0.2)
 
   '@lukeed/csprng@1.1.0': {}
 
@@ -20115,6 +20091,7 @@ snapshots:
       '@popperjs/core': '@sxzz/popperjs-es@2.11.8'
       '@types/lodash': 4.17.24
       '@types/lodash-es': 4.17.12
+      '@vue/shared': 3.5.40
       '@vueuse/core': 14.3.0(vue@3.5.35(typescript@7.0.2))
       async-validator: 4.2.5
       dayjs: 1.11.21
@@ -22798,8 +22775,6 @@ snapshots:
   minizlib@3.1.0:
     dependencies:
       minipass: 7.1.3
-
-  mitt@3.0.0: {}
 
   mitt@3.0.1: {}
 

@@ -456,10 +456,10 @@ export class BeforeLaunchTask {
       // `--custom-devtools-frontend=file://${String.raw`D:\work\devtools-133\devtools-frontend\out\Default\gen\front_end`}`,
     ]
 
-    const automationExtensionDir = await prepareAutomationControlExtension(dirId!).catch((error) => {
-      console.warn(`[automation-control] Failed to prepare extension for ${dirId}:`, getErrorMessage(error))
-      return undefined
-    })
+    // const automationExtensionDir = await prepareAutomationControlExtension(dirId!).catch((error) => {
+    //   console.warn(`[automation-control] Failed to prepare extension for ${dirId}:`, getErrorMessage(error))
+    //   return undefined
+    // })
 
     // 临时解决 macOS code_sign_clone 问题
     if (isMac) {
@@ -530,9 +530,9 @@ export class BeforeLaunchTask {
 
     // This product extension is mandatory for native AI tab-group state. Merge it
     // after custom arguments so a user-provided --load-extension cannot replace it.
-    if (automationExtensionDir) {
-      ensureAutomationExtensionLaunchArg(args, automationExtensionDir)
-    }
+    // if (automationExtensionDir) {
+    //   ensureAutomationExtensionLaunchArg(args, automationExtensionDir)
+    // }
 
     // 如果是全屏，则不设置窗口大小
     if (!positionSwitch) {

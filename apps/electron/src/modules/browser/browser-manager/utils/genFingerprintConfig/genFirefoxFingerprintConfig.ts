@@ -1,4 +1,5 @@
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { pinAcceptLangVoice } from '@roxy/shared'
 import { join } from 'node:path'
 import { appConfig } from '/@/constants'
 import { currentOS, isMac } from '/@/constants/common'
@@ -82,7 +83,7 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
     clientRects: {
       enable: winInfo.clientRects,
       clientRectsNoiseFactorX: winInfo.clientRectsValue.clientRectsNoiseFactorX,
-      clientRectsNoiseFactorY: winInfo.clientRectsValue.clientRectsNoiseFactorY,
+      clientRectsNoiseFactorY: winInfo.clientRectsValue.clientRectsNoiseFactorX,
     },
     webGL: {
       enableWebGLRendererNoise: winInfo.webGL,
@@ -99,8 +100,9 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
       }[position] || 'disable'
 
       function transValue(key: string) {
-        if (positionMode === 'disable')
+        if (positionMode === 'disable') {
           return 0
+        }
         const num = (isPositionBaseIp ? proxyInfo : winInfo)[key]
         return toNumber(num, 0)
       }
@@ -166,9 +168,12 @@ export async function genFirefoxFingerprintConfig(winInfo: WindowItemType, proxy
         },
       }
     },
-    speechSynthesis: {
-      ...winInfo.speechVoicesValue,
-      enable: winInfo.speechVoices,
+    get speechSynthesis() {
+      return {
+        ...winInfo.speechVoicesValue,
+        voices: pinAcceptLangVoice(winInfo.speechVoicesValue?.voices, this.acceptLang, 'Firefox'),
+        enable: winInfo.speechVoices,
+      }
     },
     webrtc: {
       mode: { 0: 'altered', 1: 'real', 2: 'disable' }[winInfo.webRTC] || 'disable',

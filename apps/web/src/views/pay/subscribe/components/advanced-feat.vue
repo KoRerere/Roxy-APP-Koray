@@ -24,6 +24,7 @@ const advanced = computed(() => [
   [
     billingLabels.value.entitySync,
     $t('日志保留时长（{value} 天）', { value: plan?.logDays }),
+    $t('创建/打开额度大幅提升'),
   ],
 ])
 

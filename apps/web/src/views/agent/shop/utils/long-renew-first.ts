@@ -1,5 +1,5 @@
 import currency from 'currency.js'
-import { applyPriceDiscount, discountCalculate } from '/@/views/pay/subscribe/util'
+import { discountCalculate } from '/@/views/pay/subscribe/util'
 
 /** 90 天及以上才算长续；30 天与自动续费不参与长续首享 */
 const LONG_RENEW_MIN_DAYS = 90
@@ -113,7 +113,7 @@ export function calcProxyRenewUnitPrice(input: {
   if (appliedOff <= 0) {
     return input.proxyProviderPrice
   }
-  return applyPriceDiscount(input.proxyProviderPrice, discountCalculate([appliedOff]))
+  return currency(input.proxyProviderPrice, { precision: 6 }).multiply(discountCalculate([appliedOff])).value
 }
 
 /**

@@ -21,7 +21,12 @@ import {
 import { CoreType } from '/@/enums/'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { emitter } from '/@/utils/eventBus.ts'
-import { tryShowPreUpgradeFeatureTips } from './try-show-pre-upgrade-tips'
+import { useVisibilityAwareInterval } from '/@/hooks/useVisibilityAwareInterval'
+import {
+  isAppForceUpgrade,
+  isAppUpdateReadyToAnnounce,
+  tryShowPreUpgradeFeatureTips,
+} from './try-show-pre-upgrade-tips'
 
 interface KernelUpdateGroup {
   title: string
@@ -68,11 +73,11 @@ const isDownloading = computed(() => {
   return [...clientUpdates.value, ...kernelUpdates.value].some(item => item.status === 'downloading')
 })
 
-// APP 是否强制升级
+// APP 是否强制升级（含 web 活动包；时段提醒只用 isAppForceUpgradeReady）
 const isForceUpgrade = computed(() => {
-  const isAppForceUpgrade = clientUpdates.value.some(item => item.type === 'app' && item.status === 'downloaded' && item.originUpgradeData?.forceUpgrade)
-  const isWebForceUpgrade = clientUpdates.value.some(item => item.type === 'web' && item.status === 'downloaded' && item.newFeatureTips?.activityInfo?.[simpleLocale.currentLocale!]?.imageList?.length > 0 && item.newFeatureTips?.isActivity)
-  return isAppForceUpgrade || isWebForceUpgrade
+  const hasAppForceUpgrade = clientUpdates.value.some(item => item.type === 'app' && item.status === 'downloaded' && item.originUpgradeData?.forceUpgrade)
+  const hasWebForceUpgrade = clientUpdates.value.some(item => item.type === 'web' && item.status === 'downloaded' && item.newFeatureTips?.activityInfo?.[simpleLocale.currentLocale!]?.imageList?.length > 0 && item.newFeatureTips?.isActivity)
+  return hasAppForceUpgrade || hasWebForceUpgrade
 })
 
 // APP 更新信息
@@ -107,6 +112,27 @@ function applyClientUpdate(data: ResourceUpdateMessage) {
     () => clientUpdates.value.find(item => item.type === 'app'),
   )
 }
+
+/** 强制更新安装包已就绪：长驻时按 8 小时间隔补弹，就绪后 3 天内有效 */
+const isAppForceUpgradeReady = computed(() => {
+  const appUpdate = clientUpdates.value.find(item => item.type === 'app')
+  return isAppUpdateReadyToAnnounce(appUpdate) && isAppForceUpgrade(appUpdate)
+})
+
+function tickForceUpgradeReminder() {
+  const appUpdate = clientUpdates.value.find(item => item.type === 'app')
+  if (!isAppUpdateReadyToAnnounce(appUpdate) || !isAppForceUpgrade(appUpdate)) {
+    return
+  }
+
+  void tryShowPreUpgradeFeatureTips(
+    appUpdate,
+    simpleLocale.currentLocale,
+    () => clientUpdates.value.find(item => item.type === 'app'),
+  )
+}
+
+useVisibilityAwareInterval(tickForceUpgradeReminder, 60 * 1000, isAppForceUpgradeReady)
 
 async function checkForUpdates() {
   // 直接消费主进程返回值回填状态，避免依赖 app:resource-update 推送时序

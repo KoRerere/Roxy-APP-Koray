@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
+import ActivityInfoProxy from '/@/views/campaign/mid-autumn-festival/activity-info-proxy.vue'
 import RxSlider from '/@/components/rx-slider'
 import RxStepInput from '/@/components/rx-step-input'
 import RxButton from '/@/components/rx-button'
+import { computed, ref, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { API } from '/@/api'
 import type { PointsData } from './interface.ts'
 import { useSimpleLocale } from '/@/stores/locale'
@@ -46,8 +47,9 @@ async function fetchTierDiscountRules() {
     const res = await API.points.getPointsTierDiscountRulesList()
     if (res.code === 0) {
       pointsDiscounts.value = res.data.rules.reduce<Record<number, string>>((acc, rule) => {
-        if (rule.discount > 0)
+        if (rule.discount > 0) {
           acc[rule.threshold] = `-${rule.discount}%`
+        }
         return acc
       }, {})
     }
@@ -249,10 +251,12 @@ const billRows = computed(() => [
  * ── Format helpers ───────────────────────────────────────────────────
  */
 function formatMarkLabel(value: number): string {
-  if (value === 0)
+  if (value === 0) {
     return '0'
-  if (value >= 1000)
+  }
+  if (value >= 1000) {
     return `${(value / 1000).toFixed(1)}K`
+  }
   return String(value)
 }
 
@@ -287,7 +291,6 @@ function handleClose() {
         <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" />
       </button>
     </div>
-
     <!-- ── Body ──────────────────────────────────────────────────── -->
     <div class="flex flex-col gap-11 items-center w-full">
       <!-- Subtitle -->
@@ -346,6 +349,8 @@ function handleClose() {
         />
       </div>
     </div>
+
+    <ActivityInfoProxy />
 
     <!-- ── Bottom cards ──────────────────────────────────────────── -->
     <div class="flex gap-5 w-full">

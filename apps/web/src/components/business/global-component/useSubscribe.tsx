@@ -247,6 +247,8 @@ export function useSubscribe() {
       : $t('v{appVersion} 更新概览', { appVersion: headerVersion })
 
     showModal({
+      // 标题含版本号，不能当去重 key；挂机后再触发间隔提醒时复用同一层
+      uniqueKey: 'appUpgradeDialog',
       header,
       class: 'w-125 max-h-[90vh] !transform-none',
       pt: {
@@ -369,6 +371,7 @@ export function useSubscribe() {
       data: {
         props: {
           defaultType: options?.defaultType,
+          insufficient: options?.insufficient,
         },
         onConfirm: async ({ payType, ...params }: { payType: PayWay, giftType: RoxyGiftsType, purchaseMember: { staff: number, workspace: number } }) => {
           const { code, data, msg } = await API.pay.userPaySettlementCreate({

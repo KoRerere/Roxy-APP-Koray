@@ -8,6 +8,7 @@ import { formatNumberToKMB } from '/@/utils/basic'
 import { alignSubscribeCount, formatTierData } from '../util'
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { useCampaignStore } from '/@/stores/campaign'
+import { useUserStore } from '/@/stores/user'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import type { Plan } from '../type'
 
@@ -23,6 +24,7 @@ const { list, rawList } = defineProps<Props>()
 const popoverRef = useTemplateRef('popover')
 
 const { seasonalActivity } = storeToRefs(useCampaignStore())
+const { userPayInfo } = storeToRefs(useUserStore())
 const billingLabels = useBillingEntityLabels()
 
 const selectedPlan = defineModel<Plan>('plan')
@@ -35,8 +37,9 @@ const tiersList = computed(() => tiersData.value.tiers)
 const tiersSteps = computed(() => [...tiersData.value.steps])
 
 const planInfo = computed(() => {
-  if (!selectedPlan.value)
+  if (!selectedPlan.value) {
     return
+  }
 
   const { subLevel, windowPrice, minWindows, maxWindows } = selectedPlan.value
 
@@ -47,6 +50,19 @@ const planInfo = computed(() => {
     : billingLabels.value.entityUnitPriceTier(`${(minWindows < 10 ? 0 : minWindows) + 1}~${maxWindows}`)
 
   return { isTrial, windowPrice, description }
+})
+
+/** 与套餐详情一致：购买后每日额度 = (付费窗口 + 免费窗口) × 30 / 100 */
+const dailyQuota = computed(() => {
+  const paidWindowCount = planInfo.value?.isTrial ? Math.max(selectedCount.value, 10) : selectedCount.value
+  const profileCount = currency(paidWindowCount, { precision: 0, symbol: '' })
+  const freeCount = currency(userPayInfo.value.freeWindowCount, { precision: 0, symbol: '' })
+  const totalWindows = profileCount.add(freeCount.value)
+
+  return {
+    create: totalWindows.multiply(30).format(),
+    open: totalWindows.multiply(100).format(),
+  }
 })
 
 function tooltipFormatter(value: number) {
@@ -127,14 +143,28 @@ function showIllustrate(event: Event) {
         </template>
       </TierSlider>
     </div>
-    <div v-if="!planInfo?.isTrial" class="flex items-center justify-between pt-8">
-      <div class="flex items-center gap-1.5">
-        <span class="sub-title">{{ billingLabels.entityCount }}</span>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate" />
+    <div class="flex flex-col gap-1 pt-8">
+      <div v-if="!planInfo?.isTrial" class="flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="tt-primary text-4 font-600 leading-5">{{ billingLabels.entityCount }}</span>
+          <SvgIcon class="cursor-pointer" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" @click="showIllustrate" />
+        </div>
+        <RxStepInput v-model="selectedCount!" size="lg" class="!w-40" :min="min ?? Math.max(tiersList[1]!.start, 10)" :max="max ?? tiersList[tiersList.length - 1]!.end" :step="step"
+                     :before-plus="onBeforePlus" :before-minus="onBeforeMinus" @update:model-value="onUpdate"
+        />
       </div>
-      <RxStepInput v-model="selectedCount!" size="lg" class="!w-40" :min="min ?? Math.max(tiersList[1]!.start, 10)" :max="max ?? tiersList[tiersList.length - 1]!.end" :step="step"
-                   :before-plus="onBeforePlus" :before-minus="onBeforeMinus" @update:model-value="onUpdate"
-      />
+      <div class="h-10 flex items-center justify-between">
+        <span class="tt-primary text-4 leading-5">{{ $t('每日可创建数') }}</span>
+        <div class="!w-56 flex items-center justify-center">
+          {{ dailyQuota.create }}
+        </div>
+      </div>
+      <div class="h-10 flex items-center justify-between">
+        <span class="tt-primary text-4 leading-5">{{ $t('每日可打开数') }}</span>
+        <div class="!w-56 flex items-center justify-center">
+          {{ dailyQuota.open }}
+        </div>
+      </div>
     </div>
     <RyPopover ref="popover">
       <Illustrate :data="rawList" />
@@ -188,11 +218,10 @@ function showIllustrate(event: Event) {
   }
 }
 
-.sub-title {
-  color: var(--colors-text-text-primary, #fafafa);
-  font-family: Inter;
+.quota-value {
+  color: var(--colors-text-text-secondary, #34393d);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 20px;
 }
 </style>

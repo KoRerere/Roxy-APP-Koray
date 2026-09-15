@@ -4,6 +4,8 @@ import SpringFestival from '/@/views/campaign/spring-festival/index.vue'
 import Easter from '/@/views/campaign/easter/index.vue'
 import Freedom from '/@/views/campaign/freedom/index.vue'
 import NewUser from '/@/views/campaign/new-user/index.vue'
+import JuneEighteen from '/@/views/campaign/june-eighteen/index.vue'
+import MidAutumnFestival from '/@/views/campaign/mid-autumn-festival/index.vue'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { enhanceCountdown, sleep } from '/@/utils'
@@ -36,11 +38,20 @@ const activityMap = {
     component: markRaw(Freedom),
     localStorageKey: '$FreedomModalStatus',
   },
+  [ActivityType.JuneEighteen]: {
+    component: markRaw(JuneEighteen),
+    localStorageKey: '$JuneEighteenModalStatus',
+  },
+  [ActivityType.MidAutumnFestival]: {
+    component: markRaw(MidAutumnFestival),
+    localStorageKey: '$MidAutumnFestivalModalStatus',
+  },
 }
 
 const activity = computed(() => {
-  if (!currentActivity.value)
+  if (!currentActivity.value) {
     return undefined
+  }
   return activityMap[currentActivity.value.type as keyof typeof activityMap]
 })
 
@@ -59,8 +70,9 @@ async function getActivityBySeason() {
 }
 
 function stratHolidaySeasonCountdown() {
-  if (seasonalActivity.value.none)
+  if (seasonalActivity.value.none) {
     return
+  }
 
   const timeStamp = seasonalActivity.value.active
     ? currentActivity.value.end_timestamp
@@ -76,15 +88,16 @@ function stratHolidaySeasonCountdown() {
 
 function clearExpiredLocalStorageKey() {
   Object.entries(activityMap).forEach(([type, { localStorageKey }]) => {
-    if (currentActivity.value.type === Number(type))
+    if (currentActivity.value.type === Number(type)) {
       return
+    }
     localStorage.removeItem(localStorageKey)
   })
 }
 </script>
 
 <template>
-    <NewUser v-if="newUserVisible" :collapsed />
+  <NewUser v-if="newUserVisible" :collapsed />
   <component :is="activity.component" v-if="seasonalActivity.active && activity" :collapsed :local-storage-key="activity.localStorageKey" />
 </template>
 

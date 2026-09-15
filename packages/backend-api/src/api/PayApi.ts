@@ -28,6 +28,8 @@ import {
   UserCancelSubscriptionListData,
   UserCancelSubscriptionListParams,
   UserCheckTeamUserRightsListData,
+  UserCloudphoneSettlementCreateData,
+  UserCloudphoneSettlementCreatePayload,
   UserDowngradeSubscriptionListData,
   UserDowngradeSubscriptionListParams,
   UserDowngradeSubscriptionV2ListData,
@@ -36,8 +38,11 @@ import {
   UserGetAutoSubscriptionInfoListParams,
   UserGetBindCardListListData,
   UserGetBindCardListListParams,
+  UserGetCloudphoneSkuListCreateData,
+  UserGetCloudphoneSkuListCreatePayload,
   UserGetDowngradeSubscriptionInfoListData,
   UserGetDurationDiscountsByDaysListData,
+  UserGetDurationDiscountsByDaysListParams,
   UserGetDurationDiscountsListData,
   UserGetPayChannelFeesListData,
   UserGetPayChannelFeesListParams,
@@ -881,10 +886,14 @@ export class PayApi<SecurityDataType = unknown> {
    * @request GET:/user_get_duration_discounts_by_days
    * @response `200` `UserGetDurationDiscountsByDaysListData`
    */
-  userGetDurationDiscountsByDaysList = (params: RequestParams = {}) =>
+  userGetDurationDiscountsByDaysList = (
+    query: UserGetDurationDiscountsByDaysListParams,
+    params: RequestParams = {},
+  ) =>
     this.http.request<UserGetDurationDiscountsByDaysListData, any>({
       path: `/user_get_duration_discounts_by_days`,
       method: "GET",
+      query: query,
       format: "json",
       ...params,
     });
@@ -926,6 +935,48 @@ export class PayApi<SecurityDataType = unknown> {
       path: `/app_statistics/query_order_status`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 返回可购买的云手机套餐 / 时长包 / 包月开机。amount 为美元，amount_cents 为美分。定价为占位，待产品确认。
+   *
+   * @tags Pay
+   * @name UserGetCloudphoneSkuListCreate
+   * @summary 云手机商品 SKU 列表
+   * @request POST:/user_get_cloudphone_sku_list
+   * @response `200` `UserGetCloudphoneSkuListCreateData` 成功
+   */
+  userGetCloudphoneSkuListCreate = (
+    data: UserGetCloudphoneSkuListCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetCloudphoneSkuListCreateData, any>({
+      path: `/user_get_cloudphone_sku_list`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 仅支持钱包支付（payType=Balance 或省略）。sku 必须来自 user_get_cloudphone_sku_list。 teamId 为云手机团队 ID（cloudphone-server），不是主站 workspace。 扣款成功后回调 cloudphone-server /internal/deliver 发货；delivered=false 时由 OrderTask 重试。
+   *
+   * @tags Pay
+   * @name UserCloudphoneSettlementCreate
+   * @summary 云手机钱包结算
+   * @request POST:/user_cloudphone_settlement
+   * @response `200` `UserCloudphoneSettlementCreateData` 成功
+   */
+  userCloudphoneSettlementCreate = (
+    data: UserCloudphoneSettlementCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserCloudphoneSettlementCreateData, any>({
+      path: `/user_cloudphone_settlement`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
       format: "json",
       ...params,
     });

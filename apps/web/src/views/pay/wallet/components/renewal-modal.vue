@@ -11,8 +11,8 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useSimpleLocale } from '/@/stores/locale'
-import { applyPriceDiscount, discountCalculate, durationAmountFromMonthly, hasVisiblePriceDiscount } from '/@/views/pay/subscribe/util.ts'
-import { AutoRenewalStatus, SubLevelEnum } from '/@/enums/pay'
+import { discountCalculate, durationAmountFromMonthly, durationPayableAmount, hasVisiblePriceDiscount } from '/@/views/pay/subscribe/util.ts'
+import { AutoRenewalStatus, OrderType, SubLevelEnum } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 
@@ -36,6 +36,14 @@ const defaultDays = dialogRef.value?.data?.defaultDays as number | undefined
 
 const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
+/** 账户折扣烘进月单价后再传给时长卡；档位折扣只走 Duration.rate */
+const discountedMonthly = computed(() => {
+  const { firstPurchaseDiscount, discount } = userPayInfo.value!
+  return currency(monthAmount.value, { precision: 6 })
+    .multiply(discountCalculate([firstPurchaseDiscount, discount]))
+    .value
+})
+
 const allDiscount = computed(() => {
   const { firstPurchaseDiscount, discount } = userPayInfo.value!
   const { discount: durationDiscount } = selectedDuration.value || {}
@@ -46,24 +54,34 @@ const allDiscount = computed(() => {
     ['durationDiscount', durationDiscount, !!durationDiscount],
   ].filter(([_, __, assert]) => assert).map(([key, value, __]) => [key, value]))
 
-  return {
-    ...discounts,
-    finalDiscount: discountCalculate(Object.values(discounts)),
-  }
+  return discounts
 })
 
 const disabled = computed(() => loading.value || !selectedDuration.value)
 
 const originalAmount = computed(() => durationAmountFromMonthly(monthAmount.value, selectedDuration.value?.day ?? 30))
-const totalAmount = computed(() => applyPriceDiscount(originalAmount.value, allDiscount.value.finalDiscount))
+const totalAmount = computed(() => durationPayableAmount(
+  discountedMonthly.value,
+  selectedDuration.value?.day ?? 30,
+  selectedDuration.value?.rate ?? 1,
+))
 const discountAmount = computed(() => currency(originalAmount.value, { precision: 6 }).subtract(totalAmount.value).value)
 
-const detail = computed(() => {
+const totalCount = computed(() => {
   const { purchaseWindowCount, freeWindowCount } = userPayInfo.value!
-  const { /* discount, */ firstPurchaseDiscount, durationDiscount } = allDiscount.value
-
   const profileCount = currency(purchaseWindowCount, { precision: 0, symbol: '' })
   const freeCount = currency(freeWindowCount, { precision: 0, symbol: '' })
+
+  return {
+    profile: profileCount.format(),
+    free: freeCount.format(),
+    create: profileCount.add(freeCount.value).multiply(30).format(),
+    open: profileCount.add(freeCount.value).multiply(100).format(),
+  }
+})
+
+const detail = computed(() => {
+  const { /* discount, */ firstPurchaseDiscount, durationDiscount } = allDiscount.value
 
   return [
     {
@@ -71,15 +89,15 @@ const detail = computed(() => {
       items: [
         {
           label: billingLabels.value.entityCount,
-          value: `${profileCount.format()} + ${freeCount.format()}`,
+          value: `${totalCount.value.profile} + ${totalCount.value.free}`,
         },
         {
           label: $t('每日可创建数'),
-          value: profileCount.add(freeCount.value).multiply(30).format(),
+          value: totalCount.value.create,
         },
         {
           label: $t('每日可打开数'),
-          value: profileCount.add(freeCount.value).multiply(100).format(),
+          value: totalCount.value.open,
         },
         {
           label: $t('续费时长'),
@@ -210,13 +228,42 @@ function onUpgradePlan() {
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>
     <div class="flex mt-6 gap-6">
-      <div class="flex-1 flex flex-col gap-8">
-        <ItemBlock :title="isExpired ? $t('续费套餐') : $t('当前套餐')">
-          <div>
-            <div class="plan">
-              {{ billingLabels.countEntitiesShort(currency(userPayInfo.purchaseWindowCount, { precision: 0, symbol: '' }).add(userPayInfo.freeWindowCount).format()) }}
-            </div>
-            <i18n-t tag="div" class="mt-1.5 select-none terms" :keypath="billingLabels.upgradeForMoreEntitiesKeypath" scope="global">
+      <div class="flex-1 flex flex-col gap-5">
+        <ItemBlock :title="$t('选择续费时长')">
+          <div class="flex flex-col gap-2.5">
+            <Duration v-model="selectedDuration" :price="discountedMonthly" :default-days="defaultDays" :order-type="OrderType.Renew" />
+
+            <ActivityInfo :show-proxy-price="false" />
+          </div>
+        </ItemBlock>
+
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-2">
+            <i18n-t tag="div" class=" tt-primary font-[DingTalk_JinBuTi] text-4 leading-normal select-none" scope="global" :keypath="$t('您当前套餐：{count} 窗口', { count: '{count}' })">
+              <template #count>
+                <span class="tt-brand">
+                  {{ currency(userPayInfo.purchaseWindowCount, { precision: 0, symbol: '' }).add(userPayInfo.freeWindowCount).format() }}
+                </span>
+              </template>
+            </i18n-t>
+            <i18n-t tag="div" class="flex items-center tt-tertiary text-3 leading-normal"
+                    :keypath="$t('每日可创建数：{create} {line} 每日可打开数：{open}', { create: '{create}', open: '{open}', line: '{line}' })"
+            >
+              <template #create>
+                <span>
+                  {{ totalCount.create }}
+                </span>
+              </template>
+              <template #open>
+                <span>
+                  {{ totalCount.open }}
+                </span>
+              </template>
+              <template #line>
+                <RxDivider class="mx-3" line-only vertical />
+              </template>
+            </i18n-t>
+            <i18n-t tag="div" class="select-none terms" :keypath="billingLabels.upgradeForMoreEntitiesKeypath" scope="global">
               <template #terms>
                 <a class="cursor-pointer terms-link" target="_blank" @click="onUpgradePlan">{{ $t('单击此处') }}</a>
               </template>
@@ -225,16 +272,13 @@ function onUpgradePlan() {
               </template>
             </i18n-t>
           </div>
-        </ItemBlock>
-        <ItemBlock :title="$t('选择续费时长')">
-          <div class="flex flex-col gap-2.5">
-            <Duration v-model="selectedDuration" :price="monthAmount" :default-days="defaultDays" />
-            <div v-if="!isExpired" class="help">
+          <template v-if="!isExpired">
+            <RxDivider line-only line-style="dashed" />
+            <div class="tt-inactive text-3 leading-normal">
               {{ $t('您当前的套餐仍在有效期内，这将会延长套餐的到期时间。') }}
             </div>
-            <ActivityInfo :show-proxy-price="false" />
-          </div>
-        </ItemBlock>
+          </template>
+        </div>
       </div>
       <div class="flex flex-col gap-2.5 w-88">
         <Detail :list="detail">
@@ -310,20 +354,6 @@ function onUpgradePlan() {
   line-height: normal;
 }
 
-.plan {
-  color: var(--colors-text-text-primary);
-  font-family: 'DingTalk JinBuTi', Inter, sans-serif;
-  font-size: 32px;
-  line-height: 1;
-}
-
-.help {
-  color: var(--colors-text-text-inactive);
-  font-family: Inter;
-  font-size: 12px;
-  line-height: normal;
-}
-
 .details {
   &-label {
     color: var(--colors-text-text-primary, #fafafa);
@@ -376,8 +406,7 @@ function onUpgradePlan() {
 }
 
 .terms {
-  color: var(--colors-text-text-tertiary, #575d60);
-  font-family: Inter;
+  color: var(--colors-text-text-secondary);
   font-size: 12px;
   line-height: 18px;
 

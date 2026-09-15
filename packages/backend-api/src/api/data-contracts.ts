@@ -9411,7 +9411,7 @@ export interface UserAddPlatformInfoCreateData {
 }
 
 export interface UserMdfPlatformInfoCreatePayload {
-  requestType: string;
+  requestType?: string;
   platformList: {
     /** 平台ID */
     id?: number;
@@ -10810,6 +10810,8 @@ export interface UserPaySettlementCreatePayload {
   /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
   payType: string;
   giftType: string;
+  /** 'upgrade', 'purchase' */
+  subOrderType: string;
   /** 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift) */
   orderType: string;
 }
@@ -11401,12 +11403,24 @@ export interface UserGetPayChannelFeesListData {
   msg: string;
 }
 
+export interface UserGetDurationDiscountsByDaysListParams {
+  /**
+   * renew:续费
+   * @example "renew"
+   */
+  orderlype?: string;
+}
+
 export interface UserGetDurationDiscountsByDaysListData {
-  "7": number;
-  "30": number;
-  "90": number;
-  "180": number;
-  "360": number;
+  code: number;
+  data: {
+    "7": number;
+    "30": number;
+    "90": number;
+    "180": number;
+    "360": number;
+  };
+  msg: string;
 }
 
 export interface UserPermanentWindowSettlementCreatePayload {
@@ -11456,6 +11470,61 @@ export interface QueryOrderStatusListData {
   /** //支付状态 TRADE_SUCCESS: 支付成功,TRADE_CLOSED：交易关闭,WAIT_BUYER_PAY：待支付,TRADE_FAIL：自动扣款失败 */
   data: string;
   msg: string;
+}
+
+export enum DataPurchaseTypeEnum {
+  CloudphonePlan = "cloudphone_plan",
+  CloudphoneTimeAddon = "cloudphone_time_addon",
+  CloudphoneMonthlyBoot = "cloudphone_monthly_boot",
+}
+
+export type UserGetCloudphoneSkuListCreatePayload = object;
+
+export interface UserGetCloudphoneSkuListCreateData {
+  /** 0 表示成功 */
+  code?: number;
+  msg?: string;
+  data?: {
+    rows?: {
+      sku?: string;
+      purchaseType?: DataPurchaseTypeEnum;
+      name?: string;
+      phoneSlots?: number;
+      minutes?: number;
+      days?: number;
+      /** 美分 */
+      amount_cents?: number;
+      /** 美元（amount_cents / 100） */
+      amount?: number;
+    }[];
+  };
+}
+
+export interface UserCloudphoneSettlementCreatePayload {
+  /** 仅支持 Balance（钱包）；省略则按钱包处理 */
+  payType?: string;
+  sku: string;
+  /**
+   * 云手机团队 ID
+   * @format int64
+   */
+  teamId: number;
+}
+
+export interface UserCloudphoneSettlementCreateData {
+  code?: number;
+  msg?: string;
+  data?: {
+    orderNo?: string;
+    /** 实付美元 */
+    actualAmount?: number;
+    purchaseType?: string;
+    sku?: string;
+    /** @format int64 */
+    teamId?: number;
+    /** true 表示已回调 cloudphone-server 发货成功 */
+    delivered?: boolean;
+  };
 }
 
 export interface CheckIpDownloadLimitListData {
@@ -11962,6 +12031,18 @@ export interface UserGetProxyDurationDiscountsByDaysListData {
     "90": number;
     "180": number;
     "360": number;
+  };
+  msg: string;
+}
+
+export interface GetMidAutumnPromoTimeListData {
+  code: number;
+  data: {
+    start_timestamp: number;
+    end_timestamp: number;
+    server_utc_timestamp: number;
+    type: number;
+    resetHourUtc: number;
   };
   msg: string;
 }

@@ -3,6 +3,7 @@ import { h } from 'vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import FreedomActivity from '/@/views/campaign/new-user/activity-info.vue'
+import ActivityInfoMidAutumnFestival from '/@/views/campaign/mid-autumn-festival/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import RxButton from '/@/components/rx-button/'
@@ -46,14 +47,17 @@ const sliderMin = computed(() => userPayInfo.value.isAuto ? 10 : userPayInfo.val
 const isUpgrade = computed(() => selectedCount.value >= userPayInfo.value.purchaseWindowCount)
 
 const upshiftCount = computed(() => {
-  if (!dataList.value)
+  if (!dataList.value) {
     return selectedCount.value
+  }
   const count = Math.max(selectedCount.value, 10)
   const max = dataList.value[dataList.value.length - 1].maxWindows
-  if (count < 50)
+  if (count < 50) {
     return 50
-  if (count < 100)
+  }
+  if (count < 100) {
     return 100
+  }
   return Math.min(count + 100, max)
 })
 
@@ -185,16 +189,18 @@ const getOriginalAmount = debounce(async () => {
   if (userPayInfo.value.isAuto) {
     const { code, data, msg } = await API.pay.userGetWindowSubscriptionUpgradeMessageList({ windowCount: selectedCount.value })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
     nextBill.value = data
   }
 
   if (selectedCount.value > userPayInfo.value.purchaseWindowCount) {
     const { code, data, msg } = await API.pay.userCalculatePriceDifferenceV2List({ purchaseMember: selectedCount.value })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
     originalAmount.value = data.originalAmount
     needPayAmount.value = data.actualAmount
   }
@@ -246,8 +252,9 @@ function validateWindowCount() {
 }
 
 async function onSubscribe() {
-  if (!validateWindowCount())
+  if (!validateWindowCount()) {
     return
+  }
 
   if (!userPayInfo.value.isAuto) {
     planUpgrade()
@@ -381,8 +388,9 @@ async function subscribeDowngrade() {
   async function _onConfirm() {
     const { code, msg } = await API.pay.userDowngradeSubscriptionV2List({ purchaseMember: selectedCount.value })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
     dialogInstance.handleCancel()
     showToast(code, msg)
     jumpToProfile()
@@ -403,6 +411,7 @@ function jumpToProfile() {
         <div class="flex-1 flex flex-col gap-8">
           <Profile v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" class="w-full" :list="dataList" :raw-list="dataList" :min="sliderMin" />
           <FreedomActivity v-if="selectedPlan" :count="selectedCount" :upshift-count="upshiftCount" />
+          <ActivityInfoMidAutumnFestival />
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <div class="flex items-center justify-between">
             <div class="sub-title">

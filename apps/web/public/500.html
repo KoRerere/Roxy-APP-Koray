@@ -407,9 +407,35 @@
         })
 
         function openLiveChat() {
-          if (typeof LiveChatWidget !== 'undefined' && LiveChatWidget.call) {
-            LiveChatWidget.call('maximize')
+          if (window.$chatwoot) {
+            window.$chatwoot.toggle('open')
+            return
           }
+
+          window.addEventListener('chatwoot:ready', function () {
+            window.$chatwoot && window.$chatwoot.toggle('open')
+          }, { once: true })
+
+          if (document.getElementById('chatwoot-sdk-script'))
+            return
+
+          var BASE_URL = 'https://cloudunk.com'
+          window.chatwootSettings = {
+            hideMessageBubble: true,
+            position: 'right',
+            type: 'standard',
+          }
+          var g = document.createElement('script')
+          g.id = 'chatwoot-sdk-script'
+          g.src = BASE_URL + '/packs/js/sdk.js'
+          g.async = true
+          g.onload = function () {
+            window.chatwootSDK.run({
+              websiteToken: 'KQNGK6Ad8SP2q8tBjYeNe43b',
+              baseUrl: BASE_URL,
+            })
+          }
+          document.head.appendChild(g)
         }
 
         var chatEl = document.getElementById('live-chat-trigger')

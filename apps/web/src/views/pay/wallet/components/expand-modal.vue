@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import { h } from 'vue'
 import ActivityInfoExpand from '/@/views/campaign/new-user/activity-info-expand.vue'
+import ActivityInfoMidAutumnFestival from '/@/views/campaign/mid-autumn-festival/activity-info-expand.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
@@ -15,7 +16,8 @@ import { useDialog } from '/@/hooks/useDialog'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 
 const dialogRef = inject<any>('dialogRef')
-const _props = ref()
+/** 扩容弹窗入参：默认选中类型、是否因额度不足打开 */
+const _props = ref<{ defaultType?: 'workspace' | 'staff', insufficient?: boolean }>()
 const _onConfirm = ref()
 const _onCancel = ref()
 
@@ -48,7 +50,7 @@ const buyList = ref([
 ].filter(item => item.visible !== false))
 
 const renderList = computed<any[]>(() => {
-  return [...buyList.value, { label: 'activity', render: () => h(ActivityInfoExpand) }]
+  return [...buyList.value]
 })
 
 const allAmount = computed(() => buyList.value.reduce((acc, item) => currency(item.value).multiply(item.cost).add(acc).value, 0))
@@ -134,8 +136,9 @@ onMounted(() => {
 
 function onUpdate(value: number, item: any) {
   nextTick(() => {
-    if (!value)
+    if (!value) {
       item.value = 0
+    }
   })
 }
 
@@ -167,9 +170,38 @@ async function confirm() {
 
 function close(isCancel: boolean) {
   dialogRef.value.close()
-  if (isCancel)
+  if (isCancel) {
     _onCancel.value?.()
+  }
 }
+
+/** 额度不足与普通入口共用同一条 Alert，文案按类型在弹窗内组装，避免外部传入翻译串 */
+const alertProps = computed(() => {
+  const memberCount = userPayInfo.value?.maxMemberCount
+  const workspaceCount = userPayInfo.value?.maxWorkspaceCount
+  const current = $t('您当前拥有: {member} 团队成员, {workspace} 团队', { member: memberCount, workspace: workspaceCount })
+
+  const member = {
+    type: 'warn' as const,
+    title: $t('团队成员不足，您当前拥有: {member} 团队成员, {workspace} 团队', { member: memberCount, workspace: workspaceCount }),
+    content: $t('你已达到添加团队成员的最大上限。你可以移除非活跃的团队成员或购买更多'),
+  }
+
+  const workspace = {
+    type: 'warn' as const,
+    title: $t('团队不足，您当前拥有: {member} 团队成员, {workspace} 团队', { member: memberCount, workspace: workspaceCount }),
+    content: $t('你已达到添加团队的最大上限。你可以移除非活跃的团队或购买更多'),
+  }
+
+  if (!_props.value?.insufficient) {
+    return {
+      type: 'info' as const,
+      title: current,
+    }
+  }
+
+  return _props.value.defaultType === 'workspace' ? workspace : member
+})
 </script>
 
 <template>
@@ -182,16 +214,14 @@ function close(isCancel: boolean) {
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>
     <div class="flex gap-6">
-      <div class="flex-1 flex flex-col gap-8">
+      <div class="flex-1 flex flex-col gap-6">
         <div class="flex flex-col gap-4">
-          <RxAlert class="w-full" type="info" size="small" :title="$t('您当前拥有: {member} 团队成员, {workspace} 团队', { member: userPayInfo?.maxMemberCount, workspace: userPayInfo?.maxWorkspaceCount })"
-                   :closable="false"
-          />
-          <div>
-            <div class="sub-title">
+          <RxAlert class="w-full" size="small" :closable="false" v-bind="alertProps" />
+          <div class="flex flex-col gap-1.5">
+            <div class="tt-primary text-4 font-700 leading-normal">
               {{ $t('请选择数量') }}
             </div>
-            <div class="mt-2 desc">
+            <div class="tt-tertiary text-3 leading-normal">
               {{ $t('团队成员和团队购买后永久有效') }}
             </div>
           </div>
@@ -208,6 +238,8 @@ function close(isCancel: boolean) {
             </div>
           </div>
         </div>
+        <ActivityInfoExpand />
+        <ActivityInfoMidAutumnFestival />
       </div>
       <Detail class="w-88" :list="detail">
         <template #oldprice="{ item }">
@@ -264,23 +296,9 @@ function close(isCancel: boolean) {
   line-height: 20px;
 }
 
-.sub-title {
-  color: var(--colors-text-text-primary, #fafafa);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: normal;
-}
-
 .label {
   color: var(--colors-text-text-primary, #fafafa);
   font-size: 14px;
-  line-height: normal;
-}
-
-.desc {
-  color: var(--colors-text-text-tertiary, #575d60);
-  font-family: Inter;
-  font-size: 12px;
   line-height: normal;
 }
 

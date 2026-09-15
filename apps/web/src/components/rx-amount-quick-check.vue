@@ -23,8 +23,9 @@ const actualPresets = computed(() => {
 })
 
 function handleSelect(value: number, itemDisabled: boolean) {
-  if (itemDisabled)
+  if (itemDisabled) {
     return
+  }
 
   emit('select', value)
 }

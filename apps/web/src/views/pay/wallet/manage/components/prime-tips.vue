@@ -46,6 +46,10 @@ const advanced = computed(() => [
       ? $t('更多的 API 请求次数')
       : $t('API 请求次数（{value}次 / 分钟）', { value: userPayInfo.value?.apiRate }),
   },
+  {
+    icon: 'base/rx_ic_check',
+    text: $t('创建/打开额度大幅提升'),
+  },
 ])
 </script>
 

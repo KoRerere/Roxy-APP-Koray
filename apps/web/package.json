@@ -31,8 +31,6 @@
     "@jsonforms/vue": "3.8.0",
     "@jsonforms/vue-vanilla": "3.8.0",
     "@lezer/highlight": "^1.2.3",
-    "@livechat/widget-core": "^1.4.1",
-    "@livechat/widget-vue": "^1.4.1",
     "@number-flow/vue": "^0.5.2",
     "@primeuix/themes": "^1.2.1",
     "@primevue/forms": "^4.5.4",

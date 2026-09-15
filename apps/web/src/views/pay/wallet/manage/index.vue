@@ -3,7 +3,8 @@ import Services from '/@/views/pay/wallet/manage/services.vue'
 import AutoRenew from '/@/views/pay/wallet/manage/auto-renew.vue'
 import Wallet from '/@/views/pay/wallet/manage/wallet.vue'
 import BankCards from '/@/views/pay/wallet/manage/bank-cards.vue'
-import ActivityInfoWallet from '/@/views/campaign/new-user/activity-info-wallet.vue'
+import NewUserActivityInfoWallet from '/@/views/campaign/new-user/activity-info-wallet.vue'
+import MidAutumnFestivalActivityInfoWallet from '/@/views/campaign/mid-autumn-festival/activity-info-wallet.vue'
 // import Redeem from '/@/views/pay/wallet/manage/redeem.vue'
 import { useUserStore } from '/@/stores/user'
 
@@ -55,8 +56,9 @@ function onRefresh() {
           <Wallet class="min-w-0 flex-[1.4]" :balance-refresh-ui="balanceRefreshUi" @refresh="onRefresh" />
           <BankCards class="min-w-0 flex-1" />
         </div>
+        <MidAutumnFestivalActivityInfoWallet />
         <Services />
-        <ActivityInfoWallet class="relative z-1" />
+        <NewUserActivityInfoWallet class="relative z-1" />
         <AutoRenew />
       </div>
     </div>

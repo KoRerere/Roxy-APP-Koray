@@ -63,12 +63,6 @@ export function getRawColumns(options?: any) {
         minWidth: '120px',
       },
     },
-    {
-      title: $t('操作'),
-      key: 'actions',
-      style: 'width: 9rem',
-      slot: 'actions',
-    },
   ], options)
 }
 

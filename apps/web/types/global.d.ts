@@ -1,14 +1,61 @@
-/// <reference types="../node_modules/@livechat/widget-core/dist/widget-core.d.ts" />
-
-import type { ExtendedWindow } from '@livechat/widget-core'
 import type { ElectronAPI } from '@roxy/electron-preload'
 import type { OverridedMixpanel } from 'mixpanel-browser'
 import type RxSvgIcon from '@/components/rx-icon'
 
+/** Chatwoot 在注入 SDK 前读取的全局配置 */
+interface ChatwootSettings {
+  /** 是否隐藏默认气泡，改由产品按钮打开 */
+  hideMessageBubble?: boolean
+  position?: 'left' | 'right'
+  locale?: string
+  type?: 'standard' | 'expanded_bubble'
+  darkMode?: 'light' | 'dark' | 'auto'
+  launcherTitle?: string
+}
+
+/** Chatwoot 官方 SDK 入口 */
+interface ChatwootSDK {
+  /** 用 website token 启动 widget */
+  run: (config: { websiteToken: string, baseUrl: string }) => void
+}
+
+/** Chatwoot 已就绪后的 widget API */
+interface ChatwootWidget {
+  /** iframe 回传 loaded 后由 SDK 置为 true */
+  hasLoaded?: boolean
+  /** 打开 / 关闭会话窗口；无参时切换 */
+  toggle: (state?: 'open' | 'close') => void
+  toggleBubbleVisibility: (visibility: 'hide' | 'show') => void
+  /** 绑定联系人，identifier 需稳定且不要使用登录 token */
+  setUser: (identifier: string, user: {
+    email?: string
+    name?: string
+    avatar_url?: string
+    phone_number?: string
+    identifier_hash?: string
+  }) => void
+  setCustomAttributes: (attributes: Record<string, string | number | boolean>) => void
+  deleteCustomAttribute: (key: string) => void
+  setLocale: (locale: string) => void
+  /** SDK 内部字段，无公开 setter；改位置需同时换 holder/bubble 的 woot-elements class */
+  position?: 'left' | 'right'
+  /** 清空当前联系人会话，避免账号切换串数据 */
+  reset: () => void
+  popoutChatWindow: () => void
+}
+
 declare global {
+  interface WindowEventMap {
+    'chatwoot:ready': Event
+    'chatwoot:opened': Event
+    'chatwoot:closed': Event
+  }
+
   var electronAPI: ElectronAPI
   var mixpanel: OverridedMixpanel
-  var LiveChatWidget: ExtendedWindow['LiveChatWidget']
+  var chatwootSDK: ChatwootSDK | undefined
+  var $chatwoot: ChatwootWidget | undefined
+  var chatwootSettings: ChatwootSettings | undefined
   var showLiveChat: () => void
   var $t: (...args: any[]) => string
   /** 是否为 electron 环境 */

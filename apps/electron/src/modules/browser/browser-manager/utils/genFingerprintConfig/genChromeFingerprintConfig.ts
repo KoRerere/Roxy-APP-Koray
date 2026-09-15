@@ -1,4 +1,5 @@
 import type { WindowItemType } from '/@/modules/browser/browser-manager/types'
+import { pinAcceptLangVoice } from '@roxy/shared'
 import { join } from 'node:path'
 import { appConfig } from '/@/constants'
 import { currentOS, isDev, isMac } from '/@/constants/common'
@@ -97,7 +98,7 @@ export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyI
       /** 是否开启 */
       enable: winInfo.clientRects,
       clientRectsNoiseFactorX: winInfo.clientRectsValue.clientRectsNoiseFactorX,
-      clientRectsNoiseFactorY: winInfo.clientRectsValue.clientRectsNoiseFactorY,
+      clientRectsNoiseFactorY: winInfo.clientRectsValue.clientRectsNoiseFactorX,
     },
     /** WebGL 显卡数据，从列表中随机 */
     WebGL: {
@@ -341,9 +342,12 @@ export async function genChromeFingerprintConfig(winInfo: WindowItemType, proxyI
      * 其中isLocalService代表是否是local，如果不是就自动设成了 remote 属性 ，
      * 一般isLocalService 会有3个true
      */
-    speechSynthesis: {
-      ...winInfo.speechVoicesValue,
-      enable: winInfo.speechVoices,
+    get speechSynthesis() {
+      return {
+        ...winInfo.speechVoicesValue,
+        voices: pinAcceptLangVoice(winInfo.speechVoicesValue?.voices, this.acceptLang, 'Chrome'),
+        enable: winInfo.speechVoices,
+      }
     },
     /**
      * 开启WebRTC,将公网网络替换为代理网络，并隐藏真实网络

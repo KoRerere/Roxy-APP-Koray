@@ -228,7 +228,7 @@ onMounted(() => {
       </main>
     </div>
 
-    <LiveChat :user-name="userInfo?.userName" />
+    <LiveChat :user-name="userInfo?.userName" :user-id="userInfo?.id" />
   </div>
 </template>
 

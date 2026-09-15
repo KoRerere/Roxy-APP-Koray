@@ -23,6 +23,12 @@ cleanupUnusedCatalogs: true
 onlyBuiltDependencies:
   - electron
 
+packageExtensions:
+  element-plus:
+    dependencies:
+      # element-plus 源码直接 import '@vue/shared'，但未写入自身 dependencies
+      '@vue/shared': '*'
+
 overrides:
   '@electron/node-gyp': npm:node-gyp@^11.5.0
 

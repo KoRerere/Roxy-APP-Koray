@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useUserStore } from '/@/stores/user';
-import currency from 'currency.js';
+import currency from 'currency.js'
+import { useUserStore } from '/@/stores/user'
 import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay.ts'
-;
-import { formatNumberToKMB } from '/@/utils/basic';
-import type { Plan } from '../type';
+import { formatNumberToKMB } from '/@/utils/basic'
+import type { Plan } from '../type'
 
 const { list = [] } = defineProps<{
   list?: Plan[]
 }>()
+
 const emit = defineEmits(['change'])
 
 const selectedPlan = defineModel<Plan>('modelValue')
@@ -31,17 +31,18 @@ const subscribePlans = computed(() => {
     acc[item.subLevel].disabled = !userPayInfo.value.isAuto && currentWindowCount > acc[item.subLevel].maxWindows!
     acc[item.subLevel].tierCount = $t('{min}-{max} 窗口', {
       min: formatNumberToKMB(Math.max(_list[0].maxWindows, acc[item.subLevel].minWindows!)),
-      max: formatNumberToKMB(acc[item.subLevel].maxWindows!)
+      max: formatNumberToKMB(acc[item.subLevel].maxWindows!),
     })
     return acc
   }, _default))
 })
 
 function onSwitchPlan(plan: Partial<Plan>) {
-  if (plan.disabled) return
+  if (plan.disabled) {
+    return
+  }
   emit('change', plan.maxWindows)
 }
-
 </script>
 
 <template>
@@ -50,13 +51,18 @@ function onSwitchPlan(plan: Partial<Plan>) {
       item.subLevel === SubLevelEnum.Trial ? 'flex-1/2' : 'flex-2/2',
       item.subLevel === selectedPlan?.subLevel ? 'active' : '',
       item.disabled ? 'cursor-not-allowed disabled' : '',
-    ]" @click="onSwitchPlan(item)">
-      <div class="absolute top-0 right-1.5 -translate-y-1/2 py-0.5 px-2 rounded-full plans-current" v-if="item.subLevel === userPayInfo?.subLevel">{{
-        $t('当前套餐') }}</div>
+    ]" @click="onSwitchPlan(item)"
+    >
+      <div v-if="item.subLevel === userPayInfo?.subLevel" class="absolute top-0 right-1.5 -translate-y-1/2 py-0.5 px-2 rounded-full plans-current">
+        {{
+          $t('当前套餐') }}
+      </div>
       <div class="plans-text">
         {{ SubLevelEnumStr[item.subLevel as SubLevelEnum] }}
       </div>
-      <div class="plans-price" :class="{ 'opacity-0': item.subLevel === SubLevelEnum.Trial }" v-if="item.windowPrice">{{ item.tierCount }}</div>
+      <div v-if="item.windowPrice" class="plans-price" :class="{ 'opacity-0': item.subLevel === SubLevelEnum.Trial }">
+        {{ item.tierCount }}
+      </div>
     </div>
   </div>
 </template>
@@ -69,7 +75,7 @@ function onSwitchPlan(plan: Partial<Plan>) {
 
   &.disabled {
     border: 1px solid var(--pattern-pay-plan-border-plan-inactive, #293038);
-    background: var(--pattern-pay-plan-bg-plan-inactive, #05101A);
+    background: var(--pattern-pay-plan-bg-plan-inactive, #05101a);
     box-shadow: none;
 
     .plans-text,
@@ -88,14 +94,14 @@ function onSwitchPlan(plan: Partial<Plan>) {
 
     .plans-text,
     .plans-price {
-      color: var(--pattern-pay-plan-text-plan-selected, #3FB6FD);
+      color: var(--pattern-pay-plan-text-plan-selected, #3fb6fd);
     }
   }
 
   &-current {
-    background: linear-gradient(90deg, #8780FE 0%, #C491F1 100%);
-    color: #FFF;
-    font-family: "DingTalk JinBuTi", Inter, sans-serif;
+    background: linear-gradient(90deg, #8780fe 0%, #c491f1 100%);
+    color: #fff;
+    font-family: 'DingTalk JinBuTi', Inter, sans-serif;
     font-size: 12px;
     line-height: normal;
   }

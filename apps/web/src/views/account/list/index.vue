@@ -48,8 +48,9 @@ const canBatchExport = computed(() => check(PlatformPermissionCode.BatchExport))
 
 watch(isViewer, (viewer) => {
   const actionsColumn = columns.value.find(column => column.key === 'actions')
-  if (actionsColumn)
+  if (actionsColumn) {
     actionsColumn._visible = !viewer
+  }
 }, { immediate: true })
 
 const tableRef = useTemplateRef('account')
@@ -148,15 +149,17 @@ function onAdvancedSearch(search?: Record<string, any>) {
 
 async function tableRequest(params: any) {
   const result = await API.platform.userGetPlatformInfoV2List(params)
-  if (result.code === 0)
+  if (result.code === 0) {
     exportData.value = result.data.rows as Data[]
+  }
   return result
 }
 
 function syncExportDataFromCache() {
   const entry = tableRef.value?.getCachedEntry?.()
-  if (entry?.rows)
+  if (entry?.rows) {
     exportData.value = entry.rows as Data[]
+  }
 }
 
 function refreshAccountList() {
@@ -212,8 +215,9 @@ function editField(data: Data, field: keyof Data, title: string, inputType: 'tex
       const payload = { ...data, [field]: formData[field]?.trim?.() ?? formData[field] }
       const { code, msg } = await API.platform.userMdfPlatformInfoCreate({ platformList: [payload] })
       onlyErrorToast(code, msg)
-      if (code === 0)
+      if (code === 0) {
         refreshAccountList()
+      }
     },
   })
 }
@@ -243,8 +247,9 @@ function onRemark(data: Data) {
       const datas = ([] as Data[]).concat(data).map(item => ({ ...item, platformRemarks: formData.platformRemarks }))
       const { code, msg } = await API.platform.userMdfPlatformInfoCreate({ platformList: datas, requestType: PlatformReqType.EditRemark })
       onlyErrorToast(code, msg)
-      if (code === 0)
+      if (code === 0) {
         refreshAccountList()
+      }
     },
     onHide: resolve,
   })
@@ -276,15 +281,17 @@ function bindProfiles(data: Data) {
         linkedWindowSortNums: parseWindowInfo(data.window_info),
         onClose: () => drawerInstance.hideDrawer(),
         onConfirm: async (profiles: any[]) => {
-          if (!data.id)
+          if (!data.id) {
             return
+          }
           const { code, msg } = await API.window.userMdfPlatformBindWindowCreate({
             platformId: data.id,
             windowIds: profiles.map(item => item.id),
           })
           onlyErrorToast(code, msg)
-          if (code === 0)
+          if (code === 0) {
             refreshAccountList()
+          }
         },
       }),
     },
@@ -346,8 +353,9 @@ function deletePopup(data: any) {
       <RxButton v-if="canEdit && check(PlatformPermissionCode.Add)" size="xxs" icon="base/rx_ic_add_keys" :label="$t('添加账号')" @click.stop="createAccount" />
     </ViewsHeader>
     <div class="flex flex-1 overflow-hidden">
-      <RyTable ref="account" v-model:columns="columns" v-model:selection="tableSelection" cache-key="account-list" list-cache-key="account-list" selection-mode="multiple" class="account-table" :table-request="tableRequest"
-               :operation="canEdit ? operation : []" :operation-handler="operationHandler" :virtual-scroller-options="{ itemSize: 60 }" :show-gridlines="false" :show-actions="false" :context-menu="canEdit"
+      <RyTable ref="account" v-model:columns="columns" v-model:selection="tableSelection" cache-key="account-list" list-cache-key="account-list" selection-mode="multiple" class="account-table"
+               :table-request="tableRequest" :operation="canEdit ? operation : []" :operation-handler="operationHandler" :virtual-scroller-options="{ itemSize: 60 }" :show-gridlines="false"
+               :context-menu="canEdit" :show-actions="canEdit" :show-actions-menu="false"
       >
         <template #display-before>
           <RxButton v-if="canBatchExport" severity="secondary" outlined size="xxs" icon="base/rx_ic_export" :label="$t('导出数据')" @click.stop="exportAccounts" />
@@ -401,11 +409,6 @@ function deletePopup(data: any) {
         </template>
         <template #related="{ data }">
           <RelatedProfilesCell :list="getRelatedProfileLabels(data)" :show-add="canEdit && check('Profiles_select_platform')" @add="bindProfiles(data)" />
-        </template>
-        <template v-if="canEdit" #actions="{ data }">
-          <div class="flex gap-2 items-center">
-            <Actions :operation="operation" :show-menu="false" @quick-click="(operate: any) => operationHandler(operate, data)" />
-          </div>
         </template>
       </RyTable>
     </div>

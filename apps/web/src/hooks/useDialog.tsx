@@ -6,7 +6,6 @@ import type { ButtonProps } from 'primevue/button'
 import RxButton from '/@/components/rx-button/'
 import type { SvgNames } from '/@/components/rx-icon/'
 import { isFunction } from 'es-toolkit'
-import type { JSX } from 'vue/jsx-runtime'
 import { emitter } from '/@/utils/eventBus'
 
 interface UseDialogOkProps extends Partial<Omit<ButtonProps, 'icon' | 'size' | 'disabled'>> {
@@ -22,8 +21,11 @@ interface UseDialogCustomProps {
   okText?: string
   okProps?: UseDialogOkProps
   cancelText?: string
-  slots?: { [key in keyof DialogSlots]?: (instance: UseDialogInstance) => JSX.Element }
+  /** SFC 与 .tsx 可能解析到不同份 @vue/runtime-core，JSX.Element/VNode 的 unique symbol 无法互赋 */
+  slots?: { [key in keyof DialogSlots]?: (instance: UseDialogInstance) => unknown }
   noAutoClose?: boolean
+  /** 同一 key 只保留一个实例；不传时回退到 header。标题文案变化时必须显式传入 */
+  uniqueKey?: string
   class?: string
 }
 
@@ -39,9 +41,13 @@ export interface UseDialogInstance {
 
 // 弹窗队列，避免一次性显示多个弹窗
 // const dialogQueue: UseDialogProps[] = []
-// 根据 header 来判断是否是同一个弹窗
 const dialogMap = new Map<string, UseDialogInstance>()
 let appContext: AppContext | null = null
+
+/** uniqueKey 优先，否则用可见标题 header；空 key 无法去重 */
+function getDialogMapKey(props: Pick<UseDialogProps, 'uniqueKey' | 'header'>) {
+  return props.uniqueKey || props.header || ''
+}
 
 // function customizer(a: any, b: any) {
 //   if (typeof a === 'function' && typeof b === 'function') {
@@ -53,7 +59,8 @@ export function useDialog() {
   appContext ||= getCurrentInstance()!.appContext
 
   function showModal(props: UseDialogProps) {
-    const dialog = dialogMap.get(props.header || '')
+    const mapKey = getDialogMapKey(props)
+    const dialog = mapKey ? dialogMap.get(mapKey) : undefined
     if (dialog) {
       return dialog
     }
@@ -68,8 +75,8 @@ export function useDialog() {
 
     function doHide() {
       visible.value = false
-      if (props.header) {
-        dialogMap.delete(props.header)
+      if (mapKey) {
+        dialogMap.delete(mapKey)
       }
 
       emitter.off('kickedOut', handleKickedOut)
@@ -132,12 +139,12 @@ export function useDialog() {
       handleCancel: () => innerProps.value.handleCancel?.(),
     }
 
-    if (props.header) {
-      dialogMap.set(props.header, instance)
+    if (mapKey) {
+      dialogMap.set(mapKey, instance)
     }
 
     const DialogComponent: FunctionalComponent = () => {
-      const { handleCancel, handleOk, okText, cancelText, slots, okProps, beforeClose: _beforeClose, noAutoClose: _noAutoClose, ...dialogProps } = innerProps.value
+      const { handleCancel, handleOk, okText, cancelText, slots, okProps, beforeClose: _beforeClose, noAutoClose: _noAutoClose, uniqueKey: _uniqueKey, ...dialogProps } = innerProps.value
 
       const __dialogSlots = {
         footer: () => (
@@ -155,7 +162,7 @@ export function useDialog() {
               })
             : value
           return acc
-        }, {} as Record<string, (instance: UseDialogInstance) => JSX.Element>),
+        }, {} as Record<string, (instance: UseDialogInstance) => unknown>),
       }
 
       const dialogBindProps = {

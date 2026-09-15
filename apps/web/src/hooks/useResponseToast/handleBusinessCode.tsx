@@ -33,8 +33,9 @@ export function hasWorkspaceBillingPermission() {
   return check('Cost_Center_all')
 }
 
-function buyMoreExpand(defaultType: 'workspace' | 'staff') {
-  emitter.emit('showExpandDialog', { defaultType })
+/** 打开团队/成员扩容弹窗；insufficient 为额度不足入口，文案由弹窗按类型自行展示 */
+function buyMoreExpand(defaultType: 'workspace' | 'staff', insufficient?: boolean) {
+  emitter.emit('showExpandDialog', { defaultType, insufficient })
 }
 
 export function executeSomethingByBackToSelfWorkspace(next: (...args: any[]) => void) {
@@ -104,18 +105,9 @@ export function useHandleBusinessCode() {
     const buyMoreExpandOnSelfWorkspace = executeSomethingByBackToSelfWorkspace(buyMoreExpand)
     const privateMoreExpand = check('Cost_Center_all') ? buyMoreExpand : buyMoreExpandOnSelfWorkspace
 
-    // 团队数量超出
+    // 团队数量超出：切回自有空间后直接打开购买弹窗
     if (code === BUSINESS_CODE.WORKSPACE_MAX_LIMIT) {
-      showToast({
-        severity: 'warn',
-        summary: $t('团队用量不足'),
-        detail: (
-          <I18nT keypath={$t('您已达到最大团队创建限制，可通过删除不再使用的团队或 {link}', { link: '{link}' })}>
-            {{ link: () => <a class="cursor-pointer" onClick={() => buyMoreExpandOnSelfWorkspace('workspace')}>{$t('购买更多')}</a> }}
-          </I18nT>
-        ),
-        life: 5000,
-      })
+      buyMoreExpandOnSelfWorkspace('workspace', true)
     }
     else if (code === BUSINESS_CODE.MEMBER_MAX_LIMIT) {
       if (!check('Cost_Center_all')) {
@@ -126,16 +118,8 @@ export function useHandleBusinessCode() {
           life: 5000,
         })
       }
-      showToast({
-        severity: 'warn',
-        summary: $t('团队成员用量不足'),
-        detail: (
-          <I18nT keypath={$t('您已达到最大团队成员添加限制，可通过删除不再活跃的团队成员或 {link}', { link: '{link}' })}>
-            {{ link: () => <a class="cursor-pointer" onClick={() => privateMoreExpand('staff')}>{$t('购买更多')}</a> }}
-          </I18nT>
-        ),
-        life: 5000,
-      })
+      // 有费用中心权限时直接打开购买弹窗，额度不足说明由弹窗按类型展示
+      privateMoreExpand('staff', true)
     }
     else if (code === BUSINESS_CODE.WINDOW_MAX_LIMIT) {
       // 电商模式按设备绑定/续费约束，不走窗口额度升级链路

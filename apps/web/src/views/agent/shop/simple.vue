@@ -4,14 +4,14 @@ import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import AdvancedSearch from '/@/views/browser/list/profiles/components/advanced-search.vue'
 import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
 import { RxAlert } from '/@/components/rx-alert'
-import { RxSvgIcon } from '/@/components/rx-icon/'
 import { RxInputNumber } from '/@/components/rx-input-number'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { concurrentControl, setOperationLoading } from '/@/utils'
 import { filterFieldByValue, getFormData } from '/@/utils/index'
 import { useCheckProxy, useProxy } from '/@/views/agent/hooks'
 import { BuyEntryType, BuyProxyListType, ProxyReqType, ProxyType } from '/@/enums'
-import { getRawColumns, getRelatedProfileLabels } from '/@/views/agent/shop/columns.tsx'
+import RemarkCell from '/@/views/agent/shop/components/remark-cell.vue'
+import { getRelatedProfileLabels, useColumns } from '/@/views/agent/shop/columns.tsx'
 import { getAdvancedSearch, getCustomFilters, tableOperation, tableRequest } from '/@/views/agent/shop/operation.ts'
 import type { ProxyCheckStatus } from '/@/enums'
 import type { ProxyItem } from '/@/views/agent/shop/operation.ts'
@@ -86,13 +86,13 @@ function resolveInitialSelection(data: any, batch: boolean) {
   return undefined
 }
 
-const columns = getRawColumns({
+const { columns } = useColumns({
   inserts: isBatch ? [[5, { title: $t('关联窗口数量'), slot: 'bounded' }]] : [],
   filters: ['proxy', 'ipChecker', 'proxyProviderPrice', 'autoRenew'],
+  storageKey: 'proxy_quick_display_v1',
 })
 
 const tableProps = {
-  columns,
   showDisplay: false,
   showGridlines: false,
   contextMenu: false,
@@ -286,7 +286,7 @@ async function saveSelected() {
     <RxAlert :visible="isBatch" class="w-full proxy-alert" type="info" :title="proxyAlertMessage" :closable="false" />
     <div class="flex-ovh-1">
       <!-- 关闭请求后清空选中，否则更换代理时已选代理无法在列表回显 -->
-      <RyTable ref="agent" v-model:selection="selection" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'"
+      <RyTable ref="agent" v-model:selection="selection" v-model:columns="columns" cache-key="proxy-quick-list" :table-request="getTableList" :selection-mode="isBatch ? 'multiple' : 'single'"
                :clear-selection-on-request="false" v-bind="tableProps" :virtual-scroller-options="{ itemSize: 60 }" :show-table-header="false"
       >
         <template #table-empty>
@@ -297,8 +297,8 @@ async function saveSelected() {
                       :is-loading="row.loadingOperationMap?.test"
           />
         </template>
-        <template #remark="{ data: row }">
-          <RxSvgIcon v-tooltip.top="{ value: row.remark, showDelay: 500 }" :name="row.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ 'color-[#12A3FC]': row.remark }" />
+        <template #remark="{ data: row, column: { _cache } }">
+          <RemarkCell :remark="row.remark" :extend="_cache.extend" />
         </template>
         <template #bounded="{ data: row }">
           <div class="bounded" @click.stop>

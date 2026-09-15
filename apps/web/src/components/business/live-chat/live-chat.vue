@@ -1,55 +1,118 @@
 <script setup lang="ts">
-import { LiveChatWidget } from '@livechat/widget-vue'
+import currency from 'currency.js'
+import { useEventListener } from '@vueuse/core'
 import { useUserStore } from '/@/stores/user'
-import { emitter } from '/@/utils/eventBus'
-import type { MittEvents } from '/@/utils/eventBus'
+import { useSimpleLocale } from '/@/stores/locale'
 import { useThemeStore } from '/@/stores/theme'
 import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
+import {
+  applyChatwootIdentity,
+  isChatwootReady,
+  loadChatwoot,
+  resetChatwoot,
+  setChatwootPosition,
+  toChatwootLocale,
+} from './chatwoot'
 
-const userStore = useUserStore()
 const route = useRoute()
-const router = useRouter()
+const userStore = useUserStore()
+const localeStore = useSimpleLocale()
 const themeStore = useThemeStore()
-const visibility = ref<MittEvents['toggleChatVisible']>('hidden')
 
-const sessionVariables = computed(() => {
-  const { userName } = userStore.userInfo
-  const { maxWindowCount, useWindowCount } = userStore.userPayInfo
-  return {
-    username: `[Roxy]-${userName}-总窗口${maxWindowCount}/已用-${useWindowCount}`,
-    Account_ID: userStore.token,
-    // Total_order_value: `$${totalAmount / 100}`
-  }
-})
-const customerName = computed(() => {
-  const { userName } = userStore.userInfo
-  return `[Roxy]-[${isCurrentEcommerceWorkspace() ? '电商模式' : '普通模式'}]-${userName || '游客'}`
-})
-
-function handleVisibilityChanged(data: any) {
-  console.log('data.visibility', data.visibility)
-  visibility.value = data.visibility
+/** 登录页靠右，内部页靠左，避开右侧帮助浮标 */
+function chatwootPositionForRoute() {
+  return route.name === 'login' ? 'right' : 'left'
 }
 
-// watch(() => themeStore.realTheme, (newVal) => {
-//   console.log('newVal', newVal)
-//   // LiveChatWidget?.call?.("destroy");
-//   router.replace({ ...router.currentRoute.value, query: { ...route.query, theme: newVal } as Record<string, any> })
-// }, { immediate: true })
+/** 客服侧可见的窗口额度与钱包余额，金额格式与钱包页一致 */
+function windowAndBalanceLabel() {
+  const { maxWindowCount, balance } = userStore.userPayInfo
+  return `[总窗口:${maxWindowCount} / 余额:${currency(balance ?? 0).format()}]`
+}
 
-emitter.on('toggleChatVisible', (_visibility) => {
-  visibility.value = _visibility
+const customerName = computed(() => {
+  const { userName } = userStore.userInfo
+  const mode = isCurrentEcommerceWorkspace() ? '电商模式' : '普通模式'
+  if (!userName) {
+    return `[Roxy]-[${mode}]-游客`
+  }
+  return `[Roxy]-[${mode}]-${userName}-${windowAndBalanceLabel()}`
 })
 
-onErrorCaptured((err) => {
-  console.error('LiveChatWidget error', err)
+const customAttributes = computed(() => {
+  const { userName } = userStore.userInfo
+  return {
+    username: `[Roxy]-${userName}-${windowAndBalanceLabel()}`,
+    Account_ID: String(userStore.userInfo.id ?? ''),
+  }
+})
+
+/** 把当前登录用户同步给 Chatwoot，未登录时保持匿名会话 */
+function syncIdentity() {
+  if (!isChatwootReady()) {
+    return
+  }
+
+  const identifier = userStore.userInfo.id
+  if (!identifier) {
+    return
+  }
+
+  applyChatwootIdentity({
+    identifier: String(identifier),
+    name: customerName.value,
+    email: userStore.userInfo.email,
+    phoneNumber: userStore.userInfo.phone,
+    customAttributes: customAttributes.value,
+  })
+}
+
+useEventListener(window, 'chatwoot:ready', () => {
+  syncIdentity()
+})
+
+onMounted(async () => {
+  try {
+    await loadChatwoot({
+      locale: localeStore.currentLocale,
+      darkMode: themeStore.isDarkTheme ? 'dark' : 'light',
+      position: chatwootPositionForRoute(),
+    })
+    syncIdentity()
+  }
+  catch (err) {
+    console.error('[LiveChat] Chatwoot SDK load failed', err)
+  }
+})
+
+watch(() => route.name, () => {
+  setChatwootPosition(chatwootPositionForRoute())
+})
+
+watch(
+  () => [
+    userStore.userInfo.id,
+    userStore.userInfo.userName,
+    userStore.userInfo.email,
+    userStore.userPayInfo.maxWindowCount,
+    userStore.userPayInfo.balance,
+  ] as const,
+  () => {
+    syncIdentity()
+  },
+)
+
+watch(() => userStore.token, (token, prevToken) => {
+  if (!token && prevToken) {
+    resetChatwoot()
+  }
+})
+
+watch(() => localeStore.currentLocale, (locale) => {
+  globalThis.$chatwoot?.setLocale(toChatwootLocale(locale))
 })
 </script>
 
 <template>
-  <LiveChatWidget :key="$route.query.theme" license="18087441" :customer-name="customerName"
-                  :session-variables="sessionVariables" :visibility="visibility" @visibility-changed="handleVisibilityChanged"
-  />
+  <div class="hidden" />
 </template>
-
-<style></style>

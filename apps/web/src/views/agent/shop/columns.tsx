@@ -2,6 +2,7 @@ import RxTag from '/@/components/rx-tag.vue'
 import BasicInfo from '/@/views/agent/shop/components/basic-info.vue'
 import ExpireDate from '/@/views/agent/shop/components/expire-date.vue'
 import BandwidthCell from '/@/views/agent/shop/components/bandwidth-cell.vue'
+import RemarkHeader from '/@/views/agent/shop/components/remark-header.vue'
 import { useColumns as _useColumns, setColumns } from '/@/hooks/useColumns'
 import { usePermission } from '/@/hooks/usePermission'
 import { useWorkspaceStore } from '/@/stores/workspace'
@@ -59,10 +60,8 @@ export function getRawColumns(options?: any) {
       title: $t('备注'),
       key: 'proxyRemark',
       headerSlot: 'remarkHeader',
+      headerRender: ({ column }: { column: any }) => <RemarkHeader column={column}></RemarkHeader>,
       slot: 'remark',
-      style: {
-        minWidth: '75px',
-      },
       _cache: {
         extend: false,
       },
@@ -152,12 +151,22 @@ export function getRawColumns(options?: any) {
   return setColumns(columns, options)
 }
 
-export function useColumns(options?: any) {
-  const { userConfig } = storeToRefs(useUserStore())
+interface ShopColumnsOptions {
+  /** 在指定下标插入额外列 */
+  inserts?: [number, any][]
+  /** 需要隐藏的列 key */
+  filters?: string[]
+  /** 列布局缓存 key；选择弹窗与主列表列集合不同，必须分开以免互相覆盖 */
+  storageKey?: string
+}
 
-  const { columns, updateColumns, updateRemarkDisplayStatus } = _useColumns({
-    key: 'proxy_display_v1',
-    data: getRawColumns(options),
+export function useColumns(options?: ShopColumnsOptions) {
+  const { userConfig } = storeToRefs(useUserStore())
+  const { storageKey = 'proxy_display_v1', ...columnOptions } = options ?? {}
+
+  const { columns, updateColumns } = _useColumns({
+    key: storageKey,
+    data: getRawColumns(columnOptions),
   })
 
   onBeforeMount(() => {
@@ -169,5 +178,5 @@ export function useColumns(options?: any) {
     })
   })
 
-  return { columns, updateRemarkDisplayStatus }
+  return { columns }
 }

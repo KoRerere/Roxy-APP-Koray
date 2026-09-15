@@ -99,6 +99,7 @@ const actions = computed(() => {
 const infoValue = computed(() => {
   const { totalOpenWindowTimes, totalCreateWindowTimes, openWindowTimes, createWindowTimes } = userPayInfo.value
 
+  // 免费/过期用户每日创建、打开额度均为免费窗口数 × 5；试用与付费套餐仍用接口返回额度
   const totalCreateStr = isPremiumPartner.value ? $t('无限用量') : totalCreateWindowTimes
   const totalOpenStr = isPremiumPartner.value ? $t('无限用量') : totalOpenWindowTimes
 

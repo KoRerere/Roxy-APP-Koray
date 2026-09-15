@@ -1,6 +1,7 @@
 <script setup lang="tsx">
 import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
+import ActivityInfoProxy from '/@/views/campaign/mid-autumn-festival/activity-info-proxy.vue'
 import BusinessUseSelector from '/@/views/agent/shop/components/provider-buy/business-use-selector.vue'
 import CountrySelector from '/@/views/agent/shop/components/provider-buy/country-selector.vue'
 import DurationSelector from '/@/views/agent/shop/components/provider-buy/duration-selector.vue'
@@ -239,6 +240,7 @@ async function onPay() {
     <RxLoading v-model="loading" :opacity="0.9" />
     <div class="py-5 flex-1 flex flex-col pl-8 gap-9 rounded-3 overflow-hidden overflow-y-auto selectors">
       <div class="grid grid-cols-2 gap-y-6">
+        <ActivityInfoProxy class="col-span-2" />
         <BusinessUseSelector :options="businessUseOptions" :model-value="businessUse" @update:model-value="selectBusinessUse" />
         <CountrySelector :options="countryOptions" :model-value="purchaseCountry" :loading="loadingPurchaseCountry" @update:model-value="selectCountry" />
         <DurationSelector v-model="subscriptionMonths" :options="durationOptions" />

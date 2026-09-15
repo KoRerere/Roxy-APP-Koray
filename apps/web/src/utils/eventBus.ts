@@ -39,6 +39,8 @@ export type MittEvents = {
   /** 显示扩容弹窗 */
   showExpandDialog?: {
     defaultType?: 'workspace' | 'staff'
+    /** 是否因额度不足打开；弹窗按 defaultType 展示对应提示文案 */
+    insufficient?: boolean
     paySuccess?: (result: UserPaySettlementCreateData) => void
     payError?: (result: UserPaySettlementCreateData) => void
     afterConfirm?: (result: UserPaySettlementCreateData) => void

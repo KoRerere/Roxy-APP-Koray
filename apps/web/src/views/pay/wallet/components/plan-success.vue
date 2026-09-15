@@ -1,10 +1,11 @@
 <script setup lang="ts">
-
 import { format } from 'date-fns'
 import currency from 'currency.js'
-import { useUserStore } from '/@/stores/user';
-import { SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay.ts'
+import { useUserStore } from '/@/stores/user'
+import type { SubLevelEnum } from '/@/enums/pay.ts'
+import { SubLevelEnumStr } from '/@/enums/pay.ts'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import LotteryEntry from '/@/views/campaign/mid-autumn-festival/lottery-entry.vue'
 
 const emit = defineEmits(['confirm'])
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -19,6 +20,7 @@ const featureTexts = computed(() => {
       labels.unlimitedProjects,
       labels.entitySync,
       labels.entityTransfer,
+      $t('创建/打开额度大幅提升'),
     ],
     [
       $t('频道权限（即将推出）'),
@@ -39,22 +41,27 @@ function close() {
   <CardContainer>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
       <div
-        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] bg-white card">
+        class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl border-1 border-solid border-[var(--colors-border-border-overlay)] bg-white card"
+      >
         <div class="flex justify-between items-center">
           <div class="card-title">
             {{ $t('订阅') }}
           </div>
-          <div class="card-expired" v-if="userPayInfo?.subEndDate">
+          <div v-if="userPayInfo?.subEndDate" class="card-expired">
             <span v-if="!!userPayInfo.isAuto">{{ $t('下次扣费: {value}', {
-              value: format(userPayInfo.subEndDate, 'yyyy/MM/dd')
+              value: format(userPayInfo.subEndDate, 'yyyy/MM/dd'),
             }) }}</span>
             <span v-else>{{ $t('到期时间: {value}', { value: format(userPayInfo.subEndDate, 'yyyy/MM/dd') }) }}</span>
           </div>
         </div>
-        <div class="card-plan">{{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}</div>
-        <div class="flex justify-end card-desc">{{ billingLabels.countEntitiesShort(currency(userPayInfo?.maxWindowCount, {
-          symbol: '', precision: 0
-        }).format()) }}</div>
+        <div class="card-plan">
+          {{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}
+        </div>
+        <div class="flex justify-end card-desc">
+          {{ billingLabels.countEntitiesShort(currency(userPayInfo?.maxWindowCount, {
+            symbol: '', precision: 0,
+          }).format()) }}
+        </div>
       </div>
       <CardItem as="div" :translate-z="1" class="flex flex-col gap-5 feat">
         <div class="flex items-center gap-2.5 feat-title">
@@ -62,8 +69,8 @@ function close() {
           <span>{{ $t('您已解锁以下 Roxy 会员功能!') }}</span>
         </div>
         <div class="flex">
-          <div class="flex flex-col flex-1 gap-2" v-for="(list, index) in featureTexts" :key="index">
-            <div class="flex items-center gap-3 feat-item" v-for="item in list" :key="item">
+          <div v-for="(list, index) in featureTexts" :key="index" class="flex flex-col flex-1 gap-2">
+            <div v-for="item in list" :key="item" class="flex items-center gap-3 feat-item">
               <SvgIcon name="base/rx_ic_check" color="#1CC94D" />
               <span>{{ item }}</span>
             </div>
@@ -71,6 +78,7 @@ function close() {
         </div>
       </CardItem>
       <CardItem class="w-full" as="div" :translate-z="1">
+        <LotteryEntry />
         <RxButton class="w-full" outlined severity="secondary" size="lg" :label="$t('确认')" @click="close" />
       </CardItem>
     </CardBody>
@@ -88,7 +96,7 @@ function close() {
   background: var(--colors-background-bg-action) url('/images/payments/ripple.svg') no-repeat 86px -174px/380px 380px;
 
   &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Archivo;
     font-size: 20px;
     font-weight: 700;
@@ -113,7 +121,7 @@ function close() {
   }
 
   &-renew {
-    color: var(--colors-text-text-tertiary, #575D60);
+    color: var(--colors-text-text-tertiary, #575d60);
     font-family: Inter;
     font-size: 12px;
     line-height: normal;
@@ -129,7 +137,7 @@ function close() {
 
 .feat {
   &-title {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Archivo;
     font-size: 24px;
     font-weight: 600;
@@ -144,7 +152,7 @@ function close() {
   }
 
   &-item {
-    color: var(--colors-text-text-primary, #FAFAFA);
+    color: var(--colors-text-text-primary, #fafafa);
     font-family: Inter;
     font-size: 12px;
     font-weight: 500;

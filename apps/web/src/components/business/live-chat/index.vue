@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { useWidgetIsReady } from '@livechat/widget-vue'
-import { emitter, type MittEvents } from '/@/utils/eventBus'
+import { useToast } from 'primevue/usetoast'
+import { toggleChatwoot } from './chatwoot'
 
-const isWidgetReady = useWidgetIsReady()
-const visibility = ref<MittEvents['toggleChatVisible']>('hidden')
+const toast = useToast()
 
-
-function toggleChatVisible() {
-  visibility.value = visibility.value === 'maximized' ? 'hidden' : 'maximized'
-  emitter.emit('toggleChatVisible', visibility.value)
+/** 登录页帮助按钮切换 Chatwoot 窗口 */
+async function toggleChatVisible() {
+  if (await toggleChatwoot()) {
+    return
+  }
+  toast.add({
+    severity: 'error',
+    summary: `${$t('联系客服')} · ${$t('操作失败')}`,
+    detail: $t('请检查网络连接后重试。'),
+    life: 5000,
+  })
 }
-
-onErrorCaptured((err) => {
-  console.error('LiveChatWidget error', err)
-})
 </script>
 
 <template>
   <div class="cursor-pointer" @click="toggleChatVisible">
-    <slot v-if="isWidgetReady" />
+    <slot />
   </div>
 </template>
-
-<style></style>

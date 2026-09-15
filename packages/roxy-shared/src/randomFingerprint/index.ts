@@ -105,6 +105,58 @@ function getSpeechSynthesis(os: string, coreType: 'Chrome' | 'Firefox' = 'Chrome
   return [...windowsVoices, ...newArray, ...newVoices]
 }
 
+/** speechSynthesis 单条语音 */
+export interface SpeechVoice {
+  name: string
+  lang: string
+  isLocalService: boolean
+}
+
+/**
+ * 保证 voices[0].lang === acceptLang，且该项为本地语音。
+ * 随机生成可能删掉唯一匹配项，故以完整 chromeVoices / firefoxVoices 目录补齐；
+ * 目录没有该 locale（如 en-CA）时无法伪造，保持原列表。
+ * 返回新数组并浅拷贝每一项，避免改 isLocalService 时写回指纹源对象。
+ */
+export function pinAcceptLangVoice(
+  voices: SpeechVoice[] | undefined,
+  acceptLang: string | undefined,
+  coreType: 'Chrome' | 'Firefox' = 'Chrome',
+): SpeechVoice[] | undefined {
+  if (!acceptLang) {
+    return voices
+  }
+
+  const list = Array.isArray(voices) ? voices : []
+  const catalog = isFirefox(coreType) ? firefoxVoices : chromeVoices
+  const picked = list.find(voice => voice.lang === acceptLang)
+    ?? catalog.find(voice => voice.lang === acceptLang)
+
+  if (!picked) {
+    return voices
+  }
+
+  const next = [
+    { ...picked, isLocalService: true },
+    ...list
+      .filter(voice => !(voice.name === picked.name && voice.lang === picked.lang))
+      .map(voice => ({ ...voice })),
+  ]
+
+  // 内核侧约定本地语音约 3 条；第一项占用 1 个名额，其余最多再留 2 个 true
+  let localCount = 0
+  return next.map((voice) => {
+    if (!voice.isLocalService) {
+      return voice
+    }
+    localCount += 1
+    if (localCount <= 3) {
+      return voice
+    }
+    return { ...voice, isLocalService: false }
+  })
+}
+
 export type RandomFingerprint = ReturnType<typeof genRandomFingerprint>
 
 export interface GenRandomFingerprintOptions {

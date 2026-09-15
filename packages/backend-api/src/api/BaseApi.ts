@@ -49,6 +49,7 @@ import {
   GetFaqHelpListData,
   GetJuneRechargePromoTimeListData,
   GetMayFreedomSeasonPromoTimeListData,
+  GetMidAutumnPromoTimeListData,
   GetPersonalVerifyValidatorCodeListData,
   GetPersonalVerifyValidatorCodeListParams,
   GetPromotionLinkDiscountAndUsernameListData,
@@ -2744,6 +2745,22 @@ export class BaseApi<SecurityDataType = unknown> {
   getTgWechatQrcodeList = (params: RequestParams = {}) =>
     this.http.request<GetTgWechatQrcodeListData, any>({
       path: `/get_tg_wechat_qrcode`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Base
+   * @name GetMidAutumnPromoTimeList
+   * @summary 获取中秋活动配置信息
+   * @request GET:/get_mid_autumn_promo_time
+   * @response `200` `GetMidAutumnPromoTimeListData`
+   */
+  getMidAutumnPromoTimeList = (params: RequestParams = {}) =>
+    this.http.request<GetMidAutumnPromoTimeListData, any>({
+      path: `/get_mid_autumn_promo_time`,
       method: "GET",
       format: "json",
       ...params,

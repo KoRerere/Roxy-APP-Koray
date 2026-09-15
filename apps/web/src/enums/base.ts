@@ -73,6 +73,8 @@ export enum ActivityType {
   Freedom = 4,
   /** 618 活动 */
   JuneEighteen = 6,
+  /** 中秋活动 */
+  MidAutumnFestival = 7,
 }
 
 /**

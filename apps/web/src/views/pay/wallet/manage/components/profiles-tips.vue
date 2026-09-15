@@ -2,21 +2,24 @@
 import currency from 'currency.js'
 import { format } from 'date-fns'
 import { useUserStore } from '/@/stores/user'
+import { SubLevelEnum } from '/@/enums/pay'
 
 const { userPayInfo } = storeToRefs(useUserStore())
+
+const isExpired = computed(() => userPayInfo.value.subLevel === SubLevelEnum.Expired)
 
 const profileCounts = computed(() => {
   const { freeWindowCount, purchasePermanentWindowCount, purchaseWindowCount } = userPayInfo.value
   return {
     free: currency(freeWindowCount).subtract(purchasePermanentWindowCount).value,
     purchasePermanent: purchasePermanentWindowCount,
-    purchase: purchaseWindowCount,
+    purchase: isExpired.value ? 0 : purchaseWindowCount,
   }
 })
 
 /** 计费窗口到期日；无付费窗口或无到期时间时显示暂无 */
 const billedWindowEndDate = computed(() => {
-  if (!profileCounts.value.purchase || !userPayInfo.value.subEndDate) {
+  if (isExpired.value || !profileCounts.value.purchase || !userPayInfo.value.subEndDate) {
     return $t('暂无')
   }
   return format(userPayInfo.value.subEndDate, 'yyyy/MM/dd')

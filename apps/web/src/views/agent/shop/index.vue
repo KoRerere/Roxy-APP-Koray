@@ -10,6 +10,7 @@ import ProviderSimpleList from '/@/views/agent/shop/components/provider-simple-l
 import ProfileSelect from '/@/views/account/list/components/profile-select.vue'
 import { parseWindowInfo } from '/@/views/account/list/utils'
 import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
+import RemarkCell from '/@/views/agent/shop/components/remark-cell.vue'
 import ProxyFilter from '/@/views/agent/shop/components/proxy-filter/index.vue'
 import { useProxyFilter } from '/@/views/agent/shop/components/proxy-filter/useProxyFilter'
 import currency from 'currency.js'
@@ -52,7 +53,7 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const { userConfig } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
-const { columns, updateRemarkDisplayStatus } = useColumns()
+const { columns } = useColumns()
 const { testProxy: checkProxy, batchTestShowToast, concurrentProxyTest } = useCheckProxy()
 const { showSimpleDialog } = useSimpleDialog()
 const { buyProxy, downloadProxy, renewProxy, upgradeProxy, showProxyDownloadKycBlockModal } = useProxy()
@@ -466,13 +467,6 @@ function onRemark(data: any) {
   })
 }
 
-function toggleRemarkDisplayStatus(cache: Record<string, any>) {
-  cache.extend = !cache.extend
-  if (userConfig.value.remarkDisplayStatus !== cache.extend) {
-    updateRemarkDisplayStatus(cache.extend)
-  }
-}
-
 function tableBeforeRefresh() {
   checkedMessage.value = {}
 }
@@ -648,24 +642,8 @@ function bindProfiles(data: ProxyItem) {
             --
           </div>
         </template>
-        <template #remarkHeader="{ column: { title, _cache } }">
-          <div class="flex items-center gap-2 note-header">
-            <span>{{ title }}</span>
-            <SvgIcon v-tooltip.top="{ value: _cache.extend ? $t('收起') : $t('展开'), showDelay: 0 }" class="cursor-pointer color-[#989CA0]" :name="_cache.extend ? 'base/rx_ic_hidden' : 'base/rx_ic_eye'"
-                     @click.stop="toggleRemarkDisplayStatus(_cache)"
-            />
-          </div>
-        </template>
         <template #remark="{ data, column: { _cache } }">
-          <div class="inline-flex items-center gap-1" @click.stop="operationHandler({ name: 'remark' }, data)">
-            <RxButton v-tooltip.top="{ value: data.remark, showDelay: 0 }" class="shrink-0" :class="{ 'note-light': data.remark }" text severity="secondary" size="xxs"
-                      :icon="data.remark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'"
-            />
-            <div v-if="_cache.extend" :title="data.remark" class="min-w-50 whitespace-pre-wrap note-content">
-              {{
-                data.remark }}
-            </div>
-          </div>
+          <RemarkCell :remark="data.remark" :extend="_cache.extend" @click.stop="operationHandler({ name: 'remark' }, data)" />
         </template>
         <template #providerType="{ data }">
           <div v-if="data.proxyType === ProxyType.buy" class="flex items-center gap-2">
@@ -724,32 +702,6 @@ function bindProfiles(data: ProxyItem) {
 
 .days {
   color: var(--colors-text-text-inactive);
-}
-
-.note {
-  &-header {
-    color: var(--colors-text-text-primary);
-    font-size: 12px;
-    line-height: 16px;
-    font-weight: 600;
-  }
-
-  &-content {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    word-break: break-all;
-    line-height: 1.4;
-  }
-
-  &-light {
-    :deep(svg) {
-      color: var(--colors-text-text-brand) !important;
-    }
-  }
 }
 
 .tag {

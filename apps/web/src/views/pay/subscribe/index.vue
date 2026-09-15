@@ -18,7 +18,7 @@ import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 // import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { deepClone } from '/@/utils'
-import { applyPriceDiscount, discountCalculate, durationAmountFromMonthly, hasVisiblePriceDiscount, tierCalculate } from './util'
+import { discountCalculate, durationAmountFromMonthly, durationPayableAmount, hasVisiblePriceDiscount, tierCalculate } from './util'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import type { Plan } from './type'
@@ -48,14 +48,17 @@ const defaultDurationDays = computed(() => {
 })
 
 const upshiftCount = computed(() => {
-  if (!rawList.value)
+  if (!rawList.value) {
     return selectedCount.value
+  }
   const count = Math.max(selectedCount.value, 10)
   const max = rawList.value[rawList.value.length - 1].maxWindows
-  if (count < 50)
+  if (count < 50) {
     return 50
-  if (count < 100)
+  }
+  if (count < 100) {
     return 100
+  }
   return Math.min(count + 100, max)
 })
 
@@ -64,30 +67,34 @@ const showAlert = computed(() => {
 })
 
 const monthlySubscribePrice = computed(() => {
-  if (selectedPlan.value?.subLevel === SubLevelEnum.Trial)
+  if (selectedPlan.value?.subLevel === SubLevelEnum.Trial) {
     return 0
+  }
   return tierCalculate(rawList.value!, selectedCount.value).value
 })
 
 const monthlyUpshiftPrice = computed(() => {
-  if (selectedPlan.value?.subLevel === SubLevelEnum.Trial)
+  if (selectedPlan.value?.subLevel === SubLevelEnum.Trial) {
     return 0
+  }
   return tierCalculate(rawList.value!, upshiftCount.value).value
 })
 
-const finalDiscount = computed(() => {
-  return discountCalculate([
-    userPayInfo.value?.firstPurchaseDiscount,
-    userPayInfo.value?.discount,
-    selectedDuration.value?.discount,
-  ])
+/** 账户折扣烘进月单价后再传给时长卡；档位折扣只走 Duration.rate */
+const discountedMonthly = computed(() => {
+  const { firstPurchaseDiscount, discount } = userPayInfo.value
+
+  return currency(monthlySubscribePrice.value, { precision: 6 })
+    .multiply(discountCalculate([firstPurchaseDiscount, discount]))
+    .value
 })
 
 const finalCalculate = computed(() => {
-  const originalAmount = durationAmountFromMonthly(monthlySubscribePrice.value, selectedDuration.value?.day ?? 30)
-  const amount = applyPriceDiscount(originalAmount, finalDiscount.value)
+  const day = selectedDuration.value?.day ?? 30
+  const originalAmount = durationAmountFromMonthly(monthlySubscribePrice.value, day)
+  const amount = durationPayableAmount(discountedMonthly.value, day, selectedDuration.value?.rate ?? 1)
   const discountAmount = currency(originalAmount, { precision: 6 }).subtract(amount).value
-  const amountPerMonth = currency(monthlySubscribePrice.value, { precision: 6 }).multiply(finalDiscount.value).value
+  const amountPerMonth = currency(discountedMonthly.value, { precision: 6 }).multiply(discountCalculate([selectedDuration.value?.discount ?? 0])).value
   const discountAmountPerMonth = currency(monthlySubscribePrice.value, { precision: 6 }).subtract(amountPerMonth).value
   const upshiftAmountPerMonth = currency(monthlyUpshiftPrice.value, { precision: 6 }).subtract(amountPerMonth).subtract(discountAmountPerMonth).value
 
@@ -207,7 +214,7 @@ async function getTierPricingList() {
     if (code === 0) {
       rawList.value = deepClone(data.rows)
       // 试用套餐的 maxWindows 用于 tier 的显示，实际为最低级套餐，后续逻辑会处理
-      if (!userPayInfo.value.isTrial) {
+      if (userPayInfo.value.isTrial === 0) {
         const [first, ...rest] = data.rows
         const trial = { ...first, windowPrice: 0, maxWindows: 5, subLevel: SubLevelEnum.Trial } as Plan
         const basic = { ...first, minWindows: trial.maxWindows } as Plan
@@ -299,13 +306,13 @@ async function trialSubscribe() {
       <div class="flex flex-1 items-start gap-15 px-19.5 pt-6 pb-8 overflow-y-auto content">
         <div class="flex-1 flex flex-col gap-8">
           <Profile v-if="dataList?.length" v-model:plan="selectedPlan" v-model:count="selectedCount" class="w-full" :list="dataList" :raw-list="rawList!" />
-          <FreedomActivity v-if="selectedPlan " :count="selectedCount" :upshift-count="upshiftCount" />
+          <FreedomActivity v-if="selectedPlan" :count="selectedCount" :upshift-count="upshiftCount" />
           <RxDivider line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
           <div v-show="!isTrial" class="flex flex-col gap-4">
             <div class="title">
               {{ $t('订阅时长') }}
             </div>
-            <Duration v-model="selectedDuration" :price="monthlySubscribePrice" :default-days="defaultDurationDays" />
+            <Duration v-model="selectedDuration" :price="discountedMonthly" :default-days="defaultDurationDays" />
           </div>
           <div v-if="isTrial" class="flex items-center justify-between">
             <div class="title">

@@ -1,5 +1,5 @@
 import currency from 'currency.js'
-import type { Plan } from './type'
+import type { Duration, Plan } from './type'
 
 export function tierCalculate(list: Plan[], count: number) {
   if (!list?.length || !count || count < 1) {
@@ -7,8 +7,9 @@ export function tierCalculate(list: Plan[], count: number) {
   }
 
   const { sum, algorithm } = list.reduceRight((acc, { windowPrice, minWindows }) => {
-    if (count < minWindows)
+    if (count < minWindows) {
       return acc
+    }
 
     const tiersCount = currency(count).subtract(minWindows).value
 
@@ -33,21 +34,87 @@ export function discountCalculate(discounts: number[]) {
       .multiply(acc).value), 1)
 }
 
-/** 与购买页一致：6 位精度乘折扣系数，避免默认 4 位先舍入再打折 */
-export function applyPriceDiscount(originalAmount: number, discountFactor: number) {
-  return currency(originalAmount, { precision: 6 }).multiply(discountFactor).value
+/** 获取小于 30 天的价格倍数 */
+export function getMultiplePriceLessThan30(day: number) {
+  if (day < 7) {
+    return 5
+  }
+  if (day < 30) {
+    return 2
+  }
+  return 1
 }
 
-/** 7 天短周期上浮系数：日单价相对月折算贵 30% */
-const SEVEN_DAY_PRICE_FACTOR = 1.3
-
 /**
- * 由月单价换算所选时长原价。
- * 7 天 = 月价 × (7/30) × 1.3；其它天数仍为月价 × 天数/30。
+ * 由月单价换算所选时长原价（只含短周期加价，不含账户/时长折扣）。
  */
 export function durationAmountFromMonthly(monthlyPrice: number, day = 30, precision = 6) {
   const amount = currency(monthlyPrice, { precision }).multiply(day).divide(30)
-  return day === 7 ? amount.multiply(SEVEN_DAY_PRICE_FACTOR).value : amount.value
+  return amount.multiply(getMultiplePriceLessThan30(day)).value
+}
+
+/**
+ * 该档计价乘数：短周期加价 × 时长/活动折扣系数。
+ * 账户折扣烘进月单价，不在这里相乘；买赠天数不算价。
+ */
+export function durationTierRate(day: number, discounts: number[] = []) {
+  return currency(getMultiplePriceLessThan30(day), { precision: 6 })
+    .multiply(discountCalculate(discounts))
+    .value
+}
+
+/**
+ * 已折月价换算该档实付：月价 × day / 30 × rate。
+ */
+export function durationPayableAmount(discountedMonthly: number, day: number, rate: number) {
+  return currency(discountedMonthly, { precision: 6 })
+    .multiply(day)
+    .divide(30)
+    .multiply(rate)
+    .value
+}
+
+/**
+ * 时长卡日单价展示金额：实付摊到「购买天数 + 买赠天数」。
+ * 买赠只拉低展示日均，不改结算；摊到分后向上取整，保证 日单价 × 总天数 ≥ 实付；1 天档不取整，避免把参考价抬高。仅展示，不参与结算。
+ */
+export function formatDurationDailyUnitPrice(
+  monthlyPrice: number,
+  day: number,
+  rate: number,
+  giftDays = 0,
+) {
+  const usageDays = day + (giftDays || 0)
+  const cents = currency(monthlyPrice, { precision: 6 })
+    .multiply(rate)
+    .divide(30)
+    .multiply(day)
+    .divide(usageDays)
+    .multiply(100)
+    .value
+
+  const ceiledCents = day === 1 ? cents : Math.ceil(cents)
+  return currency(ceiledCents).divide(100).format()
+}
+
+/**
+ * 按档位生成日单价展示文案；list 未就绪时不返回，避免空卡误显 $0.00。
+ * 读取 giftDays，资格异步回写后日均会跟着重算。
+ */
+export function mapDurationDailyUnitPrices(
+  monthlyPrice: number,
+  list: Duration[] | undefined,
+) {
+  if (!list) {
+    return
+  }
+
+  return Object.fromEntries(
+    list.map(item => [
+      item.day,
+      formatDurationDailyUnitPrice(monthlyPrice, item.day, item.rate, item.giftDays ?? 0),
+    ]),
+  ) as Record<number, string>
 }
 
 /**
@@ -67,8 +134,9 @@ export function formatTierData(list: Plan[]) {
   const MAX_STEP = 100
   return (list || []).reduce((acc, { minWindows, maxWindows }) => {
     const step = Math.min(maxWindows - minWindows, MAX_STEP)
-    if (minWindows <= MAX_STEP)
+    if (minWindows <= MAX_STEP) {
       acc.steps.set(minWindows, step)
+    }
     acc.tiers.push({ start: minWindows, end: maxWindows, step })
     return acc
   }, { tiers: [], steps: new Map() } as { tiers: { start: number, end: number, step: number }[], steps: Map<number, number> })

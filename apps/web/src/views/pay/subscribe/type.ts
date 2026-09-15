@@ -18,6 +18,8 @@ export interface Duration {
   discount: number
   discountStr?: string
   label?: string
+  /** 该档计价乘数：短周期加价 × 时长/活动折扣，不含账户折扣 */
+  rate: number
   /** 新人窗口买赠的额外天数，无活动时为 0 */
   giftDays?: number
   [key: string]: any

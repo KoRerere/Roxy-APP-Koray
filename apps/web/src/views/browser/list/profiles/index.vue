@@ -665,6 +665,8 @@ async function onMoveToProject(data: any) {
           placeholder: $t('请选择项目'),
           options,
           optionValue: 'value',
+          filter: true,
+          filterFields: ['label'],
         },
         resolver: (z: any) => z.string({
           invalid_type_error: $t('请选择项目'),
@@ -1253,26 +1255,18 @@ defineExpose({
       <div class="w-full flex items-start gap-2">
         <div v-if="showQuickCreateEntry" class="quick-create-entry flex shrink-0 items-stretch">
           <RxButton class="!h-6.5 quick-create-entry__main" size="xxs" outlined severity="primary" icon="base/rx_ic_browser_flash" :label="$t('快速创建')" @click.stop="onQuickCreateMainClick" />
-          <RxButton v-tooltip.top="{ value: $t('配置快速创建偏好') }" class="!h-6.5 quick-create-entry__gear" size="xxs" outlined severity="primary" icon="base/rx_ic_gear" @click.stop="onQuickCreateSettingsClick" />
+          <RxButton v-tooltip.top="{ value: $t('配置快速创建偏好') }" class="!h-6.5 quick-create-entry__gear" size="xxs" outlined severity="primary" icon="base/rx_ic_gear"
+                    @click.stop="onQuickCreateSettingsClick"
+          />
         </div>
         <AdvancedSearch :options="advancedSearchOptions" :search="onAdvancedSearch" :clear="onAdvancedSearch" />
         <RxDivider class="py-1" vertical line-only />
         <CustomFilters :current-filter="currentFilter" :filters-menu="filtersMenu" :enabled-filter-save="!isProjectProfile" :video-url="getVideoSource('profile-filter.mp4')"
                        :save-filters="saveFilters" @filter-change="onRefreshTable"
         />
-        <span
-          v-if="check('Roxy_AI_Agent_All')"
-          v-tooltip.top="{ value: selectedProfiles.length ? '' : $t('请先勾选窗口') }"
-          class="inline-flex"
-        >
-          <RxButton
-            class="create-automation-button"
-            size="xxs"
-            outlined
-            icon="roxy-agent/rx-ic-create-automation"
-            :label="createAutomationLabel"
-            :disabled="!selectedProfiles.length || automationOpening"
-            @click.stop="createAutomation()"
+        <span v-if="check('Roxy_AI_Agent_All')" v-tooltip.top="{ value: selectedProfiles.length ? '' : $t('请先勾选窗口') }" class="inline-flex">
+          <RxButton class="create-automation-button" size="xxs" outlined icon="roxy-agent/rx-ic-create-automation" :label="createAutomationLabel"
+                    :disabled="!selectedProfiles.length || automationOpening" @click.stop="createAutomation()"
           />
         </span>
         <RxButton v-if="check('Profiles_speed_test_proxy')" size="xxs" outlined severity="secondary" icon="base/rx_ic_speed_test" :label="$t('测试全部代理 IP')" @click.stop="testAllProxy()" />

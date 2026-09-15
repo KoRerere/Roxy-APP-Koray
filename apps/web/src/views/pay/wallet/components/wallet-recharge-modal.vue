@@ -2,6 +2,7 @@
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPaymentMethods from '/@/views/pay/wallet/components/wallet-payment-methods.vue'
 import PaywayCategorySelect from '/@/views/pay/wallet/components/payway-category-select.vue'
+import NextBouns from '/@/views/campaign/mid-autumn-festival/next-bouns.vue'
 import { PAYWAY_ALL_CATEGORY } from '/@/views/pay/wallet/components/payway-category'
 import currency from 'currency.js'
 import { debounce } from 'es-toolkit'
@@ -237,6 +238,7 @@ function close(isCancel: boolean) {
           <div class="mt-1 flex flex-col gap-2.5">
             <RxAmountQuickCheck :min="min" @select="quickSelect" />
           </div>
+          <NextBouns :amount="rechargeAmount" />
         </div>
       </ItemBlock>
     </div>
