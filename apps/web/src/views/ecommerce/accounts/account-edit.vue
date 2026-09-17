@@ -66,12 +66,14 @@ onBeforeMount(async () => {
 })
 
 async function saveAccount() {
-  if (!formInitialized.value || !inputsGroup.value || !metaData.value)
+  if (!formInitialized.value || !inputsGroup.value || !metaData.value) {
     return
+  }
 
   const form = basicInfoFormRef.value
-  if (!form)
+  if (!form) {
     return
+  }
 
   const windowId = Number(route.query.id) || undefined
   if (!await form.confirmBindRiskBeforeSubmit({

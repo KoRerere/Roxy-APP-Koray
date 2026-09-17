@@ -136,8 +136,9 @@ function setFormValues(data: any = {}) {
 }
 
 function setOriginValues() {
-  if (!formRef.value?.instance.states)
+  if (!formRef.value?.instance.states) {
     return
+  }
 
   const map = Object.entries(formRef.value?.instance.states).map(([name, item]: any) => {
     return [name, item.value]
@@ -158,10 +159,16 @@ function switchPlatform(data: any) {
   setFormValues(data)
 }
 
+function createTempId() {
+  return `${Date.now().toString(32)}${Math.random().toString(16).slice(2, 8)}`
+}
+
 function addPlatform() {
-  const empty = { ...Object.fromEntries(inputs.map(item => [item.name, ''])), tid: Date.now().toString(32), invalid: false }
+  // 表单是单例：切到新空账号前必须把当前填写写回列表，否则连续添加只会留下最后一条
+  setOriginValues()
+  const empty = { ...Object.fromEntries(inputs.map(item => [item.name, ''])), tid: createTempId(), invalid: false }
   _datalist.value.push(empty)
-  activeBar.value = empty
+  activeBar.value = _datalist.value[_datalist.value.length - 1]!
   formRef.value?.reset()
 }
 
@@ -172,10 +179,12 @@ function removePlatform() {
     rejectProps: { label: $t('取消'), severity: 'secondary', outlined: true },
     acceptProps: { label: $t('确认'), severity: 'danger' },
     accept: () => {
-      if (!_datalist.value.length)
+      if (!_datalist.value.length) {
         return
-      if (activeBar.value.id)
+      }
+      if (activeBar.value.id) {
         platformUrlIds.value.push(activeBar.value.id)
+      }
       const index = _datalist.value.findIndex(item => item.tid === activeBar.value.tid)
       _datalist.value.splice(index, 1)
       activeBar.value = _datalist.value[Math.max(index - 1, 0)] || {}
@@ -194,8 +203,9 @@ function onConfirm() {
   }
   const windowPlatformList = _datalist.value.reduce((acc, item) => {
     const { tid, invalid, platformUrl, ...rest } = item
-    if (invalid || !platformUrl)
+    if (invalid || !platformUrl) {
       return acc
+    }
     // 修改过的账号库账号需要取消关联
     if (rest.id && !isEqual(rawRelatedMap[rest.id], item)) {
       const { id, ...data } = rest
