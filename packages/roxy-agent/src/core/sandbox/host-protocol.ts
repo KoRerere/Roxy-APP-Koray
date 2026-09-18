@@ -1,5 +1,6 @@
 import type { ScriptPermissions } from '@/security/scriptPermissions'
 import { z } from 'zod'
+import { llmSerializableOptionsSchema } from '@/modes/sandbox-api/llm'
 
 export const SANDBOX_HOST_PROTOCOL_VERSION = 1 as const
 
@@ -156,6 +157,7 @@ export const sandboxHostToAgentMessageSchema = z.discriminatedUnion('type', [
     request: z.object({
       prompt: z.string(),
       schema: z.unknown().optional(),
+      options: llmSerializableOptionsSchema.optional(),
     }),
   }),
   baseHostMessageSchema.extend({

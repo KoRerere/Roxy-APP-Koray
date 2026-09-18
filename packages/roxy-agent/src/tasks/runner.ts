@@ -1,3 +1,4 @@
+import type { TaskErrorCode } from './errorCodes'
 import type { PreparedTaskSkill } from './executors/agent'
 import type {
   PreparedTaskScript,
@@ -56,6 +57,13 @@ type StartTaskExecution = (
   taskId: number,
   input: TaskLeaseStartInput,
 ) => Promise<TaskLeaseStartResult>
+
+const LEASE_REJECTION_CODES: Readonly<Record<string, TaskErrorCode>> = {
+  not_task_creator: TASK_ERROR_CODES.taskScheduleForbidden,
+  task_disabled: TASK_ERROR_CODES.taskDisabled,
+  already_claimed: TASK_ERROR_CODES.taskOccurrenceClaimed,
+  already_running: TASK_ERROR_CODES.taskAlreadyRunning,
+}
 
 function throwIfAborted(signal: AbortSignal): void {
   if (signal.aborted) {
@@ -151,6 +159,12 @@ function resolveTaskTemplate(task: UserTaskDto): Promise<ResolvedTemplate> {
   return resolveTemplate(serializeTemplateRef('user', task.userTemplateId))
 }
 
+function validateTriggerOwner(task: UserTaskDto, triggerType: TaskRunTrigger['triggerType']): void {
+  if (triggerType !== 'manual' && task.creatorUserId !== requireEnv(env.ROXY_USER_ID, 'ROXY_USER_ID')) {
+    throw new TaskRunAbortError(TASK_ERROR_CODES.taskScheduleForbidden)
+  }
+}
+
 function abortResult(signal: AbortSignal): TaskExecutorResult {
   const reason = signal.reason
   return {
@@ -199,6 +213,7 @@ export class TaskRunner {
     }
 
     const task = await agentUserTasksApi.getById(taskId)
+    validateTriggerOwner(task, trigger.triggerType)
     const template = await resolveTaskTemplate(task)
     const input = taskInput(task, template)
 
@@ -217,10 +232,6 @@ export class TaskRunner {
     })
 
     try {
-      console.debug('start task')
-      console.debug(`task: ${JSON.stringify(task)}`)
-      console.debug(`template: ${JSON.stringify(template)}`)
-      console.debug(`workspace id: ${env.ROXY_WORKSPACE_ID}`)
       validateDefinition(task, template)
     }
     catch (error) {
@@ -289,13 +300,10 @@ export class TaskRunner {
     scheduledAt: string,
   ): Promise<TaskLog> {
     const task = await agentUserTasksApi.getById(taskId)
+    validateTriggerOwner(task, trigger)
     const template = await resolveTaskTemplate(task)
     const input = taskInput(task, template)
 
-    console.debug('record missed')
-    console.debug(`task: ${JSON.stringify(task)}`)
-    console.debug(`template: ${JSON.stringify(template)}`)
-    console.debug(`workspace id: ${env.ROXY_WORKSPACE_ID}`)
     validateDefinition(task, template)
 
     const log = taskLogStore.create({
@@ -441,13 +449,10 @@ export class TaskRunner {
       }
 
       if (!acquired.acquired) {
-        const taskDisabled = acquired.reason === 'task_disabled'
         result = {
           status: 'failed',
           fileIds: [],
-          endReasonCode: taskDisabled
-            ? TASK_ERROR_CODES.taskDisabled
-            : TASK_ERROR_CODES.taskExecutedByOtherUser,
+          endReasonCode: LEASE_REJECTION_CODES[acquired.reason ?? ''] ?? TASK_ERROR_CODES.taskExecutionFailed,
         }
 
         return taskLogStore.finish(log.id, {

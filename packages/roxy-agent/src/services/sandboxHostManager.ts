@@ -508,7 +508,7 @@ export class SandboxHostManager {
         ...(message.request.schema && typeof message.request.schema === 'object'
           ? { schema: message.request.schema as Record<string, unknown> }
           : {}),
-        options: { signal: pending.llmAbortController.signal },
+        options: { ...message.request.options, signal: pending.llmAbortController.signal },
       })
       response = { type: 'rpc.llm.response', runId: message.runId, requestId: message.requestId, ok: true, value }
     }

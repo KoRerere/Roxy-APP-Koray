@@ -132,6 +132,7 @@ describe('taskRunner', () => {
     runnerMocks.getTask.mockResolvedValue({
       id: 1,
       workspaceId: 'workspace-1',
+      creatorUserId: 'user-1',
       name: 'Task',
       userTemplateId: 2,
       windowIds: windows.map(window => window.dirId),
@@ -151,6 +152,57 @@ describe('taskRunner', () => {
     })
     runnerMocks.finishExecution.mockResolvedValue({ finished: true })
   }
+
+  it('rejects another creator schedule before preparing resources or writing logs', async () => {
+    // 回归：陈旧定时器不能绕过本人任务过滤，触发他人的任务准备流程。
+    for (const triggerType of ['once', 'cron'] as const) {
+      arrangePromptRun()
+      const task = await runnerMocks.getTask()
+      runnerMocks.getTask.mockResolvedValue({ ...task, creatorUserId: 'other-user' })
+      await assert.rejects(new TaskRunner().start(1, {
+        triggerType,
+        scheduledAt: '2026-07-23T01:00:00.000Z',
+      }), { code: 'TASK_SCHEDULE_FORBIDDEN' })
+    }
+    assert.equal(runnerMocks.getTemplate.mock.calls.length, 0)
+    assert.equal(runnerMocks.createLog.mock.calls.length, 0)
+    assert.equal(runnerMocks.reserveWindows.mock.calls.length, 0)
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 0)
+  })
+
+  it('allows manual execution of another creator task', async () => {
+    arrangePromptRun()
+    const task = await runnerMocks.getTask()
+    runnerMocks.getTask.mockResolvedValue({ ...task, creatorUserId: 'other-user' })
+    runnerMocks.executeAgentTask.mockResolvedValue({ status: 'success', fileIds: [] })
+    const completed = await new TaskRunner().run(1, { triggerType: 'manual' })
+    assert.equal(completed.status, 'success')
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 1)
+  })
+
+  it('does not record missed schedules owned by other accounts', async () => {
+    arrangePromptRun()
+    const task = await runnerMocks.getTask()
+    runnerMocks.getTask.mockResolvedValue({ ...task, creatorUserId: 'other-user' })
+    await assert.rejects(new TaskRunner().recordMissed(1, 'once', '2026-07-23T01:00:00.000Z'), {
+      code: 'TASK_SCHEDULE_FORBIDDEN',
+    })
+    assert.equal(runnerMocks.createLog.mock.calls.length, 0)
+    assert.equal(runnerMocks.getTemplate.mock.calls.length, 0)
+  })
+
+  it('keeps backend schedule rejection distinct from execution contention', async () => {
+    arrangePromptRun()
+    runnerMocks.startExecution.mockResolvedValue({ acquired: false, reason: 'not_task_creator' })
+    const completed = await new TaskRunner().run(1, {
+      triggerType: 'once',
+      scheduledAt: '2026-07-23T01:00:00.000Z',
+    })
+    assert.equal(completed.status, 'skipped')
+    assert.equal(completed.end_reason_code, 'TASK_SCHEDULE_FORBIDDEN')
+    assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 0)
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 1)
+  })
 
   it('closes resolved windows before releasing them after success', async () => {
     const windows = [
@@ -198,6 +250,7 @@ describe('taskRunner', () => {
       id: 1,
       workspaceId: 'workspace-1',
       name: 'Skill task',
+      creatorUserId: 'user-1',
       userTemplateId: 2,
       windowIds: [],
       metadata: { prompt: null },
@@ -441,6 +494,7 @@ describe('taskRunner', () => {
     runnerMocks.getTask.mockResolvedValue({
       id: 1,
       workspaceId: 'workspace-1',
+      creatorUserId: 'user-1',
       name: 'Task',
       userTemplateId: 2,
       windowIds: [],

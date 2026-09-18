@@ -12,6 +12,7 @@ import type { Message } from 'roxy-agent-runtime'
 import { OpenAIResponsesProvider } from 'roxy-agent-runtime'
 import { aiAgentResponsesUrl, aiAgentToken } from '@/config'
 import { getRuntimeModel } from '@/runtime/provider'
+import { llmSerializableOptionsSchema } from './llm'
 
 export const SANDBOX_LLM_TIMEOUT_MS = 60_000
 
@@ -71,6 +72,17 @@ function extractTextContent(content: Message['content']): string {
 export function buildLlmTransport(runId: string): LlmTransport {
   return {
     async ask(req: AskRequest): Promise<unknown> {
+      const options = llmSerializableOptionsSchema.parse(req.options ?? {})
+      const images = options.images ?? []
+      const messages: Message[] = [{
+        role: 'user',
+        content: images.length
+          ? [
+              { type: 'text', text: req.prompt },
+              ...images.map(image => ({ type: 'image' as const, data: image.base64, mimeType: image.mimeType })),
+            ]
+          : req.prompt,
+      }]
       const { model, headers } = await getRuntimeModel({ turnId: runId })
       const provider = new OpenAIResponsesProvider({
         model: req.options?.model ?? model,
@@ -90,16 +102,16 @@ export function buildLlmTransport(runId: string): LlmTransport {
           ...(req.options?.maxTokens !== undefined ? { maxTokens: req.options.maxTokens } : {}),
         })
         return await invokeWithTimeout(
-          signal => extract(req.prompt, signal),
+          signal => extract(images.length ? messages : req.prompt, signal),
           req.options?.signal,
         )
       }
 
-      // 纯文本
+      // 文本输出，输入可包含图片。
       const res = await invokeWithTimeout(
         signal => provider.invoke({
           model: req.options?.model ?? model,
-          messages: [{ role: 'user', content: req.prompt }],
+          messages,
           maxTokens: req.options?.maxTokens ?? 16384,
           ...(req.options?.temperature !== undefined ? { temperature: req.options.temperature } : {}),
         }, signal),

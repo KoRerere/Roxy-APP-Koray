@@ -1,6 +1,7 @@
 import type { StartedTaskRun } from './runner'
 import type { UserTaskDto, UserTaskPage } from '@/api/agentApiClient'
 import { agentUserTasksApi } from '@/api/agentApiClient'
+import { env } from '@/config'
 import {
   MAX_TIMER_DELAY_MS,
   TASK_SYNC_INTERVAL_MS,
@@ -26,8 +27,8 @@ export interface TaskSyncResult {
 }
 
 export interface TaskSchedulerDeps {
+  userId: string | undefined
   listTasks: (limit: number, offset: number) => Promise<UserTaskPage>
-  setEnabled: (taskId: number, enabled: boolean) => Promise<UserTaskDto>
   startTask: (taskId: number, trigger: { triggerType: 'once' | 'cron', scheduledAt: string }) => Promise<StartedTaskRun>
   recordMissed: (taskId: number, trigger: 'once' | 'cron', scheduledAt: string) => Promise<unknown>
   stopTasks: () => Promise<void>
@@ -35,8 +36,8 @@ export interface TaskSchedulerDeps {
 }
 
 const defaultDeps: TaskSchedulerDeps = {
+  userId: env.ROXY_USER_ID,
   listTasks: (limit, offset) => agentUserTasksApi.list({ limit, offset }),
-  setEnabled: (taskId, enabled) => agentUserTasksApi.setEnabled(taskId, enabled),
   startTask: (taskId, trigger) => taskRunner.start(taskId, trigger),
   recordMissed: (taskId, trigger, scheduledAt) => taskRunner.recordMissed(taskId, trigger, scheduledAt),
   stopTasks: () => taskRunner.stopAll(),
@@ -54,8 +55,8 @@ function scheduleSignature(task: UserTaskDto): string {
   })
 }
 
-function schedulable(task: UserTaskDto, now: number): task is ScheduledTask {
-  if (!task.enabled || task.planType === 'manual' || !task.nextExecuteAt) {
+function schedulable(task: UserTaskDto, now: number, userId: string | undefined): task is ScheduledTask {
+  if (!userId || task.creatorUserId !== userId || !task.enabled || task.planType === 'manual' || !task.nextExecuteAt) {
     return false
   }
 
@@ -151,7 +152,7 @@ export class TaskScheduler {
 
     const now = this.deps.now()
     const desired = new Map(tasks.filter(task =>
-      schedulable(task, now)).map(task => [task.id, task]))
+      schedulable(task, now, this.deps.userId)).map(task => [task.id, task]))
     for (const taskId of this.entries.keys()) {
       if (!desired.has(taskId)) {
         this.unregister(taskId)
@@ -208,7 +209,6 @@ export class TaskScheduler {
 
     this.entries.delete(entry.task.id)
     const lateness = this.deps.now() - Date.parse(entry.scheduledAt)
-    let disableOnceAfterCompletion = false
 
     try {
       if (lateness > TASK_TRIGGER_LEEWAY_MS) {
@@ -219,45 +219,18 @@ export class TaskScheduler {
           triggerType: entry.task.planType,
           scheduledAt: entry.scheduledAt,
         })
-        if (entry.task.planType === 'once') {
-          disableOnceAfterCompletion = true
-          void started.completion
-            .catch(error =>
-              console.error(`[task-scheduler] Task completion failed taskId=${entry.task.id}:`, error))
-            .finally(async () => {
-              await this.disableOnce(entry.task.id)
-              if (!this.stopping) {
-                await this.sync().catch(error =>
-                  console.warn(`[task-scheduler] Failed to resync after once taskId=${entry.task.id}:`, error))
-              }
-            })
-        }
-        else {
-          void started.completion.catch(error =>
-            console.error(`[task-scheduler] Task completion failed taskId=${entry.task.id}:`, error))
-        }
+        void started.completion.catch(error =>
+          console.error(`[task-scheduler] Task completion failed taskId=${entry.task.id}:`, error))
       }
     }
     catch (error) {
       console.error(`[task-scheduler] Failed to trigger taskId=${entry.task.id}:`, error)
     }
     finally {
-      if (entry.task.planType === 'once' && !disableOnceAfterCompletion) {
-        await this.disableOnce(entry.task.id)
-      }
       if (!this.stopping) {
         await this.sync().catch(error =>
           console.warn(`[task-scheduler] Failed to resync after taskId=${entry.task.id}:`, error))
       }
-    }
-  }
-
-  private async disableOnce(taskId: number): Promise<void> {
-    try {
-      await this.deps.setEnabled(taskId, false)
-    }
-    catch (error) {
-      console.warn(`[task-scheduler] Failed to disable once taskId=${taskId}:`, error)
     }
   }
 }

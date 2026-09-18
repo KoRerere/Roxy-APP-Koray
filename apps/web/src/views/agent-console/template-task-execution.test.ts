@@ -27,6 +27,7 @@ function task(overrides: Partial<UserTaskDTO> = {}): UserTaskDTO {
   return {
     id: 3,
     workspaceId: 'workspace-1',
+    creatorUserId: 'creator',
     name: 'Research task',
     userTemplateId: 7,
     windowIds: ['window-a', 'window-b'],

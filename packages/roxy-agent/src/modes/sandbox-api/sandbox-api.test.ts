@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { Buffer } from 'node:buffer'
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
+import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -24,6 +24,32 @@ afterEach(async () => {
 })
 
 describe('sandbox API factories', () => {
+  it('接受常见大截图的 Base64 数据，校验不发生栈溢出', async () => {
+    // 回归：按四字符分组重复的正则在大图片上耗尽 V8 正则调用栈。
+    // 修复：分开校验总长度、字符集和末尾填充，避免重复分组。
+    const ask = vi.fn().mockResolvedValue('图片内容')
+    const api = createLlmApi({ ask })
+    await expect(api.ask('描述图片', {
+      images: [{ base64: Buffer.alloc(8 * 1024 * 1024).toString('base64'), mimeType: 'image/png' }],
+    })).resolves.toBe('图片内容')
+    expect(ask).toHaveBeenCalledOnce()
+  })
+
+  it.each(['ask', 'json'] as const)('在 %s 调用前拒绝无效图片', async (method) => {
+    const ask = vi.fn().mockResolvedValue('不应调用模型')
+    const api = createLlmApi({ ask })
+    for (const image of [
+      { base64: '', mimeType: 'image/png' },
+      { base64: 'data:image/png;base64,aGVsbG8=', mimeType: 'image/png' },
+      { base64: '不是 Base64', mimeType: 'image/png' },
+      { base64: 'aGVsbG8=', mimeType: 'text/plain' },
+    ]) {
+      const options = { images: [image] } as Parameters<typeof api.ask>[1]
+      await expect(method === 'ask' ? api.ask('描述', options) : api.json('描述', {}, options)).rejects.toThrow()
+    }
+    expect(ask).not.toHaveBeenCalled()
+  })
+
   it('forwards text and structured LLM requests without shared host state', async () => {
     const ask = vi.fn()
       .mockResolvedValueOnce('hello')

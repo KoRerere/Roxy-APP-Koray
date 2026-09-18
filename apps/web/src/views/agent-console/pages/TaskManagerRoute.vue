@@ -82,6 +82,7 @@ const statusLabels = computed<Record<TaskDisplayStatus, string>>(() => ({
   preparing: $t('准备中'),
   running: $t('执行中'),
   scheduled: $t('已计划'),
+  expired: $t('已过期'),
 }))
 const activityStatusLabels = computed<Record<AgentTaskLogStatus, string>>(() => ({
   preparing: $t('准备中'),
@@ -600,6 +601,14 @@ function formatActivityWindows(log: AgentTaskLogDTO) {
 }
 
 function activityEndReason(log: AgentTaskLogDTO) {
+  switch (log.endReasonCode) {
+    case 'TASK_SCHEDULE_FORBIDDEN':
+      return $t('计划任务仅允许创建者账号执行')
+    case 'TASK_OCCURRENCE_CLAIMED':
+      return $t('本次计划已被执行，请勿重复触发')
+    case 'TASK_ALREADY_RUNNING':
+      return $t('该任务正在运行')
+  }
   return log.endReasonCode
     ? $t(getTaskErrorI18nKey(log.endReasonCode, '任务执行失败，请稍后重试'))
     : ''
@@ -1187,6 +1196,12 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
+      <p class="my-4 text-3 leading-5 text-[var(--color-text-tertiary)]">
+        {{ activeTab === 'tasks'
+          ? $t('计划任务仅由创建者账号登录的客户端执行，团队成员仍可手动执行、编辑和启停计划。')
+          : $t('仅显示当前账号在本机的执行日志。') }}
+      </p>
+
       <div v-if="activeTab === 'tasks'" class="task-list-toolbar">
         <template v-if="loading && !tasks.length">
           <Skeleton
@@ -1316,7 +1331,8 @@ onBeforeUnmount(() => {
                       v-if="isTaskRunning(task)"
                       class="stop-task-button"
                       type="button"
-                      :disabled="isTaskStopping(task)"
+                      :disabled="isTaskStopping(task) || !activeTaskLogByTaskId.has(task.id)"
+                      :title="activeTaskLogByTaskId.has(task.id) ? undefined : $t('请在执行任务的客户端停止任务')"
                       @click="stopTask(task)"
                     >
                       {{ isTaskStopping(task) ? $t('停止中...') : $t('停止任务') }}
@@ -1902,7 +1918,8 @@ h1 {
 .status-pill.paused {
   color: #f79009;
 }
-.status-pill.manual {
+.status-pill.manual,
+.status-pill.expired {
   color: var(--color-text-quaternary);
 }
 .status-pill.preparing {

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
 import { PassThrough } from 'node:stream'
+import vm from 'node:vm'
 import { beforeEach, expect, it, vi } from 'vitest'
 
 const fork = vi.fn()
@@ -69,6 +73,86 @@ function installHost(): FakeChild {
   })
   return child
 }
+
+it.skipIf(!vm.SourceTextModule)('将真实 Sandbox VM 的图片与调用参数通过 IPC 传到宿主', async () => {
+  // 回归：VM 出站和宿主入站都丢弃 options，图片无法穿过 IPC。
+  // 修复：两端按协议保留可序列化选项，取消信号仍由宿主注入。
+  const root = await mkdtemp(path.join(os.tmpdir(), 'sandbox-llm-images-'))
+  const child = installHost()
+  const { SandboxRunSession } = await import('@/core/sandbox/sandbox-run-session')
+  const { SandboxHostManager } = await import('./sandboxHostManager')
+  const manager = new SandboxHostManager(1, () => ({ ask }))
+  const images = [{ base64: 'aW1hZ2U=', mimeType: 'image/png' }]
+  const options = { images, model: 'vision-model', temperature: 0.1, maxTokens: 120 }
+  const schema = { type: 'object', properties: { description: { type: 'string' } } }
+  let session: InstanceType<typeof SandboxRunSession> | undefined
+  const scriptPath = path.join(root, 'script.ts')
+  await writeFile(scriptPath, `
+    import { ask, json } from '@roxybrowser/sandbox/llm'
+    export async function main() {
+      const options = ${JSON.stringify(options)}
+      const text = await ask('描述图片', options)
+      const value = await json('提取描述', ${JSON.stringify(schema)}, options)
+      return text + ':' + value.description
+    }
+  `)
+  ask.mockResolvedValueOnce('图片').mockResolvedValueOnce({ description: '内容' })
+  const originalSend = child.send.getMockImplementation()!
+  child.send.mockImplementation((message: any) => {
+    originalSend(message)
+    if (message.type === 'rpc.llm.response') {
+      session!.handleLlmResponse(message.requestId, message)
+    }
+    if (message.type === 'run.start') {
+      const emit = (event: Record<string, unknown>) => child.emit('message', JSON.parse(JSON.stringify({
+        ...event,
+        protocolVersion: 1,
+        generation: child.generation,
+        runId: message.runId,
+      })))
+      session = new SandboxRunSession({
+        runId: message.runId,
+        payload: message.payload,
+        emit: (event) => {
+          if (event.type === 'llm.request') {
+            emit({ ...event, type: 'rpc.llm.request' })
+          }
+        },
+      })
+      queueMicrotask(() => {
+        emit({ type: 'run.started' })
+        void session!.run().then(result => emit({ type: 'run.finished', result }))
+      })
+    }
+  })
+  try {
+    const reservation = await manager.reserve()
+    const run = await reservation.start('run-images', {
+      ...payload,
+      scriptPath,
+      outputDir: root,
+      browserOutputDir: path.join(root, 'browser', 'today'),
+      logsDir: path.join(root, 'logs'),
+      logFilePath: path.join(root, 'logs', 'run.log'),
+    })
+    const result = await run.finished
+    expect(result.error).toBeUndefined()
+    expect(result.returnValue).toBe('图片:内容')
+    expect(ask).toHaveBeenNthCalledWith(1, {
+      prompt: '描述图片',
+      options: { ...options, signal: expect.any(AbortSignal) },
+    })
+    expect(ask).toHaveBeenNthCalledWith(2, {
+      prompt: '提取描述',
+      schema,
+      options: { ...options, signal: expect.any(AbortSignal) },
+    })
+  }
+  finally {
+    await manager.shutdown()
+    await rm(root, { recursive: true, force: true })
+  }
+})
 
 it('reuses one Host process for consecutive sandbox runs', async () => {
   const child = installHost()

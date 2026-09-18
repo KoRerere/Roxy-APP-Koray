@@ -1,4 +1,4 @@
-import type { SandboxHostRunResult, SandboxRunPayload, SandboxRunPhase } from './host-protocol'
+import type { SandboxHostRunResult, SandboxHostToAgentMessage, SandboxRunPayload, SandboxRunPhase } from './host-protocol'
 import type { AskRequest } from '@/modes/sandbox-api/llm'
 import buffer, { Buffer } from 'node:buffer'
 import crypto, { randomUUID } from 'node:crypto'
@@ -14,7 +14,7 @@ import { createDebugApi } from '@/modes/sandbox-api/debug'
 import { createDownloadApi } from '@/modes/sandbox-api/download'
 import * as sbHuman from '@/modes/sandbox-api/human'
 import { createKvApi } from '@/modes/sandbox-api/kv'
-import { createLlmApi } from '@/modes/sandbox-api/llm'
+import { createLlmApi, llmSerializableOptionsSchema } from '@/modes/sandbox-api/llm'
 import { createTableApi } from '@/modes/sandbox-api/table'
 import * as sb2fa from '@/modes/sandbox-api/twoFactor'
 import * as sbUtils from '@/modes/sandbox-api/utils'
@@ -30,7 +30,7 @@ export type SandboxRunState = 'created' | 'running' | 'aborting' | 'finished' | 
 
 export type SandboxRunSessionEvent
   = | { type: 'log', level: string, message: string }
-    | { type: 'llm.request', requestId: string, request: { prompt: string, schema?: unknown } }
+    | { type: 'llm.request', requestId: string, request: Extract<SandboxHostToAgentMessage, { type: 'rpc.llm.request' }>['request'] }
     | { type: 'phase', phase: SandboxRunPhase, timestamp: number }
 
 export interface SandboxRunSessionOptions {
@@ -411,13 +411,18 @@ export class SandboxRunSession {
     if (this.abortController.signal.aborted) {
       return Promise.reject(abortError(this.abortController.signal.reason))
     }
+    const options = request.options ? llmSerializableOptionsSchema.parse(request.options) : undefined
     const requestId = randomUUID()
     return new Promise((resolve, reject) => {
       this.llmRequests.set(requestId, { resolve, reject })
       this.emitEvent({
         type: 'llm.request',
         requestId,
-        request: { prompt: request.prompt, ...(request.schema ? { schema: request.schema } : {}) },
+        request: {
+          prompt: request.prompt,
+          ...(request.schema ? { schema: request.schema } : {}),
+          ...(options ? { options } : {}),
+        },
       })
     })
   }

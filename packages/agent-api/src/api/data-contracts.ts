@@ -2453,6 +2453,8 @@ export interface UserTaskInfo {
   id: number;
   /** Workspaceid */
   workspaceId: string;
+  /** Creatoruserid */
+  creatorUserId: string;
   /** Name */
   name: string;
   /** Usertemplateid */
@@ -2512,6 +2514,8 @@ export interface UserTaskRuntimeInfo {
   id: number;
   /** Workspaceid */
   workspaceId: string;
+  /** Creatoruserid */
+  creatorUserId: string;
   /** Name */
   name: string;
   /** Usertemplateid */

@@ -223,6 +223,7 @@ const TASK_STATE_RESULT_STATUSES: Readonly<Record<TaskExecutionResultStatus, Tas
 export interface UserTaskDto {
   id: number
   workspaceId: string
+  creatorUserId: string
   name: string
   userTemplateId: number
   windowIds: string[]
@@ -374,11 +375,6 @@ export const agentUserTasksApi = {
   getById(taskId: number): Promise<UserTaskDto> {
     return unwrap<UserTaskDto>(
       userTasksApi.getUserTask({ taskId }),
-    )
-  },
-  setEnabled(taskId: number, enabled: boolean): Promise<UserTaskDto> {
-    return unwrap<UserTaskDto>(
-      userTasksApi.updateUserTask({ taskId }, { enabled }),
     )
   },
   async startExecution(taskId: number, input: TaskLeaseStartInput): Promise<TaskLeaseStartResult> {

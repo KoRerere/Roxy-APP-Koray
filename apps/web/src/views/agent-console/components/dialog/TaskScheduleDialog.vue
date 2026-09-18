@@ -95,6 +95,9 @@ async function saveSchedule() {
     </header>
 
     <main class="agent-console-dialog__body task-schedule-dialog__body">
+      <p class="m-0 text-3 leading-5 text-[var(--color-text-tertiary)]">
+        {{ $t('计划任务仅由创建者账号登录的客户端执行，请保持客户端在线。') }}
+      </p>
       <AgentFormField :label="$t('计划')">
         <div class="task-schedule-dialog__row">
           <AgentSelect

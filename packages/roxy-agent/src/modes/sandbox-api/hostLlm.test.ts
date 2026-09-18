@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { afterEach, beforeEach, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 const getRuntimeModel = vi.fn()
 const providerInvoke = vi.fn()
@@ -41,6 +41,36 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+})
+
+it.each([false, true])('将 Base64 图片送入模型，结构化输出=%s', async (structured) => {
+  // 回归：Sandbox 仅转发 prompt，导致模型无法看到脚本传入的图片。
+  // 修复：文本和结构化调用共享包含图片的 canonical 用户消息。
+  providerInvoke.mockResolvedValue({ message: { content: '图片描述' } })
+  const extract = vi.fn().mockResolvedValue({ description: '图片描述' })
+  providerWithJsonSchemaOutput.mockReturnValue(extract)
+  const { buildLlmTransport } = await import('./hostLlm')
+  const images = [
+    { base64: 'aW1hZ2Ux', mimeType: 'image/png' as const },
+    { base64: 'aW1hZ2Uy', mimeType: 'image/jpeg' as const },
+  ]
+  const result = await buildLlmTransport('run-images').ask({
+    prompt: '比较两张图片',
+    ...(structured ? { schema: { type: 'object' } } : {}),
+    options: { images },
+  })
+  const messages = [{ role: 'user', content: [
+    { type: 'text', text: '比较两张图片' },
+    ...images.map(image => ({ type: 'image', data: image.base64, mimeType: image.mimeType })),
+  ] }]
+  if (structured) {
+    expect(extract).toHaveBeenCalledWith(messages, expect.any(AbortSignal))
+    expect(result).toEqual({ description: '图片描述' })
+  }
+  else {
+    expect(providerInvoke.mock.calls[0][0].messages).toEqual(messages)
+    expect(result).toBe('图片描述')
+  }
 })
 
 it('propagates provider errors', async () => {

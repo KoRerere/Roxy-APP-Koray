@@ -254,6 +254,8 @@ GET    /api/roxy-claw/weixin/qrcode-status
 WS     /api/events             # 双向会话、任务日志与 task-monitor 统一事件信道
 ```
 
+任务定义按 workspace 共享，`creatorUserId` 表示原创建者账号。调度器只为当前账号创建的任务注册 timer，后端再次校验 `once/cron` 请求的调用者必须是创建者；团队成员仍可手动执行、编辑和启停计划。租约、心跳和计划时刻去重继续防止多客户端重复执行。单次计划取得租约后由后端关闭，Agent 不再自动修改 `enabled`；错过时间的计划不补跑，执行日志仍仅保存在实际执行的客户端。
+
 五条 conversation action path 是 Agent Console 与 `roxy-agent-app` 共用的当前协议，只使用 GET/POST 并返回 camelCase DTO。旧 MCP 页面使用的 RESTful conversation、Skill 管理和模型选择 HTTP API 已无消费者并删除；模型配置由 Agent 运行时直接从 `/llm-proxy` 获取。
 
 **WebSocket 事件信道**：双方 envelope 均为 `{ id, type, data }`，完整协议按发送方和消息类型拆分在 `@roxy/shared/channel`，Zod schema 是运行时校验和 TypeScript 类型的唯一来源；Agent 校验入站命令和出站消息，Web 校验出站命令和入站消息。服务端消息 `id` 使用 UUIDv7。连接后先发送完整 `task_logs.snapshot` 和 `task_monitor.snapshot`，再发送 `channel.ready`；运行期广播 `task_log.changed`、`task_log.deleted`、`task_execution.event`、`task_monitor.snapshot` 和 `conversation.run.event`。服务端使用 ping/pong 保活，前端断线后指数退避重连并以快照/会话详情校准；不再提供独立 `/health`、会话日志读取 HTTP 或 conversation SSE。

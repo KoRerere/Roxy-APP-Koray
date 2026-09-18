@@ -515,6 +515,9 @@ onBeforeUnmount(() => {
         </AgentCheckbox>
 
         <div v-if="scheduleEnabled" class="schedule-controls">
+          <p class="m-0 text-3 leading-5 text-[var(--color-text-tertiary)]">
+            {{ $t('计划任务仅由创建者账号登录的客户端执行，请保持客户端在线。') }}
+          </p>
           <div class="schedule-control-row">
             <AgentSelect
               v-model="scheduleFrequency"

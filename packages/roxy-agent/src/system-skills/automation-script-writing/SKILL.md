@@ -254,6 +254,26 @@ After creating a Human actor, keep pointer movement inside that actor. Mixing
 direct `page.mouse` or Locator `hover`/`click` calls makes its tracked pointer
 position stale; use explicit `human.move`/`hover`/`click` instead.
 
+### LLM Image Input
+
+Both `ask(prompt, options)` and `json(prompt, schema, options)` accept
+`options.images: [{ base64, mimeType }]`, preserving image order. Pass raw Base64
+without a `data:` prefix and set `mimeType` to match the image format. The selected
+model must support image input; `options.model` overrides the host default.
+See `references/sandbox-api.d.ts` for supported MIME types and full signatures.
+
+Import `ask` at module scope; run the screenshot and LLM calls inside `main`
+using the existing `page`:
+
+```typescript
+import { ask } from '@roxybrowser/sandbox/llm'
+
+const screenshot = await page.screenshot({ type: 'png' })
+const description = await ask('Describe the page in this screenshot.', {
+  images: [{ base64: screenshot.toString('base64'), mimeType: 'image/png' as const }],
+})
+```
+
 ### Table And KV Buckets
 
 `Table` and `KV` are classes. One instance is one persisted data bucket backed by one file in the script workdir:

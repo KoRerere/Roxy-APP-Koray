@@ -18,8 +18,28 @@
  * provider/model/apiKey 始终留在宿主进程，不暴露给脚本。
  */
 
+import { z } from 'zod'
+
+/** 图片使用原始 Base64，不包含 data URL 前缀。 */
+export const llmImageSchema = z.object({
+  base64: z.string().min(1).regex(/^[A-Z0-9+/]+={0,2}$/i, '图片必须使用原始 Base64 编码').refine(value => value.length % 4 === 0, 'Base64 编码长度或填充不正确'),
+  mimeType: z.enum(['image/png', 'image/jpeg', 'image/webp', 'image/gif']),
+})
+
+export type LlmImageInput = z.infer<typeof llmImageSchema>
+
+/** IPC 仅传输数据字段，AbortSignal 由宿主进程管理。 */
+export const llmSerializableOptionsSchema = z.object({
+  model: z.string().optional(),
+  temperature: z.number().optional(),
+  maxTokens: z.number().optional(),
+  images: z.array(llmImageSchema).optional(),
+})
+
 /** 单次调用可带的参数。 */
 export interface LlmCallOptions {
+  /** 附带的图片，按数组顺序传给模型；所用模型须支持图片输入。 */
+  images?: LlmImageInput[]
   /** 模型标识；缺省用宿主默认模型。 */
   model?: string
   /** 采样温度（0~2）。结构化任务建议低温度。 */
@@ -59,15 +79,21 @@ export interface SandboxLlmApi {
 
 /** Create the script-facing LLM API for one sandbox run. */
 export function createLlmApi(transport: LlmTransport): SandboxLlmApi {
+  const request = (req: AskRequest) => {
+    if (req.options?.images !== undefined) {
+      z.array(llmImageSchema).parse(req.options.images)
+    }
+    return transport.ask(req)
+  }
   return {
     ask: async (prompt, options) => {
-      const value = await transport.ask({ prompt, options })
+      const value = await request({ prompt, options })
       if (typeof value !== 'string') {
-        throw new Error('@roxybrowser/sandbox/llm.ask returned a non-text result')
+        throw new TypeError('@roxybrowser/sandbox/llm.ask returned a non-text result')
       }
       return value
     },
     json: async <T = unknown>(prompt: string, schema: Record<string, unknown>, options?: LlmCallOptions) =>
-      transport.ask({ prompt, schema, options }) as Promise<T>,
+      request({ prompt, schema, options }) as Promise<T>,
   }
 }

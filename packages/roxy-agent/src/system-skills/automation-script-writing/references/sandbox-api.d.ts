@@ -281,8 +281,18 @@ declare module '@roxybrowser/sandbox/2fa' {
 
 // ─────────────────────────────────────────────────────────────────────────────
 declare module '@roxybrowser/sandbox/llm' {
+  /** 图片使用原始 Base64 编码，不包含 data:image/...;base64, 前缀。 */
+  export interface LlmImageInput {
+    base64: string
+    mimeType: 'image/png' | 'image/jpeg' | 'image/webp' | 'image/gif'
+  }
+
   /** 单次调用可带的参数。 */
   export interface LlmCallOptions {
+    /** 附带的图片，按数组顺序传给模型；所用模型须支持图片输入。 */
+    images?: LlmImageInput[]
+    /** 模型标识；缺省用宿主默认模型。 */
+    model?: string
     /** 采样温度（0~2）。结构化任务建议低温度。 */
     temperature?: number
     /** 最大生成 token 数。 */
@@ -291,11 +301,11 @@ declare module '@roxybrowser/sandbox/llm' {
     signal?: AbortSignal
   }
 
-  /** 文本：给定 prompt，返回模型生成的纯文本。 */
+  /** 文本：给定 prompt 与可选的 opts.images，返回模型生成的纯文本。 */
   export function ask(prompt: string, opts?: LlmCallOptions): Promise<string>
 
   /**
-   * 结构化：给定 prompt 与完整 JSON Schema，返回符合 schema 的对象。
+   * 结构化：给定 prompt、完整 JSON Schema 与可选的 opts.images，返回符合 schema 的对象。
    * 需要结构化输出（分类、抽取、判断…）时用它，schema 描述期望结构。
    * @example
    * const { price } = await json<{ price: number }>(prompt, {

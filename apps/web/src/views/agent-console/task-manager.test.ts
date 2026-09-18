@@ -22,7 +22,19 @@ import {
 
 describe('task concurrency metadata', () => {
   it('defaults to the detected CPU core count plus two', () => {
-    assert.equal(getDefaultTaskConcurrency(), 10)
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'hardwareConcurrency')
+    Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, value: 8 })
+    try {
+      assert.equal(getDefaultTaskConcurrency(), 10)
+    }
+    finally {
+      if (descriptor) {
+        Object.defineProperty(navigator, 'hardwareConcurrency', descriptor)
+      }
+      else {
+        Reflect.deleteProperty(navigator, 'hardwareConcurrency')
+      }
+    }
   })
 
   it('reads only positive safe integer concurrency values', () => {
@@ -109,6 +121,7 @@ describe('task error i18n mapping', () => {
     assert.equal(getTaskErrorI18nKey('TASK_DISABLED', 'fallback'), '任务已被禁用')
     assert.equal(getTaskErrorI18nKey('HEARTBEAT_REJECTED', 'fallback'), '任务心跳请求被拒绝')
     assert.equal(getTaskErrorI18nKey('SCRIPT_EXECUTION_FAILED', 'fallback'), '所有脚本执行均失败')
+    assert.equal(getTaskErrorI18nKey('TASK_SCHEDULE_FORBIDDEN', 'fallback'), '计划任务仅允许创建者账号执行')
   })
 
   it('uses the caller fallback for missing or unknown codes', () => {
@@ -118,6 +131,15 @@ describe('task error i18n mapping', () => {
 })
 
 describe('getTaskPlanStatus', () => {
+  it('shows an unclaimed past once plan as expired without disabling it', () => {
+    const task = { planType: 'once' as const, enabled: true, executeAt: '2026-09-18T01:00:00Z' }
+    assert.equal(getTaskPlanStatus(task, Date.parse('2026-09-18T01:00:01Z')), 'expired')
+    assert.equal(task.enabled, true)
+    assert.equal(getTaskPlanStatus(task, Date.parse('2026-09-18T00:59:59Z')), 'scheduled')
+    assert.equal(getTaskPlanStatus({ ...task, enabled: false }), 'paused')
+    assert.equal(getTaskDisplayStatus('expired', 'running'), 'running')
+  })
+
   it('keeps manual tasks outside the scheduling state', () => {
     assert.equal(getTaskPlanStatus({ planType: 'manual', enabled: true }), 'manual')
     assert.equal(getTaskPlanStatus({ planType: 'manual', enabled: false }), 'manual')
