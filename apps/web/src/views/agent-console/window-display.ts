@@ -31,7 +31,3 @@ export function getAgentWindowDisplay(row: WindowDisplayRow) {
     remark: row.windowRemark ?? '',
   }
 }
-
-export function sortAgentWindowsOpenedFirst<T extends { isOpen?: boolean }>(items: readonly T[]) {
-  return [...items].sort((left, right) => Number(Boolean(right.isOpen)) - Number(Boolean(left.isOpen)))
-}

@@ -6,7 +6,6 @@ import type { TaskWindowOption } from './task-manager'
 import {
   getAgentWindowDisplay,
   mergeAgentWindowOpenStatus,
-  sortAgentWindowsOpenedFirst,
 } from './window-display'
 
 interface BrowserItem {
@@ -56,7 +55,7 @@ function toTaskWindowOptions(
       }]
     : [])
 
-  return sortAgentWindowsOpenedFirst(options)
+  return options
 }
 
 export function reformatTaskWindowOptions(

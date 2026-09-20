@@ -5,7 +5,6 @@ import { getAgentOpenedWindowIds } from '../../opened-window-state'
 import {
   getAgentWindowDisplay,
   mergeAgentWindowOpenStatus,
-  sortAgentWindowsOpenedFirst,
 } from '../../window-display'
 import type { AgentComposerItem } from './types'
 
@@ -110,7 +109,7 @@ function mapWindowRows(
     ))
     .filter((item): item is AgentComposerItem => Boolean(item))
 
-  return sortAgentWindowsOpenedFirst(items)
+  return items
 }
 
 export async function fetchAgentComposerWindowsPage(

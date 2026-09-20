@@ -3,7 +3,6 @@ import { describe, it } from 'node:test'
 import {
   getAgentWindowDisplay,
   mergeAgentWindowOpenStatus,
-  sortAgentWindowsOpenedFirst,
 } from './window-display'
 
 describe('getAgentWindowDisplay', () => {
@@ -49,31 +48,5 @@ describe('mergeAgentWindowOpenStatus', () => {
     assert.equal(mergeAgentWindowOpenStatus({ dirId: 'locally-open', openStatus: false }, openedWindowIds).openStatus, true)
     assert.equal(mergeAgentWindowOpenStatus({ dirId: 'backend-open', openStatus: true }, openedWindowIds).openStatus, true)
     assert.equal(mergeAgentWindowOpenStatus({ dirId: 'closed', openStatus: false }, openedWindowIds).openStatus, false)
-  })
-})
-
-describe('sortAgentWindowsOpenedFirst', () => {
-  it('moves open windows first without changing the order inside each group', () => {
-    const windows = [
-      { id: 'closed-a', isOpen: false },
-      { id: 'open-a', isOpen: true },
-      { id: 'closed-b' },
-      { id: 'open-b', isOpen: true },
-    ]
-
-    assert.deepEqual(
-      sortAgentWindowsOpenedFirst(windows).map(item => item.id),
-      ['open-a', 'open-b', 'closed-a', 'closed-b'],
-    )
-  })
-
-  it('returns a sorted copy instead of mutating the API result', () => {
-    const windows = [
-      { id: 'closed', isOpen: false },
-      { id: 'open', isOpen: true },
-    ]
-
-    sortAgentWindowsOpenedFirst(windows)
-    assert.deepEqual(windows.map(item => item.id), ['closed', 'open'])
   })
 })
