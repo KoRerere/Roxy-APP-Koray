@@ -1016,11 +1016,11 @@ importers:
         specifier: workspace:*
         version: link:../roxy-shared
       '@roxybrowser/openapi':
-        specifier: 3.1.1
-        version: 3.1.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)
+        specifier: 3.2.0
+        version: 3.2.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
       '@roxybrowser/playwright':
-        specifier: 2.0.6-beta.3
-        version: 2.0.6-beta.3(@cfworker/json-schema@4.1.1)
+        specifier: 2.0.6-beta.4
+        version: 2.0.6-beta.4(@cfworker/json-schema@4.1.1)
       '@slack/bolt':
         specifier: ^3.22.0
         version: 3.22.0
@@ -4658,13 +4658,13 @@ packages:
     resolution: {integrity: sha512-4lihLZyXDYcyiDuc61IrAsKd/j4JYObhqDQxv7v1zdexucpQuf2nxSHp7S4tfmMMVeavhboNAqULpoxNOvggGQ==}
     engines: {node: '>=20.12.0'}
 
-  '@roxybrowser/openapi@3.1.1':
-    resolution: {integrity: sha512-ztE8tmnOHxubP6fCQs9zbNOs2ly1rkquN8GSufDsT9VcIl83UbGUMdJ7cchBrZRZJk1tP3ktBVOPIf8YH/24eA==}
+  '@roxybrowser/openapi@3.2.0':
+    resolution: {integrity: sha512-YdHWaDJ1pftu7q4LyzxKrp1iyAGAjtCzNG8omxq+TYSCpAfudnm3MT9ChX96U6NnFCOOsyFB385439Ge7k79PA==}
     engines: {node: ^24.11.0}
     hasBin: true
 
-  '@roxybrowser/playwright@2.0.6-beta.3':
-    resolution: {integrity: sha512-L/mFMmLduudyc2Ukl0jKiqHy2wKENPM09TTpj6q10L+wcCYn0cNqSQyPc/e/o3YvVVNidxgfQ6BMEe2yzBwwUg==}
+  '@roxybrowser/playwright@2.0.6-beta.4':
+    resolution: {integrity: sha512-p+sSPCfHhnNlLwqV1UVNszykhKPE0XjzWhnzwSnMEBNIZUvjrLbQaAF4+6dhKdQ4pcsuQASCoE3yPoorH5HByQ==}
     hasBin: true
 
   '@scarf/scarf@1.4.0':
@@ -16337,7 +16337,7 @@ snapshots:
       listr2: 11.0.0
       ssh2: 1.17.0
 
-  '@roxybrowser/openapi@3.1.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)':
+  '@roxybrowser/openapi@3.2.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
       commander: 15.0.0
@@ -16348,10 +16348,9 @@ snapshots:
       - supports-color
       - zod
 
-  '@roxybrowser/playwright@2.0.6-beta.3(@cfworker/json-schema@4.1.1)':
+  '@roxybrowser/playwright@2.0.6-beta.4(@cfworker/json-schema@4.1.1)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.30.0(@cfworker/json-schema@4.1.1)(zod@4.4.3)
-      '@roxybrowser/openapi': 3.1.1(@cfworker/json-schema@4.1.1)(zod@4.4.3)
       chrome-remote-interface: 0.34.0
       dotenv: 17.4.2
       mime: 4.1.0
