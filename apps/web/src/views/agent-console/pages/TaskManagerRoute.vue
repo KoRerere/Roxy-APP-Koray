@@ -17,6 +17,8 @@ import { useDialog } from 'primevue/usedialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useWorkspaceStore } from '/@/stores/workspace'
+import { useRoleStore } from '/@/stores/role'
+import { useUserStore } from '/@/stores/user'
 import AgentConsolePageLayout from '../components/AgentConsolePageLayout.vue'
 import AgentSelect from '../components/form/AgentSelect.vue'
 import AgentPopover from '../components/AgentPopover.vue'
@@ -100,6 +102,8 @@ const agentApi = useAgentConsoleApi()
 const agentChannel = useAgentChannelState()
 const localeStore = useSimpleLocale()
 const workspaceStore = useWorkspaceStore()
+const roleStore = useRoleStore()
+const userStore = useUserStore()
 const dialog = useDialog()
 const confirm = useConfirm()
 const taskManagerLocaleClass = computed(() => `task-manager-content--${localeStore.siteLocale}`)
@@ -178,6 +182,12 @@ const selectedActivityWindowIds = computed(() => {
 })
 const selectedActivityWindowLabelsReady = computed(() => activityWindowOptionsReady(selectedActivityWindowIds.value))
 const canCreateTask = computed(() => !loading.value && templateOptions.value.length > 0)
+const canOperateTask = (task: Pick<UserTaskDTO, 'creatorUserId'>) => (
+  roleStore.isOwner || String(task.creatorUserId) === String(userStore.userInfo.id)
+)
+const canStopTask = (task: Pick<UserTaskDTO, 'creatorUserId'>) => (
+  !roleStore.isOwner && String(task.creatorUserId) === String(userStore.userInfo.id)
+)
 
 function onActivityPageSizeChange() {
   activityPageFirst.value = 0
@@ -656,6 +666,10 @@ function taskInitialValues(task: TaskTableItem): TaskDialogInitialValues {
 }
 
 async function saveTask(payload: TaskDialogPayload, task?: TaskTableItem) {
+  if (task && !canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    return false
+  }
   try {
     if (task) {
       const body: UserTaskUpdate = {
@@ -699,6 +713,10 @@ async function saveTask(payload: TaskDialogPayload, task?: TaskTableItem) {
 }
 
 function openTaskDialog(task?: TaskTableItem) {
+  if (task && !canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    return
+  }
   if (!task && !canCreateTask.value) {
     onlyErrorToast(-1, $t('请先创建一个用户模板'))
     return
@@ -738,6 +756,10 @@ function openTaskDialog(task?: TaskTableItem) {
 }
 
 async function saveTaskSchedule(task: TaskTableItem, payload: TaskSchedulePlan) {
+  if (!canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    return false
+  }
   try {
     const body: UserTaskUpdate = {
       plan_type: toUserTaskUpdatePlanType(payload.planType),
@@ -761,6 +783,10 @@ async function saveTaskSchedule(task: TaskTableItem, payload: TaskSchedulePlan) 
 }
 
 function openTaskScheduleDialog(task: TaskTableItem) {
+  if (!canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    return
+  }
   closeTaskActionMenu()
   dialog.open(TaskScheduleDialog, {
     props: {
@@ -789,6 +815,10 @@ function openTaskScheduleDialog(task: TaskTableItem) {
 }
 
 async function toggleTaskPlan(task: TaskTableItem) {
+  if (!canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    return
+  }
   closeTaskActionMenu()
   try {
     const response = await agentApi.userTasks.updateUserTask(
@@ -807,6 +837,10 @@ async function toggleTaskPlan(task: TaskTableItem) {
 }
 
 function deleteTask(task: TaskTableItem) {
+  if (!canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以删除任务'))
+    return
+  }
   closeTaskActionMenu()
   confirm.require({
     group: 'agentConsoleDeleteConfirmDialog',
@@ -917,6 +951,10 @@ async function refreshTaskStatuses(silent = true) {
 }
 
 async function runTaskNow(task: TaskTableItem) {
+  if (!canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以执行任务'))
+    return
+  }
   if (startingTaskIds.value.has(task.id) || isTaskRunning(task)) {
     return
   }
@@ -1071,6 +1109,14 @@ function clearFinishedStoppingLogIds() {
 }
 
 async function stopTask(task: TaskTableItem) {
+  if (!canStopTask(task)) {
+    onlyErrorToast(-1, $t('任务执行中不可停止，空间所有者可在任务结束后继续管理'))
+    return
+  }
+  if (!canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以停止任务'))
+    return
+  }
   if (!isTaskRunning(task)) {
     return
   }
@@ -1099,6 +1145,15 @@ async function stopTask(task: TaskTableItem) {
 
 async function stopActivityLog(log: AgentTaskLogDTO) {
   closeActivityActionMenu()
+  const task = tasks.value.find(item => item.id === log.taskId)
+  if (task && !canStopTask(task)) {
+    onlyErrorToast(-1, $t('任务执行中不可停止，空间所有者可在任务结束后继续管理'))
+    return
+  }
+  if (task && !canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以停止任务'))
+    return
+  }
   if (!isActiveTaskLog(log.status) || stoppingLogIds.value.has(log.id)) {
     return
   }
@@ -1117,6 +1172,11 @@ async function stopActivityLog(log: AgentTaskLogDTO) {
 
 function deleteActivityLog(log: AgentTaskLogDTO) {
   closeActivityActionMenu()
+  const task = tasks.value.find(item => item.id === log.taskId)
+  if (task && !canOperateTask(task)) {
+    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以删除执行记录'))
+    return
+  }
   if (isActiveTaskLog(log.status) || deletingLogIds.value.has(log.id)) {
     return
   }
@@ -1198,7 +1258,7 @@ onBeforeUnmount(() => {
 
       <p class="my-4 text-3 leading-5 text-[var(--color-text-tertiary)]">
         {{ activeTab === 'tasks'
-          ? $t('计划任务仅由创建者账号登录的客户端执行，团队成员仍可手动执行、编辑和启停计划。')
+          ? $t('计划任务仅由创建者账号登录的客户端执行；其他成员只能查看，空间所有者可以管理任务。')
           : $t('仅显示当前账号在本机的执行日志。') }}
       </p>
 
@@ -1328,7 +1388,7 @@ onBeforeUnmount(() => {
                 <td>
                   <div class="task-actions">
                     <button
-                      v-if="isTaskRunning(task)"
+                      v-if="canStopTask(task) && isTaskRunning(task)"
                       class="stop-task-button"
                       type="button"
                       :disabled="isTaskStopping(task) || !activeTaskLogByTaskId.has(task.id)"
@@ -1338,7 +1398,7 @@ onBeforeUnmount(() => {
                       {{ isTaskStopping(task) ? $t('停止中...') : $t('停止任务') }}
                     </button>
                     <button
-                      v-else
+                      v-if="!isTaskRunning(task) && canOperateTask(task)"
                       class="run-button"
                       type="button"
                       :disabled="startingTaskIds.has(task.id)"
@@ -1364,7 +1424,7 @@ onBeforeUnmount(() => {
                       </button>
 
                       <template #content>
-                        <button type="button" @click="closeTaskActionMenu(); openTaskDialog(task)">
+                        <button v-if="canOperateTask(task)" type="button" @click="closeTaskActionMenu(); openTaskDialog(task)">
                           <SvgIcon name="base/rx_ic_agent_edit" size="16" />
                           <span>{{ $t('编辑') }}</span>
                         </button>
@@ -1372,15 +1432,15 @@ onBeforeUnmount(() => {
                           <SvgIcon name="roxy-agent/rx-ic-task-logs" size="16" />
                           <span>{{ $t('查看日志') }}</span>
                         </button>
-                        <button type="button" @click="openTaskScheduleDialog(task)">
+                        <button v-if="canOperateTask(task)" type="button" @click="openTaskScheduleDialog(task)">
                           <SvgIcon name="roxy-agent/rx-ic-task-schedule" size="16" />
                           <span>{{ $t('计划') }}</span>
                         </button>
-                        <button v-if="task.planType !== 'manual'" type="button" @click="toggleTaskPlan(task)">
+                        <button v-if="canOperateTask(task) && task.planType !== 'manual'" type="button" @click="toggleTaskPlan(task)">
                           <SvgIcon :name="task.enabled ? 'roxy-agent/rx-ic-task-pause' : 'base/rx_ic_play'" size="16" />
                           <span>{{ task.enabled ? $t('暂停计划') : $t('启用计划') }}</span>
                         </button>
-                        <button class="danger" type="button" @click="deleteTask(task)">
+                        <button v-if="canOperateTask(task)" class="danger" type="button" @click="deleteTask(task)">
                           <SvgIcon name="base/rx_ic_bin_1" size="16" />
                           <span>{{ $t('删除') }}</span>
                         </button>

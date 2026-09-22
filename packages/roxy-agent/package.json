@@ -31,6 +31,7 @@
     "@slack/web-api": "^7.15.1",
     "adm-zip": "^0.6.0",
     "cors": "^2.8.6",
+    "cron-parser": "5.10.1",
     "discord-api-types": "0.38.46",
     "express": "^5.2.1",
     "fix-path": "^5.0.0",

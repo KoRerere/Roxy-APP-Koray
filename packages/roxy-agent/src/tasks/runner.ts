@@ -1,16 +1,10 @@
-import type { TaskErrorCode } from './errorCodes'
 import type { PreparedTaskSkill } from './executors/agent'
 import type {
   PreparedTaskScript,
   ScriptExecutionPlan,
 } from './executors/script'
 import type { ResolvedTaskWindow, TaskExecutorResult, TaskRunTrigger } from './types'
-import type {
-  TaskExecutionResultStatus,
-  TaskLeaseStartInput,
-  TaskLeaseStartResult,
-  UserTaskDto,
-} from '@/api/agentApiClient'
+import type { UserTaskDto } from '@/api/agentApiClient'
 import type { TaskLog } from '@/database/tasks'
 import type { ResolvedTemplate } from '@/services/templateService'
 import { serializeTemplateRef } from '@roxy/shared'
@@ -18,16 +12,11 @@ import { randomUUID } from 'node:crypto'
 import {
   agentUserTasksApi,
 } from '@/api/agentApiClient'
-import { AiAgentHttpError } from '@/api/errors'
 import { env } from '@/config'
 import { executionCenter } from '@/core/registry/executionCenter'
 import { taskLogStore } from '@/database/tasks'
 import { resolveTemplate } from '@/services/templateService'
-import {
-  DEFAULT_SCRIPT_TASK_CONCURRENCY,
-  TASK_LEASE_START_MAX_ATTEMPTS,
-  TASK_LEASE_START_RETRY_BASE_DELAY_MS,
-} from './constants'
+import { DEFAULT_SCRIPT_TASK_CONCURRENCY } from './constants'
 import { TASK_ERROR_CODES } from './errorCodes'
 import { executeAgentTask, prepareTaskSkill } from './executors/agent'
 import {
@@ -35,7 +24,7 @@ import {
   executeScriptTask,
   prepareTaskScript,
 } from './executors/script'
-import { TaskLeaseHeartbeat, TaskRunAbortError } from './heartbeat'
+import { TaskRunAbortError } from './runAbortError'
 import { closeTaskBrowserWindows } from './windowLifecycle'
 import {
   reserveAvailableTaskWindows,
@@ -51,57 +40,6 @@ interface ActiveTaskRun {
   logId: string
   abortController: AbortController
   completion: Promise<TaskLog>
-}
-
-type StartTaskExecution = (
-  taskId: number,
-  input: TaskLeaseStartInput,
-) => Promise<TaskLeaseStartResult>
-
-const LEASE_REJECTION_CODES: Readonly<Record<string, TaskErrorCode>> = {
-  not_task_creator: TASK_ERROR_CODES.taskScheduleForbidden,
-  task_disabled: TASK_ERROR_CODES.taskDisabled,
-  already_claimed: TASK_ERROR_CODES.taskOccurrenceClaimed,
-  already_running: TASK_ERROR_CODES.taskAlreadyRunning,
-}
-
-function throwIfAborted(signal: AbortSignal): void {
-  if (signal.aborted) {
-    throw signal.reason ?? new TaskRunAbortError(TASK_ERROR_CODES.taskInterrupted)
-  }
-}
-
-function shouldRetryLeaseStart(error: unknown): boolean {
-  return !(error instanceof AiAgentHttpError) || error.status >= 500
-}
-
-export async function startLeaseWithRetry(
-  taskId: number,
-  input: TaskLeaseStartInput,
-  signal: AbortSignal,
-  startExecution: StartTaskExecution = agentUserTasksApi.startExecution,
-): Promise<TaskLeaseStartResult> {
-  for (let attempt = 1; attempt <= TASK_LEASE_START_MAX_ATTEMPTS; attempt += 1) {
-    throwIfAborted(signal)
-
-    try {
-      return await startExecution(taskId, input)
-    }
-    catch (error) {
-      if (!shouldRetryLeaseStart(error) || attempt === TASK_LEASE_START_MAX_ATTEMPTS) {
-        throw error
-      }
-      console.warn(
-        `[task] Lease start attempt ${attempt} failed taskId=${taskId}; retrying`,
-        error,
-      )
-      await new Promise(resolve => setTimeout(
-        resolve,
-        TASK_LEASE_START_RETRY_BASE_DELAY_MS * attempt,
-      ))
-    }
-  }
-  throw new Error('Task lease start retry loop exited unexpectedly')
 }
 
 function requireEnv(value: string | undefined, name: string): string {
@@ -176,33 +114,6 @@ function abortResult(signal: AbortSignal): TaskExecutorResult {
   }
 }
 
-async function finishLeaseWithRetry(
-  taskId: number,
-  input: {
-    taskLogId: string
-    leaseToken: string
-    resultStatus: TaskExecutionResultStatus
-  },
-): Promise<void> {
-  let lastError: unknown
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      const result = await agentUserTasksApi.finishExecution(taskId, input)
-      if (!result.finished) {
-        console.warn(`[task] Lease finish rejected taskId=${taskId}: ${result.reason ?? 'unknown reason'}`)
-      }
-      return
-    }
-    catch (error) {
-      lastError = error
-      if (attempt < 2) {
-        await new Promise(resolve => setTimeout(resolve, 200 * (attempt + 1)))
-      }
-    }
-  }
-  console.warn(`[task] Failed to finish lease taskId=${taskId}:`, lastError)
-}
-
 export class TaskRunner {
   private readonly active = new Map<number, ActiveTaskRun>()
   private stopping = false
@@ -245,6 +156,14 @@ export class TaskRunner {
         log: finished,
         completion: Promise.resolve(finished),
       }
+    }
+
+    if (trigger.triggerType !== 'manual' && !task.enabled) {
+      const skipped = taskLogStore.finish(log.id, {
+        status: 'skipped',
+        endReasonCode: TASK_ERROR_CODES.taskDisabled,
+      })
+      return { log: skipped, completion: Promise.resolve(skipped) }
     }
 
     if (this.active.has(taskId)) {
@@ -354,8 +273,6 @@ export class TaskRunner {
     trigger: TaskRunTrigger,
     abortController: AbortController,
   ): Promise<TaskLog> {
-    let leaseToken: string | undefined
-    let heartbeat: TaskLeaseHeartbeat | undefined
     let cleanupPrepared: (() => Promise<void>) | undefined
     let result: TaskExecutorResult | undefined
     let scriptPlan: ScriptExecutionPlan | undefined
@@ -421,56 +338,6 @@ export class TaskRunner {
         return this.finishLocal(log.id, template.kind, result)
       }
 
-      let acquired
-      try {
-        acquired = await startLeaseWithRetry(
-          task.id,
-          {
-            taskLogId: log.id,
-            triggerType: trigger.triggerType,
-            scheduledAt: trigger.scheduledAt ?? null,
-          },
-          abortController.signal,
-        )
-      }
-      catch (error) {
-        if (abortController.signal.aborted) {
-          result = abortResult(abortController.signal)
-        }
-        else {
-          console.error(`[task] Failed to acquire execution lease taskId=${task.id}:`, error)
-          result = {
-            status: 'failed',
-            fileIds: [],
-            endReasonCode: TASK_ERROR_CODES.leaseServiceUnavailable,
-          }
-        }
-        return this.finishLocal(log.id, template.kind, result)
-      }
-
-      if (!acquired.acquired) {
-        result = {
-          status: 'failed',
-          fileIds: [],
-          endReasonCode: LEASE_REJECTION_CODES[acquired.reason ?? ''] ?? TASK_ERROR_CODES.taskExecutionFailed,
-        }
-
-        return taskLogStore.finish(log.id, {
-          status: 'skipped',
-          endReasonCode: result.endReasonCode,
-        })
-      }
-
-      if (!acquired.leaseToken) {
-        throw new Error('Lease response did not include leaseToken')
-      }
-
-      leaseToken = acquired.leaseToken
-      if (abortController.signal.aborted) {
-        result = abortResult(abortController.signal)
-        return this.finishLocal(log.id, template.kind, result)
-      }
-
       if (preparedScript) {
         scriptPlan = createScriptExecutionPlan(
           log.id,
@@ -483,12 +350,10 @@ export class TaskRunner {
       }
 
       taskLogStore.markRunning(log.id, {
-        occurrenceId: acquired.occurrenceId ?? null,
+        occurrenceId: trigger.scheduledAt ?? null,
         windowDirIds: windows.map(window => window.dirId),
         scriptRuns: scriptPlan?.scriptRuns,
       })
-      heartbeat = new TaskLeaseHeartbeat(task.id, log.id, leaseToken, abortController)
-      heartbeat.start()
 
       if (scriptPlan) {
         result = await executeScriptTask(scriptPlan, abortController.signal)
@@ -540,14 +405,6 @@ export class TaskRunner {
       return this.finishLocal(log.id, template.kind, result)
     }
     finally {
-      heartbeat?.stop()
-      if (leaseToken && result) {
-        await finishLeaseWithRetry(task.id, {
-          taskLogId: log.id,
-          leaseToken,
-          resultStatus: result.status,
-        })
-      }
       const closedWindowDirIds = new Set(result?.closedWindowDirIds ?? [])
       await closeTaskBrowserWindows(
         windows.filter(window => !closedWindowDirIds.has(window.dirId)),

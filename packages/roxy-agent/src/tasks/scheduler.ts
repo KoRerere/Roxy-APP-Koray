@@ -1,5 +1,6 @@
 import type { StartedTaskRun } from './runner'
 import type { UserTaskDto, UserTaskPage } from '@/api/agentApiClient'
+import { CronExpressionParser } from 'cron-parser'
 import { agentUserTasksApi } from '@/api/agentApiClient'
 import { env } from '@/config'
 import {
@@ -11,7 +12,6 @@ import { taskRunner } from './runner'
 
 type ScheduledTask = UserTaskDto & {
   planType: 'once' | 'cron'
-  nextExecuteAt: string
 }
 
 interface ScheduledEntry {
@@ -44,24 +44,43 @@ const defaultDeps: TaskSchedulerDeps = {
   now: () => Date.now(),
 }
 
-function scheduleSignature(task: UserTaskDto): string {
+function scheduleDefinitionSignature(task: UserTaskDto): string {
   return JSON.stringify({
     enabled: task.enabled,
     planType: task.planType,
     cron: task.cron,
     timezone: task.timezone,
     executeAt: task.executeAt,
-    nextExecuteAt: task.nextExecuteAt,
   })
 }
 
-function schedulable(task: UserTaskDto, now: number, userId: string | undefined): task is ScheduledTask {
-  if (!userId || task.creatorUserId !== userId || !task.enabled || task.planType === 'manual' || !task.nextExecuteAt) {
-    return false
+/**
+ * 服务器保存计划定义，本地只根据计划和当前时钟计算；不读取服务器 nextExecuteAt。
+ */
+function nextOccurrence(task: ScheduledTask, after: number): string | null {
+  if (task.planType === 'once') {
+    const timestamp = task.executeAt ? Date.parse(task.executeAt) : Number.NaN
+    return Number.isFinite(timestamp) && timestamp > after ? new Date(timestamp).toISOString() : null
   }
+  if (!task.cron?.trim()) {
+    return null
+  }
+  try {
+    return CronExpressionParser.parse(task.cron, {
+      currentDate: after,
+      tz: task.timezone || 'UTC',
+      hashSeed: `${task.workspaceId}:${task.id}`,
+    }).next().toISOString()
+  }
+  catch (error) {
+    console.warn(`[task-scheduler] Invalid schedule taskId=${task.id}:`, error)
+    return null
+  }
+}
 
-  const timestamp = Date.parse(task.nextExecuteAt)
-  return Number.isFinite(timestamp) && timestamp > now
+function schedulable(task: UserTaskDto, userId: string | undefined): task is ScheduledTask {
+  return !!userId && task.creatorUserId === userId && task.enabled
+    && (task.planType === 'once' || task.planType === 'cron')
 }
 
 export class TaskScheduler {
@@ -151,8 +170,12 @@ export class TaskScheduler {
     }
 
     const now = this.deps.now()
-    const desired = new Map(tasks.filter(task =>
-      schedulable(task, now, this.deps.userId)).map(task => [task.id, task]))
+    const desired = new Map<number, ScheduledTask>()
+    for (const task of tasks) {
+      if (schedulable(task, this.deps.userId)) {
+        desired.set(task.id, task)
+      }
+    }
     for (const taskId of this.entries.keys()) {
       if (!desired.has(taskId)) {
         this.unregister(taskId)
@@ -160,18 +183,19 @@ export class TaskScheduler {
     }
 
     for (const task of desired.values()) {
-      const signature = scheduleSignature(task)
+      const signature = scheduleDefinitionSignature(task)
       const existing = this.entries.get(task.id)
+      // 同步只处理定义变化；保留已到期的 timer，让迟到检查记录错过的计划。
       if (existing?.signature === signature) {
         continue
       }
 
       this.unregister(task.id)
-      const entry: ScheduledEntry = {
-        task,
-        scheduledAt: task.nextExecuteAt,
-        signature,
+      const scheduledAt = nextOccurrence(task, now)
+      if (!scheduledAt) {
+        continue
       }
+      const entry: ScheduledEntry = { task, scheduledAt, signature }
       this.entries.set(task.id, entry)
       this.arm(entry)
     }
@@ -207,7 +231,22 @@ export class TaskScheduler {
       return
     }
 
+    // 系统时间回拨时重新等待，不能提前执行。
+    if (Date.parse(entry.scheduledAt) > this.deps.now()) {
+      this.arm(entry)
+      return
+    }
+
     this.entries.delete(entry.task.id)
+    // 先在本地续排，避免同步失败、执行准备缓慢或失败阻断后续计划。
+    if (entry.task.planType === 'cron') {
+      const scheduledAt = nextOccurrence(entry.task, this.deps.now())
+      if (scheduledAt) {
+        const nextEntry: ScheduledEntry = { ...entry, scheduledAt, timer: undefined }
+        this.entries.set(entry.task.id, nextEntry)
+        this.arm(nextEntry)
+      }
+    }
     const lateness = this.deps.now() - Date.parse(entry.scheduledAt)
 
     try {
@@ -225,12 +264,6 @@ export class TaskScheduler {
     }
     catch (error) {
       console.error(`[task-scheduler] Failed to trigger taskId=${entry.task.id}:`, error)
-    }
-    finally {
-      if (!this.stopping) {
-        await this.sync().catch(error =>
-          console.warn(`[task-scheduler] Failed to resync after taskId=${entry.task.id}:`, error))
-      }
     }
   }
 }

@@ -107,7 +107,7 @@ src/
 │   ├── libraryStore.ts       # 本地脚本库
 │   ├── remoteScriptPolicy.ts # 远程官方脚本地址策略
 │   └── scriptMeta.ts         # 脚本自描述静态提取
-├── tasks/                # 后端任务同步、UTC timer、lease 与执行器
+├── tasks/                # 任务定义同步、本地 Cron/timer 与执行器
 ├── im/                   # IM 平台适配器
 │   ├── index.ts
 │   ├── core/
@@ -254,7 +254,9 @@ GET    /api/roxy-claw/weixin/qrcode-status
 WS     /api/events             # 双向会话、任务日志与 task-monitor 统一事件信道
 ```
 
-任务定义按 workspace 共享，`creatorUserId` 表示原创建者账号。调度器只为当前账号创建的任务注册 timer，后端再次校验 `once/cron` 请求的调用者必须是创建者；团队成员仍可手动执行、编辑和启停计划。租约、心跳和计划时刻去重继续防止多客户端重复执行。单次计划取得租约后由后端关闭，Agent 不再自动修改 `enabled`；错过时间的计划不补跑，执行日志仍仅保存在实际执行的客户端。
+任务定义按 workspace 保存在服务器，`creatorUserId` 表示原创建者账号。Agent 只为当前账号创建的任务注册本地 timer：单次计划读取 `executeAt`，周期计划使用 `cron-parser` 根据 `cron`、`timezone`（默认 UTC）和当前时钟计算，不依赖服务器 `nextExecuteAt` 或运行状态。重启后同步定义并计算未来下一次，不补跑离线期间的计划；已注册 timer 迟到超过 5 分钟时记录 missed，Cron 继续未来计划。续排直接在本地完成，不等待服务器同步成功。执行器不申请云端租约、不发送心跳或完成通知，同一 Agent 内通过 active map 防止同一任务并发执行。执行日志仍保存在本机，任务定义同步与执行准备仍需访问服务器。
+
+操作入口由前端按创建者/空间所有者控制，Agent 不接收空间角色。当前尚未绑定创建机器：同一创建者账号在多台设备运行 Agent 时仍可能重复调度，不能将账号过滤视为设备唯一执行保证。
 
 五条 conversation action path 是 Agent Console 与 `roxy-agent-app` 共用的当前协议，只使用 GET/POST 并返回 camelCase DTO。旧 MCP 页面使用的 RESTful conversation、Skill 管理和模型选择 HTTP API 已无消费者并删除；模型配置由 Agent 运行时直接从 `/llm-proxy` 获取。
 

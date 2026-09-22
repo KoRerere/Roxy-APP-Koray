@@ -1,10 +1,8 @@
 import assert from 'node:assert/strict'
 import { afterEach, describe, it, vi } from 'vitest'
-import { AiAgentHttpError } from '@/api/errors'
 import { DEFAULT_SCRIPT_TASK_CONCURRENCY } from './constants'
 import {
   resolveTaskConcurrency,
-  startLeaseWithRetry,
   TaskRunner,
 } from './runner'
 
@@ -133,6 +131,7 @@ describe('taskRunner', () => {
       id: 1,
       workspaceId: 'workspace-1',
       creatorUserId: 'user-1',
+      enabled: true,
       name: 'Task',
       userTemplateId: 2,
       windowIds: windows.map(window => window.dirId),
@@ -145,12 +144,6 @@ describe('taskRunner', () => {
       templateType: 'prompt',
     })
     runnerMocks.reserveWindows.mockResolvedValue(windows)
-    runnerMocks.startExecution.mockResolvedValue({
-      acquired: true,
-      leaseToken: 'lease-token',
-      occurrenceId: null,
-    })
-    runnerMocks.finishExecution.mockResolvedValue({ finished: true })
   }
 
   it('rejects another creator schedule before preparing resources or writing logs', async () => {
@@ -177,7 +170,7 @@ describe('taskRunner', () => {
     runnerMocks.executeAgentTask.mockResolvedValue({ status: 'success', fileIds: [] })
     const completed = await new TaskRunner().run(1, { triggerType: 'manual' })
     assert.equal(completed.status, 'success')
-    assert.equal(runnerMocks.startExecution.mock.calls.length, 1)
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 0)
   })
 
   it('does not record missed schedules owned by other accounts', async () => {
@@ -191,17 +184,42 @@ describe('taskRunner', () => {
     assert.equal(runnerMocks.getTemplate.mock.calls.length, 0)
   })
 
-  it('keeps backend schedule rejection distinct from execution contention', async () => {
+  it('本地执行不申请云端租约、不续租、不向云端完成接口上报', async () => {
+    // 回归：空接口仍让执行器依赖云端租约协议；执行生命周期应由本地掌握。
+    vi.useFakeTimers()
     arrangePromptRun()
-    runnerMocks.startExecution.mockResolvedValue({ acquired: false, reason: 'not_task_creator' })
-    const completed = await new TaskRunner().run(1, {
+    runnerMocks.startExecution.mockResolvedValue({ acquired: false, reason: 'already_claimed' })
+    runnerMocks.executeAgentTask.mockImplementation(() => new Promise(resolve => setTimeout(
+      resolve,
+      60_000,
+      { status: 'success', fileIds: [] },
+    )))
+    const started = await new TaskRunner().start(1, {
       triggerType: 'once',
       scheduledAt: '2026-07-23T01:00:00.000Z',
     })
-    assert.equal(completed.status, 'skipped')
-    assert.equal(completed.end_reason_code, 'TASK_SCHEDULE_FORBIDDEN')
-    assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 0)
-    assert.equal(runnerMocks.startExecution.mock.calls.length, 1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    assert.equal((await started.completion).status, 'success')
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 0)
+    assert.equal(runnerMocks.heartbeat.mock.calls.length, 0)
+    assert.equal(runnerMocks.finishExecution.mock.calls.length, 0)
+    assert.equal(runnerMocks.markRunning.mock.calls[0]?.[1].occurrenceId, '2026-07-23T01:00:00.000Z')
+  })
+
+  it('本地拦截同一任务的并发运行', async () => {
+    arrangePromptRun()
+    let finish!: (value: { status: string, fileIds: string[] }) => void
+    runnerMocks.executeAgentTask.mockImplementation(() => new Promise((resolve) => {
+      finish = resolve
+    }))
+    const runner = new TaskRunner()
+    const first = await runner.start(1, { triggerType: 'manual' })
+    await vi.waitFor(() => assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 1))
+    const second = await runner.run(1, { triggerType: 'manual' })
+    assert.equal(second.status, 'skipped')
+    assert.equal(second.end_reason_code, 'TASK_ALREADY_RUNNING')
+    finish({ status: 'success', fileIds: [] })
+    await first.completion
   })
 
   it('closes resolved windows before releasing them after success', async () => {
@@ -249,8 +267,9 @@ describe('taskRunner', () => {
     runnerMocks.getTask.mockResolvedValue({
       id: 1,
       workspaceId: 'workspace-1',
-      name: 'Skill task',
       creatorUserId: 'user-1',
+      enabled: true,
+      name: 'Skill task',
       userTemplateId: 2,
       windowIds: [],
       metadata: { prompt: null },
@@ -263,12 +282,6 @@ describe('taskRunner', () => {
       metadata: {},
     })
     runnerMocks.reserveWindows.mockResolvedValue([])
-    runnerMocks.startExecution.mockResolvedValue({
-      acquired: true,
-      leaseToken: 'lease-token',
-      occurrenceId: null,
-    })
-    runnerMocks.finishExecution.mockResolvedValue({ finished: true })
     runnerMocks.executeAgentTask.mockResolvedValue({ status: 'success', fileIds: [] })
 
     const completed = await new TaskRunner().run(1, {
@@ -328,12 +341,6 @@ describe('taskRunner', () => {
       metadata: {},
     })
     runnerMocks.reserveWindows.mockResolvedValue(windows)
-    runnerMocks.startExecution.mockResolvedValue({
-      acquired: true,
-      leaseToken: 'lease-token',
-      occurrenceId: 'occurrence-1',
-    })
-    runnerMocks.finishExecution.mockResolvedValue({ finished: true })
     runnerMocks.prepareTaskScript.mockResolvedValue({
       scriptPath: '/tmp/report.js',
       assetSlug: 'report-script',
@@ -374,7 +381,7 @@ describe('taskRunner', () => {
     assert.equal('conversationId' in finishInput, false)
   })
 
-  it('keeps a script task in the script log shape when it is cancelled after acquiring a lease', async () => {
+  it('脚本在资源准备阶段取消后仍保留脚本日志结构', async () => {
     runnerMocks.getTask.mockResolvedValue({
       id: 1,
       workspaceId: 'workspace-1',
@@ -396,16 +403,11 @@ describe('taskRunner', () => {
       sha512: 'sha512',
     })
     runnerMocks.reserveWindows.mockResolvedValue([])
-    runnerMocks.finishExecution.mockResolvedValue({ finished: true })
 
     const runner = new TaskRunner()
-    runnerMocks.startExecution.mockImplementation(async (_taskId, input) => {
-      queueMicrotask(() => runner.stop(input.taskLogId))
-      return {
-        acquired: true,
-        leaseToken: 'lease-token',
-        occurrenceId: null,
-      }
+    runnerMocks.reserveWindows.mockImplementationOnce(async (_windowIds, logId) => {
+      queueMicrotask(() => runner.stop(logId))
+      return []
     })
 
     const completed = await runner.run(1, {
@@ -495,6 +497,7 @@ describe('taskRunner', () => {
       id: 1,
       workspaceId: 'workspace-1',
       creatorUserId: 'user-1',
+      enabled: false,
       name: 'Task',
       userTemplateId: 2,
       windowIds: [],
@@ -507,10 +510,6 @@ describe('taskRunner', () => {
       templateType: 'prompt',
     })
     runnerMocks.reserveWindows.mockResolvedValue([])
-    runnerMocks.startExecution.mockResolvedValue({
-      acquired: false,
-      reason: 'task_disabled',
-    })
 
     const completed = await new TaskRunner().run(1, {
       triggerType: 'once',
@@ -519,44 +518,22 @@ describe('taskRunner', () => {
 
     assert.equal(completed.status, 'skipped')
     assert.equal(completed.end_reason_code, 'TASK_DISABLED')
-    assert.equal(runnerMocks.startExecution.mock.calls.length, 1)
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 0)
     assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 0)
   })
 
-  it('records an abort during lease retry backoff as interrupted', async () => {
-    vi.useFakeTimers()
-    runnerMocks.getTask.mockResolvedValue({
-      id: 1,
-      workspaceId: 'workspace-1',
-      name: 'Task',
-      userTemplateId: 2,
-      windowIds: [],
-      metadata: { prompt: 'run' },
-    })
-    runnerMocks.getTemplate.mockResolvedValue({
-      id: 2,
-      workspaceId: 'workspace-1',
-      name: 'Prompt template',
-      templateType: 'prompt',
-    })
-    runnerMocks.reserveWindows.mockResolvedValue([])
-    runnerMocks.startExecution.mockRejectedValue(new Error('network unavailable'))
-
+  it('关闭 Agent 时中断本地执行', async () => {
+    arrangePromptRun()
+    runnerMocks.executeAgentTask.mockImplementation(({ signal }) => new Promise((resolve) => {
+      signal.addEventListener('abort', () => resolve({ status: 'interrupted', fileIds: [] }), { once: true })
+    }))
     const runner = new TaskRunner()
-    const started = await runner.start(1, {
-      triggerType: 'manual',
-      scheduledAt: null,
-    })
-    await vi.waitFor(() => assert.equal(runnerMocks.startExecution.mock.calls.length, 1))
-
-    const stopPromise = runner.stopAll()
-    await vi.runAllTimersAsync()
-    await stopPromise
+    const started = await runner.start(1, { triggerType: 'manual' })
+    await vi.waitFor(() => assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 1))
+    await runner.stopAll()
     const completed = await started.completion
-
     assert.equal(completed.status, 'interrupted')
     assert.equal(completed.end_reason_code, 'AGENT_SHUTDOWN')
-    assert.equal(runnerMocks.startExecution.mock.calls.length, 1)
   })
 
   it('stops only the active run matching the task log ID', async () => {
@@ -564,6 +541,8 @@ describe('taskRunner', () => {
     runnerMocks.getTask.mockResolvedValue({
       id: 1,
       workspaceId: 'workspace-1',
+      creatorUserId: 'user-1',
+      enabled: true,
       name: 'Task',
       userTemplateId: 2,
       windowIds: [],
@@ -576,14 +555,16 @@ describe('taskRunner', () => {
       templateType: 'prompt',
     })
     runnerMocks.reserveWindows.mockResolvedValue([])
-    runnerMocks.startExecution.mockRejectedValue(new Error('network unavailable'))
+    runnerMocks.executeAgentTask.mockImplementation(({ signal }) => new Promise((resolve) => {
+      signal.addEventListener('abort', () => resolve({ status: 'interrupted', fileIds: [] }), { once: true })
+    }))
 
     const runner = new TaskRunner()
     const started = await runner.start(1, {
       triggerType: 'manual',
       scheduledAt: null,
     })
-    await vi.waitFor(() => assert.equal(runnerMocks.startExecution.mock.calls.length, 1))
+    await vi.waitFor(() => assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 1))
 
     assert.equal(runner.stop('another-log'), false)
     assert.equal(runner.stop(started.log.id), true)
@@ -593,7 +574,7 @@ describe('taskRunner', () => {
 
     assert.equal(completed.status, 'interrupted')
     assert.equal(completed.end_reason_code, 'TASK_INTERRUPTED')
-    assert.equal(runnerMocks.startExecution.mock.calls.length, 1)
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 0)
   })
 })
 
@@ -606,110 +587,5 @@ describe('resolveScriptTaskConcurrency', () => {
     assert.equal(resolveTaskConcurrency({}), DEFAULT_SCRIPT_TASK_CONCURRENCY)
     assert.equal(resolveTaskConcurrency({ concurrency: 0 }), DEFAULT_SCRIPT_TASK_CONCURRENCY)
     assert.equal(resolveTaskConcurrency({ concurrency: 1.5 }), DEFAULT_SCRIPT_TASK_CONCURRENCY)
-  })
-})
-
-describe('startLeaseWithRetry', () => {
-  const input = {
-    taskLogId: 'task-log',
-    triggerType: 'once' as const,
-    scheduledAt: '2026-07-23T01:00:00.000Z',
-  }
-
-  it('retries transient failures with the same task log ID', async () => {
-    vi.useFakeTimers()
-    const startExecution = vi.fn()
-      .mockRejectedValueOnce(new Error('network unavailable'))
-      .mockRejectedValueOnce(new AiAgentHttpError(503, 'service unavailable'))
-      .mockResolvedValue({
-        acquired: true,
-        leaseToken: 'lease-token',
-        occurrenceId: input.scheduledAt,
-      })
-
-    const resultPromise = startLeaseWithRetry(
-      1,
-      input,
-      new AbortController().signal,
-      startExecution,
-    )
-    await vi.runAllTimersAsync()
-    const result = await resultPromise
-
-    assert.equal(result.acquired, true)
-    assert.equal(startExecution.mock.calls.length, 3)
-    for (const call of startExecution.mock.calls) {
-      assert.equal(call[0], 1)
-      assert.equal(call[1], input)
-    }
-  })
-
-  it('does not retry client or application errors', async () => {
-    for (const error of [
-      new AiAgentHttpError(400, 'invalid request'),
-      new AiAgentHttpError(200, 'application error', { code: 40001 }),
-    ]) {
-      const startExecution = vi.fn().mockRejectedValue(error)
-      await assert.rejects(startLeaseWithRetry(
-        1,
-        input,
-        new AbortController().signal,
-        startExecution,
-      ), error)
-      assert.equal(startExecution.mock.calls.length, 1)
-    }
-  })
-
-  it('does not retry a business conflict response', async () => {
-    const startExecution = vi.fn().mockResolvedValue({
-      acquired: false,
-      reason: 'already_claimed',
-    })
-
-    const result = await startLeaseWithRetry(
-      1,
-      input,
-      new AbortController().signal,
-      startExecution,
-    )
-
-    assert.deepEqual(result, { acquired: false, reason: 'already_claimed' })
-    assert.equal(startExecution.mock.calls.length, 1)
-  })
-
-  it('fails after three transient errors', async () => {
-    vi.useFakeTimers()
-    const error = new Error('network unavailable')
-    const startExecution = vi.fn().mockRejectedValue(error)
-    const resultPromise = startLeaseWithRetry(
-      1,
-      input,
-      new AbortController().signal,
-      startExecution,
-    )
-    const rejection = assert.rejects(resultPromise, error)
-
-    await vi.runAllTimersAsync()
-    await rejection
-    assert.equal(startExecution.mock.calls.length, 3)
-  })
-
-  it('does not start another attempt after the task is aborted', async () => {
-    vi.useFakeTimers()
-    const abortController = new AbortController()
-    const startExecution = vi.fn().mockRejectedValue(new Error('network unavailable'))
-    const resultPromise = startLeaseWithRetry(
-      1,
-      input,
-      abortController.signal,
-      startExecution,
-    )
-    const rejection = assert.rejects(resultPromise, /stopped/)
-
-    await vi.waitFor(() => assert.equal(startExecution.mock.calls.length, 1))
-    abortController.abort(new Error('Task stopped'))
-    await vi.runAllTimersAsync()
-    await rejection
-    assert.equal(startExecution.mock.calls.length, 1)
   })
 })

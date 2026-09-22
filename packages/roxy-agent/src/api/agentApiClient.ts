@@ -12,9 +12,6 @@ import {
   HttpClient,
   OfficialScriptsApi,
   PlanTypeEnum,
-  TaskStateRequestActionEnum,
-  TaskStateRequestResultStatusEnum,
-  TaskStateRequestTriggerTypeEnum,
   TemplatesApi,
   UserApi,
   UserTasksApi,
@@ -72,7 +69,7 @@ installAxiosGetRetryInterceptor(httpClient.instance, {
 
 /**
  * HTTP 错误（4xx/5xx）转 AiAgentHttpError，供任务和路由调用方按状态码
- * 区分可重试错误、租约冲突与上游失败。
+ * 区分可重试错误与上游失败。
  */
 httpClient.instance.interceptors.response.use(
   (response) => {
@@ -199,25 +196,11 @@ export const agentModelApi = {
 
 export type UserTaskPlanType = 'manual' | 'once' | 'cron'
 export type UserTaskTemplateType = 'script' | 'skill' | 'prompt'
-export type TaskExecutionResultStatus = 'success' | 'partial_failed' | 'failed' | 'interrupted'
-
-const TASK_STATE_TRIGGER_TYPES: Readonly<Record<UserTaskPlanType, TaskStateRequestTriggerTypeEnum>> = {
-  manual: TaskStateRequestTriggerTypeEnum.Manual,
-  once: TaskStateRequestTriggerTypeEnum.Once,
-  cron: TaskStateRequestTriggerTypeEnum.Cron,
-}
 
 const USER_TASK_LIST_PLAN_TYPES: Readonly<Record<UserTaskPlanType, PlanTypeEnum>> = {
   manual: PlanTypeEnum.Manual,
   once: PlanTypeEnum.Once,
   cron: PlanTypeEnum.Cron,
-}
-
-const TASK_STATE_RESULT_STATUSES: Readonly<Record<TaskExecutionResultStatus, TaskStateRequestResultStatusEnum>> = {
-  success: TaskStateRequestResultStatusEnum.Success,
-  partial_failed: TaskStateRequestResultStatusEnum.PartialFailed,
-  failed: TaskStateRequestResultStatusEnum.Failed,
-  interrupted: TaskStateRequestResultStatusEnum.Interrupted,
 }
 
 export interface UserTaskDto {
@@ -276,40 +259,6 @@ export interface UserTaskListParams {
   limit?: number
   offset?: number
   planType?: UserTaskPlanType
-}
-
-export interface TaskLeaseStartInput {
-  taskLogId: string
-  triggerType: UserTaskPlanType
-  scheduledAt?: string | null
-}
-
-export interface TaskLeaseStartResult {
-  acquired: boolean
-  reason?: string | null
-  leaseToken?: string | null
-  occurrenceId?: string | null
-}
-
-export interface TaskLeaseFinishInput {
-  taskLogId: string
-  leaseToken: string
-  resultStatus: TaskExecutionResultStatus
-}
-
-export interface TaskLeaseFinishResult {
-  finished: boolean
-  reason?: string | null
-}
-
-export interface TaskLeaseHeartbeatInput {
-  taskLogId: string
-  leaseToken: string
-}
-
-export interface TaskLeaseHeartbeatResult {
-  renewed: boolean
-  reason?: string | null
 }
 
 function invalidAgentApiData(endpoint: string, payload: unknown): AiAgentHttpError {
@@ -375,47 +324,6 @@ export const agentUserTasksApi = {
   getById(taskId: number): Promise<UserTaskDto> {
     return unwrap<UserTaskDto>(
       userTasksApi.getUserTask({ taskId }),
-    )
-  },
-  async startExecution(taskId: number, input: TaskLeaseStartInput): Promise<TaskLeaseStartResult> {
-    const result = await unwrap(userTasksApi.updateUserTaskState(
-      { taskId },
-      {
-        action: TaskStateRequestActionEnum.Start,
-        task_log_id: input.taskLogId,
-        trigger_type: TASK_STATE_TRIGGER_TYPES[input.triggerType],
-        scheduled_at: input.scheduledAt ?? null,
-      },
-    ))
-    if (!('acquired' in result)) {
-      throw invalidAgentApiData('POST /v1/user/tasks/{task_id}/state (start)', result)
-    }
-    return result
-  },
-  async finishExecution(taskId: number, input: TaskLeaseFinishInput): Promise<TaskLeaseFinishResult> {
-    const result = await unwrap(userTasksApi.updateUserTaskState(
-      { taskId },
-      {
-        action: TaskStateRequestActionEnum.Finish,
-        task_log_id: input.taskLogId,
-        lease_token: input.leaseToken,
-        result_status: TASK_STATE_RESULT_STATUSES[input.resultStatus],
-      },
-    ))
-    if (!('finished' in result)) {
-      throw invalidAgentApiData('POST /v1/user/tasks/{task_id}/state (finish)', result)
-    }
-    return result
-  },
-  heartbeat(taskId: number, input: TaskLeaseHeartbeatInput): Promise<TaskLeaseHeartbeatResult> {
-    return unwrap<TaskLeaseHeartbeatResult>(
-      userTasksApi.heartbeatUserTask(
-        { taskId },
-        {
-          task_log_id: input.taskLogId,
-          lease_token: input.leaseToken,
-        },
-      ),
     )
   },
 }

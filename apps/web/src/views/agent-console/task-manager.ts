@@ -37,7 +37,7 @@ const TASK_ERROR_I18N_KEYS: Readonly<Record<string, string>> = {
   LEASE_SERVICE_UNAVAILABLE: '任务执行协调服务暂时不可用',
   TASK_DISABLED: '任务已被禁用',
   TASK_EXECUTED_BY_OTHER_USER: '任务已被其他客户端抢占',
-  TASK_SCHEDULE_FORBIDDEN: '计划任务仅允许创建者账号执行',
+  TASK_SCHEDULE_FORBIDDEN: '任务仅允许创建者账号或空间所有者操作',
   TASK_OCCURRENCE_CLAIMED: '本次计划已被执行，请勿重复触发',
   TASK_EXECUTION_FAILED: '任务执行失败，请稍后重试',
   AGENT_EXECUTION_FAILED: '任务执行失败，请稍后重试',
