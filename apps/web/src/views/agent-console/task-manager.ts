@@ -23,30 +23,30 @@ const USER_TASK_UPDATE_PLAN_TYPES: Readonly<Record<TaskPlanType, UserTaskUpdateP
   once: UserTaskUpdatePlanTypeEnum.Once,
 }
 
-const TASK_ERROR_I18N_KEYS: Readonly<Record<string, string>> = {
-  TASK_INTERRUPTED: '任务执行已中断',
-  TASK_WORKSPACE_MISMATCH: '任务或模板不属于当前工作区',
-  TASK_TEMPLATE_MISMATCH: '任务引用的模板不匹配',
-  TASK_ALREADY_RUNNING: '该任务正在运行',
-  MISSED_TRIGGER: '计划触发延迟超过五分钟，本次执行已跳过',
-  AGENT_SHUTDOWN: 'Agent 关闭期间任务执行被中断',
-  AGENT_RESTARTED: 'Agent 重启导致任务执行中断',
-  TASK_ASSET_INVALID: '任务资源无效或已损坏',
-  WINDOW_STATE_UNAVAILABLE: '无法读取任务窗口状态',
-  NO_AVAILABLE_WINDOWS: '配置的浏览器窗口均不可用',
-  LEASE_SERVICE_UNAVAILABLE: '任务执行协调服务暂时不可用',
-  TASK_DISABLED: '任务已被禁用',
-  TASK_EXECUTED_BY_OTHER_USER: '任务已被其他客户端抢占',
-  TASK_SCHEDULE_FORBIDDEN: '任务仅允许创建者账号或空间所有者操作',
-  TASK_OCCURRENCE_CLAIMED: '本次计划已被执行，请勿重复触发',
-  TASK_EXECUTION_FAILED: '任务执行失败，请稍后重试',
-  AGENT_EXECUTION_FAILED: '任务执行失败，请稍后重试',
-  SCRIPT_EXECUTION_FAILED: '所有脚本执行均失败',
-  PARTIAL_WINDOW_FAILURE: '部分窗口的脚本执行失败',
-  ARTIFACT_UPLOAD_PARTIAL_FAILURE: '部分任务产物上传失败',
-  LEASE_LOST: '任务执行租约已失效',
-  HEARTBEAT_REJECTED: '任务心跳请求被拒绝',
-  HEARTBEAT_FAILED: '任务心跳连续失败',
+const TASK_ERROR_MESSAGES: Readonly<Record<string, () => string>> = {
+  TASK_INTERRUPTED: () => $t('任务执行已中断'),
+  TASK_WORKSPACE_MISMATCH: () => $t('任务或模板不属于当前工作区'),
+  TASK_TEMPLATE_MISMATCH: () => $t('任务引用的模板不匹配'),
+  TASK_ALREADY_RUNNING: () => $t('该任务正在运行'),
+  MISSED_TRIGGER: () => $t('计划触发延迟超过五分钟，本次执行已跳过'),
+  AGENT_SHUTDOWN: () => $t('Agent 关闭期间任务执行被中断'),
+  AGENT_RESTARTED: () => $t('Agent 重启导致任务执行中断'),
+  TASK_ASSET_INVALID: () => $t('任务资源无效或已损坏'),
+  WINDOW_STATE_UNAVAILABLE: () => $t('无法读取任务窗口状态'),
+  NO_AVAILABLE_WINDOWS: () => $t('配置的浏览器窗口均不可用'),
+  LEASE_SERVICE_UNAVAILABLE: () => $t('任务执行协调服务暂时不可用'),
+  TASK_DISABLED: () => $t('任务已被禁用'),
+  TASK_EXECUTED_BY_OTHER_USER: () => $t('任务已被其他客户端抢占'),
+  TASK_SCHEDULE_FORBIDDEN: () => $t('计划任务仅允许创建者账号执行'),
+  TASK_OCCURRENCE_CLAIMED: () => $t('本次计划已被执行，请勿重复触发'),
+  TASK_EXECUTION_FAILED: () => $t('任务执行失败，请稍后重试'),
+  AGENT_EXECUTION_FAILED: () => $t('任务执行失败，请稍后重试'),
+  SCRIPT_EXECUTION_FAILED: () => $t('所有脚本执行均失败'),
+  PARTIAL_WINDOW_FAILURE: () => $t('部分窗口的脚本执行失败'),
+  ARTIFACT_UPLOAD_PARTIAL_FAILURE: () => $t('部分任务产物上传失败'),
+  LEASE_LOST: () => $t('任务执行租约已失效'),
+  HEARTBEAT_REJECTED: () => $t('任务心跳请求被拒绝'),
+  HEARTBEAT_FAILED: () => $t('任务心跳连续失败'),
 }
 
 export interface UserTaskDTO {
@@ -76,6 +76,19 @@ export interface UserTaskPage {
   total: number
   limit: number
   offset: number
+}
+
+export function canAccessTask(
+  task: { creatorUserId?: string | number | null },
+  userId: string | number | null | undefined,
+  canManageAll: boolean,
+): boolean {
+  if (canManageAll) {
+    return true
+  }
+  return userId !== undefined && userId !== null && String(userId) !== ''
+    && task.creatorUserId !== undefined && task.creatorUserId !== null
+    && String(task.creatorUserId) === String(userId)
 }
 
 export interface TaskTemplateOption {
@@ -164,10 +177,12 @@ export function findLatestTaskLogForTask<
   T extends Pick<AgentTaskLogDTO, 'startedAt' | 'taskId'>,
 >(logs: readonly T[], taskId: number): T | undefined {
   return logs.reduce<T | undefined>((latest, log) => {
-    if (log.taskId !== taskId)
+    if (log.taskId !== taskId) {
       return latest
-    if (!latest)
+    }
+    if (!latest) {
       return log
+    }
     return Date.parse(log.startedAt) > Date.parse(latest.startedAt) ? log : latest
   }, undefined)
 }
@@ -183,20 +198,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-export function getTaskErrorI18nKey(
-  code: string | null | undefined,
-  fallback: string,
-): string {
-  return code ? TASK_ERROR_I18N_KEYS[code] ?? fallback : fallback
+export function getTaskErrorMessage(code: string | null | undefined): string {
+  if (!code) {
+    return ''
+  }
+  return Object.hasOwn(TASK_ERROR_MESSAGES, code)
+    ? TASK_ERROR_MESSAGES[code]()
+    : $t('任务执行失败，请稍后重试')
 }
 
 export function formatTaskDateTime(value?: string | null): string {
-  if (!value)
+  if (!value) {
     return '-'
+  }
 
   const date = new Date(value)
-  if (Number.isNaN(date.getTime()))
+  if (Number.isNaN(date.getTime())) {
     return value
+  }
 
   const pad = (part: number) => String(part).padStart(2, '0')
   return [
@@ -208,10 +227,12 @@ export function formatTaskDateTime(value?: string | null): string {
 export function getTaskActivityDetails(
   log: Pick<AgentTaskLogDTO, 'input'>,
 ): string {
-  if (typeof log.input === 'string')
+  if (typeof log.input === 'string') {
     return log.input.trim() || '-'
-  if (log.input === null || log.input === undefined)
+  }
+  if (log.input === null || log.input === undefined) {
     return '-'
+  }
 
   try {
     return JSON.stringify(log.input) || '-'
@@ -236,19 +257,22 @@ export function getTaskDurationMs(
 }
 
 export function readUserTaskPage(response: unknown, fallbackMessage: string): UserTaskPage {
-  if (!isRecord(response) || response.code !== 0 || !isRecord(response.data))
+  if (!isRecord(response) || response.code !== 0 || !isRecord(response.data)) {
     throw new Error(isRecord(response) && typeof response.message === 'string' ? response.message : fallbackMessage)
+  }
 
   const { items, total, limit, offset } = response.data
-  if (!Array.isArray(items) || typeof total !== 'number' || typeof limit !== 'number' || typeof offset !== 'number')
-    throw new Error(fallbackMessage)
+  if (!Array.isArray(items) || typeof total !== 'number' || typeof limit !== 'number' || typeof offset !== 'number') {
+    throw new TypeError(fallbackMessage)
+  }
 
   return response.data as unknown as UserTaskPage
 }
 
 export function readTaskMutation<T>(response: unknown, fallbackMessage: string): T {
-  if (!isRecord(response) || response.code !== 0)
+  if (!isRecord(response) || response.code !== 0) {
     throw new Error(isRecord(response) && typeof response.message === 'string' ? response.message : fallbackMessage)
+  }
 
   return response.data as T
 }
@@ -283,8 +307,9 @@ export function getTaskDisplayStatus(
   executionStatus?: AgentTaskLogStatus,
   runtimeStatus?: TaskRuntimeStatus,
 ): TaskDisplayStatus {
-  if (executionStatus === 'preparing' || executionStatus === 'running')
+  if (executionStatus === 'preparing' || executionStatus === 'running') {
     return executionStatus
+  }
   return runtimeStatus === 'running' ? 'running' : planStatus
 }
 

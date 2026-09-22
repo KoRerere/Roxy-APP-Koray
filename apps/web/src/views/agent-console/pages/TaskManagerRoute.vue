@@ -38,10 +38,11 @@ import { mapMyTemplateItem, readUserTemplatePage } from '../my-templates'
 import {
   buildTaskMetadata,
   buildTaskTemplateOptions,
+  canAccessTask,
   findLatestTaskLogForTask,
   formatTaskDateTime,
   getTaskDisplayStatus,
-  getTaskErrorI18nKey,
+  getTaskErrorMessage,
   mapTaskTableItem,
   readTaskConcurrency,
   readTaskMutation,
@@ -109,22 +110,37 @@ const confirm = useConfirm()
 const taskManagerLocaleClass = computed(() => `task-manager-content--${localeStore.siteLocale}`)
 const [showToast, onlyErrorToast] = useResponseToast()
 const { executeTemplateTask } = useTemplateTaskExecution(prompt)
-const tasks = ref<TaskTableItem[]>([])
+const canManageAllTasks = computed(() => roleStore.isOwner || roleStore.isManager)
+function canOperateTask(task: Pick<UserTaskDTO, 'creatorUserId'>) {
+  return canAccessTask(task, userStore.userInfo.id, canManageAllTasks.value)
+}
+const allTasks = ref<TaskTableItem[]>([])
+const taskCatalogReady = ref(false)
+const tasks = computed(() => allTasks.value.filter(canOperateTask))
+const allTasksById = computed(() => new Map(allTasks.value.map(task => [task.id, task])))
+/**
+ * 信道日志已按当前账号和空间隔离；保留已删除任务的本机历史日志。
+ */
+function canViewActivityLog(log: AgentTaskLogDTO) {
+  const task = allTasksById.value.get(log.taskId)
+  return canManageAllTasks.value || (taskCatalogReady.value && (!task || canOperateTask(task)))
+}
+const visibleActivityLogs = computed(() => agentChannel.taskLogs.value.filter(canViewActivityLog))
 const templates = ref<UserTemplateDTO[]>([])
 const windows = ref<TaskWindowOption[]>([])
 const activityWindows = ref<TaskWindowOption[]>([])
-const total = ref(0)
+const total = computed(() => tasks.value.length)
 const loading = ref(false)
 const showTaskLoadingSkeleton = useDelayedLoading(loading)
 const loadError = ref(false)
 const activityPageFirst = ref(0)
 const activityPageSize = ref(ACTIVITY_DEFAULT_PAGE_SIZE)
-const activityLogTotal = computed(() => agentChannel.taskLogs.value.length)
+const activityLogTotal = computed(() => visibleActivityLogs.value.length)
 const activityPageSizeOptions = computed(() => ACTIVITY_PAGE_SIZE_OPTIONS.map(count => ({
   label: $t('{count} 条/页', { count }),
   value: count,
 })))
-const activityLogs = computed(() => agentChannel.taskLogs.value.slice(
+const activityLogs = computed(() => visibleActivityLogs.value.slice(
   activityPageFirst.value,
   activityPageFirst.value + activityPageSize.value,
 ))
@@ -164,10 +180,10 @@ const activityWindowLabels = computed(() => Object.fromEntries(activityWindowNum
 const deletedActivityWindowLabels = computed<Record<string, boolean>>(() => Object.fromEntries(
   Array.from(deletedActivityWindowIds.value).map(id => [id, true]),
 ))
-const selectedActivityLog = computed(() => agentChannel.taskLogs.value
+const selectedActivityLog = computed(() => visibleActivityLogs.value
   .find(log => log.id === selectedActivityLogId.value))
-const selectedActivityDetail = computed(() => selectedActivityLogId.value
-  ? agentChannel.taskExecutionDetails.value[selectedActivityLogId.value]
+const selectedActivityDetail = computed(() => selectedActivityLog.value
+  ? agentChannel.taskExecutionDetails.value[selectedActivityLog.value.id]
   : undefined)
 const selectedActivityWindowIds = computed(() => {
   const log = selectedActivityLog.value
@@ -182,11 +198,23 @@ const selectedActivityWindowIds = computed(() => {
 })
 const selectedActivityWindowLabelsReady = computed(() => activityWindowOptionsReady(selectedActivityWindowIds.value))
 const canCreateTask = computed(() => !loading.value && templateOptions.value.length > 0)
-const canOperateTask = (task: Pick<UserTaskDTO, 'creatorUserId'>) => (
-  roleStore.isOwner || String(task.creatorUserId) === String(userStore.userInfo.id)
-)
-const canStopTask = (task: Pick<UserTaskDTO, 'creatorUserId'>) => (
-  !roleStore.isOwner && String(task.creatorUserId) === String(userStore.userInfo.id)
+function canStopTask(task: Pick<UserTaskDTO, 'creatorUserId'>) {
+  return !roleStore.isOwner && canAccessTask(task, userStore.userInfo.id, false)
+}
+
+function canStopActivityLog(log: AgentTaskLogDTO) {
+  const task = allTasksById.value.get(log.taskId)
+  return canViewActivityLog(log) && (task ? canStopTask(task) : !roleStore.isOwner)
+}
+
+watch(
+  [canManageAllTasks, () => roleStore.isOwner, () => userStore.userInfo.id],
+  () => {
+    closeTaskActionMenu()
+    closeActivityActionMenu()
+    activityPageFirst.value = 0
+    void ensureTaskWindowOptions(tasks.value)
+  },
 )
 
 function onActivityPageSizeChange() {
@@ -464,10 +492,10 @@ async function loadTasks(): Promise<boolean> {
     }
 
     templates.value = templateRows
-    tasks.value = buildTaskRows(taskPage.rows, templateRows, windowOptions.value)
-    total.value = taskPage.total
+    allTasks.value = buildTaskRows(taskPage.rows, templateRows, windowOptions.value)
     taskReferencesReady = true
-    void ensureTaskWindowOptions(taskPage.rows)
+    taskCatalogReady.value = true
+    void ensureTaskWindowOptions(tasks.value)
     return true
   }
   catch (error) {
@@ -475,8 +503,8 @@ async function loadTasks(): Promise<boolean> {
       return false
     }
     console.error('Failed to load user tasks', error)
-    tasks.value = []
-    total.value = 0
+    allTasks.value = []
+    taskCatalogReady.value = false
     loadError.value = true
     return false
   }
@@ -611,20 +639,13 @@ function formatActivityWindows(log: AgentTaskLogDTO) {
 }
 
 function activityEndReason(log: AgentTaskLogDTO) {
-  switch (log.endReasonCode) {
-    case 'TASK_SCHEDULE_FORBIDDEN':
-      return $t('计划任务仅允许创建者账号执行')
-    case 'TASK_OCCURRENCE_CLAIMED':
-      return $t('本次计划已被执行，请勿重复触发')
-    case 'TASK_ALREADY_RUNNING':
-      return $t('该任务正在运行')
-  }
-  return log.endReasonCode
-    ? $t(getTaskErrorI18nKey(log.endReasonCode, '任务执行失败，请稍后重试'))
-    : ''
+  return getTaskErrorMessage(log.endReasonCode)
 }
 
 function openActivityLogDetail(log: AgentTaskLogDTO) {
+  if (!canViewActivityLog(log)) {
+    return
+  }
   selectedActivityLogId.value = log.id
   void ensureActivityWindowOptions([log])
 }
@@ -634,15 +655,18 @@ function closeActivityLogDetail() {
 }
 
 function openTaskActivityLog(task: TaskTableItem) {
+  if (!canOperateTask(task)) {
+    return
+  }
   closeTaskActionMenu()
   activeTab.value = 'activity'
-  const log = findLatestTaskLogForTask(agentChannel.taskLogs.value, task.id)
+  const log = findLatestTaskLogForTask(visibleActivityLogs.value, task.id)
   selectedActivityLogId.value = log?.id
   if (log) {
     void ensureActivityWindowOptions([log])
   }
   const logIndex = log
-    ? agentChannel.taskLogs.value.findIndex(item => item.id === log.id)
+    ? visibleActivityLogs.value.findIndex(item => item.id === log.id)
     : -1
   if (logIndex >= 0) {
     activityPageFirst.value = Math.floor(logIndex / activityPageSize.value) * activityPageSize.value
@@ -667,7 +691,7 @@ function taskInitialValues(task: TaskTableItem): TaskDialogInitialValues {
 
 async function saveTask(payload: TaskDialogPayload, task?: TaskTableItem) {
   if (task && !canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return false
   }
   try {
@@ -714,7 +738,7 @@ async function saveTask(payload: TaskDialogPayload, task?: TaskTableItem) {
 
 function openTaskDialog(task?: TaskTableItem) {
   if (task && !canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   if (!task && !canCreateTask.value) {
@@ -757,7 +781,7 @@ function openTaskDialog(task?: TaskTableItem) {
 
 async function saveTaskSchedule(task: TaskTableItem, payload: TaskSchedulePlan) {
   if (!canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return false
   }
   try {
@@ -784,7 +808,7 @@ async function saveTaskSchedule(task: TaskTableItem, payload: TaskSchedulePlan) 
 
 function openTaskScheduleDialog(task: TaskTableItem) {
   if (!canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   closeTaskActionMenu()
@@ -816,7 +840,7 @@ function openTaskScheduleDialog(task: TaskTableItem) {
 
 async function toggleTaskPlan(task: TaskTableItem) {
   if (!canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以修改任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   closeTaskActionMenu()
@@ -838,7 +862,7 @@ async function toggleTaskPlan(task: TaskTableItem) {
 
 function deleteTask(task: TaskTableItem) {
   if (!canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以删除任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   closeTaskActionMenu()
@@ -849,6 +873,9 @@ function deleteTask(task: TaskTableItem) {
     acceptLabel: $t('删除'),
     rejectLabel: $t('取消'),
     accept: async () => {
+      if (!canOperateTask(task)) {
+        return
+      }
       try {
         const response = await agentApi.userTasks.deleteUserTask({ taskId: task.id })
         readTaskMutation<unknown>(response, $t('删除任务失败'))
@@ -928,10 +955,9 @@ async function refreshTaskStatuses(silent = true) {
     if (currentRequest !== requestSequence) {
       return
     }
-    tasks.value = buildTaskRows(taskPage.rows, templates.value, windowOptions.value)
-    void ensureTaskWindowOptions(taskPage.rows)
+    allTasks.value = buildTaskRows(taskPage.rows, templates.value, windowOptions.value)
+    void ensureTaskWindowOptions(tasks.value)
     clearFinishedStoppingLogIds()
-    total.value = taskPage.total
     loadError.value = false
   }
   catch (error) {
@@ -952,7 +978,7 @@ async function refreshTaskStatuses(silent = true) {
 
 async function runTaskNow(task: TaskTableItem) {
   if (!canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以执行任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   if (startingTaskIds.value.has(task.id) || isTaskRunning(task)) {
@@ -973,6 +999,9 @@ async function runTaskNow(task: TaskTableItem) {
 }
 
 function openTemplatePreview(task: TaskTableItem) {
+  if (!canOperateTask(task)) {
+    return
+  }
   const template = templates.value.find(item => item.id === task.userTemplateId)
   const myTemplate = template ? mapMyTemplateItem(template) : undefined
   if (!template || !myTemplate) {
@@ -1114,7 +1143,7 @@ async function stopTask(task: TaskTableItem) {
     return
   }
   if (!canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以停止任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   if (!isTaskRunning(task)) {
@@ -1145,13 +1174,13 @@ async function stopTask(task: TaskTableItem) {
 
 async function stopActivityLog(log: AgentTaskLogDTO) {
   closeActivityActionMenu()
-  const task = tasks.value.find(item => item.id === log.taskId)
-  if (task && !canStopTask(task)) {
+  const task = allTasksById.value.get(log.taskId)
+  if (!canStopActivityLog(log)) {
     onlyErrorToast(-1, $t('任务执行中不可停止，空间所有者可在任务结束后继续管理'))
     return
   }
   if (task && !canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以停止任务'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   if (!isActiveTaskLog(log.status) || stoppingLogIds.value.has(log.id)) {
@@ -1172,9 +1201,9 @@ async function stopActivityLog(log: AgentTaskLogDTO) {
 
 function deleteActivityLog(log: AgentTaskLogDTO) {
   closeActivityActionMenu()
-  const task = tasks.value.find(item => item.id === log.taskId)
+  const task = allTasksById.value.get(log.taskId)
   if (task && !canOperateTask(task)) {
-    onlyErrorToast(-1, $t('只有任务创建者或空间所有者可以删除执行记录'))
+    onlyErrorToast(-1, $t('没有权限操作该任务'))
     return
   }
   if (isActiveTaskLog(log.status) || deletingLogIds.value.has(log.id)) {
@@ -1188,6 +1217,9 @@ function deleteActivityLog(log: AgentTaskLogDTO) {
     acceptLabel: $t('删除'),
     rejectLabel: $t('取消'),
     accept: async () => {
+      if (!canViewActivityLog(log)) {
+        return
+      }
       setPendingLogId(deletingLogIds, log.id, true)
       try {
         await agentApi.deleteTaskLog(log.id)
@@ -1258,7 +1290,7 @@ onBeforeUnmount(() => {
 
       <p class="my-4 text-3 leading-5 text-[var(--color-text-tertiary)]">
         {{ activeTab === 'tasks'
-          ? $t('计划任务仅由创建者账号登录的客户端执行；其他成员只能查看，空间所有者可以管理任务。')
+          ? $t('空间拥有者和管理者可查看、修改和删除所有任务；其他角色只能查看和管理自己的任务。计划任务仍由创建者账号登录的客户端执行。')
           : $t('仅显示当前账号在本机的执行日志。') }}
       </p>
 
@@ -1362,7 +1394,7 @@ onBeforeUnmount(() => {
                 <td><OverflowTooltip :content="formatSchedule(task)" /></td>
                 <td>
                   <button
-                    v-if="isManualTask(task)"
+                    v-if="isManualTask(task) && canOperateTask(task)"
                     class="status-pill status-pill--add-plan"
                     type="button"
                     @click="openTaskScheduleDialog(task)"
@@ -1549,6 +1581,7 @@ onBeforeUnmount(() => {
                       {{ $t('查看日志') }}
                     </button>
                     <AgentPopover
+                      v-if="!isActiveTaskLog(log.status) || canStopActivityLog(log)"
                       :open="isActivityActionMenuOpen(log)"
                       content-class="task-action-popover"
                       placement="bottom-end"

@@ -16,7 +16,7 @@ import { env } from '@/config'
 import { executionCenter } from '@/core/registry/executionCenter'
 import { taskLogStore } from '@/database/tasks'
 import { resolveTemplate } from '@/services/templateService'
-import { DEFAULT_SCRIPT_TASK_CONCURRENCY } from './constants'
+import { DEFAULT_SCRIPT_TASK_CONCURRENCY, TASK_TRIGGER_LEEWAY_MS } from './constants'
 import { TASK_ERROR_CODES } from './errorCodes'
 import { executeAgentTask, prepareTaskSkill } from './executors/agent'
 import {
@@ -158,7 +158,14 @@ export class TaskRunner {
       }
     }
 
-    if (trigger.triggerType !== 'manual' && !task.enabled) {
+    // 本地单次 timer 到点后，旧版租约造成的自动关闭不能否决这次执行。
+    // 仅放行仍匹配当前单次计划且处于触发宽限期内的请求。
+    const scheduledAt = trigger.scheduledAt ? Date.parse(trigger.scheduledAt) : Number.NaN
+    const lateness = Date.now() - scheduledAt
+    const dueOnceTrigger = trigger.triggerType === 'once' && task.planType === 'once'
+      && !!task.executeAt && Date.parse(task.executeAt) === scheduledAt
+      && lateness >= 0 && lateness <= TASK_TRIGGER_LEEWAY_MS
+    if (trigger.triggerType !== 'manual' && !task.enabled && !dueOnceTrigger) {
       const skipped = taskLogStore.finish(log.id, {
         status: 'skipped',
         endReasonCode: TASK_ERROR_CODES.taskDisabled,

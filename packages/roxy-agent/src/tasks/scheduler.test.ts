@@ -379,3 +379,38 @@ describe('本地计划计算与恢复', () => {
     await scheduler.stop()
   })
 })
+
+describe('新旧 Agent 共存', () => {
+  it('旧版到点关闭单次计划时，本机已登记的同次计划仍触发', async () => {
+    // 回归：旧版领取租约会关闭服务器单次计划，同步会错误撤销本地已到点的 timer。
+    vi.useFakeTimers()
+    vi.setSystemTime(START)
+    let now = START
+    const items = [task()]
+    const config = deps(items, () => now)
+    const scheduler = new TaskScheduler(config)
+    await scheduler.sync()
+    now += 1_000
+    items[0]!.enabled = false
+    items[0]!.nextExecuteAt = null
+    await scheduler.sync()
+    await vi.advanceTimersByTimeAsync(1_000)
+    assert.equal(vi.mocked(config.startTask).mock.calls.length, 1)
+    assert.equal(vi.mocked(config.startTask).mock.calls[0]?.[1].scheduledAt, items[0]!.executeAt)
+    await scheduler.stop()
+  })
+
+  it('到点前暂停单次计划仍撤销本地 timer', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(START)
+    const items = [task()]
+    const config = deps(items, () => Date.now())
+    const scheduler = new TaskScheduler(config)
+    await scheduler.sync()
+    items[0]!.enabled = false
+    await scheduler.sync()
+    await vi.advanceTimersByTimeAsync(1_000)
+    assert.equal(vi.mocked(config.startTask).mock.calls.length, 0)
+    await scheduler.stop()
+  })
+})

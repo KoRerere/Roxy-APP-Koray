@@ -522,6 +522,46 @@ describe('taskRunner', () => {
     assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 0)
   })
 
+  it('旧版自动关闭已到点的同次计划不阻止本机执行', async () => {
+    // 回归：本地 timer 触发后再次读取云端 enabled，会被旧版租约的自动关闭误拦截。
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-23T01:00:00.000Z'))
+    arrangePromptRun()
+    const task = await runnerMocks.getTask()
+    runnerMocks.getTask.mockResolvedValue({
+      ...task,
+      planType: 'once',
+      enabled: false,
+      executeAt: '2026-07-23T01:00:00.000Z',
+    })
+    runnerMocks.executeAgentTask.mockResolvedValue({ status: 'success', fileIds: [] })
+    const completed = await new TaskRunner().run(1, {
+      triggerType: 'once',
+      scheduledAt: '2026-07-23T01:00:00.000Z',
+    })
+    assert.equal(completed.status, 'success')
+    assert.equal(runnerMocks.startExecution.mock.calls.length, 0)
+  })
+
+  it.each(['cron', 'once'] as const)('不会绕过尚未到点的禁用计划：%s', async (planType) => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-23T00:59:00.000Z'))
+    arrangePromptRun()
+    const task = await runnerMocks.getTask()
+    runnerMocks.getTask.mockResolvedValue({
+      ...task,
+      planType,
+      enabled: false,
+      executeAt: '2026-07-23T01:00:00.000Z',
+    })
+    const completed = await new TaskRunner().run(1, {
+      triggerType: planType,
+      scheduledAt: '2026-07-23T01:00:00.000Z',
+    })
+    assert.equal(completed.status, 'skipped')
+    assert.equal(runnerMocks.executeAgentTask.mock.calls.length, 0)
+  })
+
   it('关闭 Agent 时中断本地执行', async () => {
     arrangePromptRun()
     runnerMocks.executeAgentTask.mockImplementation(({ signal }) => new Promise((resolve) => {

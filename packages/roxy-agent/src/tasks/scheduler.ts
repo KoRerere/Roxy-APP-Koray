@@ -172,6 +172,17 @@ export class TaskScheduler {
     const now = this.deps.now()
     const desired = new Map<number, ScheduledTask>()
     for (const task of tasks) {
+      const existing = this.entries.get(task.id)
+      const enabledTask = { ...task, enabled: true }
+      // 旧客户端领取单次租约会自动关闭计划。已在本机到点的同次计划归本地 timer 处理，
+      // 不因云端 enabled 变化而撤销；到点前暂停、修改计划或删除任务仍正常生效。
+      if (!task.enabled && existing?.task.planType === 'once'
+        && Date.parse(existing.scheduledAt) <= now
+        && schedulable(enabledTask, this.deps.userId)
+        && existing.signature === scheduleDefinitionSignature(enabledTask)) {
+        desired.set(task.id, enabledTask)
+        continue
+      }
       if (schedulable(task, this.deps.userId)) {
         desired.set(task.id, task)
       }

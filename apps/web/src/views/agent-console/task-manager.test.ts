@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 // eslint-disable-next-line test/no-import-node-test
 import { describe, it } from 'node:test'
 import { UserTaskCreatePlanTypeEnum, UserTaskUpdatePlanTypeEnum } from '@roxy/agent-api'
 import {
   buildTaskMetadata,
+  canAccessTask,
   findLatestTaskLogForTask,
   formatTaskDateTime,
   formatTaskWindowNumbers,
@@ -11,7 +13,7 @@ import {
   getTaskActivityDetails,
   getTaskDisplayStatus,
   getTaskDurationMs,
-  getTaskErrorI18nKey,
+  getTaskErrorMessage,
   getTaskPlanStatus,
   isTaskWindowSelectionValid,
   readTaskConcurrency,
@@ -116,17 +118,73 @@ describe('task table formatting', () => {
   })
 })
 
-describe('task error i18n mapping', () => {
-  it('maps agent error codes to Chinese source keys', () => {
-    assert.equal(getTaskErrorI18nKey('TASK_DISABLED', 'fallback'), '任务已被禁用')
-    assert.equal(getTaskErrorI18nKey('HEARTBEAT_REJECTED', 'fallback'), '任务心跳请求被拒绝')
-    assert.equal(getTaskErrorI18nKey('SCRIPT_EXECUTION_FAILED', 'fallback'), '所有脚本执行均失败')
-    assert.equal(getTaskErrorI18nKey('TASK_SCHEDULE_FORBIDDEN', 'fallback'), '计划任务仅允许创建者账号执行')
+describe('任务错误提示翻译', () => {
+  it('每次读取时翻译，切换语言后不能继续返回旧文案', () => {
+    // 回归：纯字符串映射配合动态 $t 无法生成语言 key，也不能返回已翻译的文案。
+    const original = globalThis.$t
+    try {
+      globalThis.$t = key => `en:${key}`
+      assert.equal(getTaskErrorMessage('TASK_DISABLED'), 'en:任务已被禁用')
+      globalThis.$t = key => `ru:${key}`
+      assert.equal(getTaskErrorMessage('TASK_DISABLED'), 'ru:任务已被禁用')
+      assert.equal(getTaskErrorMessage('UNKNOWN_TASK_ERROR'), 'ru:任务执行失败，请稍后重试')
+      assert.equal(getTaskErrorMessage('toString'), 'ru:任务执行失败，请稍后重试')
+      assert.equal(getTaskErrorMessage(null), '')
+      assert.equal(getTaskErrorMessage(undefined), '')
+    }
+    finally {
+      globalThis.$t = original
+    }
   })
 
-  it('uses the caller fallback for missing or unknown codes', () => {
-    assert.equal(getTaskErrorI18nKey(null, 'fallback'), 'fallback')
-    assert.equal(getTaskErrorI18nKey('UNKNOWN_TASK_ERROR', 'fallback'), 'fallback')
+  it('所有任务错误码都能在生成的中英俄语言文件中找到非空翻译', () => {
+    const codes = [
+      'TASK_INTERRUPTED',
+      'TASK_WORKSPACE_MISMATCH',
+      'TASK_TEMPLATE_MISMATCH',
+      'TASK_ALREADY_RUNNING',
+      'MISSED_TRIGGER',
+      'AGENT_SHUTDOWN',
+      'AGENT_RESTARTED',
+      'TASK_ASSET_INVALID',
+      'WINDOW_STATE_UNAVAILABLE',
+      'NO_AVAILABLE_WINDOWS',
+      'LEASE_SERVICE_UNAVAILABLE',
+      'TASK_DISABLED',
+      'TASK_EXECUTED_BY_OTHER_USER',
+      'TASK_SCHEDULE_FORBIDDEN',
+      'TASK_OCCURRENCE_CLAIMED',
+      'TASK_EXECUTION_FAILED',
+      'AGENT_EXECUTION_FAILED',
+      'SCRIPT_EXECUTION_FAILED',
+      'PARTIAL_WINDOW_FAILURE',
+      'ARTIFACT_UPLOAD_PARTIAL_FAILURE',
+      'LEASE_LOST',
+      'HEARTBEAT_REJECTED',
+      'HEARTBEAT_FAILED',
+    ]
+    const original = globalThis.$t
+    try {
+      for (const language of ['zh-CN', 'en', 'ru']) {
+        const messages = JSON.parse(readFileSync(new URL(`../../locales/langs/${language}.json`, import.meta.url), 'utf8'))
+        let translationCalls = 0
+        globalThis.$t = (key) => {
+          translationCalls += 1
+          assert.ok(typeof messages[key] === 'string' && messages[key].trim(), `${language}: ${key}`)
+          if (language !== 'zh-CN') {
+            assert.notEqual(messages[key], key)
+          }
+          return messages[key]
+        }
+        for (const code of codes) {
+          assert.ok(getTaskErrorMessage(code))
+        }
+        assert.equal(translationCalls, codes.length)
+      }
+    }
+    finally {
+      globalThis.$t = original
+    }
   })
 })
 
@@ -207,5 +265,27 @@ describe('findLatestTaskLogForTask', () => {
 
     assert.equal(findLatestTaskLogForTask(logs, 1)?.id, 'newest')
     assert.equal(findLatestTaskLogForTask(logs, 3), undefined)
+  })
+})
+
+describe('任务管理可见范围', () => {
+  const own = { creatorUserId: 'user-1' }
+  const other = { creatorUserId: 'user-2' }
+
+  it('拥有者和管理者可以查看及管理所有人的任务', () => {
+    assert.equal(canAccessTask(own, 'user-1', true), true)
+    assert.equal(canAccessTask(other, 'user-1', true), true)
+  })
+
+  it('其他角色只能查看及管理自己的任务', () => {
+    assert.equal(canAccessTask(own, 'user-1', false), true)
+    assert.equal(canAccessTask(other, 'user-1', false), false)
+    assert.deepEqual([own, other].filter(task => canAccessTask(task, 'user-1', false)), [own])
+  })
+
+  it('兼容数字账号 ID，并且缺失账号信息不能视为自己的任务', () => {
+    assert.equal(canAccessTask({ creatorUserId: '123' }, 123, false), true)
+    assert.equal(canAccessTask({ creatorUserId: undefined }, undefined, false), false)
+    assert.equal(canAccessTask({ creatorUserId: '' }, '', false), false)
   })
 })
