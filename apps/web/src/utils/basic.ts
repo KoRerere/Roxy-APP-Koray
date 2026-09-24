@@ -703,12 +703,27 @@ export function setLocalStorageDriverStatus(key: string, value: boolean) {
   localStorage.setItem('driverStatus', JSON.stringify({ ...driverStatus, [key]: value }))
 }
 
-export function localDiscountValue(locale: string, discount: number) {
-  if (locale === 'zh-CN') {
-    return currency(100).subtract(discount).divide(10).value
+/**
+ * % Off 转中文折扣展示：30 → 7，2 → 9.8。
+ */
+export function percentOffToZhe(percentOff: number) {
+  const zhe = currency(100).subtract(percentOff).divide(10).value
+  if (Number.isInteger(zhe)) {
+    return String(zhe)
   }
+  return String(Number(zhe.toFixed(1)))
+}
 
-  return discount
+/**
+ * 折扣角标。入参是立减百分比（30 表示优惠 30%）。
+ * 中文用折数（7折），英/俄用 % Off，同一组参数交给各语言选用。
+ */
+export function formatDiscountOff(percentOff?: number | string | null) {
+  const off = Number(percentOff ?? 0) || 0
+  return $t('{discount}折', {
+    discount: percentOffToZhe(off),
+    off,
+  })
 }
 
 export function truncNumber2(number: number, precision: number = 2) {

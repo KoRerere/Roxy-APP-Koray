@@ -1,7 +1,7 @@
 import Qrcode from '/@/views/agent/shop/components/proxy-qrcode.vue'
 import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
 import { canShowProxyQrcode, isDirectExportBlocked } from '/@/views/agent/shop/utils/proxy-download-kyc-gate'
-import { canUseLongRenewFirst, getLongRenewDealLabel } from '/@/views/agent/shop/utils/long-renew-first'
+import { canUseLongRenewFirst, formatDiscountOff, getLongRenewDealLabel } from '/@/views/agent/shop/utils/long-renew-first'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
@@ -124,7 +124,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
     : 0
   const longRenewDealLabel = getLongRenewDealLabel(longRenewOff)
   const longRenewDiscountBadge = longRenewOff > 0
-    ? $t('{discount}% Off', { discount: longRenewOff })
+    ? formatDiscountOff(longRenewOff)
     : ''
 
   return [

@@ -4,7 +4,7 @@ import { h } from 'vue'
 import currency from 'currency.js'
 import { addDays, format } from 'date-fns'
 import { API } from '/@/api'
-import { getImage } from '/@/utils'
+import { formatDiscountOff, getImage } from '/@/utils'
 import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
@@ -97,7 +97,7 @@ async function getDiscountByDuration() {
       rate: durationTierRate(day, [discount]),
       key: `day${day}`,
       title: $t('{day} 天', { day }),
-      label: discount > 0 ? $t('{discount}% Off', { discount }) : day === 30 ? $t('最受欢迎') : '',
+      label: discount > 0 ? formatDiscountOff(discount) : day === 30 ? $t('最受欢迎') : '',
       giftDays: 0,
       due: format(addDays(userPayInfo.value.subEndDate || Date.now(), day), 'yyyy/MM/dd'),
     }

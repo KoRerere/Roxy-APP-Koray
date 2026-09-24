@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { h } from 'vue'
-import HistoryDetail from '/@/views/browser/list/transfer/components/history-detail.vue';
+import HistoryDetail from '/@/views/browser/list/transfer/components/history-detail.vue'
 
 import { API } from '/@/api'
 import { useDialog } from '/@/hooks/useDialog'
@@ -26,7 +26,7 @@ const columns = [
   {
     title: $t('类型'),
     key: 'type',
-    slot: 'type'
+    slot: 'type',
   },
   {
     title: $t('转移者'),
@@ -39,12 +39,12 @@ const columns = [
   {
     title: $t('详情'),
     key: 'detail',
-    slot: 'detail'
+    slot: 'detail',
   },
   {
     title: $t('状态'),
     key: 'status',
-    slot: 'status'
+    slot: 'status',
   },
 ]
 
@@ -53,7 +53,6 @@ function tableFilters() {
     {
       type: 'select',
       name: 'type',
-      value: [],
       placeholder: $t('全部操作'),
       options: Object.entries(typeMap).map(([value, label]) => ({ label, value })),
     },
@@ -70,21 +69,21 @@ function viewDetail(item: any) {
     modal: true,
     blockScroll: true,
     pt: {
-      content: '!pa-0'
+      content: '!pa-0',
     },
     slots: {
       container: ({ hideModal }) => h(HistoryDetail, {
         transferTaskId: item.id,
         onClose: hideModal,
-      })
-    }
+      }),
+    },
   })
 }
 </script>
 
 <template>
   <div class="h-full flex overflow-hidden">
-    <RyTable cacheKey="transfer-history" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
+    <RyTable cache-key="transfer-history" :table-filters="tableFilters" :columns="columns" :table-request="tableRequest" :show-actions="false" :show-display="false" :context-menu="false">
       <template #table-empty>
         <CustomEmpty icon="rx_illustration_transfer.svg" :title="$t('暂无转移窗口数据')">
           <template #extra>
@@ -95,16 +94,16 @@ function viewDetail(item: any) {
         </CustomEmpty>
       </template>
       <template #type="{ data }">
-        <span :class="{ 'info': data.type === 'Receive' }">{{ typeMap[data.type as keyof typeof typeMap] }}</span>
+        <span :class="{ info: data.type === 'Receive' }">{{ typeMap[data.type as keyof typeof typeMap] }}</span>
       </template>
       <template #detail="{ data }">
         <div class="flex items-center gap-2.5">
           <span>{{ data.detail }}</span>
-          <RxButton severity="secondary" variant="outlined" size="xxs" icon="base/rx_ic_doc_article" :label="$t('详情')" @click="viewDetail(data)"></RxButton>
+          <RxButton severity="secondary" variant="outlined" size="xxs" icon="base/rx_ic_doc_article" :label="$t('详情')" @click="viewDetail(data)" />
         </div>
       </template>
       <template #status="{ data }">
-        <span :class="{ 'error': data.status === 3 }">{{ statusMap[data.status as keyof typeof statusMap] }}</span>
+        <span :class="{ error: data.status === 3 }">{{ statusMap[data.status as keyof typeof statusMap] }}</span>
       </template>
     </RyTable>
   </div>

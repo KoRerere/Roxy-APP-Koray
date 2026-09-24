@@ -5,6 +5,7 @@ import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
 import { SubLevelEnum } from '/@/enums/pay'
 import { usePermission } from '/@/hooks/usePermission'
 import { useUserStore } from '/@/stores/user'
+import { formatDiscountOff } from '/@/utils/basic'
 import { emitter } from '/@/utils/eventBus'
 import { useThemeStore } from '/@/stores/theme'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
@@ -367,7 +368,7 @@ function handleRenew() {
           <!-- 折扣头部区域 -->
           <div class="flex flex-col gap-3 relative z-1">
             <div class="flex items-center gap-3">
-              <span class="text-40px font-900 leading-12 text-[var(--colors-text-text-primary,#111213)] font-['DM_Sans',Inter,sans-serif]" style="font-variation-settings: 'opsz' 14;">{{ totalOffPercent }}% OFF</span>
+              <span class="text-40px font-900 leading-12 text-[var(--colors-text-text-primary,#111213)] font-['DM_Sans',Inter,sans-serif]" style="font-variation-settings: 'opsz' 14;">{{ formatDiscountOff(totalOffPercent) }}</span>
               <div class="bg-gradient-to-r from-[#8780fe] to-[#c491f1] text-white text-14px font-['DingTalk_JinBuTi'] px-3 py-1.5 rounded-full whitespace-nowrap leading-none flex items-center justify-center">
                 {{ $t('限时优惠') }}
               </div>
@@ -379,7 +380,7 @@ function handleRenew() {
                 class="bg-[var(--colors-background-bg-page,#ffffff)] dark:bg-[#1f2429] px-2 py-1 rounded-1 shadow-[0px_1px_1px_rgba(16,24,40,0.05)] dark:shadow-none flex items-center gap-1"
               >
                 <span class="text-13px font-normal text-[var(--colors-text-text-primary,#111213)] leading-[18px]">{{ $t('首购折扣') }}</span>
-                <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ firstPurchaseDiscount }}%</span>off
+                <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ formatDiscountOff(firstPurchaseDiscount) }}</span>
               </div>
               <!-- 身份折扣文案暂不对外展示，折扣仍计入总折扣 -->
               <div
@@ -387,11 +388,11 @@ function handleRenew() {
                 class="bg-[var(--colors-background-bg-page,#ffffff)] dark:bg-[#1f2429] px-2 py-1 rounded-1 shadow-[0px_1px_1px_rgba(16,24,40,0.05)] dark:shadow-none flex items-center gap-1"
               >
                 <span class="text-13px font-normal text-[var(--colors-text-text-primary,#111213)] leading-[18px]">{{ $t('专属折扣') }}</span>
-                <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ exclusiveDiscount }}%</span>off
+                <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ formatDiscountOff(exclusiveDiscount) }}</span>
               </div>
               <div class="bg-[var(--colors-background-bg-page,#ffffff)] dark:bg-[#1f2429] px-2 py-1 rounded-1 shadow-[0px_1px_1px_rgba(16,24,40,0.05)] dark:shadow-none flex items-center gap-1">
                 <span class="text-13px font-normal text-[var(--colors-text-text-primary,#111213)] leading-[18px]">{{ $t('续费折扣') }}</span>
-                <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ RENEWAL_CAMPAIGN_DISCOUNT }}%</span>off
+                <span class="text-14px font-bold text-[var(--colors-text-text-warning,#fd9f12)] leading-[20px]">{{ formatDiscountOff(RENEWAL_CAMPAIGN_DISCOUNT) }}</span>
               </div>
             </div>
 
@@ -403,7 +404,7 @@ function handleRenew() {
           <!-- 续费按钮区域 -->
           <div class="relative w-full z-1">
             <div class="absolute top-2 right-3 z-2 bg-[#FC9D12] text-white text-14px font-['DingTalk_JinBuTi',sans-serif] px-3 py-0.5 rounded-full shadow-[0px_2px_4px_rgba(252,157,18,0.25)] whitespace-nowrap leading-tight pointer-events-none flex items-center justify-center">
-              {{ totalOffPercent }}% Off
+              {{ formatDiscountOff(totalOffPercent) }}
             </div>
             <RxButton class="w-full !h-10 !text-14px mt-20px font-medium !rounded-2" severity="primary" size="lg" @click="handleRenew">
               {{ $t('立即续费') }}

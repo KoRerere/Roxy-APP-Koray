@@ -20,8 +20,9 @@ function onMultiChange() {
 }
 
 function onMultiHide() {
-  if (!multiChanged.value)
+  if (!multiChanged.value) {
     return
+  }
 
   multiChanged.value = false
   onFilterChange()
@@ -50,15 +51,18 @@ function onFilterChange() {
 <template>
   <div v-for="item in filters" :key="item.key" class="flex items-start">
     <MultiSelect v-if="item.type === 'multiple'" v-model="item.value" class="min-w-37.5" option-label="label" option-value="value" :max-selected-labels="1" :show-toggle-all="false"
-      :pt="{ list: 'text-3.25', emptymessage: 'text-3.25' }" v-bind="item" @change="onMultiChange" @hide="onMultiHide">
+                 :pt="{ list: 'text-3.25', emptymessage: 'text-3.25' }" v-bind="item" @change="onMultiChange" @hide="onMultiHide"
+    >
       <template #dropdownicon>
         <RxSvgIcon name="base/rx_ic_chevron_down" />
       </template>
     </MultiSelect>
-    <TsFormSelect v-else-if="item.type === 'select'" class="min-w-37.5" v-model="item.value" size="xxs" checkmark show-clear :highlight-on-select="false"
-      v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange"></TsFormSelect>
+    <TsFormSelect v-else-if="item.type === 'select'" v-model="item.value" class="!min-w-37.5" size="xxs" checkmark show-clear :highlight-on-select="false"
+                  v-bind="{ filter: false, optionValue: 'value', ...item }" @change="onFilterChange"
+    />
     <InputDate v-else-if="item.type === 'date'" v-model="item.value" class="min-w-37.5 flex-row-reverse" selection-mode="range" :manual-input="false" show-icon show-button-bar date-format="yy/mm/dd"
-      :placeholder="item.placeholder" v-bind="item" @hide="onDateHide" @update:modelValue="onDateChange" @clear-click="onDateClear" />
+               :placeholder="item.placeholder" v-bind="item" @hide="onDateHide" @update:model-value="onDateChange" @clear-click="onDateClear"
+    />
   </div>
 </template>
 

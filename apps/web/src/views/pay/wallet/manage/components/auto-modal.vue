@@ -7,6 +7,7 @@ import { useUserStore } from '/@/stores/user'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import { formatDiscountOff } from '/@/utils/basic'
 import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 
 const emit = defineEmits<{
@@ -88,7 +89,7 @@ function close() {
         </i18n-t>
         <i18n-t class="whitespace-pre-wrap desc" tag="div" :keypath="$t('启用自动续费将享受 {discount}。', { discount: '{discount}' })" scope="global">
           <template #discount>
-            <span class="discount">{{ $t('{discount}% Off', { discount: userPayInfo.autoRenewDiscount }) }}</span>
+            <span class="discount">{{ formatDiscountOff(userPayInfo.autoRenewDiscount) }}</span>
           </template>
         </i18n-t>
       </div>

@@ -1,6 +1,6 @@
 import { getProxyFilterGroups } from '/@/views/agent/shop/components/proxy-filter/useProxyFilter'
 import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
-import { canUseLongRenewFirst, getLongRenewDealLabel } from '/@/views/agent/shop/utils/long-renew-first'
+import { canUseLongRenewFirst, formatDiscountOff, getLongRenewDealLabel } from '/@/views/agent/shop/utils/long-renew-first'
 import { API } from '/@/api'
 import { getDictMap, transformSortOrder } from '/@/utils'
 import { ProxyBindStatus, ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/proxy'
@@ -152,7 +152,7 @@ export function getDeviceOperation(data: DeviceItem | DeviceItem[]) {
     : 0
   const longRenewDealLabel = getLongRenewDealLabel(longRenewOff)
   const longRenewDiscountBadge = longRenewOff > 0
-    ? $t('{discount}% Off', { discount: longRenewOff })
+    ? formatDiscountOff(longRenewOff)
     : ''
 
   const operations = [

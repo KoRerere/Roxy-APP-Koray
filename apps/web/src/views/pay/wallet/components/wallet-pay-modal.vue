@@ -7,7 +7,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { PAY_PROCESSING_BACK, usePay } from '/@/views/pay/wallet/hook.tsx'
 import { PayWay } from '/@/enums/pay'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
-import { getImage } from '/@/utils/basic'
+import { formatDiscountOff, getImage } from '/@/utils/basic'
 import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
 
 interface Props {
@@ -148,7 +148,7 @@ function close(isCancel: boolean) {
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
               <span class="auto-title">{{ $t('启用钱包自动续费') }}</span>
-              <span class="auto-value">{{ $t('{discount}% Off', { discount: userPayInfo.autoRenewDiscount }) }}</span>
+              <span class="auto-value">{{ formatDiscountOff(userPayInfo.autoRenewDiscount) }}</span>
             </div>
             <RxToggleSwitch v-model="isAuto" :before-change="beforeToggleAutoRenew" />
           </div>

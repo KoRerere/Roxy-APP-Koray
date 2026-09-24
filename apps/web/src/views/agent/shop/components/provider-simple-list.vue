@@ -3,6 +3,7 @@ import { useSimpleLocale } from '/@/stores/locale'
 import { useProxyStore } from '/@/stores/proxy'
 import { useThemeStore } from '/@/stores/theme'
 import type { UserGetProxyVendorListListData } from '@roxy/backend-api'
+import { formatDiscountOff } from '/@/utils/basic'
 import { useResizeObserver } from '@vueuse/core'
 
 type ShopItem = UserGetProxyVendorListListData['data'][number] & {
@@ -144,7 +145,7 @@ function buyProxyFromAnnouncement() {
     <div class="w-110">
       <div class="relative flex flex-col pa-4 gap-3 rounded-2 cursor-pointer normal overflow-visible" @click.stop="onBuyProxy(rolaip)">
         <div v-if="rolaip.vendorDiscountTitle" class="rola-discount">
-          {{ rolaip.vendorDiscount }}% off
+          {{ formatDiscountOff(rolaip.vendorDiscount) }}
         </div>
         <div class="flex gap-3 items-start">
           <img draggable="false" class="block w-10 aspect-1 rounded-2 normal-image shrink-0" :src="rolaip.vendorIcon" :alt="rolaip.vendorName">

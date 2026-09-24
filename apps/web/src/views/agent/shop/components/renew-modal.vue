@@ -23,6 +23,7 @@ import {
   calcProxyRenewTotalAmount,
   calcProxyRenewUnitPrice,
   canUseLongRenewFirst,
+  formatDiscountOff,
   getMaxAppliedOffPercent,
   getProxyRenewOffMix,
   hasLongRenewFirstOffer,
@@ -377,7 +378,7 @@ async function onPay() {
                  :class="{ active: item.value === periodValue?.value }" @click="periodValue = item"
             >
               <span v-if="hasEligibleLongRenew && item.discount > 0" class="period-discount">
-                {{ $t('{discount}% Off', { discount: item.discount }) }}
+                {{ formatDiscountOff(item.discount) }}
               </span>
               {{ item.label }}
             </div>

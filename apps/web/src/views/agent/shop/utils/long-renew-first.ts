@@ -1,5 +1,8 @@
 import currency from 'currency.js'
+import { percentOffToZhe } from '/@/utils/basic'
 import { discountCalculate } from '/@/views/pay/subscribe/util'
+
+export { formatDiscountOff, percentOffToZhe } from '/@/utils/basic'
 
 /** 90 天及以上才算长续；30 天与自动续费不参与长续首享 */
 const LONG_RENEW_MIN_DAYS = 90
@@ -198,14 +201,3 @@ export function calcProxyRenewOriginalAmount(
   }, 0)
 }
 
-/**
- * % Off 转中文折扣展示：30 → 7，2 → 9.8。
- * `proxyRenewMinDiscount` 与 `proxyDiscount` 同为 % Off 口径。
- */
-export function percentOffToZhe(percentOff: number) {
-  const zhe = currency(100).subtract(percentOff).divide(10).value
-  if (Number.isInteger(zhe)) {
-    return String(zhe)
-  }
-  return String(Number(zhe.toFixed(1)))
-}

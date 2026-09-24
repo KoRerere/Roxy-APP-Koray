@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ProxyExpireStatus, ProxyOrderStatus } from '/@/enums'
 import { useUserStore } from '/@/stores/user'
-import { canUseLongRenewFirst } from '/@/views/agent/shop/utils/long-renew-first'
+import { canUseLongRenewFirst, formatDiscountOff } from '/@/views/agent/shop/utils/long-renew-first'
 import type { UnwrapRowType, UserGetProxyListMergedListData } from '@roxy/backend-api'
 
 type Data = UnwrapRowType<UserGetProxyListMergedListData>
@@ -46,7 +46,7 @@ const showLongRenewBadge = computed(() => {
 })
 
 const longRenewBadgeText = computed(() => {
-  return $t('{discount}% Off', { discount: userPayInfo.value.proxyRenewMinDiscount })
+  return formatDiscountOff(userPayInfo.value.proxyRenewMinDiscount)
 })
 
 const statusColor = computed(() => status.value.color)

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useUserStore } from '/@/stores/user'
-import { useSimpleLocale } from '/@/stores/locale'
-import { localDiscountValue } from '/@/utils'
+import { formatDiscountOff } from '/@/utils/basic'
 
 const { discount } = defineProps<{
   discount: number
@@ -9,14 +8,13 @@ const { discount } = defineProps<{
 }>()
 
 const { userPayInfo } = storeToRefs(useUserStore())
-const { currentLocale } = storeToRefs(useSimpleLocale())
 </script>
 
 <template>
   <div v-if="userPayInfo.isEaster" class="relative flex flex-col pa-4 gap-3 rounded-2 select-none overflow-hidden content">
     <i18n-t v-if="beyondDiscount" class="text" tag="div" scope="global" :keypath="$t('您已有折扣已超 {discount}，系统将以您最优折扣进行计算', { discount: '{discount}' })">
       <template #discount>
-        <span>{{ $t('{discount} 折', { discount: localDiscountValue(currentLocale, discount) }) }}</span>
+        <span>{{ formatDiscountOff(discount) }}</span>
       </template>
     </i18n-t>
     <template v-else>
@@ -26,7 +24,7 @@ const { currentLocale } = storeToRefs(useSimpleLocale())
       </div>
       <i18n-t class="w-46 whitespace-pre-wrap discount" tag="div" scope="global" :keypath="$t('全场消费立享 {discount} 优惠', { discount: '{discount}' })">
         <template #discount>
-          <span class="discount-value">{{ $t('{discount} 折', { discount: localDiscountValue(currentLocale, discount) }) }}</span>
+          <span class="discount-value">{{ formatDiscountOff(discount) }}</span>
         </template>
       </i18n-t>
     </template>
