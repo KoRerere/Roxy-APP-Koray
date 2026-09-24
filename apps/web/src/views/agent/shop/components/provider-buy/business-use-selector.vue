@@ -30,8 +30,8 @@ function showSpecialOfferHint(option: BusinessUseOption) {
 
 <template>
   <div class="flex gap-2 col-span-2">
-    <div class="w-20 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0">
-      {{ $t('用途:') }}
+    <div class="w-22 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap">
+      {{ labels.entityUsage }}
     </div>
     <div class="flex gap-3 gap-row-3.5 flex-wrap">
       <RxTooltip v-for="(option, index) in options" :key="option.value" :class="index === 0 ? 'w-full' : undefined">

@@ -27,7 +27,7 @@ function toggle(event: Event) {
 
 /** 只能移除比自己权限低的成员 */
 function isRemoveDisabled(member: { role: Role }) {
-  return currentWorkspace.value!.role <= member.role
+  return currentWorkspace.value!.role! <= member.role
 }
 
 function removeMember(member: any) {
@@ -63,14 +63,14 @@ function removeMember(member: any) {
 
 <template>
   <div class="drop-btn" @click="toggle">
-    <span class="tt-primary text-3 font-500 leading-4">{{ $t('成员') }}({{ members?.length || 0 }}) </span>
+    <span class="tt-primary text-3 font-500 leading-4">{{ $t('成员') }}({{ members?.length || 0 }})</span>
     <RxSvgIcon name="base/rx_ic_chevron_down" />
   </div>
 
   <Popover ref="op" :pt="{ content: { class: '!pa-0' } }">
     <div class="flex flex-col gap-4 min-w-80">
       <div>
-        <div class="member-list">
+        <div class="member-list max-h-[440px] overflow-y-auto">
           <div v-for="member in members" :key="member.email" class="self-stretch flex items-center justify-between gap-1.5 py-2 pr-1.5 pl-2.5 rounded-1">
             <MemberInfo :avatar="member.avatar" :user-name="member.userName" :avatar-color="member.avatarColor" :email="member.email" :phone="member.phone">
               <template #name>

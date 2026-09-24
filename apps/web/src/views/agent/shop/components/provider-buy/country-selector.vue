@@ -6,7 +6,7 @@ import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
 import CountryChip from './country-chip.vue'
 import { groupCountryOptionsByContinent } from './utils'
 import type { CountryOption } from './utils'
-// import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
+import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 
 const { options, modelValue, loading } = defineProps<{
   options: CountryOption[]
@@ -18,7 +18,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: CountryOption]
 }>()
 
-// const labels = useProxyPurchaseLabels()
+const labels = useProxyPurchaseLabels()
 
 const searchCountry = ref('')
 
@@ -26,8 +26,9 @@ const groupedList = computed(() => groupCountryOptionsByContinent(options))
 
 const searchResults = computed(() => {
   const keyword = searchCountry.value.trim()
-  if (!keyword)
+  if (!keyword) {
     return []
+  }
   const fuse = new Fuse(options, {
     keys: [
       { name: 'country_name', weight: 2 },
@@ -47,13 +48,13 @@ function select(option: CountryOption) {
 <template>
   <div class="flex flex-col gap-4 col-span-2">
     <div class="flex gap-2 items-center">
-      <div class="shrink-0 w-20 tt-primary text-3.5 font-600 leading-normal break-all">
-        {{ $t('国家/地区:') }}
+      <div class="shrink-0 w-22 tt-primary text-3.5 font-600 leading-normal whitespace-nowrap">
+        {{ labels.selectCountry }}
       </div>
       <TsFormInputText :model-value="searchCountry" :placeholder="$t('搜索国家/地区名称或代码')" class="!w-50" pre-icon="base/rx_ic_magnify" @update:model-value="searchCountry = $event" />
     </div>
 
-    <div v-if="searchCountry.trim()" class="relative min-h-20 flex gap-3 flex-wrap pl-21.5">
+    <div v-if="searchCountry.trim()" class="relative min-h-20 flex gap-3 flex-wrap pl-23.5">
       <template v-if="searchResults.length">
         <CountryChip v-for="option in searchResults" :key="option.value" :option="option" :active="modelValue?.value === option.value" @select="select" />
       </template>
@@ -69,7 +70,7 @@ function select(option: CountryOption) {
       <RxLoading :model-value="loading" :opacity="0.9" />
       <div class="flex flex-col gap-3">
         <div v-for="group in groupedList" :key="group.title" class="flex gap-2">
-          <div class="w-20 h-10 flex items-center tt-tertiary text-3.5 font-500 leading-5 shrink-0">
+          <div class="w-22 h-10 flex items-center tt-tertiary text-3.5 font-500 leading-5 shrink-0">
             {{ group.title }}:
           </div>
           <div class="flex gap-3 flex-wrap">

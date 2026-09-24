@@ -704,14 +704,12 @@ export function setLocalStorageDriverStatus(key: string, value: boolean) {
 }
 
 /**
- * % Off 转中文折扣展示：30 → 7，2 → 9.8。
+ * % Off 转中文折扣展示：30 → 7，2 → 9.8，7.5 → 9.25。
+ * 折数最多两位小数，并去掉末尾 0，避免把 9.25 四舍五入成 9.3。
  */
 export function percentOffToZhe(percentOff: number) {
   const zhe = currency(100).subtract(percentOff).divide(10).value
-  if (Number.isInteger(zhe)) {
-    return String(zhe)
-  }
-  return String(Number(zhe.toFixed(1)))
+  return String(Number(zhe.toFixed(2)))
 }
 
 /**

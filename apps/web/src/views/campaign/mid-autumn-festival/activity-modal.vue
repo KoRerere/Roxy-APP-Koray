@@ -49,7 +49,7 @@ const list = computed(() => [
   {
     icon: getImage('campaing/mid-autumn-festival/gift_box.svg'),
     title: $t('笔笔消费抽豪礼！'),
-    description: $t('每次升级、续费、购买 IP 或充值 AI 积分，均可获得 1 次 Mac / iPhone 抽奖机会。'),
+    description: $t('每次升级、续费、购买代理 IP 或充值 AI 积分，均可获得 1 次 Mac / iPhone 抽奖机会。'),
     benefitRender: () => {
       const award = [
         {
@@ -70,7 +70,7 @@ const list = computed(() => [
         {
           title: $t('参与奖'),
           img: getImage('campaing/mid-autumn-festival/award_4.png'),
-          description: $t('窗口会员 · 美国原生 IP · AI 积分'),
+          description: $t('窗口会员 · 美国原生代理 IP · AI 积分'),
         },
       ]
 

@@ -172,7 +172,8 @@ function buyLifetimeProfile() {
       </div>
       <div class="duration-text whitespace-nowrap">
         <template v-if="item.giftDays">
-          {{ item.day }}<i18n-t tag="span" class="duration-gift" :keypath="$t('{day} 天', { day: '{day}' })" scope="global">
+          <span>{{ item.day }}</span>
+          <i18n-t tag="span" class="duration-gift" :keypath="$t('{day} 天', { day: '{day}' })" scope="global">
             <template #day>
               + {{ item.giftDays }}
             </template>
@@ -181,6 +182,7 @@ function buyLifetimeProfile() {
         <template v-else>
           {{ item.title }}
         </template>
+        <SvgIcon v-if="item.day < 30" v-tooltip="$t('仅首次订阅可选')" class="ml-1" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
       </div>
       <div v-if="dailyUnitPrice" class="tt-tertiary font-[JetBrains_Mono] text-3 font-500 leading-normal" :class="{ best: item.discount === maxDiscount }">
         {{ item.day === 1 ? $t('{price}/天', { price: dailyUnitPrice[item.day] }) : $t('低至 {price}/天', { price: dailyUnitPrice[item.day] }) }}

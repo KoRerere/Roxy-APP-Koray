@@ -240,11 +240,11 @@ async function onPay() {
 </script>
 
 <template>
-  <div class="relative flex-1 flex gap-6 overflow-hidden">
+  <div class="relative flex-1 flex gap-5 overflow-hidden">
     <RxLoading v-model="loading" :opacity="0.9" />
     <div class="py-5 flex-1 flex flex-col pl-8 gap-9 rounded-3 overflow-hidden overflow-y-auto selectors">
       <div class="grid grid-cols-2 gap-y-6">
-        <ActivityInfoProxy class="mr-7 col-span-2" type="proxy" />
+        <ActivityInfoProxy class="mr-6 col-span-2" type="proxy" />
         <BusinessUseSelector :options="businessUseOptions" :model-value="businessUse" @update:model-value="selectBusinessUse" />
         <CountrySelector :options="countryOptions" :model-value="purchaseCountry" :loading="loadingPurchaseCountry" @update:model-value="selectCountry" />
         <DurationSelector v-model="subscriptionMonths" :options="durationOptions" />

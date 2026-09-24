@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DurationOption } from './utils'
+import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 
 const { options } = defineProps<{
   options: DurationOption[]
@@ -8,12 +9,13 @@ const { options } = defineProps<{
 const modelValue = defineModel<DurationOption>()
 
 const styles = useCssModule()
+const labels = useProxyPurchaseLabels()
 </script>
 
 <template>
   <div class="flex gap-2 col-span-2">
-    <div class="w-20 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0">
-      {{ $t('时长:') }}
+    <div class="w-22 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap">
+      {{ labels.entityDuration }}
     </div>
     <div class="flex gap-3 flex-wrap">
       <div v-for="option in options" :key="option.value" class="w-38 h-10 flex items-center justify-center leading-none cursor-pointer select-none"

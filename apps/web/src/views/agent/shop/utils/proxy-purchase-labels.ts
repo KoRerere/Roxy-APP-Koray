@@ -18,12 +18,12 @@ export interface ProxyPurchaseLabels {
   entityQuantity: string
   entityPrice: string
   entityQuantityLabel: string
-  /**
-   * entityUsage: string
-   */
-  /**
-   * selectCountry: string
-   */
+  /** 用途标签，两种模式都不加实体前缀 */
+  entityUsage: string
+  /** 国家/地区标签，前缀为 IP 或设备 */
+  selectCountry: string
+  /** 时长标签，前缀为 IP 或设备 */
+  entityDuration: string
   cnNetworkAlert: string
   specialOfferNote: string
   bandwidthUpgradeTooltip: string
@@ -37,12 +37,9 @@ interface ProxyPurchaseLabelsBase {
   entityQuantity: string
   entityPrice: string
   entityQuantityLabel: string
-  /**
-   * entityUsage: string
-   */
-  /**
-   * selectCountry: string
-   */
+  entityUsage: string
+  selectCountry: string
+  entityDuration: string
   cnNetworkAlert: string
   specialOfferNote: string
   bandwidthUpgradeTooltip: string
@@ -56,8 +53,9 @@ const PROXY_PURCHASE_LABELS: ProxyPurchaseLabelsBase = {
   entityQuantity: $t('代理 IP 数量'),
   entityPrice: $t('代理 IP 价格'),
   entityQuantityLabel: $t('代理 IP 数量:'),
-  // entityUsage: $t('用途:'),
-  // selectCountry: $t('国家/地区:'),
+  entityUsage: $t('用途:'),
+  selectCountry: $t('IP 国家/地区:'),
+  entityDuration: $t('IP 时长:'),
   cnNetworkAlert: $t('检测到您当前网络环境位于中国大陆，当前代理 IP 暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。'),
   specialOfferNote: $t('请注意：当前代理 IP 为特价商品，不退不换'),
   bandwidthUpgradeTooltip: $t('当前仅支持美国、香港、法国和日本的超高质量代理 IP 进行带宽升级。'),
@@ -71,8 +69,9 @@ const DEVICE_PURCHASE_LABELS: ProxyPurchaseLabelsBase = {
   entityQuantity: $t('设备数量'),
   entityPrice: $t('设备价格'),
   entityQuantityLabel: $t('设备数量:'),
-  // entityUsage: $t('用途:'),
-  // selectCountry: $t('国家/地区:'),
+  entityUsage: $t('用途:'),
+  selectCountry: $t('设备国家/地区:'),
+  entityDuration: $t('设备时长:'),
   cnNetworkAlert: $t('检测到您当前网络环境位于中国大陆，当前设备暂不支持直连，请切换至海外网络后使用。\nRoxy 持续助力中国互联网环境健康发展，倡导安全、合规的网络环境。'),
   specialOfferNote: $t('请注意：购买后不支持退换'),
   bandwidthUpgradeTooltip: $t('当前仅支持美国、香港、法国和日本的超高质量设备进行带宽升级。'),
@@ -92,8 +91,9 @@ export function createProxyPurchaseLabels(mode: ProxyPurchaseMode): ProxyPurchas
     entityQuantity: base.entityQuantity,
     entityPrice: base.entityPrice,
     entityQuantityLabel: base.entityQuantityLabel,
-    // entityUsage: base.entityUsage,
-    // // selectCountry: base.selectCountry,
+    entityUsage: base.entityUsage,
+    selectCountry: base.selectCountry,
+    entityDuration: base.entityDuration,
     cnNetworkAlert: base.cnNetworkAlert,
     specialOfferNote: base.specialOfferNote,
     bandwidthUpgradeTooltip: base.bandwidthUpgradeTooltip,
