@@ -169,11 +169,17 @@ function quickSelect(value: number) {
 }
 
 async function confirm(extraData: any) {
-  await onConfirm?.({
+  const result = await onConfirm?.({
     payType: selectedPayway.value,
     rechargeAmount: rechargeAmount.value,
     ...extraData,
   })
+
+  // 扫码支付返回后会重新打开充值弹窗；若当前实例还在等待则先关掉，避免叠两层
+  if (result === 'back') {
+    close(false)
+    return
+  }
 
   if (needAmount) {
     mixpanelTrack('click_confirm_recharge_insufficient')
@@ -198,56 +204,58 @@ function close(isCancel: boolean) {
 </script>
 
 <template>
-  <div class="flex flex-col pt-4 gap-6 overflow-hidden w-140">
-    <div class="h-10 relative flex justify-between items-center px-6">
-      <span class="tt-primary text-5 font-700 leading-normal">{{ $t('钱包充值') }}</span>
-      <SvgIcon v-tooltip.top="lockMessage" :class="[lockModal ? 'cursor-not-allowed' : 'cursor-pointer']" size="24" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)"
-               @click="close(true)"
-      />
-    </div>
-
-    <div v-if="needAmount" class="px-6 flex justify-between items-center need">
-      <div class="tt-primary text-3.5 leading-5">
-        {{ $t('至少还需充值') }}
+  <div class="grid w-140 max-h-[90vh] grid-rows-[auto_minmax(0,1fr)] gap-5 rounded-2 overflow-hidden pt-4">
+    <div class="flex flex-col gap-5">
+      <div class="h-10 relative flex justify-between items-center px-6">
+        <span class="tt-primary text-5 font-700 leading-normal">{{ $t('钱包充值') }}</span>
+        <SvgIcon v-tooltip.top="lockMessage" :class="[lockModal ? 'cursor-not-allowed' : 'cursor-pointer']" size="24" name="base/rx_ic_delete" color="var(--colors-icon-icon-secondary)"
+                 @click="close(true)"
+        />
       </div>
-      <div class="tt-brand text-5 font-600 leading-normal">
-        {{ currency(needAmount).format() }}
-      </div>
-    </div>
 
-    <div class="flex flex-col gap-6 px-6">
-      <ItemBlock :title="$t('请输入充值金额')">
-        <div class="flex flex-col items-center gap-4">
-          <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="DEFAULT_MAX_AMOUNT" :step="defaultStep" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
-                       :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @update:model-value="onUpdate" @change="delayQuery"
-          />
-          <div class="px-6 justify-between flex gap-3 tt-tertiary">
-            <I18nT class="font-500 text-3.5" scope="global" tag="div" :keypath="$t('实付金额：{money}', { money: '{money}' })">
-              <template #money>
-                <span class="tt-brand font-600">{{ currency(playInfo.total).format() }}</span>
-                <span v-if="playInfo.activityTotalRecharge > rechargeAmount" class="tt-brand font-600">({{ $t('到账 {amount}', { amount: currency(playInfo.activityTotalRecharge).format() }) }})</span>
-              </template>
-            </I18nT>
-            <div v-if="playInfo.fee > 0" class="flex gap-1 items-center text-3.5">
-              <div>{{ $t('手续费（{feeDetail}）：{fee}', { feeDetail: playInfo.feeDetail, fee: currency(playInfo.fee).format() }) }}</div>
-              <div v-if="isCardPayWay(selectedPayway)" v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeDetail} 的手续费。', { feeDetail: playInfo.feeDetail }) }" class="flex items-center">
-                <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
+      <div v-if="needAmount" class="px-6 flex justify-between items-center need">
+        <div class="tt-primary text-3.5 leading-5">
+          {{ $t('至少还需充值') }}
+        </div>
+        <div class="tt-brand text-5 font-600 leading-normal">
+          {{ currency(needAmount).format() }}
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-6 px-6">
+        <ItemBlock :title="$t('请输入充值金额')">
+          <div class="flex flex-col items-center gap-4">
+            <RxStepInput v-model="amount" class="!w-60 !h-18" size="lg" :min="min" :max="DEFAULT_MAX_AMOUNT" :step="defaultStep" mode="currency" currency="USD" locale="en-US" :min-fraction-digits="0"
+                         :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }" @update:model-value="onUpdate" @change="delayQuery"
+            />
+            <div class="px-6 justify-between flex gap-3 tt-tertiary">
+              <I18nT class="font-500 text-3.5" scope="global" tag="div" :keypath="$t('实付金额：{money}', { money: '{money}' })">
+                <template #money>
+                  <span class="tt-brand font-600">{{ currency(playInfo.total).format() }}</span>
+                  <span v-if="playInfo.activityTotalRecharge > rechargeAmount" class="tt-brand font-600">({{ $t('到账 {amount}', { amount: currency(playInfo.activityTotalRecharge).format() }) }})</span>
+                </template>
+              </I18nT>
+              <div v-if="playInfo.fee > 0" class="flex gap-1 items-center text-3.5">
+                <div>{{ $t('手续费（{feeDetail}）：{fee}', { feeDetail: playInfo.feeDetail, fee: currency(playInfo.fee).format() }) }}</div>
+                <div v-if="isCardPayWay(selectedPayway)" v-tooltip.top="{ value: $t('由于银行处理成本，该支付渠道需加收 {feeDetail} 的手续费。', { feeDetail: playInfo.feeDetail }) }" class="flex items-center">
+                  <SvgIcon name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
+                </div>
               </div>
             </div>
+            <div class="mt-1 flex flex-col gap-2.5">
+              <RxAmountQuickCheck :min="min" @select="quickSelect" />
+            </div>
+            <NextBouns :amount="rechargeAmount" />
           </div>
-          <div class="mt-1 flex flex-col gap-2.5">
-            <RxAmountQuickCheck :min="min" @select="quickSelect" />
-          </div>
-          <NextBouns :amount="rechargeAmount" />
-        </div>
-      </ItemBlock>
+        </ItemBlock>
+      </div>
     </div>
-    <div class="flex-1 flex-col px-6 pb-6 gap-6 overflow-y-auto">
-      <ItemBlock :title="$t('选择支付方式')">
+    <div class="min-h-0 flex flex-col px-6 pb-6">
+      <ItemBlock class="min-h-0 flex-1" :title="$t('选择支付方式')">
         <template v-if="otherPayOpen" #extra>
           <PaywayCategorySelect v-model="selectedCategory" :categories="payCategories" />
         </template>
-        <WalletPaymentMethods v-model="selectedPayway" :category="selectedCategory" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList" :on-confirm="confirm"
+        <WalletPaymentMethods v-model="selectedPayway" class="min-h-0 flex-1" :category="selectedCategory" :add-funds-and-pay="!!needAmount" :recharge-amount="rechargeAmount" :methods="paywayList" :on-confirm="confirm"
                               @other-pay-open="otherPayOpen = $event"
         />
       </ItemBlock>

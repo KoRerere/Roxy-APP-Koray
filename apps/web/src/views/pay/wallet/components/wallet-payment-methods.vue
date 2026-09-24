@@ -280,6 +280,28 @@ const defaultMethods: AvailableMethods[] = [
 const confirmText = computed(() => addFundsAndPay ? $t('充值并支付') : $t('确认'))
 const expandedMethods = ref(false)
 
+/** StripePay 暴露给底栏的提交入口；卡渠道时由底栏按钮调用 */
+interface StripePayExpose {
+  /** 触发 Stripe 绑卡或支付 */
+  submit: () => Promise<void>
+  /** Stripe 提交中 */
+  isLoading: boolean
+}
+
+const stripePayRef = useTemplateRef<StripePayExpose>('stripePay')
+/** 支付方式滚动层，选中银行卡或 USDT/USDC 后滚到底露出下方表单 */
+const paywayScrollRef = useTemplateRef<{ scrollToBottom: () => void }>('paywayScroll')
+
+/** 选中后会在网格下方展开额外表单（Stripe / 稳定币币种网络） */
+function shouldScrollPayDetail(payway?: PayWay) {
+  return isCardPayWay(payway) || payway === PayWay.USDT || payway === PayWay.USDC
+}
+
+/** 展开其它方式且选中银行卡时，底栏 loading 跟 Stripe 提交态 */
+const footerLoading = computed(() => {
+  return Boolean(openOther.value && isCardPayWay(selectedPayway.value) && stripePayRef.value?.isLoading)
+})
+
 const availableMethods = computed(() => {
   return methods.reduce((acc, { value: payway, discount, ...meta }) => {
     if (acc.some(item => item.value.includes(payway))) {
@@ -457,6 +479,15 @@ watch(openOther, (open) => {
   emit('otherPayOpen', open)
 }, { immediate: true })
 
+watch([selectedPayway, openOther], async ([payway, other]) => {
+  // Stripe / 稳定币表单 v-show 后高度才进入布局，等一帧再滚，否则 scrollHeight 仍是旧值
+  if (!other || !shouldScrollPayDetail(payway)) {
+    return
+  }
+  await nextTick()
+  paywayScrollRef.value?.scrollToBottom()
+})
+
 /** 展开其它支付方式（无绑卡或删光卡片后保持面板可见） */
 function showOtherPay() {
   genStripe.value = true
@@ -517,93 +548,108 @@ async function payConfirm() {
   }
   await onConfirm(data)
 }
+
+/** 底栏统一入口：新卡走 Stripe submit，其余走已有 payConfirm */
+async function onFooterConfirm() {
+  if (openOther.value && isCardPayWay(selectedPayway.value)) {
+    await stripePayRef.value?.submit()
+    return
+  }
+  await payConfirm()
+}
 </script>
 
 <template>
-  <div class="relative w-full flex flex-col gap-3">
+  <div class="relative w-full min-h-0 flex flex-col">
     <RxLoading v-model="loading" :opacity="0.9" />
-    <div v-if="cardList?.length" class="flex self-stretch justify-between items-center px-2 gap-2 cards">
-      <div class="flex py-2.5 gap-2 overflow-x-auto">
-        <div v-for="item in cardList" :key="item.cardId" class="h-20 flex flex-col justify-between gap-2.5 pa-2 rounded-md cursor-pointer select-none cards-item"
-             :class="{ active: activeCard?.cardId === item.cardId }" @click="handleCardClick(item)"
-        >
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-1">
-              <SvgIcon :name="item.cardIcon" size="32" />
-              <span class="cards-item-number">({{ item.last4 }})</span>
+    <div class="min-h-0 flex-1 grid grid-rows-[minmax(0,1fr)_auto] gap-3">
+      <RxMaskScroll ref="paywayScroll" class="min-h-0 -mx-6" show-scrollbar>
+        <div class="flex flex-col gap-3 px-6">
+          <div v-if="cardList?.length" class="flex self-stretch justify-between items-center px-2 gap-2 cards">
+            <div class="flex py-2.5 gap-2 overflow-x-auto">
+              <div v-for="item in cardList" :key="item.cardId" class="h-20 flex flex-col justify-between gap-2.5 pa-2 rounded-md cursor-pointer select-none cards-item"
+                   :class="{ active: activeCard?.cardId === item.cardId }" @click="handleCardClick(item)"
+              >
+                <div class="flex items-center justify-between gap-4">
+                  <div class="flex items-center gap-1">
+                    <SvgIcon :name="item.cardIcon" size="32" />
+                    <span class="cards-item-number">({{ item.last4 }})</span>
+                  </div>
+                  <RxButton class="shrink-0" outlined severity="secondary" size="xxs" icon="base/rx_ic_bin_1" @click.stop="deleteCard(item.cardId)" />
+                </div>
+                <div class="flex items-center">
+                  <SvgIcon v-if="activeCard?.cardId === item.cardId" name="status/rx_ic_check_fill" />
+                  <span class="flex-1 text-right cards-item-date">{{ item.exp_month }}/{{ item.exp_year }}</span>
+                </div>
+              </div>
             </div>
-            <RxButton class="shrink-0" outlined severity="secondary" size="xxs" icon="base/rx_ic_bin_1" @click.stop="deleteCard(item.cardId)" />
+            <div class="h-20 w-8 flex justify-center items-center cursor-pointer cards-other" @click="toggleOtherPay">
+              <SvgIcon class="transition-transform duration-300" :class="{ '-rotate-45': openOther }" name="base/rx_ic_plus" />
+            </div>
           </div>
-          <div class="flex items-center">
-            <SvgIcon v-if="activeCard?.cardId === item.cardId" name="status/rx_ic_check_fill" />
-            <span class="flex-1 text-right cards-item-date">{{ item.exp_month }}/{{ item.exp_year }}</span>
-          </div>
-        </div>
-      </div>
-      <div class="h-20 w-8 flex justify-center items-center cursor-pointer cards-other" @click="toggleOtherPay">
-        <SvgIcon class="transition-transform duration-300" :class="{ '-rotate-45': openOther }" name="base/rx_ic_plus" />
-      </div>
-    </div>
-    <div v-show="openOther" class="w-full grid grid-cols-3 gap-3 select-none payway">
-      <template v-for="item in visibleMethods" :key="item.label">
-        <div class="payway-item" :class="{ active: item.value.includes(selectedPayway!), disabled: item.disabled }" @click="handleClick(item)">
-          <component :is="item.disabled ? RxToolTip : 'div'" class="relative flex items-center gap-2 w-full min-w-0">
-            <div v-if="item.discount" class="payway-item-discount">
-              {{ item.discount }}
-            </div>
-            <!-- 设计稿为 24px 品牌标与文案横排，contain 避免宽字标被裁切 -->
-            <div class="payway-item-icon">
-              <img :src="item.image">
-            </div>
-            <div class="payway-item-label">
-              {{ item.label }}
-            </div>
+          <div v-show="openOther" class="w-full grid grid-cols-3 gap-3 select-none payway">
+            <template v-for="item in visibleMethods" :key="item.label">
+              <div class="payway-item" :class="{ active: item.value.includes(selectedPayway!), disabled: item.disabled }" @click="handleClick(item)">
+                <component :is="item.disabled ? RxToolTip : 'div'" class="relative flex items-center gap-2 w-full min-w-0">
+                  <div v-if="item.discount" class="payway-item-discount">
+                    {{ item.discount }}
+                  </div>
+                  <!-- 设计稿为 24px 品牌标与文案横排，contain 避免宽字标被裁切 -->
+                  <div class="payway-item-icon">
+                    <img :src="item.image">
+                  </div>
+                  <div class="payway-item-label">
+                    {{ item.label }}
+                  </div>
 
-            <template #content>
-              <span class="text-white">{{ $t('该支付方式暂时无法使用') }}</span>
+                  <template #content>
+                    <span class="text-white">{{ $t('该支付方式暂时无法使用') }}</span>
+                  </template>
+                </component>
+              </div>
             </template>
-          </component>
-        </div>
-      </template>
-      <RxButton v-if="showMoreButton" class="w-full" outlined size="lg" :label="$t('更多支付方式')" @click="expandCurrentCategory" />
-    </div>
-    <div v-if="genStripe" class="w-full">
-      <StripePay v-show="openOther && isCardPayWay(selectedPayway)" v-model:bind="saveCard" class="w-full" :pay-type="selectedPayway" :recharge-amount="rechargeAmount" :confirm-text="confirmText" :on-confirm="newCardConfirm">
-        <template v-if="cardList.length < 4" #after>
-          <div class="flex items-center gap-2.5">
-            <RxCheckbox v-model="saveCard" input-id="wrap" binary />
-            <label for="wrap" class="select-none default">{{ $t('保存并开通快捷支付') }}</label>
+            <RxButton v-if="showMoreButton" class="w-full" outlined size="lg" :label="$t('更多支付方式')" @click="expandCurrentCategory" />
           </div>
-        </template>
-      </StripePay>
+          <div v-if="genStripe" class="w-full">
+            <StripePay ref="stripePay" v-show="openOther && isCardPayWay(selectedPayway)" v-model:bind="saveCard" class="w-full" hide-submit :pay-type="selectedPayway" :recharge-amount="rechargeAmount" :confirm-text="confirmText" :on-confirm="newCardConfirm">
+              <template v-if="cardList.length < 4" #after>
+                <div class="flex items-center gap-2.5">
+                  <RxCheckbox v-model="saveCard" input-id="wrap" binary />
+                  <label for="wrap" class="select-none default">{{ $t('保存并开通快捷支付') }}</label>
+                </div>
+              </template>
+            </StripePay>
 
-      <div v-show="openOther && !isCardPayWay(selectedPayway)" class="flex flex-col gap-3">
-        <div v-if="[PayWay.USDT, PayWay.USDC].includes(selectedPayway!) && cryptoCoins.length" class="flex gap-2.5">
-          <div v-for="item in cryptoCoins" :key="item.name" class="flex-1 flex flex-col gap-1.5">
-            <div class="label">
-              {{ item.label }}
+            <div v-show="openOther && !isCardPayWay(selectedPayway)" class="flex flex-col gap-3">
+              <div v-if="[PayWay.USDT, PayWay.USDC].includes(selectedPayway!) && cryptoCoins.length" class="flex gap-2.5">
+                <div v-for="item in cryptoCoins" :key="item.name" class="flex-1 flex flex-col gap-1.5">
+                  <div class="label">
+                    {{ item.label }}
+                  </div>
+                  <TsFormSelect v-model="item.value" v-bind="item.props" size="lg" />
+                </div>
+              </div>
+              <div v-if="chooseMethod" class="flex flex-col gap-2.5 pa-4 rounded-md extend">
+                <div class="flex flex-col items-start gap-1.5">
+                  <img class="h-8" :src="chooseMethod.image">
+                  <div class="extend-desc">
+                    {{ chooseMethod.desc }}
+                  </div>
+                </div>
+                <RxDivider line-only line-color="var(--colors-border-border-action)" />
+                <div class="flex items-center gap-2.5">
+                  <SvgIcon name="base/rx_ic_modal" size="48" color="var(--colors-icon-icon-tertiary)" />
+                  <div class="extend-tip">
+                    {{ chooseMethod.tip }}
+                  </div>
+                </div>
+              </div>
             </div>
-            <TsFormSelect v-model="item.value" v-bind="item.props" size="lg" />
           </div>
         </div>
-        <div v-if="chooseMethod" class="flex flex-col gap-2.5 pa-4 rounded-md extend">
-          <div class="flex flex-col items-start gap-1.5">
-            <img class="h-8" :src="chooseMethod.image">
-            <div class="extend-desc">
-              {{ chooseMethod.desc }}
-            </div>
-          </div>
-          <RxDivider line-only line-color="var(--colors-border-border-action)" />
-          <div class="flex items-center gap-2.5">
-            <SvgIcon name="base/rx_ic_modal" size="48" color="var(--colors-icon-icon-tertiary)" />
-            <div class="extend-tip">
-              {{ chooseMethod.tip }}
-            </div>
-          </div>
-        </div>
-      </div>
+      </RxMaskScroll>
+      <RxButton class="w-full shrink-0" size="lg" :label="confirmText" :loading="footerLoading" @click="onFooterConfirm" />
     </div>
-    <RxButton v-if="!openOther || (openOther && !isCardPayWay(selectedPayway))" class="w-full" size="lg" :label="confirmText" @click="payConfirm" />
   </div>
 </template>
 

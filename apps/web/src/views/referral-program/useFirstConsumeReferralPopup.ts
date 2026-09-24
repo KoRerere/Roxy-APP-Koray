@@ -3,7 +3,7 @@ import ReferralModal from '/@/views/referral-program/components/referral-modal.v
 import { useDialog } from '/@/hooks/useDialog'
 import { useUserStore } from '/@/stores/user'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks'
-import { genDriver, sleep } from '/@/utils'
+import { genDriver /* sleep */ } from '/@/utils'
 
 /** 侧边栏底部「推广计划」入口，供关闭弹窗后的引导高亮 */
 const REFERRAL_PROGRAM_ENTRY_ID = 'REFERRAL_PROGRAM_ENTRY'
@@ -24,7 +24,7 @@ export function useFirstConsumeReferralPopup() {
 
   /**
    * 未弹过则打开推广弹窗；关闭时把 firstConsumePopupStatus 记为已弹。
-   * @param onClosed 弹窗关闭或无需弹出时的回调；查看详情时 reason 为 view-details，调用方应跳过默认跳转
+   * @param onClosed 弹窗关闭或无需弹出时的回调。查看详情时 reason 为 view-details，只应跳过购买成功后的默认跳转，抽奖等后续弹窗仍要走。
    */
   function maybeShowFirstConsumeReferralPopup(onClosed?: (reason: FirstConsumeReferralCloseReason) => void) {
     if (userPayInfo.value.firstConsumePopupStatus !== false || isShowingFirstConsumePopup) {
@@ -33,7 +33,7 @@ export function useFirstConsumeReferralPopup() {
     }
 
     isShowingFirstConsumePopup = true
-    /** 查看详情会先自己跳路由，关闭回调不能再走购买成功后的默认跳转 */
+    /** 查看详情会先自己跳推广页，关闭回调里不能再 push 别的路由 */
     let closeReason: FirstConsumeReferralCloseReason = 'dismiss'
     showModal({
       header: 'first-consume-referral-popup',
@@ -46,10 +46,10 @@ export function useFirstConsumeReferralPopup() {
         await updateOnboardingTaskStatus({ firstConsumePopupStatus: true })
         const reason = closeReason
         onClosed?.(reason)
-        if (reason === 'dismiss') {
-          await sleep(300)
-          focusReferralProgramEntry()
-        }
+        // if (reason === 'dismiss') {
+        //   await sleep(300)
+        //   focusReferralProgramEntry()
+        // }
       },
       slots: {
         container: ({ handleCancel }) => h(ReferralModal, {
@@ -79,7 +79,7 @@ function dismissReferralEntryDriver() {
   driver.destroy()
 }
 
-function focusReferralProgramEntry() {
+function _focusReferralProgramEntry() {
   const el = document.getElementById(REFERRAL_PROGRAM_ENTRY_ID)
   if (!el) {
     return

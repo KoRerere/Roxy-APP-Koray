@@ -165,9 +165,12 @@ function close(isCancel: boolean) {
       <div class="relative flex flex-col gap-5 items-center overflow-hidden py-6 rounded-lg qty-panel">
         <!-- 设计稿顶部光晕：480×122 居中贴顶，圆角由 overflow-hidden 裁切 -->
         <img :src="qtyPanelGlowSrc" alt="" draggable="false" class="absolute top-0 left-1/2 -translate-x-1/2 w-480px h-122px max-w-none pointer-events-none select-none">
-        <p class="relative z-1 tt-primary text-3.5 font-500 text-center m-0">
-          {{ $t('请选择要购买的窗口数量') }}
-        </p>
+        <i18n-t class="relative z-1 tt-primary text-3.5 font-500 text-center m-0" tag="p" :keypath="$t('请选择要购买的 {profile} 数量', { profile: '{profile}' })" scope="global">
+          <template #profile>
+            <span class="first !font-[Inter]">{{ $t('终身窗口') }}</span>
+          </template>
+        </i18n-t>
+
         <RxStepInput v-model="purchaseCount" class="relative z-1 !w-70 !h-18" size="lg" :min="MIN_COUNT" :max="MAX_COUNT" :step="1" :pt="{ pcinputtext: { root: '!text-8 !font-bold' } }"
                      @update:model-value="onCountUpdate"
         />

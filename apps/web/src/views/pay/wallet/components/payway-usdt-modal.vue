@@ -10,9 +10,11 @@ interface Props {
   data: Record<string, any>
   onConfirm?: () => void | Promise<void>
   onCancel?: () => void | Promise<void>
+  /** 从钱包充值进入时显示返回；点击后关闭支付弹窗，不跳转账单页，回到充值弹窗 */
+  onBack?: () => void | Promise<void>
 }
 
-const { data: props, onConfirm, onCancel } = defineProps<Props>()
+const { data: props, onConfirm, onCancel /* onBack */ } = defineProps<Props>()
 
 const emit = defineEmits(['close'])
 
@@ -121,12 +123,21 @@ function close(isCancel: boolean) {
     onCancel?.()
   }
 }
+
+/** 关闭支付弹窗并回到钱包充值，不走取消支付的账单页跳转 */
+// function back() {
+//   emit('close')
+//   onBack?.()
+// }
 </script>
 
 <template>
   <div class="flex flex-col pt-4 pb-6 px-6 gap-6 select-none min-w-130">
     <div class="relative flex items-center h-10 header">
-      <span>{{ $t('{type} 支付', { type: props.payType }) }}</span>
+      <div class="flex items-center gap-2">
+        <!-- <RxButton v-if="onBack" severity="secondary" variant="text" size="xxs" icon="base/rx_ic_arrow_left" :label="$t('返回')" @click="back" /> -->
+        <span>{{ $t('{type} 支付', { type: props.payType }) }}</span>
+      </div>
       <SvgIcon class="absolute right-0 cursor-pointer" size="24" name="base/rx_ic_delete" @click="close(true)" />
     </div>
 

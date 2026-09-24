@@ -26,7 +26,7 @@ import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { markNewUserBenefitShowOnLogin } from '/@/views/campaign/new-user/useNewUserBenefitModal'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
-import { OFFICIAL_SITE_REDIRECT_SESSION } from '/@/constants/storage-key'
+import { OFFICIAL_SITE_REDIRECT_SESSION, PROTOCOL_AUTO_LOGIN_PENDING } from '/@/constants/storage-key'
 
 const loginEventCommonParams = {
   login_client: globalThis.isElectron ? 'PC_APP' : 'WEB',
@@ -67,6 +67,10 @@ const currentCompProps = ref<Recordable>()
 // })
 
 onMounted(() => {
+  // 登录页会清 token。已有会话、协议自动登录进行中、或用户信息已拉到时不能清。
+  if (sessionStorage.getItem(PROTOCOL_AUTO_LOGIN_PENDING) || token.value || userInfo.value?.id) {
+    return
+  }
   token.value = ''
   workspaceStore.resetWorkspace()
 })
@@ -219,7 +223,7 @@ async function handleSubmitBy2fa(faCode: string) {
 }
 
 async function afterLogin(loginData: LoginCreateData['data']) {
-  setToken(loginData.token)
+  setToken(loginData.token, { fromOfficialSite: false })
   // 进入主界面后新人福利弹窗自动出现一次（不受 8 小时/当日次数限制）
   markNewUserBenefitShowOnLogin()
   console.log('rememberMe', rememberMe.value)

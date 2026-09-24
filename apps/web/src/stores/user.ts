@@ -43,6 +43,17 @@ export interface GetUserInfoOptions {
 
 const INIT_USER_INFO_CACHE_KEY = 'user:initUserInfo:cache'
 
+/** 官网协议 token 的同步标记：拦截器可能早于 persist 水合，不能只读 Pinia */
+let officialSiteSession = false
+
+function setOfficialSiteSession(enabled: boolean) {
+  officialSiteSession = enabled
+}
+
+export function isOfficialSiteSession() {
+  return officialSiteSession
+}
+
 function getWorkspaceStore() {
   return useWorkspaceStore()
 }
@@ -73,6 +84,8 @@ export const useUserStore = defineStore(
 
     const userConfig = ref<UserConfig>({})
     const token = ref('')
+    /** 官网协议写入的 token 须带 source:web，否则 Limit 接口会 403 */
+    const isOfficialSiteToken = ref(false)
     const appVersion = ref('')
     const localNetwork = ref<ProxyDetectionResult>({} as ProxyDetectionResult)
     const rememberMe = ref(false)
@@ -359,6 +372,8 @@ export const useUserStore = defineStore(
       removeCookie('roxy_token', '/', location.hostname.split('.').slice(-2).join('.'))
       userCards.value = undefined
       token.value = ''
+      isOfficialSiteToken.value = false
+      setOfficialSiteSession(false)
       mixpanel.reset()
       useListCacheStore().clearAll()
       getWorkspaceStore().resetWorkspace()
@@ -484,8 +499,25 @@ export const useUserStore = defineStore(
       return userCards.value
     }
 
-    function setToken(_token: string) {
+    function setToken(_token: string, options?: { fromOfficialSite?: boolean }) {
+      // 官网协议写入走 fromOfficialSite。本地已有 token 时拒绝覆盖，避免 A 被换成 B。
+      if (options?.fromOfficialSite && token.value && _token && _token !== token.value) {
+        console.warn('[auto-login] ignore official-site token, renderer already has a session')
+        return
+      }
+
       token.value = _token
+      if (!_token) {
+        isOfficialSiteToken.value = false
+        setOfficialSiteSession(false)
+      }
+      else if (options?.fromOfficialSite !== undefined) {
+        isOfficialSiteToken.value = options.fromOfficialSite
+        setOfficialSiteSession(options.fromOfficialSite)
+      }
+      else {
+        setOfficialSiteSession(isOfficialSiteToken.value)
+      }
 
       if (!globalThis.isElectron) {
         const domain = location.hostname.split('.').slice(-2).join('.')
@@ -673,6 +705,7 @@ export const useUserStore = defineStore(
     return {
       hasCallInitUserInfo,
       token,
+      isOfficialSiteToken,
       loginWay,
       rememberMe,
       userInfo,
@@ -707,7 +740,7 @@ export const useUserStore = defineStore(
   },
   {
     persist: {
-      pick: ['token', 'rememberMe', 'password', 'userInfo.email', 'loginWay', 'userInfo.onboardingTaskStatus'],
+      pick: ['token', 'isOfficialSiteToken', 'rememberMe', 'password', 'userInfo.email', 'loginWay', 'userInfo.onboardingTaskStatus'],
     },
   },
 )

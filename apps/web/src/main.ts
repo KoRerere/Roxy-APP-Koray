@@ -49,8 +49,10 @@ queueMicrotask(async () => {
         const simpleLocale = useSimpleLocale()
         const userStore = useUserStore()
         simpleLocale.currentLocale = language
-        userStore.setToken(token || '')
-        perfLog('main:userStore:setToken', { hasToken: Boolean(token) })
+
+        // Electron 主进程 token 是 App 登录态；Pinia persist 也有 token 时不要用空串盖掉
+        userStore.setToken(token || userStore.token || '')
+        perfLog('main:userStore:setToken', { hasToken: Boolean(token || userStore.token) })
         userStore.initUserInfo()
         perfLog('main:userStore:initUserInfo:called')
         app.mount('#app')
@@ -123,8 +125,9 @@ queueMicrotask(async () => {
       else {
         try {
           const roxyToken = await getCookie('roxy_token')
-          if (roxyToken)
+          if (roxyToken) {
             userStore.setToken(roxyToken)
+          }
         }
         catch (error) {
           console.error('Failed to get token from cookie:', error)

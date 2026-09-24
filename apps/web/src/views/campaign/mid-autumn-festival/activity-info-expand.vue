@@ -2,13 +2,13 @@
 import { getImage } from '/@/utils/basic'
 import { useCampaignStore } from '/@/stores/campaign'
 
-const { seasonalActivity } = storeToRefs(useCampaignStore())
+const { seasonalActivity, currentActivity } = storeToRefs(useCampaignStore())
 
 const imgSrc = `url('${getImage('campaing/mid-autumn-festival/member_banner_bg.jpg')}')`
 </script>
 
 <template>
-  <div v-if="seasonalActivity.midAutumnFestival" class="flex flex-col gap-1.5 py-3.5 px-4 rounded-2 overflow-hidden banner">
+  <div v-if="seasonalActivity.midAutumnFestival && currentActivity.team_bogo" class="flex flex-col gap-1.5 py-3.5 px-4 rounded-2 overflow-hidden banner">
     <div class="flex items-center gap-2">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -24,11 +24,11 @@ const imgSrc = `url('${getImage('campaing/mid-autumn-festival/member_banner_bg.j
         </defs>
       </svg>
       <div class="title">
-        {{ $t('团队席位 · 买多少送多少') }}
+        {{ $t('团队席位 · 买 {count} 送 {count}', { count: 1 }) }}
       </div>
     </div>
     <div class="color-white text-3.25 font-600 leading-4.5">
-      {{ $t('活动期间购买团队席位，购买数量即为赠送数量，多买多送') }}
+      {{ $t('团队、团队成员均参与 · 购买及赠送均终身有效') }}
     </div>
   </div>
 </template>

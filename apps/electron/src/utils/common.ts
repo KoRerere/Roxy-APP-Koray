@@ -18,6 +18,26 @@ export const isWebReady = () => webReadyPromise.promise
 /** 前端已经准备就绪 */
 export const setWebReady = () => webReadyPromise.resolve(true)
 
+/** 渲染进程尚未消费的 open-page / auto-login query，避免 web:ready 竞态丢包 */
+let pendingOpenPageQuery = ''
+
+/** 记录待分发的协议 query（含前导 ?） */
+export function setPendingOpenPageQuery(query: string) {
+  pendingOpenPageQuery = query
+}
+
+/** 取出并清空待分发 query；无则返回空串 */
+export function takePendingOpenPageQuery() {
+  const query = pendingOpenPageQuery
+  pendingOpenPageQuery = ''
+  return query
+}
+
+/** 只读 pending，供渲染进程在 initUserInfo 前判断是否走官网自动登录 */
+export function peekPendingOpenPageQuery() {
+  return pendingOpenPageQuery
+}
+
 export function safeStringify(obj) {
   const seen = new WeakSet()
   return JSON.stringify(obj, (key, value) => {

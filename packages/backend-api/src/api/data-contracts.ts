@@ -4223,28 +4223,28 @@ export interface UserUpdateDeviceNameCreateData {
 
 export interface UserUpdateOnboardingTaskStatusCreatePayload {
   /** 首次注册指引弹窗：False未完成 True已完成 */
-  firstRegisterGuideStatus: boolean;
+  firstRegisterGuideStatus?: boolean;
   /** 隐藏侧边栏入口：False未完成 True已完成 */
-  hideSidebarEntryStatus: boolean;
+  hideSidebarEntryStatus?: boolean;
   /** 右键操作点击指引：False未完成 True已完成 */
-  contextMenuGuideStatus: boolean;
+  contextMenuGuideStatus?: boolean;
   /** 保存筛选条件：False未完成 True已完成 */
-  saveFilterGuideStatus: boolean;
+  saveFilterGuideStatus?: boolean;
   /** 创建窗口视频入口：False未完成 True已完成 */
-  createProfileVideoEntryStatus: boolean;
+  createProfileVideoEntryStatus?: boolean;
   /** 创建窗口步骤指引：False未完成 True已完成 */
-  createProfileTourGuideStatus: boolean;
+  createProfileTourGuideStatus?: boolean;
   /** 创建代理视频入口：False未完成 True已完成 */
-  createProxyVideoEntryStatus: boolean;
-  autoRatingStatus: boolean;
-  ratingStatus: boolean;
-  externalRatingStatus: boolean;
-  firstOpenWindowStatus: boolean;
-  firstWebRegisterGuideStatus: boolean;
-  batchOpenWindowNoPromptStatus: boolean;
-  newSpaceCreateTeamStatus: boolean;
+  createProxyVideoEntryStatus?: boolean;
+  autoRatingStatus?: boolean;
+  ratingStatus?: boolean;
+  externalRatingStatus?: boolean;
+  firstOpenWindowStatus?: boolean;
+  firstWebRegisterGuideStatus?: boolean;
+  batchOpenWindowNoPromptStatus?: boolean;
+  newSpaceCreateTeamStatus?: boolean;
   /** '首次消费弹窗：False未弹 True 已弹/历史已消费不再弹' */
-  firstConsumePopupStatus: boolean;
+  firstConsumePopupStatus?: boolean;
 }
 
 export interface UserUpdateOnboardingTaskStatusCreateData {
@@ -7935,6 +7935,23 @@ export interface UserGetProxyModuleListData {
       /** 绑定的窗口数量 */
       bindCount?: number;
       bindList?: number[];
+      /** 绑定的云手机数量 */
+      phoneBindCount?: number;
+      /** 绑定的云手机列表 */
+      phoneBindList?: {
+        /** 云手机ID */
+        id?: number;
+        /** 云手机名称 */
+        name?: string;
+        /** 云手机状态 */
+        status?: string;
+        /** 云手机号码 */
+        phone?: string;
+        /** 云手机团队ID */
+        teamId?: number;
+        /** 代理ID */
+        proxyId?: number;
+      }[];
       /** 编辑时间 */
       updateTime?: string;
       /** 创建时间 */
@@ -8673,6 +8690,10 @@ export interface UserGetProxyListMergedListData {
       bindAccountList?: string[];
       canRefund?: boolean;
       bandwidthSpeed?: number;
+      /** 关联云手机数量（绑定到该代理的云手机台数，无绑定时为 0） */
+      phoneBindCount?: number;
+      /** 关联云手机列表（cloudphone-server 透传的云手机信息，无绑定时为空数组） */
+      phoneBindList?: object[];
     }[];
   };
   msg: string;
@@ -10790,28 +10811,28 @@ export interface UserSevenDayTrialCreateData {
 }
 
 export interface UserPaySettlementCreatePayload {
-  purchaseMember: {
-    profile: number;
-    workspace: number;
-    staff: number;
+  purchaseMember?: {
+    profile?: number;
+    workspace?: number;
+    staff?: number;
   };
   /** 购买类型(wallet/workspace/staff/profile) */
-  purchaseType: string;
+  purchaseType?: string;
   /** 订阅等级(Basic/Pro/Business/Enterprise) */
-  subLevel: string;
+  subLevel?: string;
   /** 购买月数(1/3/6/12) */
-  subscriptionMonths: number;
+  subscriptionMonths?: number;
   /** 购买天(7/30//90/180/360) 新版使用 */
-  subscriptionDays: number;
+  subscriptionDays?: number;
   /** 是否自动购买和续费, */
-  isAuto: boolean;
+  isAuto?: boolean;
   /** 订单号 */
-  orderNo: string;
+  orderNo?: string;
   /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
   payType: string;
-  giftType: string;
+  giftType?: string;
   /** 'upgrade', 'purchase' */
-  subOrderType: string;
+  subOrderType?: string;
   /** 订单类型(续费/订阅/购买/充值/提现/退款/兑换/赠送:renew/subscribe/purchase/recharge/withdraw/refund/exchange/gift) */
   orderType: string;
 }
@@ -11101,28 +11122,28 @@ export interface UserGetAutoSubscriptionInfoListData {
 }
 
 export interface UserBuyProxySettlementCreatePayload {
-  entryType: number;
+  entryType?: number;
   /** 是否自动续费：0=关闭，1=开启；未传则购买默认关闭 */
-  isAuto: number;
+  isAuto?: boolean;
   /** 购买数量 */
-  purchaseMember: number;
+  purchaseMember?: number;
   /** 购买月数(1) */
-  subscriptionMonths: number;
+  subscriptionMonths?: number;
   /** 支付方式: Balance,Alipay,USDT,Wechat,Card */
   payType: string;
   /** 订单类型(续费//购买:renew/purchase) */
   orderType: string;
   /** 购买供应商ID */
-  proxyProviderId: number;
+  proxyProviderId?: number;
   /** 购买的城市 */
-  purchaseCountry: string;
+  purchaseCountry?: string;
   /** 商业用途 */
-  businessUse: string;
+  businessUse?: string;
   /** 商业用途 */
-  businessId: number;
+  businessId?: number;
   /** 代理ip 带宽 */
-  bandwidthSpeed: number;
-  renewIdList: number[];
+  bandwidthSpeed?: number;
+  renewIdList?: number[];
 }
 
 export interface UserBuyProxySettlementCreateData {
@@ -11363,6 +11384,8 @@ export interface UserRedeemCodeListListData {
     expireDate: string;
     rewardType: string;
     status: number;
+    /** 兑换码描叙 */
+    codeDesc?: string;
   }[];
   msg: string;
 }
@@ -11472,60 +11495,830 @@ export interface QueryOrderStatusListData {
   msg: string;
 }
 
-export enum DataPurchaseTypeEnum {
-  CloudphonePlan = "cloudphone_plan",
-  CloudphoneTimeAddon = "cloudphone_time_addon",
-  CloudphoneMonthlyBoot = "cloudphone_monthly_boot",
-}
-
-export type UserGetCloudphoneSkuListCreatePayload = object;
-
-export interface UserGetCloudphoneSkuListCreateData {
-  /** 0 表示成功 */
-  code?: number;
-  msg?: string;
-  data?: {
-    rows?: {
-      sku?: string;
-      purchaseType?: DataPurchaseTypeEnum;
-      name?: string;
-      phoneSlots?: number;
-      minutes?: number;
-      days?: number;
-      /** 美分 */
-      amount_cents?: number;
-      /** 美元（amount_cents / 100） */
-      amount?: number;
+export interface UserMidAutumnLotteryPrizesListData {
+  /** 业务状态码：0=成功 */
+  code: number;
+  /** 提示文案 */
+  msg: string;
+  data: {
+    /** 待抽奖次数（还有几条 pending 未抽） */
+    pendingCount: number;
+    /** 已抽取（drawn）的奖品列表，按抽奖时间倒序 */
+    prizes: {
+      /** 抽奖记录主键 mid_autumn_lottery_record.id */
+      id?: number;
+      /** 奖品档位：third(≥$30) / fourth(≥$20) / participate_a(≥$12) / participate_b(<$12) */
+      prizeTier?: string;
+      /** 奖品类型：window=窗口会员 / proxy=机房代理 / points=AI积分 */
+      prizeType?: string;
+      /** 奖品明细（随 prizeType 变化） */
+      prizePayload?: {
+        /** proxy：赠送天数；window 还会有 windows；points 则为 points */
+        days: number;
+      };
+      /** 触发抽奖的消费品类：profile=窗口 / proxy=代理 / points=积分 */
+      consumeCategory?: string;
+      /** 触发订单实付金额（美分），1440=$14.40 → 落在 participate_a */
+      consumeAmountCents?: number;
+      /** 触发抽奖的原消费订单号（幂等键） */
+      sourceOrderNo?: string;
+      /** 抽奖到账时生成的赠送订单号（official_gift） */
+      grantOrderNo?: string;
+      /** 用户点击抽奖、奖品到账时间 */
+      drawTime?: string;
+      /** 消费成功预生成抽奖记录的时间 */
+      createTime?: string;
     }[];
   };
 }
 
-export interface UserCloudphoneSettlementCreatePayload {
-  /** 仅支持 Balance（钱包）；省略则按钱包处理 */
-  payType?: string;
-  sku: string;
+export interface UserMidAutumnLotteryDrawCreateData {
+  /** 业务状态码：0=成功 */
+  code: number;
+  /** 提示文案 */
+  msg: string;
+  /** 本次抽中的这一条奖品（每次只抽 1 条） */
+  data: {
+    /** 抽奖记录主键 mid_autumn_lottery_record.id */
+    id: number;
+    /** 档位：third(≥$30) / fourth(≥$20) / participate_a(≥$12) / participate_b(<$12) */
+    prizeTier: string;
+    /** 奖品类型：window=窗口 / proxy=机房代理 / points=AI积分 */
+    prizeType: string;
+    /** 奖品明细（随 prizeType 变化） */
+    prizePayload: {
+      /** 本例为代理：赠送 7 天；window 还有 windows；points 则为 points */
+      days: number;
+    };
+    /** 触发抽奖的消费品类：profile / proxy / points */
+    consumeCategory: string;
+    /** 触发订单实付（美分），1440=$14.40 → participate_a */
+    consumeAmountCents: number;
+    /** 触发抽奖的原消费订单号 */
+    sourceOrderNo: string;
+    /** 本次到账生成的赠送订单号 */
+    grantOrderNo: string;
+    /** 本次抽奖到账时间 */
+    drawTime: string;
+    /** 消费成功预生成该条记录的时间 */
+    createTime: string;
+    /** 抽完后剩余待抽次数（0=已抽完） */
+    pendingCount: number;
+  };
+}
+
+/** 业务状态码，成功固定为0（不是HTTP状态码）；成功时始终返回。 */
+export enum CodeEnum {
+  Value0 = 0,
+}
+
+/** 该档云手机台数，单位台；每项始终返回。枚举数值均为可购买的精确整档台数，不是区间下限；无默认档位。 */
+export enum DataQtyEnum {
+  Value5 = 5,
+  Value10 = 10,
+  Value20 = 20,
+  Value30 = 30,
+  Value40 = 40,
+  Value50 = 50,
+  Value100 = 100,
+  Value150 = 150,
+  Value200 = 200,
+  Value250 = 250,
+  Value300 = 300,
+  Value400 = 400,
+  Value500 = 500,
+  Value600 = 600,
+  Value700 = 700,
+  Value800 = 800,
+  Value900 = 900,
+  Value1000 = 1000,
+}
+
+/** 订阅周期标识，7天/30天/90天/180天/360天分别表示对应自然天数；每项始终返回，供请求原样传入。 */
+export enum DataTermEnum {
+  Value7天 = "7天",
+  Value30天 = "30天",
+  Value90天 = "90天",
+  Value180天 = "180天",
+  Value360天 = "360天",
+}
+
+/** 订阅时长，单位天；分别对应term的7、30、90、180、360天，每项始终返回，不按日历月天数换算。 */
+export enum DataDaysEnum {
+  Value7 = 7,
+  Value30 = 30,
+  Value90 = 90,
+  Value180 = 180,
+  Value360 = 360,
+}
+
+/** 月价计价倍数，无量纲；7天=0.25（不是7/30）、30天=1、90天=3、180天=6、360天=12。每项始终返回，不是实际自然月数量。 */
+export enum DataMonthsEnum {
+  Value025 = 0.25,
+  Value1 = 1,
+  Value3 = 3,
+  Value6 = 6,
+  Value12 = 12,
+}
+
+/** 价格的实付乘数，无量纲，非减免比例；7/30天=1（原价），90天=0.95（付95%，9.5折），180天=0.9（付90%，9折），360天=0.85（付85%，8.5折）。每项始终返回。 */
+export enum DataRateEnum {
+  Value1 = 1,
+  Value095 = 0.95,
+  Value09 = 0.9,
+  Value085 = 0.85,
+}
+
+/** 折扣展示文本；7/30天为空字符串（无折扣），90天为9.5 折、180天为9 折、360天为8.5 折。每项始终返回；无折扣返回空字符串，不缺省也不是null，不用于再次计算减免。 */
+export enum DataOffEnum {
+  Value = "",
+  Value95折 = "9.5 折",
+  Value9折 = "9 折",
+  Value85折 = "8.5 折",
+}
+
+/** 包月开机单台月价，单位美分/台/月；当前固定2990，成功时始终返回。套餐计价时还需乘包月开机台数、months和rate，不是整档套餐月价。 */
+export enum DataMonthlyBootUnitCentsEnum {
+  Value2990 = 2990,
+}
+
+/** 包月开机单台月价，单位美元/台/月，等于monthlyBootUnitCents/100，当前固定29.90。成功时始终返回。 */
+export enum DataMonthlyBootUnitEnum {
+  Value299 = 29.9,
+}
+
+/** 时长包分钟数，单位分钟；每项始终返回，无默认档位。枚举数值均为可购买的精确时长，不能传任意分钟数。 */
+export enum DataMinutesEnum {
+  Value2000 = 2000,
+  Value5000 = 5000,
+  Value10000 = 10000,
+  Value20000 = 20000,
+  Value50000 = 50000,
+  Value100000 = 100000,
+  Value200000 = 200000,
+  Value500000 = 500000,
+  Value1000000 = 1000000,
+  Value2000000 = 2000000,
+  Value5000000 = 5000000,
+  Value10000000 = 10000000,
+}
+
+/** 优惠展示文本，负百分数表示减价幅度，不是实付乘数：2000/5000/10000分钟减5%，20000减9.75%，50000/100000减14.50%，200000减19.25%，500000/1000000减24%，2000000减28.75%，5000000减33.50%，10000000减38.25%。每项始终返回；实现中未配置优惠时回退空字符串而非缺省或null。 */
+export enum DataOffEnum1 {
+  Value = "",
+  Value500 = "-5.00%",
+  Value975 = "-9.75%",
+  Value1450 = "-14.50%",
+  Value1925 = "-19.25%",
+  Value2400 = "-24.00%",
+  Value2875 = "-28.75%",
+  Value3350 = "-33.50%",
+  Value3825 = "-38.25%",
+}
+
+/** 体验云手机名额，单位台，当前固定1；始终返回，不缺省。 */
+export enum DataPhoneSlotsEnum {
+  Value1 = 1,
+}
+
+/** 体验有效时长，单位天，当前固定30；始终返回，不缺省，不是开机分钟数。 */
+export enum DataDaysEnum1 {
+  Value30 = 30,
+}
+
+/** 赠送临时开机时长，单位分钟，当前固定30；始终返回，不缺省。 */
+export enum DataMinutesEnum1 {
+  Value30 = 30,
+}
+
+/** 业务码500表示服务器错误；始终返回，不是HTTP状态码。 */
+export enum CodeEnum1 {
+  Value500 = 500,
+}
+
+/** 无需业务参数；可发送空 JSON 对象，接口不读取请求体业务字段。 */
+export type UserGetCloudphonePlanOptionsCreatePayload = object;
+
+/** HTTP 200 成功响应；code、msg、data 均返回。 */
+export interface UserGetCloudphonePlanOptionsCreateData {
+  /** 业务状态码，成功固定为0（不是HTTP状态码）；成功时始终返回。 */
+  code: CodeEnum;
+  /** 中文结果提示，成功固定为成功；始终返回，不缺省。 */
+  msg: string;
+  /** 套餐配置对象，仅成功时返回；服务器错误时整个字段缺省而非null。成功时下列配置字段全部返回，无请求式默认值。完整对象示例见响应示例。 */
+  data: {
+    /** 可购买的精确台数档位列表，成功时始终返回，按台数升序；报价 qty 必须精确匹配，不能用区间或任意台数。 */
+    qtyTiers: {
+      /** 该档云手机台数，单位台；每项始终返回。枚举数值均为可购买的精确整档台数，不是区间下限；无默认档位。 */
+      qty: DataQtyEnum;
+      /** 该档全部 qty 台每月合计价格，单位美分/月；不是单台价格，未乘订阅倍数和实付乘数，也不含包月开机费。每项始终返回，无固定默认值；5台档为500。 */
+      monthlyCents: number;
+      /** 整档每月合计美元价，单位美元/月，等于monthlyCents/100；不是单台价格。每项始终返回，无固定默认值；5台档为5美元/月。 */
+      monthly: number;
+    }[];
+    /** 订阅周期配置列表，成功时始终返回；仅套餐新购/续期使用，变更套餐忽略。请求term省略默认30天，并非默认选择本数组首项。 */
+    terms: {
+      /** 订阅周期标识，7天/30天/90天/180天/360天分别表示对应自然天数；每项始终返回，供请求原样传入。 */
+      term: DataTermEnum;
+      /** 订阅时长，单位天；分别对应term的7、30、90、180、360天，每项始终返回，不按日历月天数换算。 */
+      days: DataDaysEnum;
+      /** 月价计价倍数，无量纲；7天=0.25（不是7/30）、30天=1、90天=3、180天=6、360天=12。每项始终返回，不是实际自然月数量。 */
+      months: DataMonthsEnum;
+      /** 价格的实付乘数，无量纲，非减免比例；7/30天=1（原价），90天=0.95（付95%，9.5折），180天=0.9（付90%，9折），360天=0.85（付85%，8.5折）。每项始终返回。 */
+      rate: DataRateEnum;
+      /** 折扣展示文本；7/30天为空字符串（无折扣），90天为9.5 折、180天为9 折、360天为8.5 折。每项始终返回；无折扣返回空字符串，不缺省也不是null，不用于再次计算减免。 */
+      off: DataOffEnum;
+    }[];
+    /** 包月开机单台月价，单位美分/台/月；当前固定2990，成功时始终返回。套餐计价时还需乘包月开机台数、months和rate，不是整档套餐月价。 */
+    monthlyBootUnitCents: DataMonthlyBootUnitCentsEnum;
+    /** 包月开机单台月价，单位美元/台/月，等于monthlyBootUnitCents/100，当前固定29.90。成功时始终返回。 */
+    monthlyBootUnit: DataMonthlyBootUnitEnum;
+    /** 临时开机时长包精确档位列表，成功时始终返回，按分钟数升序；请求minutes必须精确匹配，价格已经包含优惠。 */
+    minutePacks: {
+      /** 时长包分钟数，单位分钟；每项始终返回，无默认档位。枚举数值均为可购买的精确时长，不能传任意分钟数。 */
+      minutes: DataMinutesEnum;
+      /** 整包最终应付价格，单位美分/包，已含优惠，不能再按off打折；每项始终返回，无固定默认值。2000分钟包为1330美分。 */
+      priceCents: number;
+      /** 整包最终应付价格，单位美元/包，等于priceCents/100；每项始终返回，无固定默认值。2000分钟包为13.30美元。 */
+      price: number;
+      /** 优惠展示文本，负百分数表示减价幅度，不是实付乘数：2000/5000/10000分钟减5%，20000减9.75%，50000/100000减14.50%，200000减19.25%，500000/1000000减24%，2000000减28.75%，5000000减33.50%，10000000减38.25%。每项始终返回；实现中未配置优惠时回退空字符串而非缺省或null。 */
+      off: DataOffEnum1;
+    }[];
+    /** 新人免费体验配置，成功时始终返回；只展示配置，不查询用户是否已领取。当前固定1台、30天、30分钟，三个字段均返回。 */
+    freeTrial: {
+      /** 体验云手机名额，单位台，当前固定1；始终返回，不缺省。 */
+      phoneSlots: DataPhoneSlotsEnum;
+      /** 体验有效时长，单位天，当前固定30；始终返回，不缺省，不是开机分钟数。 */
+      days: DataDaysEnum1;
+      /** 赠送临时开机时长，单位分钟，当前固定30；始终返回，不缺省。 */
+      minutes: DataMinutesEnum1;
+    };
+    /**
+     * 下月账单日展示值，YYYY-MM-DD；以服务器UTC当前日期取下月同日，不足则取下月月末。未查询团队账期。成功时始终返回，无固定默认值；示例假设UTC当前日为2026-09-17。
+     * @format date
+     */
+    nextBillingDate: string;
+  };
+}
+
+/** 服务器异常响应，无data字段。 */
+export type UserGetCloudphonePlanOptionsCreateError = {
+  /** 业务码500表示服务器错误；始终返回，不是HTTP状态码。 */
+  code: CodeEnum1;
+  /** 默认中文错误提示服务器错误；始终返回。 */
+  msg: string;
+};
+
+/** 业务状态码，成功固定0；始终返回，不是HTTP状态码。 */
+export enum CodeEnum2 {
+  Value0 = 0,
+}
+
+/** 实际报价商品类型，所有成功场景必返；plan=套餐，time_addon=临时开机时长包，free_trial=免费体验。请求省略时为plan，响应无缺省。 */
+export enum DataProductEnum {
+  Plan = "plan",
+  TimeAddon = "time_addon",
+  FreeTrial = "free_trial",
+}
+
+/** 订单商品分类标识，所有成功场景必返；plan对应cloudphone_plan（套餐），time_addon对应cloudphone_time_addon（时长包），free_trial对应cloudphone_free_trial（体验）。仅分类，不表示本接口已创建订单。 */
+export enum DataPurchaseTypeEnum {
+  CloudphonePlan = "cloudphone_plan",
+  CloudphoneTimeAddon = "cloudphone_time_addon",
+  CloudphoneFreeTrial = "cloudphone_free_trial",
+}
+
+/** 仅product=plan时必返：purchase=新购、renew=续期、change=变更；由请求决定，未传/空值回退purchase。time_addon和free_trial时整个字段缺省（不是null或空字符串），即使请求传入action也不回显。 */
+export enum DataActionEnum {
+  Purchase = "purchase",
+  Renew = "renew",
+  Change = "change",
+}
+
+/** 云手机台数，单位台。plan所有动作必返，为请求精确档位5/10/20/30/40/50/100/150/200/250/300/400/500/600/700/800/900/1000；free_trial必返固定1台；time_addon缺省（不是0或null）。响应没有统一默认值。 */
+export enum DataQtyEnum1 {
+  Value1 = 1,
+  Value5 = 5,
+  Value10 = 10,
+  Value20 = 20,
+  Value30 = 30,
+  Value40 = 40,
+  Value50 = 50,
+  Value100 = 100,
+  Value150 = 150,
+  Value200 = 200,
+  Value250 = 250,
+  Value300 = 300,
+  Value400 = 400,
+  Value500 = 500,
+  Value600 = 600,
+  Value700 = 700,
+  Value800 = 800,
+  Value900 = 900,
+  Value1000 = 1000,
+}
+
+/** 订阅周期展示值，所有成功场景必返；plan purchase/renew为请求有效周期7天/30天/90天/180天/360天（请求省略默认30天）；plan change及time_addon固定空字符串；free_trial固定30天。空字符串是实际返回值，不是缺省或null。 */
+export enum DataTermEnum1 {
+  Value = "",
+  Value7天 = "7天",
+  Value30天 = "30天",
+  Value90天 = "90天",
+  Value180天 = "180天",
+  Value360天 = "360天",
+}
+
+/** 报价对应有效时长，单位天，所有成功场景必返；plan purchase/renew按term为7/30/90/180/360；free_trial固定30；plan change及time_addon固定0。没有统一默认值，不是按团队剩余天数计算。 */
+export enum DataDaysEnum2 {
+  Value0 = 0,
+  Value7 = 7,
+  Value30 = 30,
+  Value90 = 90,
+  Value180 = 180,
+  Value360 = 360,
+}
+
+/** 仅plan purchase/renew必返的月价计价倍数，无量纲：7天=0.25（不是7/30）、30天=1、90天=3、180天=6、360天=12。plan change、time_addon、free_trial均缺省（不是0或null）；无统一默认值。 */
+export enum DataMonthsEnum1 {
+  Value025 = 0.25,
+  Value1 = 1,
+  Value3 = 3,
+  Value6 = 6,
+  Value12 = 12,
+}
+
+/** 仅plan purchase/renew必返的实付乘数，无量纲，不是减免比例；7/30天=1（原价），90天=0.95（付95%，9.5折），180天=0.9（付90%，9折），360天=0.85（付85%，8.5折）。plan change、time_addon、free_trial均缺省，不返回null；无统一默认值。 */
+export enum DataRateEnum1 {
+  Value1 = 1,
+  Value095 = 0.95,
+  Value09 = 0.9,
+  Value085 = 0.85,
+}
+
+/** 优惠展示文本，仅plan purchase/renew与time_addon必返；plan 7/30天为空字符串、90天为9.5 折、180天为9 折、360天为8.5 折。时长包2000/5000/10000分钟为-5.00%、20000为-9.75%、50000/100000为-14.50%、200000为-19.25%、500000/1000000为-24.00%、2000000为-28.75%、5000000为-33.50%、10000000为-38.25%，负百分数表示减价幅度。无优惠回退空字符串；plan change/free_trial整个字段缺省，不是空字符串或null。金额已计优惠，不再二次打折。 */
+export enum DataOffEnum2 {
+  Value = "",
+  Value95折 = "9.5 折",
+  Value9折 = "9 折",
+  Value85折 = "8.5 折",
+  Value500 = "-5.00%",
+  Value975 = "-9.75%",
+  Value1450 = "-14.50%",
+  Value1925 = "-19.25%",
+  Value2400 = "-24.00%",
+  Value2875 = "-28.75%",
+  Value3350 = "-33.50%",
+  Value3825 = "-38.25%",
+}
+
+/** 业务码101表示参数或业务校验错误；始终返回，不是HTTP状态码。 */
+export enum CodeEnum3 {
+  Value101 = 101,
+}
+
+/** 业务码500表示服务器错误；始终返回，不是HTTP状态码。 */
+export enum CodeEnum4 {
+  Value500 = 500,
+}
+
+/**
+ * 商品类型：plan=云手机套餐（新购/续期/变更），time_addon=临时开机时长包，free_trial=免费体验。可省略，默认plan，不应全局必填；不是任意字符串，空字符串或null不使用plan默认值而报product 无效。
+ * @default "plan"
+ */
+export enum UserCloudphoneQuoteCreatePayloadProductEnum {
+  Plan = "plan",
+  TimeAddon = "time_addon",
+  FreeTrial = "free_trial",
+}
+
+/**
+ * 套餐动作：purchase=新购报价，renew=续期报价，change=变更套餐报价（零金额、返回下月生效日）。可省略，默认purchase；空值或空白也回退purchase。仅product=plan读取并校验，time_addon/free_trial忽略此字段且响应不返回action。所有场景均仅报价，不实际支付。
+ * @default "purchase"
+ */
+export enum UserCloudphoneQuoteCreatePayloadActionEnum {
+  Purchase = "purchase",
+  Renew = "renew",
+  Change = "change",
+}
+
+/** 报价入参，字段无全局必填项；默认product=plan时qty仍业务必填，空对象会因qty=0产生业务错误。未传字段使用下述默认值；显式传null不等价于使用所有默认值：product=null/空字符串会报product无效，term=null/空字符串在plan purchase/renew时报订阅时长无效；action=null/空白回退purchase，数量字段null按0处理。 */
+export interface UserCloudphoneQuoteCreatePayload {
   /**
-   * 云手机团队 ID
+   * 商品类型：plan=云手机套餐（新购/续期/变更），time_addon=临时开机时长包，free_trial=免费体验。可省略，默认plan，不应全局必填；不是任意字符串，空字符串或null不使用plan默认值而报product 无效。
+   * @default "plan"
+   */
+  product?: UserCloudphoneQuoteCreatePayloadProductEnum;
+  /**
+   * 套餐动作：purchase=新购报价，renew=续期报价，change=变更套餐报价（零金额、返回下月生效日）。可省略，默认purchase；空值或空白也回退purchase。仅product=plan读取并校验，time_addon/free_trial忽略此字段且响应不返回action。所有场景均仅报价，不实际支付。
+   * @default "purchase"
+   */
+  action?: UserCloudphoneQuoteCreatePayloadActionEnum;
+  /**
+   * 套餐云手机数量，单位台。省略默认0，null按0；product=plan（含change）业务必填，必须精确为5、10、20、30、40、50、100、150、200、250、300、400、500、600、700、800、900、1000之一，不是区间，0不是有效套餐档位。time_addon/free_trial忽略，无全局必填或全局档位约束；free_trial的响应qty固定1，不取请求qty。
+   * @default 0
+   */
+  qty?: number;
+  /**
+   * 包月开机数量，单位台；可省略，默认0（不买包月开机），null按0。仅plan使用，业务范围0≤monthlyBootQty≤qty，可为该范围内任意整数，无精确档位限制；time_addon/free_trial忽略并在响应返回0。单台单月2990美分，purchase/renew费用另乘months与rate，change当前报价不收费。
+   * @default 0
+   */
+  monthlyBootQty?: number;
+  /**
+   * 订阅周期；省略默认30天，仅plan purchase/renew使用且必须精确匹配7天、30天、90天、180天、360天（对应7/30/90/180/360自然天，计价倍数0.25/1/3/6/12）。change、time_addon、free_trial忽略，不按请求term决定结果；显式null/空字符串在plan purchase/renew下无效，不等同于省略。
+   * @default "30天"
+   */
+  term?: string;
+  /**
+   * 临时开机时长包分钟数，单位分钟。省略默认0，null按0；仅time_addon使用且业务必填，必须精确为2000、5000、10000、20000、50000、100000、200000、500000、1000000、2000000、5000000、10000000之一，0不是有效包，不能传任意分钟数。plan/free_trial忽略此字段；响应plan固定0、free_trial固定30，与该请求值无关。
+   * @default 0
+   */
+  minutes?: number;
+}
+
+/** HTTP200成功响应，code/msg/data均返回；data为多场景字段并集，仅公共字段必返。 */
+export interface UserCloudphoneQuoteCreateData {
+  /** 业务状态码，成功固定0；始终返回，不是HTTP状态码。 */
+  code: CodeEnum2;
+  /** 中文结果提示，成功为成功；始终返回，无缺省。 */
+  msg: string;
+  /** 报价结果；仅code=0时存在，101/500时整个字段缺省而非null。以下为各product/action结果字段并集，仅required中公共字段在所有成功场景必返；其他字段按逐项条件返回，不填null。响应数值为计算结果或固定场景值，不套用请求默认值。完整四种结构及续期示例见responseExamples。 */
+  data: {
+    /** 实际报价商品类型，所有成功场景必返；plan=套餐，time_addon=临时开机时长包，free_trial=免费体验。请求省略时为plan，响应无缺省。 */
+    product: DataProductEnum;
+    /** 订单商品分类标识，所有成功场景必返；plan对应cloudphone_plan（套餐），time_addon对应cloudphone_time_addon（时长包），free_trial对应cloudphone_free_trial（体验）。仅分类，不表示本接口已创建订单。 */
+    purchaseType: DataPurchaseTypeEnum;
+    /** 仅product=plan时必返：purchase=新购、renew=续期、change=变更；由请求决定，未传/空值回退purchase。time_addon和free_trial时整个字段缺省（不是null或空字符串），即使请求传入action也不回显。 */
+    action?: DataActionEnum;
+    /** 云手机台数，单位台。plan所有动作必返，为请求精确档位5/10/20/30/40/50/100/150/200/250/300/400/500/600/700/800/900/1000；free_trial必返固定1台；time_addon缺省（不是0或null）。响应没有统一默认值。 */
+    qty?: DataQtyEnum1;
+    /** 云手机名额，单位台，所有成功场景必返；plan等于qty，free_trial固定1，time_addon固定0（不增加手机名额）。无缺省或null，无统一默认值。 */
+    phoneSlots: number;
+    /** 包月开机数量，单位台，所有成功场景必返。plan为校验后的请求值（省略默认0，范围0至qty）；time_addon/free_trial固定0。change虽返回目标数量，但本次报价不收费。 */
+    monthlyBootQty: number;
+    /** 订阅周期展示值，所有成功场景必返；plan purchase/renew为请求有效周期7天/30天/90天/180天/360天（请求省略默认30天）；plan change及time_addon固定空字符串；free_trial固定30天。空字符串是实际返回值，不是缺省或null。 */
+    term: DataTermEnum1;
+    /** 报价对应有效时长，单位天，所有成功场景必返；plan purchase/renew按term为7/30/90/180/360；free_trial固定30；plan change及time_addon固定0。没有统一默认值，不是按团队剩余天数计算。 */
+    days: DataDaysEnum2;
+    /** 仅plan purchase/renew必返的月价计价倍数，无量纲：7天=0.25（不是7/30）、30天=1、90天=3、180天=6、360天=12。plan change、time_addon、free_trial均缺省（不是0或null）；无统一默认值。 */
+    months?: DataMonthsEnum1;
+    /** 仅plan purchase/renew必返的实付乘数，无量纲，不是减免比例；7/30天=1（原价），90天=0.95（付95%，9.5折），180天=0.9（付90%，9折），360天=0.85（付85%，8.5折）。plan change、time_addon、free_trial均缺省，不返回null；无统一默认值。 */
+    rate?: DataRateEnum1;
+    /** 优惠展示文本，仅plan purchase/renew与time_addon必返；plan 7/30天为空字符串、90天为9.5 折、180天为9 折、360天为8.5 折。时长包2000/5000/10000分钟为-5.00%、20000为-9.75%、50000/100000为-14.50%、200000为-19.25%、500000/1000000为-24.00%、2000000为-28.75%、5000000为-33.50%、10000000为-38.25%，负百分数表示减价幅度。无优惠回退空字符串；plan change/free_trial整个字段缺省，不是空字符串或null。金额已计优惠，不再二次打折。 */
+    off?: DataOffEnum2;
+    /** 仅plan purchase/renew必返；所选qty整档每月合计基础价格，单位美分/月，不是单台价格，未乘months/rate且不含包月开机费。5台档500美分/月。plan change、time_addon、free_trial均缺省，不是0或null；无固定默认值。 */
+    tierMonthlyCents?: number;
+    /** 套餐手机名额费用，单位美分，所有成功场景必返；plan purchase/renew为tierMonthlyCents×months×rate，以ROUND_HALF_UP单独四舍五入至整数美分；plan change、time_addon、free_trial固定0。不是时长包应付金额，无统一默认值。 */
+    phoneFeeCents: number;
+    /** 包月开机费用，单位美分，所有成功场景必返；plan purchase/renew为2990美分/台/月×monthlyBootQty×months×rate，单独ROUND_HALF_UP四舍五入至整数美分（如1台7天=747.5取748）；未买包月开机及plan change/time_addon/free_trial均为0。 */
+    monthlyBootFeeCents: number;
+    /** 本次报价总应付金额，单位美分，所有成功场景必返；plan purchase/renew为分别舍入后的phoneFeeCents+monthlyBootFeeCents，time_addon为所选整包priceCents（如2000分钟=1330），plan change/free_trial固定0。报价不实际扣款，无统一默认值。 */
+    amountCents: number;
+    /** 套餐手机名额费用美元展示值，单位美元，等于phoneFeeCents/100，最多两位小数。仅plan purchase/renew必返；plan change、time_addon、free_trial缺省（虽有phoneFeeCents=0，但没有此美元字段），不是0或null，无默认值。 */
+    phoneFee?: number;
+    /** 包月开机费用美元展示值，单位美元，等于monthlyBootFeeCents/100，最多两位小数。仅plan purchase/renew必返，未购买包月开机时返回0；plan change、time_addon、free_trial缺省（不是0或null），无统一默认值。 */
+    monthlyBootFee?: number;
+    /** 报价总应付美元金额，单位美元，等于amountCents/100，最多两位小数；所有成功场景必返，包括time_addon（如13.30）、plan change/free_trial（固定0）。不是条件缺省的phoneFee/monthlyBootFee美元字段；无统一默认值，不表示已扣款。 */
+    amount: number;
+    /**
+     * 仅plan purchase/renew必返的预计到期日期，格式YYYY-MM-DD；由服务器UTC当前日期+days计算。renew也不读取原到期日后延长，不查询团队套餐；示例假设UTC当前日2026-09-17，7天为2026-09-24。plan change、time_addon、free_trial均缺省，不是空字符串或null；无固定默认值。
+     * @format date
+     */
+    expireDate?: string;
+    /**
+     * 仅plan action=change必返的预计生效日期，格式YYYY-MM-DD；取服务器UTC当前日期下月同日，不足取下月月末，未查询团队账期。示例UTC当前日2026-09-17返回2026-10-17，2026-01-31返回2026-02-28。plan purchase/renew、time_addon、free_trial均缺省，不是空字符串或null；无固定默认值。
+     * @format date
+     */
+    effectiveDate?: string;
+    /** 临时开机时长，单位分钟，所有成功场景必返；time_addon为请求精确档位2000/5000/10000/20000/50000/100000/200000/500000/1000000/2000000/5000000/10000000；free_trial固定30；plan所有动作固定0，不回显请求minutes。无统一默认值。 */
+    minutes: number;
+  };
+}
+
+/**
+ * 业务校验错误对象，仅code和msg，没有data。
+ * 服务器异常对象，仅code和msg，没有data。
+ */
+export type UserCloudphoneQuoteCreateError =
+  | {
+      /** 业务码101表示参数或业务校验错误；始终返回，不是HTTP状态码。 */
+      code: CodeEnum3;
+      /** 具体错误原因，始终返回；例如云手机数量必须为可选档位之一、订阅时长无效、包月开机数量无效、包月开机数量不能超过云手机数量、支付金额必须大于0、action 无效、时长包档位无效、product 无效。未提供自定义提示时通用默认值为参数错误；此路由正常业务错误使用具体原因。 */
+      msg: string;
+    }
+  | {
+      /** 业务码500表示服务器错误；始终返回，不是HTTP状态码。 */
+      code: CodeEnum4;
+      /** 默认中文错误提示服务器错误；始终返回。 */
+      msg: string;
+    };
+
+/** 云手机结算参数；teamId 全局业务必填，qty 在 product=plan 时业务必填，minutes 在 product=time_addon 时必须选择有效档位。 */
+export interface UserCloudphoneSettlementCreatePayload {
+  /**
+   * 支付方式。可省略，模型默认空字符串，按 Balance 钱包支付；常规付费请求非空时仅支持 Balance。免费体验或请求 action=change 时路由不校验支付类型，但实际支付渠道仍为钱包，只有 plan+change 不扣款。
+   * @default ""
+   */
+  payType?: string;
+  /**
+   * 业务必填的云手机团队 ID，整数且大于 0，属于 cloudphone-server，不是主站 workspaceId。模型省略值为 0，但业务拒绝 0/负数，不能依赖默认值。示例为虚构团队。
    * @format int64
    */
   teamId: number;
+  /**
+   * 商品类型：plan 套餐、time_addon 临时开机时长包、free_trial 免费体验。省略默认 plan；空字符串或其他值业务报错。免费体验每个用户仅可领取一次，规格由服务端固定。
+   * @default "plan"
+   */
+  product?: string;
+  /**
+   * 套餐操作：purchase 新购、renew 续期、change 改套餐。省略或空白按 purchase；仅 product=plan 时参与业务处理及合法性校验。change 不扣款，等待 effectiveDate 生效；非套餐内部按 purchase 下单。
+   * @default "purchase"
+   */
+  action?: string;
+  /**
+   * 套餐台数，仅 product=plan 时业务必填（含新购/续期/改套餐），不可全局必填；必须精确选择档位：5、10、20、30、40、50、100、150、200、250、300、400、500、600、700、800、900、1000。模型默认 0 对套餐无效；不是任意正整数，也不读取现有套餐台数。非套餐忽略此入参：时长包返回 0，免费体验固定 1。
+   * @default 0
+   */
+  qty?: number;
+  /**
+   * 套餐包月开机台数，整数范围 0..qty（含边界），省略默认 0，不保持现有包月开机数；仅套餐使用。非套餐忽略此入参并返回 0。套餐新购/续期按每台每月 29.90 美元结合订阅周期及折扣计费；改套餐本次不扣款。
+   * @default 0
+   */
+  monthlyBootQty?: number;
+  /**
+   * 套餐新购/续期订阅时长，支持 7天、30天、90天、180天、360天，省略默认 30天；对应计费月数 0.25、1、3、6、12，折扣系数 1、1、0.95、0.9、0.85。套餐新购/续期显式传空无效；改套餐和非套餐忽略入参。改套餐/时长包响应 term 为空，免费体验固定 30天。
+   * @default "30天"
+   */
+  term?: string;
+  /**
+   * 时长包分钟数，仅 product=time_addon 时业务必填且须选择有效档位：2000、5000、10000、20000、50000、100000、200000、500000、1000000、2000000、5000000、10000000。默认 0 对时长包无效；套餐忽略此入参并返回 0，免费体验忽略此入参并固定返回 30。
+   * @default 0
+   */
+  minutes?: number;
+  /**
+   * 套餐是否自动续费：true 开启、false 关闭。省略默认 true（包含续期和改套餐），不是保持原设置；非套餐无论传入何值都强制 false。
+   * @default true
+   */
+  autoRenew?: boolean;
 }
 
+/** 订单处理成功；不保证已完成发货或变更已生效，需结合 delivered/pending。 */
 export interface UserCloudphoneSettlementCreateData {
-  code?: number;
-  msg?: string;
-  data?: {
-    orderNo?: string;
-    /** 实付美元 */
-    actualAmount?: number;
-    purchaseType?: string;
-    sku?: string;
-    /** @format int64 */
-    teamId?: number;
-    /** true 表示已回调 cloudphone-server 发货成功 */
-    delivered?: boolean;
+  /** 业务状态码，0 表示本次订单处理成功，不代表一定发货完成。 */
+  code: number;
+  /** 业务结果提示，默认中文成功，不是英文 success。 */
+  msg: string;
+  /** 订单结果，成功时固定包含以下 16 个字段；不适用的日期/时长使用空字符串，数值使用对应业务值。 */
+  data: {
+    /** 服务端生成的订单号，用于查询、发货和后台补发；应保留用于排查，不要因发货未完成重复下单。示例为虚构订单号。 */
+    orderNo: string;
+    /** 本次钱包实付金额，单位美元（USD），不是美分，最多两位小数；套餐按台数档位及包月开机数、周期折扣计算，时长包按档位定价，改套餐/免费体验为 0。delivered=false 时也可能已扣款。 */
+    actualAmount: number;
+    /** 订单购买类型：plan 对应 cloudphone_plan，time_addon 对应 cloudphone_time_addon，free_trial 对应 cloudphone_free_trial。 */
+    purchaseType: string;
+    /** 本次订单商品类型：plan 套餐、time_addon 时长包、free_trial 免费体验。 */
+    product: string;
+    /** 实际订单操作：套餐为 purchase/renew/change；非套餐固定 purchase。change 表示提交延后生效的套餐变更。 */
+    action: string;
+    /**
+     * 本次订单所属云手机团队 ID，整数且大于 0，不是 workspaceId。示例为虚构团队。
+     * @format int64
+     */
+    teamId: number;
+    /** 本次套餐台数，套餐为请求指定的有效档位，不是查询当前团队套餐得出的值；时长包为 0，免费体验固定 1。 */
+    qty: number;
+    /** 本次套餐包月开机台数，范围 0..qty；套餐取请求值（省略为 0），时长包/免费体验为 0。 */
+    monthlyBootQty: number;
+    /** 本次订阅时长，套餐新购/续期为 7天、30天、90天、180天或360天；改套餐/时长包为空字符串，免费体验为30天。 */
+    term: string;
+    /** 本次订阅天数，套餐新购/续期为所选周期的7/30/90/180/360天；改套餐/时长包为0，免费体验为30。不是剩余可用天数。 */
+    days: number;
+    /** 本次发放的临时开机分钟数：套餐（含改套餐）为0，时长包为所选分钟档位，免费体验固定30；不是团队剩余分钟数。 */
+    minutes: number;
+    /** 本次提交的自动续费设置；套餐取请求值，省略默认true，不是读取或保持原设置；时长包/免费体验强制false。 */
+    autoRenew: boolean;
+    /** 套餐新购/续期的计算到期日期，格式YYYY-MM-DD，基于UTC当前日期+所选订阅天数计算，不是查询现有到期日后延长，也不是查询发货后的实际到期日。改套餐/时长包/免费体验均为空字符串。 */
+    expireDate: string;
+    /** 仅改套餐返回计划生效日期，格式YYYY-MM-DD，取UTC当前日的下个月同日；下个月无该日则取月末。不是查询团队账期或团队现有月结日；其他操作为空字符串。 */
+    effectiveDate: string;
+    /** 本次cloudphone-server发货回调是否成功。true表示回调成功；改套餐时仅表示变更提交成功，不代表已生效。false表示本次发货未确认成功，订单可能已扣款且后台OrderTask会补发，不要重复下单。 */
+    delivered: boolean;
+    /** 是否为待生效的改套餐订单：action=change固定true，其他操作false。即使delivered=true，pending=true仍表示变更待生效；本字段由订单操作决定，不是后台任务实时查询结果。 */
+    pending: boolean;
   };
 }
+
+/**
+ * 参数校验或业务处理失败，仅返回code和msg，无data字段。
+ * 路由捕获未处理异常后的错误响应，无data字段。
+ */
+export type UserCloudphoneSettlementCreateError =
+  | {
+      /** 业务错误码101，HTTP状态仍为200。 */
+      code: number;
+      /** 具体中文错误原因，例如teamId不能为空、云手机数量必须为可选档位之一、订阅时长无效、时长包档位无效、只支持钱包支付、已领取过免费体验或钱包余额不足等业务错误。 */
+      msg: string;
+    }
+  | {
+      /** 服务器异常业务码500，不是HTTP状态码；HTTP仍为200。 */
+      code: number;
+      /** 默认中文服务器错误提示。 */
+      msg: string;
+    };
+
+/** 改套餐参数；teamId、qty为业务必填，省略可选项使用模型默认值而不是沿用原套餐。 */
+export interface UserCloudphonePlanChangeCreatePayload {
+  /**
+   * 业务必填的云手机团队ID，整数且大于0，属于cloudphone-server，不是主站workspaceId。模型省略为0，但业务拒绝0/负数，不能依赖默认值。示例为虚构团队。
+   * @format int64
+   */
+  teamId: number;
+  /** 业务必填的目标套餐台数；必须精确选择档位：5、10、20、30、40、50、100、150、200、250、300、400、500、600、700、800、900、1000。不是任意正整数，不会查询或沿用原套餐台数；模型默认0会导致业务报错。 */
+  qty: number;
+  /**
+   * 目标套餐包月开机台数，整数范围0..qty（含边界）；省略默认0，不会保持现有值。改套餐仅提交变更，本次不收取包月开机费用。
+   * @default 0
+   */
+  monthlyBootQty?: number;
+  /**
+   * 目标套餐自动续费设置，true开启、false关闭；省略默认true，不是保持原自动续费值。
+   * @default true
+   */
+  autoRenew?: boolean;
+}
+
+/** 改套餐订单提交结果；不代表目标套餐立即生效。 */
+export interface UserCloudphonePlanChangeCreateData {
+  /** 业务状态码，0表示订单处理成功，不代表变更已生效或回调必定成功。 */
+  code: number;
+  /** 默认中文成功提示，值为成功，不是英文success。 */
+  msg: string;
+  /** 改套餐订单结果，成功时固定返回以下16字段。 */
+  data: {
+    /** 服务端生成的零金额变更订单号，用于发货提交、查询及后台补发；示例为虚构订单号。 */
+    orderNo: string;
+    /** 本次实付金额，单位美元（USD），不是美分；改套餐不扣款，固定为0。 */
+    actualAmount: number;
+    /** 订单购买类型，本接口固定cloudphone_plan（云手机套餐）。 */
+    purchaseType: string;
+    /** 订单商品类型，本接口固定plan（套餐）。 */
+    product: string;
+    /** 订单操作，本接口固定change，表示提交延后生效的套餐变更。 */
+    action: string;
+    /**
+     * 本次变更所属云手机团队ID，整数且大于0，不是workspaceId。示例为虚构团队。
+     * @format int64
+     */
+    teamId: number;
+    /** 请求指定并通过档位校验的目标套餐台数，不是当前已生效的套餐台数。 */
+    qty: number;
+    /** 请求指定的目标包月开机台数，范围0..qty；请求省略时为0，不是查询原套餐所得。 */
+    monthlyBootQty: number;
+    /** 本次订阅时长；改套餐不购买新的订阅周期，固定为空字符串。 */
+    term: string;
+    /** 本次购买的订阅天数；改套餐固定为0，不是原套餐剩余天数。 */
+    days: number;
+    /** 本次发放的临时开机分钟数；改套餐固定为0，不代表团队剩余分钟数。 */
+    minutes: number;
+    /** 本次提交的目标自动续费设置；取请求值，省略默认为true，不是读取或保持原自动续费值。 */
+    autoRenew: boolean;
+    /** 本接口改套餐固定为空字符串，不查询现有到期日。通用套餐新购/续期的该字段按UTC当前日期+订阅天数计算，不是查询现有到期日后延长；不能据此推断改套餐后的实际到期日。 */
+    expireDate: string;
+    /** 目标套餐计划生效日期，格式YYYY-MM-DD。按UTC当前日的下个月同日计算；不足该日则取下个月月末。不是查询团队账期或现有月结日，也不是当前UTC日期加固定30天。 */
+    effectiveDate: string;
+    /** 本次cloudphone-server变更回调是否成功。true仅表示变更提交成功，不代表目标套餐已生效；false表示回调未确认成功，由后台OrderTask补发，不要重复下单。本接口不扣款；付费订单的delivered=false可能已经扣款。 */
+    delivered: boolean;
+    /** 本接口固定true，表示改套餐待生效；delivered=true且pending=true仅表示变更提交成功、尚待生效。本字段由action=change决定，不是实时查询团队套餐状态。 */
+    pending: boolean;
+  };
+}
+
+/**
+ * 参数或业务失败响应，无data字段。
+ * 路由捕获未处理异常后的响应，无data字段。
+ */
+export type UserCloudphonePlanChangeCreateError =
+  | {
+      /** 参数或业务错误码101，HTTP状态仍为200。 */
+      code: number;
+      /** 具体中文错误原因，例如云手机数量必须为可选档位之一、包月开机数量无效、teamId不能为空；写单失败也可能以业务错误返回。 */
+      msg: string;
+    }
+  | {
+      /** 服务器异常业务码500，不是HTTP状态码；HTTP仍为200。 */
+      code: number;
+      /** 默认中文服务器错误提示。 */
+      msg: string;
+    };
+
+/** 套餐续期参数；teamId/qty为业务必填，product/action/minutes仅因复用模型而保留，不参与本接口业务处理。 */
+export interface UserCloudphonePlanRenewCreatePayload {
+  /**
+   * 支付方式，可省略，模型默认空字符串，按Balance钱包支付；非空时仅支持Balance，其他值返回业务code101、只支持钱包支付。
+   * @default ""
+   */
+  payType?: string;
+  /**
+   * 业务必填的云手机团队ID，整数且大于0，属于cloudphone-server，不是主站workspaceId。模型省略值0会被业务拒绝，不能依赖默认值。示例为虚构团队。
+   * @format int64
+   */
+  teamId: number;
+  /**
+   * 兼容结算模型而保留，传入值被续期路由忽略，内部固定plan。可省略；模型默认plan。不会根据此字段购买时长包或免费体验。
+   * @default "plan"
+   */
+  product?: string;
+  /**
+   * 兼容结算模型而保留，传入值被续期路由忽略，内部固定renew。可省略；复用模型的原始默认值是purchase，但不影响本接口始终续期，不能通过传change改套餐。
+   * @default "purchase"
+   */
+  action?: string;
+  /** 业务必填的续期套餐台数，必须精确选择档位：5、10、20、30、40、50、100、150、200、250、300、400、500、600、700、800、900、1000。不是任意正整数，不会读取当前套餐台数；模型默认0会导致业务报错。 */
+  qty: number;
+  /**
+   * 本次续期的包月开机台数，整数范围0..qty（含边界），省略默认0，不查询或保持现有值；按每台每月29.90美元乘订阅计费月数及折扣计算费用。
+   * @default 0
+   */
+  monthlyBootQty?: number;
+  /**
+   * 本次续期订阅时长，支持7天、30天、90天、180天、360天，省略默认30天，显式空值无效；对应计费月数0.25、1、3、6、12，折扣系数1、1、0.95、0.9、0.85。expireDate按UTC当前日期加相应天数计算。
+   * @default "30天"
+   */
+  term?: string;
+  /**
+   * 兼容结算模型而保留，可省略，模型默认0。续期路由忽略传入值且不向结算服务传递该字段，内部固定0；不会购买时长包，也不要求客户端必须显式传0。
+   * @default 0
+   */
+  minutes?: number;
+  /**
+   * 本次续期提交的自动续费设置，true开启、false关闭；省略默认true，不是保持原自动续费值。本接口固定套餐，不适用通用结算中非套餐强制false的分支。
+   * @default true
+   */
+  autoRenew?: boolean;
+}
+
+/** 续期订单处理成功，是否已完成发货需结合delivered；待补发不能重复下单。 */
+export interface UserCloudphonePlanRenewCreateData {
+  /** 业务状态码，0表示本次续期订单处理成功，不代表一定已完成发货。 */
+  code: number;
+  /** 默认中文成功提示，值为成功，不是英文success。 */
+  msg: string;
+  /** 续期订单结果，成功时固定包含以下16个字段。 */
+  data: {
+    /** 服务端生成的续期订单号，用于查询、发货及后台补发；应保存用于排查，不要因发货未完成重复下单。示例为虚构订单号。 */
+    orderNo: string;
+    /** 本次钱包实付续期金额，单位美元（USD），不是美分，最多两位小数。套餐台数档位月价及包月开机费用分别按订阅计费月数和折扣计算、各自四舍五入到美分后合计并转美元返回；delivered=false时也可能已扣款。 */
+    actualAmount: number;
+    /** 订单购买类型，本接口固定cloudphone_plan（云手机套餐）。 */
+    purchaseType: string;
+    /** 实际订单商品类型，内部固定plan，与传入product无关。 */
+    product: string;
+    /** 实际订单操作，内部固定renew（续期），与传入action无关。 */
+    action: string;
+    /**
+     * 续期订单所属云手机团队ID，整数且大于0，不是workspaceId。示例为虚构团队。
+     * @format int64
+     */
+    teamId: number;
+    /** 本次请求指定并通过校验的续期套餐台数，必须为可选档位；不是服务端查询当前套餐后填充的台数。 */
+    qty: number;
+    /** 本次续期的包月开机台数，范围0..qty；取请求值，省略为0，不是原套餐包月开机数。 */
+    monthlyBootQty: number;
+    /** 本次订阅时长，取所选的7天、30天、90天、180天或360天；请求省略时为30天。 */
+    term: string;
+    /** 本次订阅天数，按term映射为7、30、90、180或360；不是原套餐剩余天数。 */
+    days: number;
+    /** 本次临时开机分钟数，套餐续期固定为0，传入minutes被忽略；不是团队剩余分钟数。 */
+    minutes: number;
+    /** 本次提交的自动续费设置，取请求值，省略默认true，不是查询或保持原自动续费设置。 */
+    autoRenew: boolean;
+    /** 计算到期日期，格式YYYY-MM-DD。基于UTC当前日期+所选订阅天数计算，不是查询现有到期日后延长，也不是查询发货后的实际到期日。比如UTC当前日2026-09-17、term=30天，返回2026-10-17。 */
+    expireDate: string;
+    /** 计划变更生效日期；续期接口固定为空字符串。只有通用改套餐才按UTC当前日的下个月同日（不足取月末）计算该日期，不查询团队账期。 */
+    effectiveDate: string;
+    /** 本次cloudphone-server发货回调是否成功。true表示回调成功；false时订单可能已扣款，后台OrderTask会补发，不要重复下单。此值不等于自动续费设置或账期状态。 */
+    delivered: boolean;
+    /** 是否属于待生效的改套餐订单；本接口action=renew，固定false。即使delivered=false也仍为false，不能用它判断后台是否待补发。 */
+    pending: boolean;
+  };
+}
+
+/**
+ * 参数校验或业务处理失败，仅返回code和msg，无data。
+ * 路由捕获未处理异常后的错误响应，无data字段。
+ */
+export type UserCloudphonePlanRenewCreateError =
+  | {
+      /** 参数或业务错误码101，HTTP状态仍为200。 */
+      code: number;
+      /** 具体中文错误原因，例如云手机数量必须为可选档位之一、订阅时长无效、包月开机数量不能超过云手机数量、teamId不能为空、只支持钱包支付或钱包余额不足等业务错误。 */
+      msg: string;
+    }
+  | {
+      /** 服务器异常业务码500，不是HTTP状态码；HTTP仍为200。 */
+      code: number;
+      /** 默认中文服务器错误提示。 */
+      msg: string;
+    };
 
 export interface CheckIpDownloadLimitListData {
   code: number;
@@ -11754,6 +12547,41 @@ export interface GetCompanyPartnerDetailListData {
     screenshots: string[];
   };
   msg: string;
+}
+
+export interface GetMidAutumnEggStatusListData {
+  code: number;
+  data: {
+    payload: string;
+  };
+  msg: string;
+}
+
+export interface UserMidAutumnClaimEggCreatePayload {
+  positionId: string;
+}
+
+export interface UserMidAutumnClaimEggCreateData {
+  /** 业务码：0=成功（claimStatus 为 1/3/4/5 时也是 0，弹窗看 claimStatus） */
+  code: number;
+  /** 提示文案；成功通常为空，失败如「找找其他的彩蛋」 */
+  msg: string;
+  data: {
+    /** 领取结果：1=坑位领不到  3=本账号已领过  4=成功  5=活动下架（2=未登录走鉴权） */
+    claimStatus: number;
+    /** 彩蛋类型：jade_rabbit=玉兔  mooncake=月饼 */
+    eggType: string;
+    /** 发放的兑换码（成功时有） */
+    code: string;
+    /** 兑换码类型：mid_autumn_jade_rabbit / mid_autumn_mooncake */
+    codeType: string;
+    /** 奖励窗口数：玉兔/月饼均为 10 */
+    windowCount: number;
+    /** 奖励月数：玉兔=3，月饼=1 */
+    month: number;
+    /** 活动名称（中文） */
+    activityName: string;
+  };
 }
 
 export interface UserCalculatePointsPriceListParams {
@@ -12036,13 +12864,30 @@ export interface UserGetProxyDurationDiscountsByDaysListData {
 }
 
 export interface GetMidAutumnPromoTimeListData {
+  /** 业务码：0=成功（与其它接口一致） */
   code: number;
-  data: {
-    start_timestamp: number;
-    end_timestamp: number;
-    server_utc_timestamp: number;
-    type: number;
-    resetHourUtc: number;
-  };
+  /** 提示文案 */
   msg: string;
+  data: {
+    /** 活动开始：MID_AUTUMN_PROMO_START_TIME（2026-09-24 00:00:00 UTC） */
+    start_timestamp: number;
+    /** 活动结束：MID_AUTUMN_PROMO_END_TIME（2026-10-15 23:59:59 UTC） */
+    end_timestamp: number;
+    /** 服务端当前 UTC 时间；前端用它做倒计时/校时，勿只信本机时间 */
+    server_utc_timestamp: number;
+    /** 活动状态：7=活动中（MID_AUTUMN_PROMO_TYPE）；0=未开始或已结束 → 前端应关寻宝层 */
+    type: number;
+    /** 每日彩蛋重置小时（UTC）。文案可用：「明天 9:00 UTC 彩蛋重置」 */
+    resetHourUtc: number;
+    /** true=开启团队/成员买一送一（付费 N → 入账 2N）；false/缺失=不展示或关闭 */
+    team_bogo: boolean;
+    /** 充值满送最低门槛（美元）：单笔 < $50 不赠送 */
+    min_amount: number;
+    /** 满送档位（由高到低命中；amount=门槛美元，discount=赠送百分比） */
+    recharge_benefits: {
+      /** ≥ $1000 → 40%（例：$1000 → $400） */
+      amount: number;
+      discount: number;
+    }[];
+  };
 }

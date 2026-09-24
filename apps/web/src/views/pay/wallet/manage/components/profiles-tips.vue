@@ -24,6 +24,16 @@ const billedWindowEndDate = computed(() => {
   }
   return format(userPayInfo.value.subEndDate, 'yyyy/MM/dd')
 })
+
+const expiredInfo = computed(() => {
+  const permanently = $t('永久有效')
+
+  return {
+    free: $t('免费窗口: {count}, 到期时间: {endDate}', { count: profileCounts.value.free, endDate: permanently }),
+    lifetime: $t('终身窗口: {count}, 到期时间: {endDate}', { count: profileCounts.value.purchasePermanent, endDate: permanently }),
+    purchase: $t('计费窗口: {count}, 到期时间: {endDate}', { count: profileCounts.value.purchase, endDate: billedWindowEndDate.value }),
+  }
+})
 </script>
 
 <template>
@@ -34,9 +44,9 @@ const billedWindowEndDate = computed(() => {
       </template>
       <template #content>
         <div class="tip">
-          <div>{{ $t('免费窗口: {count}, 到期时间: {endDate}', { count: profileCounts.free, endDate: $t('永久有效') }) }}</div>
-          <div>{{ $t('终身窗口: {count}, 到期时间: {endDate}', { count: profileCounts.purchasePermanent, endDate: $t('永久有效') }) }}</div>
-          <div>{{ $t('计费窗口: {count}, 到期时间: {endDate}', { count: profileCounts.purchase, endDate: billedWindowEndDate }) }}</div>
+          <div>{{ expiredInfo.free }}</div>
+          <div>{{ expiredInfo.lifetime }}</div>
+          <div>{{ expiredInfo.purchase }}</div>
         </div>
       </template>
     </RxTooltip>

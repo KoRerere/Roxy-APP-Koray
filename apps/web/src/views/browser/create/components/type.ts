@@ -1,7 +1,7 @@
 export interface WindowMetaData {
   projectName?: string
   projectId?: number
-  labelIds?: (number | string)[]
+  labelIds?: string[]
   windowRemark?: string
   projectDefault?: number
 }

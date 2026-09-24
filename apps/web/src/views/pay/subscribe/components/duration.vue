@@ -170,12 +170,20 @@ function buyLifetimeProfile() {
       <div v-if="item.label" class="absolute top-0 right-3 py-1 px-3 rounded-full -translate-y-1/2 whitespace-nowrap duration-discount" :class="{ 'max-discount': item.discount === maxDiscount }">
         {{ item.label }}
       </div>
-      <div class="flex items-baseline gap-1 flex-col">
-        <span class="duration-text whitespace-nowrap">{{ item.title }}</span>
-        <span v-if="item.giftDays" class="duration-gift">{{ $t('{day} 天', { day: `+${item.giftDays}` }) }}</span>
+      <div class="duration-text whitespace-nowrap">
+        <template v-if="item.giftDays">
+          {{ item.day }}<i18n-t tag="span" class="duration-gift" :keypath="$t('{day} 天', { day: '{day}' })" scope="global">
+            <template #day>
+              + {{ item.giftDays }}
+            </template>
+          </i18n-t>
+        </template>
+        <template v-else>
+          {{ item.title }}
+        </template>
       </div>
       <div v-if="dailyUnitPrice" class="tt-tertiary font-[JetBrains_Mono] text-3 font-500 leading-normal" :class="{ best: item.discount === maxDiscount }">
-        {{ item.day === 1 ? $t('{price}/天', { price: dailyUnitPrice[item.day] }) : $t('低至{price}/天', { price: dailyUnitPrice[item.day] }) }}
+        {{ item.day === 1 ? $t('{price}/天', { price: dailyUnitPrice[item.day] }) : $t('低至 {price}/天', { price: dailyUnitPrice[item.day] }) }}
       </div>
     </div>
     <!-- 与时长档独立：点选不改订阅天数，直接走终身窗口购买弹窗 -->
@@ -275,6 +283,6 @@ function buyLifetimeProfile() {
 }
 
 .best {
-  color: var(--primitives-red-500, #f53838);
+  color: var(--colors-text-text-success);
 }
 </style>

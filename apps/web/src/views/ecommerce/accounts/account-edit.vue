@@ -2,6 +2,7 @@
 import AccordionInputs from '/@/views/browser/create/components/accordion-inputs.vue'
 import MateGroup from '/@/views/browser/create/components/mate-group.vue'
 import type { WindowMetaData } from '/@/views/browser/create/components/type'
+import { toLabelId } from '/@/views/browser/create/hooks/useMate'
 import { getInputsGroup } from '/@/views/browser/create/form-inputs'
 import { createFormAsyncGate } from '/@/views/browser/create/hooks/useAsyncGate'
 import { createTableContext } from '/@/views/browser/create/hooks/useContext'
@@ -59,7 +60,7 @@ onBeforeMount(async () => {
   metaData.value = {
     projectName: data!.projectName,
     projectId: Number(data!.projectId),
-    labelIds: data!.labelIds,
+    labelIds: (data!.labelIds || []).map(id => toLabelId(id)),
     windowRemark: data!.windowRemark,
   }
   formInitialized.value = true

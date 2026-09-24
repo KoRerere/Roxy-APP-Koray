@@ -5,7 +5,7 @@ import path from 'node:path'
 import { osConfig } from '/@/constants'
 import { isMac } from '/@/constants/common'
 import { updateDict } from '/@/modules/dict'
-import { setWebReady } from '/@/utils'
+import { peekPendingOpenPageQuery, setWebReady, takePendingOpenPageQuery } from '/@/utils'
 
 export function setupCommonIpc(ipcMain: IPCMainInstance) {
   /** 选择文件夹 */
@@ -61,8 +61,9 @@ export function setupCommonIpc(ipcMain: IPCMainInstance) {
         defaultPath: options?.defaultPath,
       })
       const selectedPath = filePaths[0]
-      if (!selectedPath)
+      if (!selectedPath) {
         return null
+      }
 
       const stats = await fsPromises.stat(selectedPath)
       return {
@@ -86,6 +87,16 @@ export function setupCommonIpc(ipcMain: IPCMainInstance) {
   ipcMain.on('web:ready', (event) => {
     console.log('web:ready')
     setWebReady()
+  })
+
+  /** 取出冷启动/二次实例尚未被渲染进程消费的协议 query */
+  ipcMain.on('deep-link:takePendingOpenPage', () => {
+    return takePendingOpenPageQuery()
+  })
+
+  /** 只读 pending，不消费 */
+  ipcMain.on('deep-link:peekPendingOpenPage', () => {
+    return peekPendingOpenPageQuery()
   })
 
   /** 获取 os 配置，用于 APP 升级等接口的参数 */

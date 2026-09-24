@@ -13,7 +13,7 @@ import { setupAppMenu } from '/@/modules/devtools-guard/appMenu'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { forceSaveConfig, initStorePromise, store } from '/@/modules/store'
 import { appUpdater } from '/@/modules/updater'
-import { isWebReady, killProcessForce } from '/@/utils'
+import { isWebReady, killProcessForce, setPendingOpenPageQuery } from '/@/utils'
 import { setupTrustedWebCertificateHandler } from '/@/utils/getProdWebDomain'
 import { getMainWindow, intoMainPage, restoreOrCreateWindow } from './mainWindow'
 import { proxyManager } from './proxy-manager'
@@ -43,17 +43,100 @@ setupTrustedWebCertificateHandler()
 app.on('open-url', (event, url) => {
   console.log('open-url', url)
   event?.preventDefault?.()
+  stashOpenPageDeepLink(url)
   dispatchDeepLink(url, 'open-url')
 })
 
+function stripArgQuotes(value: string) {
+  return value.replace(/^['"]|['"]$/g, '')
+}
+
+function getAppProtocolScheme() {
+  return appProtocolName.toLowerCase()
+}
+
+/** Windows 协议名大小写不敏感，官网开发环境会发 RoxyBrowser-dev://，必须忽略 scheme 大小写 */
+function findAppProtocolUrl(args: readonly string[]) {
+  const scheme = getAppProtocolScheme()
+  const idx = args.findIndex((arg) => {
+    const normalized = stripArgQuotes(arg).toLowerCase()
+    return normalized.startsWith(`${scheme}://`) || normalized.startsWith(`${scheme}:`)
+  })
+  if (idx === -1) {
+    return ''
+  }
+
+  const first = stripArgQuotes(args[idx] ?? '')
+  const extras: string[] = []
+  // Windows 未加引号时会把 ?a=1&b=2 拆成后续 argv，这里拼回完整 query
+  for (let i = idx + 1; i < args.length; i++) {
+    const part = stripArgQuotes(args[i] ?? '')
+    if (!part || part.startsWith('--') || part.startsWith('/') || part.toLowerCase().startsWith(`${scheme}:`)) {
+      break
+    }
+    extras.push(part)
+  }
+  return extras.length ? `${first}&${extras.join('&')}` : first
+}
+
+function isAppProtocolUrl(url: string) {
+  const normalized = decodeDeepLink(url).toLowerCase()
+  const scheme = getAppProtocolScheme()
+  return normalized.startsWith(`${scheme}://`) || normalized.startsWith(`${scheme}:`)
+}
+
+function isAppProtocolPath(url: string, pathName: string) {
+  const normalized = decodeDeepLink(url).toLowerCase()
+  const scheme = getAppProtocolScheme()
+  const path = pathName.toLowerCase()
+  return normalized.includes(`${scheme}://${path}`) || normalized.includes(`${scheme}:${path}`)
+}
+
+/** 窗口加载前先落入 pending，避免残留 token 抢先 initUserInfo */
+function stashOpenPageDeepLink(url: string) {
+  if (!url || !isAppProtocolUrl(url)) {
+    return
+  }
+  if (!isAppProtocolPath(url, 'open-page') && !isAppProtocolPath(url, 'auto-login')) {
+    return
+  }
+  setPendingOpenPageQuery(`?${getDeepLinkQueryString(url)}`)
+}
+
+/** 协议 URL 可能被浏览器/系统 percent-encode，解码后再切 query */
+function decodeDeepLink(url: string) {
+  let current = url.trim()
+  for (let i = 0; i < 2; i++) {
+    try {
+      const next = decodeURIComponent(current)
+      if (next === current) {
+        break
+      }
+      current = next
+    }
+    catch {
+      break
+    }
+  }
+  return current
+}
+
+function getDeepLinkQueryString(url: string) {
+  const decoded = decodeDeepLink(url)
+  const qIndex = decoded.indexOf('?')
+  return qIndex >= 0 ? decoded.slice(qIndex + 1) : ''
+}
+
 function getRoxyActionFromArgs(args: readonly string[]) {
   const eq = args.find(a => a.startsWith('--roxy-action='))
-  if (eq)
+  if (eq) {
     return eq.split('=')[1]
+  }
 
   const idx = args.findIndex(a => a === '--roxy-action')
-  if (idx !== -1)
+  if (idx !== -1) {
     return args[idx + 1]
+  }
 
   return undefined
 }
@@ -133,8 +216,9 @@ export async function setupApp() {
     await restoreOrCreateWindow()
 
     // 优先处理 deep link（可能出现在任意 argv）
-    const deepLink = commandLine.find(arg => arg.startsWith(`${appProtocolName}://`)) || ''
+    const deepLink = findAppProtocolUrl(commandLine)
     if (deepLink) {
+      stashOpenPageDeepLink(deepLink)
       await dispatchDeepLink(deepLink, 'second-instance')
       return
     }
@@ -188,6 +272,10 @@ export async function setupApp() {
     app.setAccessibilitySupportEnabled(false)
     // 后台触发 agent 资源检查，不阻塞主窗创建（资源已改为后台异步更新，无需启动页等待）
     void checkResource()
+    const startupUrl = findAppProtocolUrl(process.argv)
+    if (startupUrl) {
+      stashOpenPageDeepLink(startupUrl)
+    }
     // 进入主页
     await intoMainPage()
     // 处理冷启动
@@ -300,7 +388,7 @@ async function handleColdStart() {
   // 而是会将协议 URL 作为启动参数传递，因此这里也需要处理 macOS 的情况
   try {
     await initStorePromise.promise
-    const startupUrl = process.argv.find(arg => arg.startsWith(`${appProtocolName}://`))
+    const startupUrl = findAppProtocolUrl(process.argv)
     if (startupUrl) {
       await dispatchDeepLink(startupUrl, 'cold-start')
       return
@@ -326,35 +414,41 @@ async function handleColdStart() {
  * 行为：
  * - 非法或不以 `${appProtocolName}://` 开头的 URL 将被忽略。
  * - 内部会等待渲染端就绪（isWebReady）再发送消息，避免丢包。
- * - 当前支持的路由：oauth2callback / inviteUser2project / open-page。
+ * - 当前支持的路由：oauth2callback / inviteUser2project / open-page / auto-login。
  *
  * @param url 形如 `${appProtocolName}://path?query` 的完整链接
  * @param source 触发来源标识（'second-instance' | 'open-url' | 'cold-start'），用于日志排查
  */
 async function dispatchDeepLink(url: string, source: 'second-instance' | 'open-url' | 'cold-start') {
   try {
-    if (!url || !url.startsWith(`${appProtocolName}://`))
+    if (!url || !isAppProtocolUrl(url)) {
       return
+    }
 
     await initStorePromise.promise
-    console.log(`deep-link [${source}]:`, url)
-    const queryString = url.split('?')[1]
+    const queryString = getDeepLinkQueryString(url)
+    console.log(`deep-link [${source}]:`, decodeDeepLink(url).replace(/([?&]token=)[^&]*/gi, '$1***'))
     const searchParams = Object.fromEntries(new URLSearchParams(`?${queryString}`))
+    if (isAppProtocolPath(url, 'open-page') || isAppProtocolPath(url, 'auto-login')) {
+      const openPageQuery = `?${queryString}`
+      setPendingOpenPageQuery(openPageQuery)
+      await isWebReady()
+      ipcSender.open.page(openPageQuery)
+      console.log(isAppProtocolPath(url, 'auto-login') ? 'auto-login:' : 'open-page:', source)
+      getMainWindow()?.show?.()
+      return
+    }
     await isWebReady()
-    if (url.includes(`${appProtocolName}://oauth2callback`)) {
+    if (isAppProtocolPath(url, 'oauth2callback')) {
       ipcSender.oauth2.googleCallback(`?${queryString}`)
-      console.log('oauth2callback:', source, url)
+      console.log('oauth2callback:', source)
     }
-    if (url.includes(`${appProtocolName}://inviteUser2project`)) {
+    if (isAppProtocolPath(url, 'inviteUser2project')) {
       ipcSender.invite.toProject(`?${queryString}`)
-      console.log('inviteUser2project:', source, url)
-    }
-    if (url.includes(`${appProtocolName}://open-page`)) {
-      ipcSender.open.page(`?${queryString}`)
-      console.log('open-page:', source, url)
+      console.log('inviteUser2project:', source)
     }
     // 通过外部打开浏览器失败错误弹窗（默认浏览器中转器兜底入口）
-    if (url.includes(`${appProtocolName}://open-browser-failed`)) {
+    if (isAppProtocolPath(url, 'open-browser-failed')) {
       console.log('dialog:open-browser-failed:', searchParams)
       const { dirId, workspaceId, url: targetUrl } = searchParams as any
       if (dirId && workspaceId) {

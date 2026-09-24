@@ -28,7 +28,17 @@ import {
   UserCancelSubscriptionListData,
   UserCancelSubscriptionListParams,
   UserCheckTeamUserRightsListData,
+  UserCloudphonePlanChangeCreateData,
+  UserCloudphonePlanChangeCreateError,
+  UserCloudphonePlanChangeCreatePayload,
+  UserCloudphonePlanRenewCreateData,
+  UserCloudphonePlanRenewCreateError,
+  UserCloudphonePlanRenewCreatePayload,
+  UserCloudphoneQuoteCreateData,
+  UserCloudphoneQuoteCreateError,
+  UserCloudphoneQuoteCreatePayload,
   UserCloudphoneSettlementCreateData,
+  UserCloudphoneSettlementCreateError,
   UserCloudphoneSettlementCreatePayload,
   UserDowngradeSubscriptionListData,
   UserDowngradeSubscriptionListParams,
@@ -38,8 +48,9 @@ import {
   UserGetAutoSubscriptionInfoListParams,
   UserGetBindCardListListData,
   UserGetBindCardListListParams,
-  UserGetCloudphoneSkuListCreateData,
-  UserGetCloudphoneSkuListCreatePayload,
+  UserGetCloudphonePlanOptionsCreateData,
+  UserGetCloudphonePlanOptionsCreateError,
+  UserGetCloudphonePlanOptionsCreatePayload,
   UserGetDowngradeSubscriptionInfoListData,
   UserGetDurationDiscountsByDaysListData,
   UserGetDurationDiscountsByDaysListParams,
@@ -63,6 +74,8 @@ import {
   UserGetWindowSubscriptionUpgradeMessageListParams,
   UserManageSubscriptionListData,
   UserManageSubscriptionListParams,
+  UserMidAutumnLotteryDrawCreateData,
+  UserMidAutumnLotteryPrizesListData,
   UserPayCaptchaTriggerListData,
   UserPaySettlementCreateData,
   UserPaySettlementCreatePayload,
@@ -939,20 +952,62 @@ export class PayApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description 返回可购买的云手机套餐 / 时长包 / 包月开机。amount 为美元，amount_cents 为美分。定价为占位，待产品确认。
+   * No description
    *
    * @tags Pay
-   * @name UserGetCloudphoneSkuListCreate
-   * @summary 云手机商品 SKU 列表
-   * @request POST:/user_get_cloudphone_sku_list
-   * @response `200` `UserGetCloudphoneSkuListCreateData` 成功
+   * @name UserMidAutumnLotteryPrizesList
+   * @summary 中秋活动1：我的奖品 + 待抽次数
+   * @request GET:/user_mid_autumn_lottery_prizes
+   * @response `200` `UserMidAutumnLotteryPrizesListData`
    */
-  userGetCloudphoneSkuListCreate = (
-    data: UserGetCloudphoneSkuListCreatePayload,
+  userMidAutumnLotteryPrizesList = (params: RequestParams = {}) =>
+    this.http.request<UserMidAutumnLotteryPrizesListData, any>({
+      path: `/user_mid_autumn_lottery_prizes`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserMidAutumnLotteryDrawCreate
+   * @summary 中秋活动1：每次抽 1 条并到账
+   * @request POST:/user_mid_autumn_lottery_draw
+   * @response `200` `UserMidAutumnLotteryDrawCreateData`
+   */
+  userMidAutumnLotteryDrawCreate = (params: RequestParams = {}) =>
+    this.http.request<UserMidAutumnLotteryDrawCreateData, any>({
+      path: `/user_mid_autumn_lottery_draw`,
+      method: "POST",
+      format: "json",
+      ...params,
+    });
+  /**
+ * @description 返回云手机套餐台数档位、订阅周期、包月开机单价、临时开机时长包、免费体验和下月账单日；本接口不读取请求业务字段，请求示例：{}。成功 code=0、msg=成功，HTTP 200；捕获的服务器异常 code=500、msg=服务器错误，仍为 HTTP 200，且不返回 data（不是 null）。 计价说明：monthlyCents/monthly 是整档每月价格，不是单台价格；monthlyBootUnitCents=2990 美分/台/月（29.90 美元/台/月）。套餐费=整档月价×months×rate，包月开机费=单台月价×包月开机台数×months×rate，分别四舍五入到美分后相加。months 是配置的计价倍数：7天=0.25、30天=1、90天=3、180天=6、360天=12，7天不是 7/30。rate 是实付乘数：1=原价、0.95=支付95%（9.5折）、0.9=支付90%（9折）、0.85=支付85%（8.5折），不是减免比例。时长包 priceCents 已是应付价格，不再按 off 二次打折。免费体验固定1台、30天、30分钟。 nextBillingDate 使用服务器 UTC 当前日期的下月同日，不足则取下月月末，格式 YYYY-MM-DD；例如 UTC 2026-09-17 返回 2026-10-17，2026-01-31 返回 2026-02-28。未查询团队账期，不代表已存在团队订阅的真实账单日。成功 data 及其全部配置字段始终返回，无缺省字段、无 null；响应配置值不是请求默认值，动态日期没有固定默认值。
+ *
+ * @tags Pay
+ * @name UserGetCloudphonePlanOptionsCreate
+ * @summary 获取云手机套餐选项
+ * @request POST:/user_get_cloudphone_plan_options
+ * @response `200` `UserGetCloudphonePlanOptionsCreateData` HTTP 200；code=0、msg=成功，data全部配置字段均返回。完整档位及日期假设见响应示例。
+ * @response `x-200-2` `{
+  /** 业务码500表示服务器错误；始终返回，不是HTTP状态码。 *\/
+    code: CodeEnum1,
+  /** 默认中文错误提示服务器错误；始终返回。 *\/
+    msg: string,
+
+}` 路由捕获异常时返回业务码500，HTTP仍为200；data字段缺省，不是null。
+ */
+  userGetCloudphonePlanOptionsCreate = (
+    data: UserGetCloudphonePlanOptionsCreatePayload,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserGetCloudphoneSkuListCreateData, any>({
-      path: `/user_get_cloudphone_sku_list`,
+    this.http.request<
+      UserGetCloudphonePlanOptionsCreateData,
+      UserGetCloudphonePlanOptionsCreateError
+    >({
+      path: `/user_get_cloudphone_plan_options`,
       method: "POST",
       body: data,
       type: ContentType.Json,
@@ -960,20 +1015,151 @@ export class PayApi<SecurityDataType = unknown> {
       ...params,
     });
   /**
-   * @description 仅支持钱包支付（payType=Balance 或省略）。sku 必须来自 user_get_cloudphone_sku_list。 teamId 为云手机团队 ID（cloudphone-server），不是主站 workspace。 扣款成功后回调 cloudphone-server /internal/deliver 发货；delivered=false 时由 OrderTask 重试。
-   *
-   * @tags Pay
-   * @name UserCloudphoneSettlementCreate
-   * @summary 云手机钱包结算
-   * @request POST:/user_cloudphone_settlement
-   * @response `200` `UserCloudphoneSettlementCreateData` 成功
-   */
+ * @description 云手机报价，仅计算并校验，不支付、不生成订单、不发货；免费体验报价不校验是否已领取，不读取团队现有套餐或账期。请求product省略默认plan，非全局必填；action省略默认purchase且仅plan使用；qty省略默认0，但plan的purchase/renew/change均业务必填且必须精确匹配台数档位；minutes省略默认0，但time_addon业务必填且必须精确匹配时长档位。term省略默认30天，仅plan purchase/renew用于计价，change忽略。 请求示例： 新购（其余字段用默认值）： ```json {"qty":5} ``` 套餐新购（7天计价倍数为0.25，不是7/30）： ```json {"product":"plan","action":"purchase","qty":5,"monthlyBootQty":1,"term":"7天"} ``` 套餐续期： ```json {"product":"plan","action":"renew","qty":5,"monthlyBootQty":1,"term":"90天"} ``` 套餐变更（term、minutes忽略）： ```json {"product":"plan","action":"change","qty":10,"monthlyBootQty":2} ``` 时长包（只使用product和minutes）： ```json {"product":"time_addon","minutes":2000} ``` 免费体验（只使用product）： ```json {"product":"free_trial"} ``` 计价：tierMonthlyCents是所选整档每月美分价，不是单台价；包月开机单价2990美分/台/月。phoneFeeCents=整档月价×months×rate，monthlyBootFeeCents=2990×monthlyBootQty×months×rate，分别以ROUND_HALF_UP四舍五入到整数美分后相加得到amountCents。months为计价倍数：7/30/90/180/360天分别为0.25/1/3/6/12。rate为实付乘数（1原价、0.95付95%即9.5折、0.9付90%即9折、0.85付85%即8.5折），不是减免比例。时长包直接使用已优惠后的整包价格。change和free_trial金额为0，但本报价接口对所有场景均不实际扣款。 成功响应data是不同product/action结果的字段并集，不是所有字段都存在，条件字段未返回时是缺省，不是null： - plan purchase/renew：返回action、qty、months、rate、off、tierMonthlyCents、phoneFee、monthlyBootFee、expireDate，不返回effectiveDate；其余公共字段均返回，minutes=0。 - plan change：有action、qty、effectiveDate；无off、months、rate、tierMonthlyCents、phoneFee、monthlyBootFee、expireDate，term为空字符串，days/minutes及费用为0。 - time_addon：有off；无qty、action、expireDate、effectiveDate、months、rate、tierMonthlyCents、phoneFee、monthlyBootFee；phoneSlots/monthlyBootQty/days/两项FeeCents为0，term为空字符串，amount/amountCents是整包应付价。 - free_trial：有qty=1；无action、expireDate、effectiveDate、off、months、rate、tierMonthlyCents、phoneFee、monthlyBootFee；phoneSlots=1、days=30、minutes=30、term=30天，monthlyBootQty及所有返回的费用为0。 expireDate仅plan purchase/renew返回，按服务器UTC当前日期+days计算YYYY-MM-DD；续期报价也不是读取原到期日后延长。effectiveDate仅plan change返回，按UTC当前日期下月同日、不足取月末计算；未查询团队账期。例如UTC当前日2026-09-17：7天expireDate=2026-09-24，90天expireDate=2026-12-16，effectiveDate=2026-10-17；UTC 2026-01-31的下月同日回退为2026-02-28。 HTTP状态与业务码分离：成功HTTP200，code=0，msg=成功；业务校验失败HTTP200，code=101，msg为具体原因，无data字段（不是null）；路由捕获服务器异常也HTTP200，code=500，msg=服务器错误，无data。101可能原因包括云手机数量必须为可选档位之一、订阅时长无效、包月开机数量无效、包月开机数量不能超过云手机数量、支付金额必须大于0、action 无效、时长包档位无效、product 无效。
+ *
+ * @tags Pay
+ * @name UserCloudphoneQuoteCreate
+ * @summary 云手机报价
+ * @request POST:/user_cloudphone_quote
+ * @response `200` `UserCloudphoneQuoteCreateData` HTTP200，code=0、msg=成功。data为四种不同返回结构的字段并集，条件字段不能全标必填；新购与续期结构相同，change/time_addon/free_trial各不同。未返回字段均缺省而非null。
+ * @response `x-200-2` `{
+  /** 业务码101表示参数或业务校验错误；始终返回，不是HTTP状态码。 *\/
+    code: CodeEnum3,
+  /** 具体错误原因，始终返回；例如云手机数量必须为可选档位之一、订阅时长无效、包月开机数量无效、包月开机数量不能超过云手机数量、支付金额必须大于0、action 无效、时长包档位无效、product 无效。未提供自定义提示时通用默认值为参数错误；此路由正常业务错误使用具体原因。 *\/
+    msg: string,
+
+}` 报价业务校验失败；HTTP200，code=101，msg具体中文原因，无data字段（不是null）。例如请求{"product":"plan","qty":6}不是精确台数档位。
+ * @response `x-200-3` `{
+  /** 业务码500表示服务器错误；始终返回，不是HTTP状态码。 *\/
+    code: CodeEnum4,
+  /** 默认中文错误提示服务器错误；始终返回。 *\/
+    msg: string,
+
+}` 路由捕获服务器异常，HTTP仍200，业务码500；无data字段（不是null）。
+ */
+  userCloudphoneQuoteCreate = (
+    data: UserCloudphoneQuoteCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<
+      UserCloudphoneQuoteCreateData,
+      UserCloudphoneQuoteCreateError
+    >({
+      path: `/user_cloudphone_quote`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+ * @description 钱包结算云手机商品：plan 套餐新购/续期、time_addon 临时开机时长包、free_trial 免费体验；plan + change 改套餐不扣款并写入零美元订单。teamId 为大于 0 的云手机团队整数 ID，不是 workspaceId；product 默认 plan，qty 仅在 product=plan 时业务必填，必须指定可选档位。套餐按请求台数、包月开机数、订阅时长计价，不查询当前套餐补全参数；autoRenew 省略默认 true，并非保持原值，非套餐强制 false。免费体验按用户检查是否已领取，固定 1 台/30 天/30 分钟。actualAmount 单位为美元，不是美分。expireDate 为 UTC 当前日期加订阅天数，不是读取现有到期日后延长；effectiveDate 为 UTC 当前日的下个月同日（不足取月末），不是读取团队账期。订单落库/扣款后通知 cloudphone-server 发货；delivered=false 仍可返回业务成功，可能已扣款，由后台 OrderTask 补发，不要重复下单。改套餐 delivered=true 仅表示变更提交成功，pending=true 表示待生效，不能视为套餐立即生效。成功 HTTP 200、code=0、msg=成功，data 固定包含 16 个字段；参数/业务错误 HTTP 200、code=101，异常 HTTP 200、code=500，错误响应无 data。
+ *
+ * @tags Pay
+ * @name UserCloudphoneSettlementCreate
+ * @summary 云手机结算
+ * @request POST:/user_cloudphone_settlement
+ * @response `200` `UserCloudphoneSettlementCreateData` 成功：HTTP 200、业务code=0、msg=成功。即使delivered=false也可能已扣款，后台补发，不要重复下单；改套餐pending=true待生效。
+ * @response `x-200-2` `{
+  /** 业务错误码101，HTTP状态仍为200。 *\/
+    code: number,
+  /** 具体中文错误原因，例如teamId不能为空、云手机数量必须为可选档位之一、订阅时长无效、时长包档位无效、只支持钱包支付、已领取过免费体验或钱包余额不足等业务错误。 *\/
+    msg: string,
+
+}` HTTP 200，业务code=101；错误无data。
+ * @response `x-200-3` `{
+  /** 服务器异常业务码500，不是HTTP状态码；HTTP仍为200。 *\/
+    code: number,
+  /** 默认中文服务器错误提示。 *\/
+    msg: string,
+
+}` HTTP 200，业务code=500，msg=服务器错误；错误无data。
+ */
   userCloudphoneSettlementCreate = (
     data: UserCloudphoneSettlementCreatePayload,
     params: RequestParams = {},
   ) =>
-    this.http.request<UserCloudphoneSettlementCreateData, any>({
+    this.http.request<
+      UserCloudphoneSettlementCreateData,
+      UserCloudphoneSettlementCreateError
+    >({
       path: `/user_cloudphone_settlement`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+ * @description 云手机改套餐：按请求指定的套餐台数及包月开机台数提交变更，不查询现有套餐补全参数；不扣款，生成零美元订单，并通知cloudphone-server延后生效。teamId和qty均业务必填：teamId是大于0的云手机团队整数ID，不是workspaceId；qty必须选有效档位。monthlyBootQty省略为0；autoRenew省略默认true，不是保持原值。内部固定product=plan、action=change，不接受订阅周期或分钟包作为改套餐规格。effectiveDate按UTC当前日的下个月同日计算（不足取月末），不是查询团队账期；expireDate为空字符串。delivered=true仅表示变更提交成功，pending=true仍表示待生效，不能视为已立即更换套餐。delivered=false由后台OrderTask补发，不要重复下单；通用付费订单出现此状态可能已扣款，本接口actualAmount恒为0美元。成功HTTP200、code=0、msg=成功，data固定包含16字段；参数/业务错误HTTP200、code=101，异常HTTP200、code=500，错误均无data。
+ *
+ * @tags Pay
+ * @name UserCloudphonePlanChangeCreate
+ * @summary 云手机改套餐
+ * @request POST:/user_cloudphone_plan_change
+ * @response `200` `UserCloudphonePlanChangeCreateData` HTTP200、code=0、msg=成功。本次不扣款；delivered=true仅提交成功，pending=true仍待生效，delivered=false后台补发，不要重复下单。
+ * @response `x-200-2` `{
+  /** 参数或业务错误码101，HTTP状态仍为200。 *\/
+    code: number,
+  /** 具体中文错误原因，例如云手机数量必须为可选档位之一、包月开机数量无效、teamId不能为空；写单失败也可能以业务错误返回。 *\/
+    msg: string,
+
+}` HTTP200、业务code101，无data。
+ * @response `x-200-3` `{
+  /** 服务器异常业务码500，不是HTTP状态码；HTTP仍为200。 *\/
+    code: number,
+  /** 默认中文服务器错误提示。 *\/
+    msg: string,
+
+}` HTTP200、业务code500、msg=服务器错误，无data。
+ */
+  userCloudphonePlanChangeCreate = (
+    data: UserCloudphonePlanChangeCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<
+      UserCloudphonePlanChangeCreateData,
+      UserCloudphonePlanChangeCreateError
+    >({
+      path: `/user_cloudphone_plan_change`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+ * @description 云手机套餐续期：按本次请求明确指定的套餐台数、包月开机数及订阅时长计算费用，钱包扣款后发货；不查询当前套餐台数或包月开机数补全参数。teamId、qty业务必填；teamId是大于0的云手机团队整数ID，不是workspaceId，qty必须指定可选档位。payType可省略，非空仅支持Balance；monthlyBootQty省略默认0，autoRenew省略默认true，不是保持原值。虽然复用结算请求模型，本接口忽略传入的product/action/minutes，内部固定product=plan、action=renew、minutes=0。expireDate是UTC当前日期+所选订阅天数，不是查询现有到期日后延长，也不是查询发货后的实际到期日；effectiveDate为空字符串（通用改套餐才按UTC下个月同日计算，不查询团队账期）。actualAmount单位美元而非美分。delivered=true表示发货回调成功；delivered=false仍可能已扣款且后台OrderTask会补发，不要重复下单；pending固定false。成功HTTP200、业务code=0、msg=成功，data固定包含16字段；参数/业务错误HTTP200、code=101，异常HTTP200、code=500，错误无data。
+ *
+ * @tags Pay
+ * @name UserCloudphonePlanRenewCreate
+ * @summary 云手机续期
+ * @request POST:/user_cloudphone_plan_renew
+ * @response `200` `UserCloudphonePlanRenewCreateData` HTTP200、业务code=0、msg=成功；delivered=false也可能已扣款，等待后台补发，不要重复下单。
+ * @response `x-200-2` `{
+  /** 参数或业务错误码101，HTTP状态仍为200。 *\/
+    code: number,
+  /** 具体中文错误原因，例如云手机数量必须为可选档位之一、订阅时长无效、包月开机数量不能超过云手机数量、teamId不能为空、只支持钱包支付或钱包余额不足等业务错误。 *\/
+    msg: string,
+
+}` HTTP200、业务code101，无data。
+ * @response `x-200-3` `{
+  /** 服务器异常业务码500，不是HTTP状态码；HTTP仍为200。 *\/
+    code: number,
+  /** 默认中文服务器错误提示。 *\/
+    msg: string,
+
+}` HTTP200、业务code500、msg=服务器错误，无data。
+ */
+  userCloudphonePlanRenewCreate = (
+    data: UserCloudphonePlanRenewCreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<
+      UserCloudphonePlanRenewCreateData,
+      UserCloudphonePlanRenewCreateError
+    >({
+      path: `/user_cloudphone_plan_renew`,
       method: "POST",
       body: data,
       type: ContentType.Json,

@@ -10,6 +10,27 @@ interface Operation {
   render?: () => any
 }
 
+/** 人员标签用 u_ 前缀，与普通标签 ID 区分 */
+export function isMemberLabelId(labelId: unknown) {
+  return `${labelId}`.startsWith('u_')
+}
+
+/**
+ * 标签 ID 后台已改为 string。
+ * 禁止 Number()：大整数会丢精度，非数字 ID 会变成 NaN。
+ */
+export function toLabelId(id: unknown) {
+  return String(id)
+}
+
+/** 菜单选中值保持 string：人员为 u_${userId}，标签为原始 string id */
+export function toSubmitLabelIds(selectedIds: unknown): string[] {
+  if (!Array.isArray(selectedIds)) {
+    return []
+  }
+  return selectedIds.map(id => toLabelId(id))
+}
+
 export function useMateGroup() {
   async function getTags(): Promise<Operation[]> {
     const { data } = await API.window.userGetLabelInfoList({ page_index: '1', page_size: '999', requestType: ProfileReqType.SelectLabel })

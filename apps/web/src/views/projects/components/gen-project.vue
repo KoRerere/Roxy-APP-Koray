@@ -64,8 +64,9 @@ async function getMemberList() {
   const { code, data, msg } = await getTeamMembers()
   loading.value = false
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   fuse.value = new Fuse(data.rows, {
     threshold: 0.3,
@@ -86,8 +87,9 @@ async function handleSubmit(formData: Record<string, any>) {
   } as any)
   subloading.value = false
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
   await onSuccess()
 }
 </script>

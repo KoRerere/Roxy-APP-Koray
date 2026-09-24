@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import ActivityInfoProxy from '/@/views/campaign/mid-autumn-festival/activity-info-proxy.vue'
+import ActivityInfoPoint from '/@/views/campaign/mid-autumn-festival/activity-info-point.vue'
 import RxSlider from '/@/components/rx-slider'
 import RxStepInput from '/@/components/rx-step-input'
 import RxButton from '/@/components/rx-button'
@@ -350,7 +350,7 @@ function handleClose() {
       </div>
     </div>
 
-    <ActivityInfoProxy />
+    <ActivityInfoPoint type="point" />
 
     <!-- ── Bottom cards ──────────────────────────────────────────── -->
     <div class="flex gap-5 w-full">

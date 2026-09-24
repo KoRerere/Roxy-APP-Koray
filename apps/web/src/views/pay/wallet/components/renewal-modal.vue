@@ -4,6 +4,7 @@ import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import ItemBlock from '/@/views/pay/subscribe/components/item-block.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import ActivityInfo from '/@/views/campaign/new-user/activity-info.vue'
+import ActivityInfoRenew from '/@/views/campaign/mid-autumn-festival/activity-info-renew.vue'
 import currency from 'currency.js'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { API } from '/@/api'
@@ -232,11 +233,9 @@ function onUpgradePlan() {
         <ItemBlock :title="$t('选择续费时长')">
           <div class="flex flex-col gap-2.5">
             <Duration v-model="selectedDuration" :price="discountedMonthly" :default-days="defaultDays" :order-type="OrderType.Renew" />
-
             <ActivityInfo :show-proxy-price="false" />
           </div>
         </ItemBlock>
-
         <div class="flex flex-col gap-3">
           <div class="flex flex-col gap-2">
             <i18n-t tag="div" class=" tt-primary font-[DingTalk_JinBuTi] text-4 leading-normal select-none" scope="global" :keypath="$t('您当前套餐：{count} 窗口', { count: '{count}' })">
@@ -279,15 +278,24 @@ function onUpgradePlan() {
             </div>
           </template>
         </div>
+        <ActivityInfoRenew />
       </div>
       <div class="flex flex-col gap-2.5 w-88">
         <Detail :list="detail">
           <template #duration="{ item, classes }">
             <div class="flex justify-between" :class="classes">
               <div>{{ item.label }}</div>
-              <div class="flex items-baseline gap-1">
-                <span>{{ selectedDuration?.title }}</span>
-                <span v-if="selectedDuration?.giftDays" class="duration-gift">{{ $t('{day} 天', { day: `+ ${selectedDuration.giftDays}` }) }}</span>
+              <div>
+                <template v-if="selectedDuration?.giftDays">
+                  {{ selectedDuration.day }}<i18n-t tag="span" class="duration-gift" :keypath="$t('{day} 天', { day: '{day}' })" scope="global">
+                    <template #day>
+                      + {{ selectedDuration.giftDays }}
+                    </template>
+                  </i18n-t>
+                </template>
+                <template v-else>
+                  {{ selectedDuration?.title }}
+                </template>
               </div>
             </div>
           </template>

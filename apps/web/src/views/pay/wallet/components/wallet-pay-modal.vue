@@ -4,7 +4,7 @@ import { RxAlert } from '/@/components/rx-alert'
 import { useUserStore } from '/@/stores/user'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { usePay } from '/@/views/pay/wallet/hook.tsx'
+import { PAY_PROCESSING_BACK, usePay } from '/@/views/pay/wallet/hook.tsx'
 import { PayWay } from '/@/enums/pay'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { getImage } from '/@/utils/basic'
@@ -65,11 +65,15 @@ onBeforeMount(() => {
 function onRecharge() {
   walletRecharge({
     needAmount: finalResult.value.needAmount,
-    next: async (data) => {
+    next: (data) => {
       setActivityModalOpenStatus()
-      await openProcessing(data, 'silent', { cancelRedirect })
+      // 不 await：与「服务和钱包」一致，先关掉充值弹窗再出扫码，避免两个弹窗叠层
+      openProcessing(data, 'silent', { cancelRedirect })
         .then(confirm)
-        .catch(() => {
+        .catch((error) => {
+          if (error === PAY_PROCESSING_BACK) {
+            return
+          }
           showToast(1, $t('支付失败'))
           close(false)
         })

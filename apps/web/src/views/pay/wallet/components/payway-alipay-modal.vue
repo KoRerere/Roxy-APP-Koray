@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import currency from 'currency.js'
 import QRCode from 'qrcode'
 import { usePay } from '/@/views/pay/wallet/hook'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -8,9 +9,11 @@ interface Props {
   data: Record<string, any>
   onConfirm?: () => void | Promise<void>
   onCancel?: () => void | Promise<void>
+  /** 从钱包充值进入时显示返回；点击后关闭扫码弹窗，不跳转账单页，回到充值弹窗 */
+  onBack?: () => void | Promise<void>
 }
 
-const { data: props, onConfirm, onCancel } = defineProps<Props>()
+const { data: props, onConfirm, onCancel, onBack } = defineProps<Props>()
 
 const emit = defineEmits(['close'])
 
@@ -49,8 +52,9 @@ async function genProxyQrcode() {
 async function checkStatus() {
   try {
     const isOK = await checker.check(props.orderNo)
-    if (isOK)
+    if (isOK) {
       confirm()
+    }
   }
   catch (error) {
     close(true)
@@ -67,25 +71,47 @@ async function confirm() {
 
 function close(isCancel: boolean) {
   emit('close')
-  if (isCancel)
+  if (isCancel) {
     onCancel?.()
+  }
+}
+
+/** 关闭扫码弹窗并回到钱包充值，不走取消支付的账单页跳转 */
+function back() {
+  emit('close')
+  onBack?.()
 }
 </script>
 
 <template>
   <div class="flex flex-col select-none w-115 rounded-2 overflow-hidden">
-    <div class="flex flex-col items-center gap-4 pa-6 top">
+    <div class="flex flex-col items-center gap-5 pa-6 top">
       <div class="w-full relative flex items-center h-9">
-        <div class="flex items-center gap-2 py-2 px-3 rounded-full clock">
-          <SvgIcon class="cursor-pointer" name="base/rx_ic_clock" />
-          <span v-if="countdown" class="tt-primary font-[JetBrains_Mono] text-3.25 font-500">{{ countdown }}</span>
-        </div>
+        <RxButton v-if="onBack" severity="secondary" variant="text" size="xxs" icon="base/rx_ic_arrow_left" :label="$t('返回')" @click="back" />
         <SvgIcon class="absolute right-0 cursor-pointer" size="20" name="base/rx_ic_delete" @click="close(true)" />
       </div>
-      <div class="w-56 aspect-square rounded-2 bg-white pa-3">
-        <div class="pa-2.5 rounded-1.5 sacn">
-          <img :src="qrcode" class="block pointer-events-none w-full aspect-square">
+
+      <div v-if="data.orderAmount" class="flex flex-col justify-center items-center gap-1">
+        <div class=" tt-secondary text-3.5 font-600 leading-4">
+          {{ $t('支付金额') }}
         </div>
+        <div class="tt-warning text-9 font-800 leading-12">
+          {{ currency(data.orderAmount).format() }}
+        </div>
+      </div>
+
+      <div class="flex flex-col items-center gap-3">
+        <div class="w-56 aspect-square rounded-2 bg-white pa-3">
+          <div class="pa-2.5 rounded-1.5 sacn">
+            <img :src="qrcode" class="block pointer-events-none w-full aspect-square">
+          </div>
+        </div>
+
+        <i18n-t class="tt-primary text-3.5 font-500 leading-normal" tag="div" :keypath="$t('二维码将于 {time} 到期', { time: '{time}' })" scope="global">
+          <template #time>
+            <span class="tt-warning">{{ countdown }}</span>
+          </template>
+        </i18n-t>
       </div>
     </div>
 
@@ -109,10 +135,6 @@ function close(isCancel: boolean) {
 <style lang="scss" scoped>
 .top {
   background: var(--colors-background-bg-block);
-}
-
-.clock {
-  background: var(--component-tag-bg2);
 }
 
 .sacn {

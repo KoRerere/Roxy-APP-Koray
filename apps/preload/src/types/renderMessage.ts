@@ -76,6 +76,8 @@ export interface RenderMessage {
   'browser:batchClose': (dirIds: string[]) => void
   /** 关闭所有窗口 */
   'browser:closeAll': () => void
+  /** 关闭指定空间已打开和启动中的窗口 */
+  'browser:closeByWorkspace': (workspaceId: number) => void
   /** 批量删除窗口 */
   'browser:batchRemove': (dirIds: string[]) => void
   /** 获取已打开的窗口 */
@@ -356,6 +358,10 @@ export interface RenderMessage {
 
   /** 前端已准备就绪 */
   'web:ready': () => void
+  /** 取出尚未被渲染进程消费的 open-page / auto-login query，避免就绪竞态丢包 */
+  'deep-link:takePendingOpenPage': () => string
+  /** 只读尚未消费的 open-page / auto-login query，不消费 */
+  'deep-link:peekPendingOpenPage': () => string
 
   /** 窗口同步器相关 */
   /** 打开窗口同步器 */

@@ -4,8 +4,8 @@ import {
   MP_DISTINCT_ID,
   OFFICIAL_SITE_INVITE_CODE,
 } from '/@/constants/storage-key'
+import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY, REDIRECT_ACTION } from '/@/constants/search-params-key'
 import { safeParseJSON } from '/@/utils/basic'
-import { LOCALE_SWITCH_HANDOFF_TOKEN_QUERY } from '/@/constants/search-params-key'
 
 interface LastAppRoute {
   userId: number
@@ -29,6 +29,7 @@ const STRIPPED_QUERY_KEYS = [
   OFFICIAL_SITE_INVITE_CODE,
   MP_DISTINCT_ID,
   LOCALE_SWITCH_HANDOFF_TOKEN_QUERY,
+  REDIRECT_ACTION,
 ]
 
 export function shouldPersistRoute(to: RouteLocationNormalized) {

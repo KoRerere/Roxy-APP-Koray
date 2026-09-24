@@ -2,20 +2,13 @@
 import { getImage } from '/@/utils/basic'
 import { useCampaignStore } from '/@/stores/campaign'
 
-const { seasonalActivity } = storeToRefs(useCampaignStore())
+const { seasonalActivity, maxBonus } = storeToRefs(useCampaignStore())
 
 const imgSrc = `url('${getImage('campaing/mid-autumn-festival/subscribe_banner_bg.jpg')}')`
-
-const giveAway = [
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 50, giveAway: 5, discount: 10 }),
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 100, giveAway: 20, discount: 20 }),
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 500, giveAway: 150, discount: 30 }),
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 1000, giveAway: 400, discount: 40 }),
-]
 </script>
 
 <template>
-  <div v-if="seasonalActivity.midAutumnFestival" class="h-33 relative flex flex-col justify-center gap-1.5 py-3.5 px-4 rounded-2 overflow-hidden banner">
+  <div v-if="seasonalActivity.midAutumnFestival" class="relative flex flex-col justify-center gap-1.5 py-3.5 px-4 rounded-2 overflow-hidden cursor-pointer banner">
     <div class="flex items-center gap-2">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -31,18 +24,7 @@ const giveAway = [
         </defs>
       </svg>
       <div class="title">
-        {{ $t('充值返利 · 满送大酬宾') }}
-      </div>
-    </div>
-    <i18n-t class="color-white text-3.25  leading-4.5" tag="div" scope="global" :keypath="$t('充值越多，返利越高！最高 {discount} 充值金额', { discount: '{discount}' })">
-      <template #discount>
-        <span class="font-600 bouns">{{ $t('赠送 {discount}%', { discount: 40 }) }}</span>
-      </template>
-    </i18n-t>
-    <div class="mt-1 flex flex-wrap items-center gap-x-5 gap-y-1">
-      <div v-for="item in giveAway" :key="item" class="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
-        <SvgIcon name="base/rx_ic_check_line" color="var(--colors-icon-icon-success)" />
-        <span class="color-white/90 text-3 leading-4.5">{{ item }}</span>
+        {{ $t('充值有礼！最高加送 {discount}%', { discount: maxBonus }) }}
       </div>
     </div>
   </div>
@@ -60,13 +42,6 @@ const giveAway = [
   font-size: 18px;
   font-weight: 700;
   line-height: 120%;
-  background: linear-gradient(180deg, #fbd99b 30.17%, #fcc67e 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.bouns {
   background: linear-gradient(180deg, #fbd99b 30.17%, #fcc67e 100%);
   background-clip: text;
   -webkit-background-clip: text;

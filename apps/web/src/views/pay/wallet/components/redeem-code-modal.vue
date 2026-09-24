@@ -5,20 +5,29 @@ import { debounce } from 'es-toolkit'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
-const { onConfirm } = defineProps<{
+const { onConfirm, defaultCode } = defineProps<{
   onConfirm: (code: string) => void | Promise<void>
+  /** 从兑换码列表进入时预填，便于直接校验并兑换 */
+  defaultCode?: string
 }>()
 
 defineEmits(['close'])
 
 const [_, onlyErrorToast] = useResponseToast()
 
-const code = ref('')
+const code = ref(defaultCode ?? '')
 const loading = ref(false)
 const available = ref(false)
 const redeemMessage = ref()
 
 const checkCodeDebounce = debounce(checkCode, 500)
+
+onMounted(() => {
+  // 列表入口已带入完整兑换码，跳过输入防抖直接校验，避免再手动粘贴
+  if (defaultCode) {
+    void checkCode(defaultCode)
+  }
+})
 
 async function checkCode(value: string) {
   if (value.length !== 14) {
@@ -30,15 +39,16 @@ async function checkCode(value: string) {
   const { code, data, msg } = await API.pay.userQueryRedeemCodeList({ code: value })
   loading.value = false
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
   available.value = true
   redeemMessage.value = data
 }
 </script>
 
 <template>
-  <div class="w-120 inline-flex flex-col pa-6 pt-4 gap-4">
+  <div v-focustrap="{ autoFocus: true }" class="w-120 inline-flex flex-col pa-6 pt-4 gap-4">
     <div class="flex justify-between items-center">
       <span class="header">{{ $t('兑换') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
@@ -53,7 +63,7 @@ async function checkCode(value: string) {
         {{ $t('礼品码是用于兑换 Roxy浏览器订阅和其他福利的代码。') }}
       </div>
     </div>
-    <TsFormInputText v-model.trim="code" class="text-center" size="lg" :placeholder="$t('请输入兑换码')" @update:model-value="checkCodeDebounce" />
+    <TsFormInputText v-model.trim="code" autofocus class="text-center" size="lg" :placeholder="$t('请输入兑换码')" @update:model-value="checkCodeDebounce" />
     <RxButton size="lg" :loading="loading" :disabled="!available" :label="loading ? $t('检测中...') : $t('兑换')" @click="onConfirm(code)" />
     <div v-if="redeemMessage" class="flex flex-col gap-1">
       <div v-if="redeemMessage.activityName" class="flex items-center gap-1.5">

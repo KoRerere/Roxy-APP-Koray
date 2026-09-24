@@ -78,6 +78,8 @@ export type MittEvents = {
     settingsKey: 'profiles' | 'authentication' | 'preferences' | 'network' | 'loginActivity'
     anchorPoint?: string
   }
+  /** 自定义协议落地后执行一次性 redirect-action */
+  applyRedirectAction?: string
   /** 直接打开实名认证弹窗（不经过设置页）；按当前 KYC 状态分流详情/审核中/表单 */
   openIdentityVerification?: {
     showRegulatoryNotice?: boolean

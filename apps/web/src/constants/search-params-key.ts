@@ -18,3 +18,12 @@ export const OFFICIAL_SITE_REDIRECT = 'official-site-redirect'
 
 /** 官网跳转 Web App 时的重定向动作，用于 打开某个页面，并执行某个动作 */
 export const REDIRECT_ACTION = 'redirect-action'
+
+/** 协议 / 官网 redirect-action 取值；客户端按值打开对应弹窗 */
+export const RedirectAction = {
+  OpenRedeemCodeRecord: 'open-redeem-code-record',
+  OpenExpandTeam: 'open-expand-team',
+  OpenWalletRecharge: 'open-wallet-recharge',
+} as const
+
+export type RedirectActionValue = (typeof RedirectAction)[keyof typeof RedirectAction]

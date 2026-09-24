@@ -18,6 +18,7 @@ import { PayWay } from '/@/enums/pay'
 import type { ProxyIpType } from '/@/enums/proxy'
 import { BuyEntryType, ProxyOrderType } from '/@/enums/proxy'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook.ts'
 import { createProxyPurchaseCountryCache, useProxyPurchaseApi, useProxyPurchaseForm, useProxyPurchasePricing } from '/@/views/agent/shop/components/provider-buy/useProxyPurchase.ts'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import type { CountryOption } from '/@/views/agent/shop/components/provider-buy/utils'
@@ -78,6 +79,7 @@ const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { check } = usePermission()
 const { showFreedomActivityModal } = useFreedomActivity()
+const { showLuckyDrawAfterPay } = useMidAutumnActivity()
 
 const api = useProxyPurchaseApi({ entryType, mode: resolvedMode, workspaceType: resolvedWorkspaceType })
 
@@ -225,6 +227,8 @@ async function onPay() {
         emit('success', data)
         emit('close')
         maybeShowFirstConsumeReferralPopup((reason) => {
+          // 查看详情会自己跳推广页，只跳过后续默认动作；抽奖次数已到账，仍要弹出抽奖盘
+          showLuckyDrawAfterPay()
           if (reason === 'view-details') {
             return
           }
@@ -240,7 +244,7 @@ async function onPay() {
     <RxLoading v-model="loading" :opacity="0.9" />
     <div class="py-5 flex-1 flex flex-col pl-8 gap-9 rounded-3 overflow-hidden overflow-y-auto selectors">
       <div class="grid grid-cols-2 gap-y-6">
-        <ActivityInfoProxy class="col-span-2" />
+        <ActivityInfoProxy class="mr-7 col-span-2" type="proxy" />
         <BusinessUseSelector :options="businessUseOptions" :model-value="businessUse" @update:model-value="selectBusinessUse" />
         <CountrySelector :options="countryOptions" :model-value="purchaseCountry" :loading="loadingPurchaseCountry" @update:model-value="selectCountry" />
         <DurationSelector v-model="subscriptionMonths" :options="durationOptions" />

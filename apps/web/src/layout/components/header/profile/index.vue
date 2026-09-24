@@ -240,6 +240,7 @@ function openRedeemCode() {
 
 function openMyRedeemCodeList() {
   showModal({
+    uniqueKey: 'redeem-code-record',
     showHeader: false,
     modal: true,
     blockScroll: true,

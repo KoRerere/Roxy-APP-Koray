@@ -63,6 +63,14 @@ export async function sendCallback(channel: string, ...args: any[]) {
     return true
   }
 
+  if (channel === 'deep-link:takePendingOpenPage') {
+    return ''
+  }
+
+  if (channel === 'deep-link:peekPendingOpenPage') {
+    return ''
+  }
+
   /** 随机生成字体 */
   if (channel === 'util:genRandomFonts') {
     return genRandomFonts(await getLocalFonts())

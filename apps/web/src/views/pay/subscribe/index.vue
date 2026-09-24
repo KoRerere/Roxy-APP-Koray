@@ -3,6 +3,7 @@ import { h } from 'vue'
 import Duration from '/@/views/pay/subscribe/components/duration.vue'
 import AdvancedFeat from '/@/views/pay/subscribe/components/advanced-feat.vue'
 import FreedomActivity from '/@/views/campaign/new-user/activity-info.vue'
+import ActivityInfoMidAutumnFestival from '/@/views/campaign/mid-autumn-festival/activity-info.vue'
 import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import Profile from '/@/views/pay/subscribe/components/profile.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
@@ -21,6 +22,7 @@ import { deepClone } from '/@/utils'
 import { discountCalculate, durationAmountFromMonthly, durationPayableAmount, hasVisiblePriceDiscount, tierCalculate } from './util'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook'
 import type { Plan } from './type'
 
 const route = useRoute()
@@ -30,6 +32,7 @@ const { userPayInfo } = storeToRefs(useUserStore())
 const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
 const { openProcessing, planSuccessFreedomActivity2, maybeShowFirstConsumeReferralPopup } = usePay()
+const { showLuckyDrawAfterPay } = useMidAutumnActivity()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const billingLabels = useBillingEntityLabels()
@@ -276,6 +279,8 @@ async function onSubscribe() {
             (payType === PayWay.Balance ? planSuccessFreedomActivity2() : openProcessing({ payType, ...data }, OrderType.Subscribe))
               .then(() => {
                 maybeShowFirstConsumeReferralPopup((reason) => {
+                  // 查看详情会自己跳推广页，不能再推窗口列表；抽奖次数已到账，仍要弹出抽奖盘
+                  showLuckyDrawAfterPay()
                   if (reason === 'view-details') {
                     return
                   }
@@ -337,10 +342,15 @@ async function trialSubscribe() {
             <template #duration="{ item, classes }">
               <div class="flex justify-between" :class="classes">
                 <div>{{ item.label }}</div>
-                <div class="flex items-baseline gap-1">
-                  <span>{{ selectedDuration?.title }}</span>
-                  <!-- 新人买赠天数与时长卡片同款青绿渐变 -->
-                  <span v-if="selectedDuration?.giftDays" class="duration-gift">{{ $t('{day} 天', { day: `+ ${selectedDuration.giftDays}` }) }}</span>
+                <div>
+                  <template v-if="selectedDuration?.giftDays">
+                    {{ selectedDuration.day }}<i18n-t tag="span" class="duration-gift" :keypath="$t('{day} 天', { day: '{day}' })" scope="global">
+                      <template #day> + {{ selectedDuration.giftDays }}</template>
+                    </i18n-t>
+                  </template>
+                  <template v-else>
+                    {{ selectedDuration?.title }}
+                  </template>
                 </div>
               </div>
             </template>
@@ -410,6 +420,7 @@ async function trialSubscribe() {
               </div>
             </template>
           </Detail>
+          <ActivityInfoMidAutumnFestival />
         </div>
       </div>
     </div>

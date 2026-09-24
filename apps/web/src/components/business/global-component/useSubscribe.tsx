@@ -15,7 +15,7 @@ import type { ToastMessageOptions } from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { useRoleStore } from '/@/stores/role'
 import { useHandleBusinessCode } from '/@/hooks/useResponseToast/handleBusinessCode'
-import { enhanceCountdown, getImage, isMainWindow, supportsApp4_0_0 } from '/@/utils'
+import { enhanceCountdown, getImage, hidePageLoading, isMainWindow, supportsApp4_0_0 } from '/@/utils'
 import { useFormDialog } from '/@/hooks/useFormDialog'
 import { getAccountSetupFormSchemas } from '/@/components/business/global-component/schemas'
 import { RxAlert } from '/@/components/rx-alert'
@@ -24,12 +24,16 @@ import styles from './schemas.module.css'
 import type { OpenBrowserFailureType } from '@roxy/electron-preload'
 import { useThemeStore } from '/@/stores/theme'
 import { useCampaignStore } from '/@/stores/campaign'
-import { isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
+import { getWorkspaceTypeLandingRoute, isCurrentEcommerceWorkspace } from '/@/utils/workspace-mode'
+import { REDIRECT_ACTION, RedirectAction } from '/@/constants/search-params-key'
+import { CONSUMED_REDIRECT_ACTION, HANDLED_OPEN_PAGE_QUERY, PENDING_REDIRECT_ACTION, PROTOCOL_AUTO_LOGIN_PENDING } from '/@/constants/storage-key'
+import { isLoginRoute } from '/@/router/navigation'
 
 const UpgradePayPlan = defineAsyncComponent(() => import('./upgrade-pay-plan.vue'))
 const SubscriptionExpired = defineAsyncComponent(() => import('./subscription-expired.vue'))
 const RenewalModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/renewal-modal.vue'))
 const ExpandModal = defineAsyncComponent(() => import('/@/views/pay/wallet/components/expand-modal.vue'))
+const RedeemCodeRecord = defineAsyncComponent(() => import('/@/layout/components/header/profile/components/record.vue'))
 const AppUpgradeTips = defineAsyncComponent(() => import('../app-upgrade-tips/index.vue'))
 const WelcomeModal = defineAsyncComponent(() => import('/@/views/tutorial/components/welcome-modal'))
 const Score = defineAsyncComponent(() => import('/@/views/tutorial/components/score'))
@@ -53,7 +57,7 @@ export function useSubscribe() {
   const themeStore = useThemeStore()
   const router = useRouter()
   const [showFormDialog] = useFormDialog()
-  const { purchaseSuccess, planSuccess, openProcessing } = usePay()
+  const { purchaseSuccess, planSuccess, openProcessing, walletRecharge } = usePay()
   const dialog = useDialog()
   const [showModal] = useDialogHook()
   const toast = useToast()
@@ -91,21 +95,321 @@ export function useSubscribe() {
 
   // 显示toast
   emitter.on('showToast', showToast)
-  // 打开页面
-  globalThis.electronAPI.on('open:page', (query) => {
-    console.log('open:page', query)
-    if (query) {
-      const searchParams = new URLSearchParams(query)
-      const url = searchParams.get('url')
-      if (url) {
-        sessionStorage.setItem('openPageUrl', url)
-        router.push(url)
-        if (userStore.userInfo?.id) {
-          sessionStorage.removeItem('openPageUrl')
-        }
+  // 打开页面 / 官网 auto-login
+  if (globalThis.isElectron) {
+    globalThis.electronAPI.on('open:page', (query) => {
+      console.log('open:page', redactDeepLinkQuery(query))
+      void (async () => {
+        await userStore.hasCallInitUserInfo.promise
+        await handleOpenPageDeepLink(query, 'ipc')
+      })()
+    })
+    // 9.2.7 起有 takePendingOpenPage；旧包会进 catch。热更新 web 仍可消费当前包已有的 pending IPC。
+    void consumePendingOpenPage()
+  }
+
+  function redactDeepLinkQuery(query: string) {
+    return query.replace(/([?&]token=)[^&]*/gi, '$1***')
+  }
+
+  function decodeQueryComponent(value: string) {
+    try {
+      return decodeURIComponent(value)
+    }
+    catch {
+      return value
+    }
+  }
+
+  /** 不用 URLSearchParams：它会把 token 里的 + 变成空格，官网 JWT 会被打坏并 403 */
+  function getDeepLinkParam(search: string, key: string) {
+    const raw = search.startsWith('?') ? search.slice(1) : search
+    const qIndex = raw.indexOf('?')
+    const query = qIndex >= 0 ? raw.slice(qIndex + 1) : raw
+    for (const part of query.split('&')) {
+      if (!part) {
+        continue
+      }
+      const eq = part.indexOf('=')
+      const name = decodeQueryComponent(eq === -1 ? part : part.slice(0, eq))
+      if (name !== key) {
+        continue
+      }
+      return decodeQueryComponent(eq === -1 ? '' : part.slice(eq + 1))
+    }
+    return ''
+  }
+
+  let lastHandledOpenPageQuery = ''
+
+  /** 不把 JWT 写入 sessionStorage，用脱敏后的 query 识别同一条深链 */
+  function getOpenPageConsumptionKey(query: string) {
+    return query.trim().replace(/([?&]token=)[^&]*/gi, '$1')
+  }
+
+  /** 当前 session 是否已经消费过这条深链（刷新后仍生效） */
+  function wasOpenPageQueryHandled(query: string) {
+    const key = getOpenPageConsumptionKey(query)
+    return Boolean(key) && sessionStorage.getItem(HANDLED_OPEN_PAGE_QUERY) === key
+  }
+
+  /** 记下已消费的深链，避免 location.reload 后 Electron leftover pending 再打开弹窗 */
+  function markOpenPageQueryHandled(query: string) {
+    const key = getOpenPageConsumptionKey(query)
+    if (key) {
+      sessionStorage.setItem(HANDLED_OPEN_PAGE_QUERY, key)
+    }
+  }
+
+  /** 顶部「刷新客户端」走 location.reload，主进程 leftover pending 不应再消费 */
+  function isRendererReload() {
+    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
+    return navigation?.type === 'reload'
+  }
+
+  /** dispatchDeepLink 在 take 之后仍可能把 pending 写回去，处理完再清掉，避免刷新重放 */
+  async function discardStalePendingOpenPage() {
+    try {
+      await globalThis.electronAPI.send('deep-link:takePendingOpenPage')
+    }
+    catch {
+      // 旧包没有这条 IPC
+    }
+  }
+
+  async function consumePendingOpenPage() {
+    try {
+      await userStore.hasCallInitUserInfo.promise
+      const pending = await globalThis.electronAPI.send('deep-link:takePendingOpenPage')
+      if (!pending) {
+        return
+      }
+      if (isRendererReload() || wasOpenPageQueryHandled(pending)) {
+        console.log('[auto-login] skip leftover pending after refresh', redactDeepLinkQuery(pending))
+        return
+      }
+      console.log('[auto-login] consume pending open-page', redactDeepLinkQuery(pending))
+      await handleOpenPageDeepLink(pending, 'pending')
+    }
+    catch (error) {
+      console.warn('[auto-login] takePendingOpenPage unavailable', error)
+    }
+  }
+
+  async function getElectronToken() {
+    try {
+      const softConfig = await globalThis.electronAPI.send('app:getSoftConfig')
+      return softConfig?.token || ''
+    }
+    catch {
+      return ''
+    }
+  }
+
+  /** App 是否已有登录账号：渲染态或 Electron 持久化 token，二有其一即视为已登录 */
+  async function hasLocalAccount() {
+    if (userStore.token && userStore.userInfo?.id) {
+      return true
+    }
+    return Boolean(await getElectronToken())
+  }
+
+  /** 与登录页 jumpHome 同一条进空间路径：initUserInfo → enterWorkspace → 落地页 */
+  async function loginByProtocolToken(nextToken: string) {
+    await userStore.hasCallInitUserInfo.promise
+
+    if (await hasLocalAccount()) {
+      console.log('[auto-login] skip protocol token, local account exists', {
+        rendererUserId: userStore.userInfo?.id,
+        hasRendererToken: Boolean(userStore.token),
+      })
+      if (isLoginRoute() && userStore.userInfo?.id) {
+        await replaceToWorkspaceLanding()
+      }
+      return
+    }
+
+    console.log('[auto-login] signing in with protocol token', {
+      onLoginPage: isLoginRoute(),
+      tokenLength: nextToken.length,
+    })
+    sessionStorage.setItem(PROTOCOL_AUTO_LOGIN_PENDING, '1')
+    try {
+      userStore.setToken(nextToken, { fromOfficialSite: true })
+      if (userStore.token !== nextToken) {
+        console.warn('[auto-login] official-site token was rejected, keep local session')
+        return
+      }
+      useWorkspaceStore().resetWorkspace()
+      await userStore.initUserInfo(undefined, { enterWorkspace: false })
+      if (!userStore.userInfo?.id) {
+        console.warn('[auto-login] failed to load user info')
+        return
+      }
+
+      await userStore.enterWorkspace(userStore.userInfo.workspaceId)
+      await replaceToWorkspaceLanding()
+    }
+    finally {
+      sessionStorage.removeItem(PROTOCOL_AUTO_LOGIN_PENDING)
+    }
+  }
+
+  async function replaceToWorkspaceLanding() {
+    const name = getWorkspaceTypeLandingRoute(
+      currentWorkspace.value?.workspaceType ?? userStore.userInfo.workspaceType,
+      userStore.userInfo.role,
+    )
+    await router.replace({ name })
+    hidePageLoading()
+  }
+
+  let applyingRedirectAction = false
+  let openedRedirectAction = ''
+
+  function openRedeemCodeRecord() {
+    showModal({
+      uniqueKey: 'redeem-code-record',
+      showHeader: false,
+      modal: true,
+      blockScroll: true,
+      slots: {
+        container: ({ hideModal }) => <RedeemCodeRecord onClose={hideModal}></RedeemCodeRecord>,
+      },
+    })
+  }
+
+  function openWalletRechargeFromProtocol() {
+    walletRecharge({
+      next: (data) => {
+        openProcessing(data, OrderType.Recharge)
+          .finally(() => {
+            emitter.emit('updateBillList')
+            getUserPayInfo()
+          })
+      },
+    })
+  }
+
+  /** 弹窗由 GlobalComponent 打开；同一条 redirect-action 只执行一次，刷新后也不重放 */
+  async function applyRedirectAction(action = sessionStorage.getItem(PENDING_REDIRECT_ACTION)) {
+    if (!action || applyingRedirectAction || openedRedirectAction === action) {
+      return
+    }
+    if (sessionStorage.getItem(CONSUMED_REDIRECT_ACTION) === action) {
+      sessionStorage.removeItem(PENDING_REDIRECT_ACTION)
+      return
+    }
+    if (!userStore.userInfo?.id || isLoginRoute()) {
+      return
+    }
+
+    applyingRedirectAction = true
+    sessionStorage.removeItem(PENDING_REDIRECT_ACTION)
+    try {
+      await nextTick()
+      if (isLoginRoute() || !userStore.userInfo?.id) {
+        sessionStorage.setItem(PENDING_REDIRECT_ACTION, action)
+        return
+      }
+      if (openedRedirectAction === action || sessionStorage.getItem(CONSUMED_REDIRECT_ACTION) === action) {
+        return
+      }
+      openedRedirectAction = action
+      sessionStorage.setItem(CONSUMED_REDIRECT_ACTION, action)
+
+      if (action === RedirectAction.OpenRedeemCodeRecord) {
+        openRedeemCodeRecord()
+        return
+      }
+      if (action === RedirectAction.OpenExpandTeam) {
+        onExpand()
+        return
+      }
+      if (action === RedirectAction.OpenWalletRecharge) {
+        openWalletRechargeFromProtocol()
+        return
+      }
+      console.warn('[auto-login] unknown redirect-action', action)
+    }
+    finally {
+      applyingRedirectAction = false
+    }
+  }
+
+  /**
+   * 消费官网深链。pending 残留是刷新重放路径，已处理过的 query 直接丢弃；
+   * ipc 才是用户再次从官网唤起，允许重新弹窗。
+   */
+  async function handleOpenPageDeepLink(query: string, source: 'pending' | 'ipc') {
+    const normalized = query.trim()
+    if (!normalized) {
+      return
+    }
+    if (lastHandledOpenPageQuery === normalized) {
+      await discardStalePendingOpenPage()
+      return
+    }
+    // 先占住本次 query，避免 consumePending 与 open:page 并行各开一次
+    lastHandledOpenPageQuery = normalized
+    if (source === 'pending' && wasOpenPageQueryHandled(normalized)) {
+      console.log('[auto-login] skip leftover pending after refresh', redactDeepLinkQuery(normalized))
+      await discardStalePendingOpenPage()
+      return
+    }
+
+    markOpenPageQueryHandled(normalized)
+
+    if (source === 'ipc') {
+      openedRedirectAction = ''
+      sessionStorage.removeItem(CONSUMED_REDIRECT_ACTION)
+    }
+    else if (sessionStorage.getItem(CONSUMED_REDIRECT_ACTION)) {
+      await discardStalePendingOpenPage()
+      return
+    }
+    else {
+      openedRedirectAction = ''
+    }
+
+    const protocolToken = getDeepLinkParam(normalized, 'token')
+    const redirectAction = getDeepLinkParam(normalized, REDIRECT_ACTION)
+    const url = getDeepLinkParam(normalized, 'url')
+
+    if (redirectAction && sessionStorage.getItem(CONSUMED_REDIRECT_ACTION) !== redirectAction) {
+      sessionStorage.setItem(PENDING_REDIRECT_ACTION, redirectAction)
+    }
+
+    if (protocolToken) {
+      await loginByProtocolToken(protocolToken)
+    }
+    else {
+      console.warn('[auto-login] open-page without token', redactDeepLinkQuery(normalized))
+    }
+
+    if (url) {
+      sessionStorage.setItem('openPageUrl', url)
+      await router.push(url)
+      if (userStore.userInfo?.id) {
+        sessionStorage.removeItem('openPageUrl')
       }
     }
-  })
+
+    await applyRedirectAction()
+    await discardStalePendingOpenPage()
+  }
+
+  if (globalThis.isElectron) {
+    // 登录切页时本次 apply 可能仍在 login 路由；落地后再消费一次
+    router.afterEach(() => {
+      if (!sessionStorage.getItem(PENDING_REDIRECT_ACTION)) {
+        return
+      }
+      queueMicrotask(() => {
+        void applyRedirectAction()
+      })
+    })
+  }
 
   globalThis.electronAPI.on('dialog:open-browser-failed', (payload) => {
     console.log('dialog:open-browser-failed', payload)

@@ -1,16 +1,16 @@
 <script setup lang="tsx">
-import IconField from "primevue/iconfield";
-import InputIcon from "primevue/inputicon";
+import IconField from 'primevue/iconfield'
+import InputIcon from 'primevue/inputicon'
 import TsFormInputNumber from '/@/views/lab/components/form/m-input-number.vue'
-import RxButton from "/@/components/rx-button";
+import RxButton from '/@/components/rx-button'
 import RxInputRadio from '/@/components/ry-form/rx-input-radio.vue'
-import RxDivider from '/@/components/rx-divider.vue';
+import RxDivider from '/@/components/rx-divider.vue'
 import { RxAlert } from '/@/components/rx-alert'
-import { RxSvgIcon } from '/@/components/rx-icon';
+import { RxSvgIcon } from '/@/components/rx-icon'
 import { useDialog } from '/@/hooks/useDialog'
 
 import { useResponseToast } from '/@/hooks/useResponseToast'
-import { ClearType } from "/@/enums";
+import { ClearType } from '/@/enums'
 import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 
 const [showModal] = useDialog()
@@ -72,42 +72,53 @@ function clearCache() {
     blockScroll: true,
     slots: {
       container: ({ hideModal }) => {
-        return <div class="w-120 flex flex-col gap-4 pa-6 pt-4" >
-          <div class="h-9 flex justify-between items-center" >
-            <div>{$t('清除缓存数据')} </div>
-            <div class="cursor-pointer" onClick={hideModal}>
-              <RxSvgIcon size="20" name="base/rx_ic_delete" ></RxSvgIcon>
+        return (
+          <div class="w-120 flex flex-col gap-4 pa-6 pt-4">
+            <div class="h-9 flex justify-between items-center">
+              <div>
+                {$t('清除缓存数据')}
+                {' '}
+              </div>
+              <div class="cursor-pointer" onClick={hideModal}>
+                <RxSvgIcon size="20" name="base/rx_ic_delete"></RxSvgIcon>
+              </div>
             </div>
+            <RxInputRadio class={cssModule.radio} v-model={clearType.value} name="clearType" options={options.value} />
+            <RxDivider line-only></RxDivider>
+            <i18n-t tag="div" class={`flex items-center gap-2.5 ${cssModule.text}`} keypath={profileLabels.value.clearUnusedEntityCacheKeypath} scope="global">
+              {{
+                input: () => (
+                  <IconField class="w-18">
+                    <TsFormInputNumber size="sm" v-model={days.value} useGrouping={false} fluid min={0} />
+                    <InputIcon class="!pt-0.5 text-3 !right-1.5">{$t('天')}</InputIcon>
+                  </IconField>
+                ),
+              }}
+            </i18n-t>
+            <RxButton
+              class="mt-1.5"
+              size="md"
+              label={$t('执行清除')}
+              onClick={
+                async () => {
+                  try {
+                    await globalThis.electronAPI.send('browser:clearCacheByTimestamp', { days: days.value, clearType: clearType.value as 'partial' | 'all' })
+                    showToast(0, $t('清除缓存数据成功'))
+                    hideModal()
+                  }
+                  catch {
+                    showToast(1, $t('操作失败'))
+                  }
+                }
+              }
+            >
+            </RxButton>
           </div>
-          <RxInputRadio class={cssModule.radio} v-model={clearType.value} name="clearType" options={options} />
-          <RxDivider line-only></RxDivider>
-          <i18n-t tag="div" class={`flex items-center gap-2.5 ${cssModule.text}`} keypath={profileLabels.value.clearUnusedEntityCacheKeypath} scope="global">
-            {{
-              input: () => <IconField class="w-18">
-                <TsFormInputNumber size='sm' v-model={days.value} useGrouping={false} fluid min={0} />
-                <InputIcon class="!pt-0.5 text-3 !right-1.5">{$t('天')}</InputIcon>
-              </IconField>
-            }}
-          </i18n-t>
-          <RxButton class="mt-1.5" size="md" label={$t('执行清除')} onClick={
-            async () => {
-              try {
-                await globalThis.electronAPI.send('browser:clearCacheByTimestamp', { days: days.value, clearType: clearType.value as "partial" | "all" })
-                showToast(0, $t('清除缓存数据成功'))
-                hideModal()
-              }
-              catch {
-                showToast(1, $t('操作失败'))
-              }
-            }
-          }></RxButton>
-        </div>
+        )
       },
-    }
+    },
   })
 }
-
-
 </script>
 
 <template>
@@ -133,7 +144,7 @@ function clearCache() {
       background: transparent;
     }
 
-    :global(.p-radiobutton-checked+.rx-radio-group-item__text) {
+    :global(.p-radiobutton-checked + .rx-radio-group-item__text) {
       font-weight: 600;
     }
   }

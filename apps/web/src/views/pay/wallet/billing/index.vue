@@ -50,7 +50,7 @@ const columns = [
   {
     title: $t('类型'),
     key: 'orderType',
-    getText: (row: any) => getOrderTypeLabel(row.orderType as OrderType),
+    slot: 'orderType',
   },
   {
     title: $t('金额'),
@@ -123,8 +123,9 @@ async function tableFilters() {
         OrderType.ProxyPurchase,
         OrderType.ProxyRefund,
         OrderType.ProxyRenew,
-        OrderType.OfficialGift,
         OrderType.BandwidthUpgrade,
+        OrderType.RewardRedeem,
+        OrderType.OfficialGift,
       ].map(item => ({ label: getOrderTypeLabel(item), value: item })),
     },
     {
@@ -156,8 +157,9 @@ function onRepay(row: any) {
 async function onRecharge(row: any) {
   const { data, code, msg } = await API.pay.userGetPayLinkList({ orderNo: row.orderNo })
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   const isPurchaseProxy = row.purchaseType === PurchaseType.Proxy
 
@@ -184,8 +186,9 @@ function reAutoRenew(row: any) {
         onConfirm: async () => {
           const { code, msg } = await API.pay.userWalletSettlementCreate({ orderNo: row.orderNo })
           onlyErrorToast(code, msg)
-          if (code !== 0)
+          if (code !== 0) {
             return
+          }
           openProcessing(row, row.orderType)
             .finally(() => {
               showFreedomActivityModal()
@@ -209,6 +212,11 @@ defineExpose({
     <template #table-empty>
       <CustomEmpty icon="rx_illustration_coin.svg" :title="$t('暂无帐单记录')" :desc="$t('您的付款记录和订阅订单将在此显示')" />
     </template>
+    <template #orderType="{ data }">
+      <div>
+        <span :class="{ gradient: data.orderType === OrderType.OfficialGift }">{{ getOrderTypeLabel(data.orderType as OrderType) }}</span>
+      </div>
+    </template>
     <template #amount="{ data }">
       <div class="amount" :class="{
         gray: data.payStatus === PaymentStatus.Closed,
@@ -231,6 +239,13 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
+.gradient {
+  background: linear-gradient(90deg, #11a3fd 0%, #f047ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .amount {
   color: var(--colors-text-text-primary, #fafafa);
   font-family: Inter;

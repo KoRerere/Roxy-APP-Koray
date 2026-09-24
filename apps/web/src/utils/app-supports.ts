@@ -15,6 +15,11 @@ export function supportsApp4_0_2() {
   return isNewerOrEqualVersion('4.0.2')
 }
 
+/** 当前客户端是否 ≥ v4.0.7（browser:closeByWorkspace IPC） */
+export function supportsApp4_0_7() {
+  return isNewerOrEqualVersion('4.0.7')
+}
+
 /**
  * 是否启用自动化脚本库与录制入口。
  * Electron 端由主进程 env ENABLE_SCRIPT_RECORDING=yes 控制；

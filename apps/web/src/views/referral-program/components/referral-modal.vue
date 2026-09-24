@@ -5,7 +5,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { API } from '/@/api'
 
 const emit = defineEmits<{
-  /** 关闭弹窗；查看详情传入 view-details，避免购买成功回调再跳走 */
+  /** 关闭弹窗；查看详情传入 view-details，避免购买成功回调再改路由，抽奖仍可弹出 */
   close: [reason?: 'dismiss' | 'view-details']
 }>()
 

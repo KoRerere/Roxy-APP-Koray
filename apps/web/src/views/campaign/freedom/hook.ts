@@ -17,8 +17,9 @@ export function useFreedomActivity() {
     console.log('打开老虎机')
     console.log(campaignStore.seasonalActivity)
     console.log(campaignStore.currentActivity)
-    if (!campaignStore.seasonalActivity.freedom)
+    if (!campaignStore.seasonalActivity.freedom) {
       return callback?.()
+    }
 
     showModal({
       modal: true,
@@ -41,8 +42,9 @@ export function useFreedomActivity() {
     console.log('打开身份获取弹窗')
     console.log(campaignStore.seasonalActivity)
     console.log(campaignStore.currentActivity)
-    if (!campaignStore.seasonalActivity.freedom || campaignStore.currentActivity.isFreedom)
+    if (!campaignStore.seasonalActivity.freedom || campaignStore.currentActivity.isFreedom) {
       return
+    }
 
     showModal({
       showHeader: false,
@@ -54,8 +56,9 @@ export function useFreedomActivity() {
           onClose: () => {
             callback?.()
             handleCancel()
-            if (isNext)
+            if (isNext) {
               showSlotMachine()
+            }
           },
           isNext,
         }),

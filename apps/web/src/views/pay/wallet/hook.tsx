@@ -25,6 +25,7 @@ import { openAliyunCaptcha } from '/@/utils/aliyun-captcha'
 import type { UserGetBindCardListListData, UserRechargeSettlementCreateData } from '@roxy/backend-api'
 
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook.ts'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { I18nT } from 'vue-i18n'
 import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent.tsx'
@@ -32,10 +33,17 @@ import { isMainWindow } from '/@/utils/common'
 import { useFirstConsumeReferralPopup } from '/@/views/referral-program/useFirstConsumeReferralPopup'
 
 type Data = UserRechargeSettlementCreateData['data']
+/** 钱包充值会带上返回回调，扫码弹窗据此显示返回并重新打开充值弹窗 */
+type PayModalData = Data & {
+  onBack?: () => void
+}
 interface ChargeParams {
-  next?: (data: Data) => void
+  next?: (data: PayModalData) => void
   [key: string]: any
 }
+
+/** 扫码支付点返回时中断等待，不视为支付失败 */
+export const PAY_PROCESSING_BACK = Symbol('pay-processing-back')
 
 const modalMap = {
   [PayWay.Alipay]: (data: Record<string, any>) => data.show_type === 'qrcode' ? markRaw(AlipayPayModal) : markRaw(ProcessingModal),
@@ -56,21 +64,29 @@ export function usePay() {
   const { openRoxyAIAgent } = useOpenRoxyAIAgent()
 
   const { showFreedomActivityModal, showSlotMachine } = useFreedomActivity()
+  const { showLuckyDrawAfterPay } = useMidAutumnActivity()
   const { maybeShowFirstConsumeReferralPopup } = useFirstConsumeReferralPopup()
 
   function openProcessing(
     data: Record<string, any>,
     type: OrderType | 'silent',
-    options: { cancelRedirect?: boolean } = {},
+    options: {
+      cancelRedirect?: boolean
+      /** 从钱包充值进入扫码支付时，返回并重新打开充值弹窗 */
+      onBack?: () => void
+    } = {},
   ) {
-    const { cancelRedirect = true } = options
+    const { cancelRedirect = true, onBack: onBackOption } = options
+    // 钱包充值会把返回回调挂在结算数据上；订阅、账单重试等入口没有该字段
+    const { onBack: onBackFromData, ...payData } = data
+    const onBack = onBackOption ?? (typeof onBackFromData === 'function' ? onBackFromData : undefined)
     const { promise, resolve, reject } = Promise.withResolvers<void>()
-    if (isCardPayWay(data.payType) || data.payType === PayWay.Balance) {
+    if (isCardPayWay(payData.payType) || payData.payType === PayWay.Balance) {
       onConfirm()
       return promise
     }
 
-    const ModalComponent = modalMap[data.payType as keyof typeof modalMap]?.(data) || markRaw(ProcessingModal)
+    const ModalComponent = modalMap[payData.payType as keyof typeof modalMap]?.(payData) || markRaw(ProcessingModal)
     showModal({
       showHeader: false,
       modal: true,
@@ -82,10 +98,18 @@ export function usePay() {
       slots: {
         container: ({ hideModal }) => (
           <ModalComponent
-            data={data}
+            data={payData}
             onConfirm={onConfirm}
             onCancel={onCancel}
             onClose={hideModal}
+            onBack={onBack
+              ? () => {
+                  hideModal()
+                  reject(PAY_PROCESSING_BACK)
+                  // 多数充值入口的 next 没有 await 支付结果，扫码出现前充值弹窗已经关掉，必须重新打开
+                  onBack()
+                }
+              : undefined}
           >
           </ModalComponent>
         ),
@@ -181,6 +205,10 @@ export function usePay() {
           mask: '!backdrop-blur-md',
         },
       },
+      data: {
+        // 兑换码不送抽奖次数，成功页不展示入口、确认后也不弹老虎机
+        showLottery: !notSlotMachine,
+      },
       emits: {
         onConfirm: () => {
           if (!notSlotMachine) {
@@ -259,13 +287,19 @@ export function usePay() {
       : $t('您当前的积分：{points}', { points })
 
     showToast(0, detail)
-    maybeShowFirstConsumeReferralPopup()
+    maybeShowFirstConsumeReferralPopup(() => {
+      // 查看详情只改路由，抽奖次数已经到账，关闭推广弹窗后仍要弹出抽奖盘
+      showLuckyDrawAfterPay()
+    })
   }
 
   async function walletRecharge(chargeParams: ChargeParams) {
     const { next: settlementNext, ...rest } = chargeParams
 
     const checker = genCheckerOrderStatus()
+    const backToRecharge = () => {
+      walletRecharge(chargeParams)
+    }
 
     const onRecharge = async (params: any) => {
       const { _PRE_ORDER, payType, rechargeAmount, cardId, chainType } = params
@@ -291,9 +325,15 @@ export function usePay() {
           }
         }
 
-        await settlementNext?.(data)
+        await settlementNext?.({
+          ...data,
+          onBack: backToRecharge,
+        })
       }
       catch (error) {
+        if (error === PAY_PROCESSING_BACK) {
+          return 'back'
+        }
         onlyErrorToast(code, (error as Error).message)
       }
     }

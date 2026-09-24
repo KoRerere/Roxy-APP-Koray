@@ -19,6 +19,7 @@ import {
   GetCompanyPartnerListListData,
   GetCompanyPartnerListListParams,
   GetEasterEggRemainingListData,
+  GetMidAutumnEggStatusListData,
   GetPromotionLinkDiscountListData,
   GetPromotionLinkDiscountListParams,
   GetVersionListListData,
@@ -177,6 +178,21 @@ export class AppStatisticsApi<SecurityDataType = unknown> {
       path: `/app_statistics/get_company_partner_detail`,
       method: "GET",
       query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @name GetMidAutumnEggStatusList
+   * @summary 中秋寻宝：今日彩蛋状态
+   * @request GET:/app_statistics/get_mid_autumn_egg_status
+   * @response `200` `GetMidAutumnEggStatusListData`
+   */
+  getMidAutumnEggStatusList = (params: RequestParams = {}) =>
+    this.http.request<GetMidAutumnEggStatusListData, any>({
+      path: `/app_statistics/get_mid_autumn_egg_status`,
+      method: "GET",
       format: "json",
       ...params,
     });

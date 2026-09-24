@@ -91,6 +91,8 @@ const OpenErrorMessageMap = {
 export class BrowserManager {
   /** 已经打开过的空间 ID */
   #openedWorkspaceIds = new Set<number>()
+  /** 正在按空间关窗的 ID。关窗同步再次返回 418 时不能重入，否则会反复关闭同一批窗口 */
+  #closingWorkspaceIds = new Set<number>()
   /** 需要定时同步窗口打开状态的空间 ID */
   get #needSyncWindowOpenStatusWorkspaceIds() {
     return [...this.#openedWorkspaceIds].filter(workspaceId => store.allWorkspaceId?.includes(workspaceId))
@@ -337,6 +339,40 @@ export class BrowserManager {
   /** 加权完成度累加值 (0 ~ #quitSyncTotalWindows), 与总窗口数一起算整体进度 */
   #quitSyncUnits = 0
   #quitSyncTotalWindows = 0
+
+  /**
+   * 关闭指定空间已打开和启动中的指纹浏览器，其它空间不动。
+   * 由 418 拦截器同步调用，因此不能等待仍占用本次请求的启动流程；启动中的窗口在启动结束后再关一次。
+   */
+  closeByWorkspace(workspaceId: number) {
+    if (!Number.isFinite(workspaceId) || this.#closingWorkspaceIds.has(workspaceId)) {
+      return
+    }
+    this.#closingWorkspaceIds.add(workspaceId)
+
+    const belongsToWorkspace = (id: unknown) => Number(id) === workspaceId
+    const openedDirIds = [...this.openedBrowserMap.entries()]
+      .filter(([, browserItem]) => belongsToWorkspace(browserItem.winInfo.workspaceId))
+      .map(([dirId]) => dirId)
+    const openingBrowsers = [...this.openingBrowserMap.entries()]
+      .filter(([, entry]) => belongsToWorkspace(entry.browserItem.winInfo.workspaceId))
+
+    const tasks: Promise<unknown>[] = []
+    if (openedDirIds.length > 0) {
+      tasks.push(Promise.resolve(this.batchClose(openedDirIds)))
+    }
+    for (const [dirId, entry] of openingBrowsers) {
+      tasks.push(entry.launchPromise.catch(() => {}).then(() => {
+        if (belongsToWorkspace(this.openedBrowserMap.get(dirId)?.winInfo.workspaceId)) {
+          return this.batchClose([dirId])
+        }
+      }))
+    }
+
+    void Promise.all(tasks).finally(() => {
+      this.#closingWorkspaceIds.delete(workspaceId)
+    })
+  }
 
   /** 批量关闭浏览器 */
   batchClose(dirIds: string[]) {

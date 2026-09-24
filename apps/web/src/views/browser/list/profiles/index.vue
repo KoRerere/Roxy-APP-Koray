@@ -25,8 +25,9 @@ import { I18nT } from 'vue-i18n'
 import { API } from '/@/api'
 import { useContextMenu } from '/@/components/rx-ctxmenu'
 import { useSimpleDialog } from '/@/components/simplePopup'
+import RxButton from '/@/components/rx-button'
 import { isProxySpeedTestable } from '/@/views/agent/shop/utils/proxy-speed-testable'
-import { isLocalNetworkStopOpenMessage, isProxyDetectOpenWarning, isRoxyIpProxyType } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
+import { isLocalNetworkStopOpenMessage, isProxyDetectOpenWarning } from '/@/views/agent/shop/utils/proxy-detect-fail-guide'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { ClearType, CoreType, ProfileModifyType, ProfileReqType, ProxyCheckStatus, ProxyType } from '/@/enums'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -34,7 +35,7 @@ import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { copyText, deepClone, genPollingChecker, safeParseJSON } from '/@/utils'
 import { useFirstRegisterOpenGuide } from './hooks/useFirstRegisterOpenGuide'
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
+import { isMemberLabelId, useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getColumns } from './columns'
 import { silentUpdateAccount, silentUpdateProxy } from './components/util'
@@ -645,6 +646,19 @@ async function onTransfer(datas: Data[], operate?: any) {
   return promise
 }
 
+/** 跳转到目标项目页；已在该项目则不必再入栈 */
+function goToProject(projectId: string | number, projectName?: string) {
+  if (route.name === 'project-item' && String(route.params.id) === String(projectId)) {
+    return
+  }
+
+  router.push({
+    name: 'project-item',
+    params: { id: String(projectId) },
+    query: projectName ? { title: projectName } : undefined,
+  })
+}
+
 async function onMoveToProject(data: any) {
   const options = await getProjects()
   const datas: any[] = [].concat(data)
@@ -653,6 +667,9 @@ async function onMoveToProject(data: any) {
 
   const names = datas.slice(0, 10).map((item: any) => `${workspaceName.value}-${item.windowSortNum}`).join(', ')
   const namesStr = `[${names}${datas.length > 10 ? '...' : ''}]`
+
+  // 点「保存并跳转」时在 click 里置位，校验失败后再点「保存」会覆盖，避免串意图
+  let jumpAfterSave = false
 
   showSimpleDialog({
     title: $t('移动项目'),
@@ -673,26 +690,63 @@ async function onMoveToProject(data: any) {
         }).min(1, $t('请选择项目')),
       },
     ],
+    slots: {
+      footer: ({ close, loading, cancelText, confirmText, formId }) => (
+        <div class="flex justify-end items-center self-stretch gap-3">
+          <RxButton size="sm" text severity="secondary" label={cancelText} onClick={close} />
+          <RxButton
+            size="sm"
+            severity="secondary"
+            outlined
+            type="submit"
+            form={formId}
+            label={$t('保存并跳转')}
+            loading={loading}
+            onClick={() => {
+              jumpAfterSave = true
+            }}
+          />
+          <RxButton
+            size="sm"
+            type="submit"
+            form={formId}
+            label={confirmText}
+            loading={loading}
+            onClick={() => {
+              jumpAfterSave = false
+            }}
+          />
+        </div>
+      ),
+    },
     onConfirm: async (formData: any) => {
       if (formData.projectId) {
+        const projectName = options.find(item => item.value === formData.projectId)?.label
         const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
         if (!ids.length) {
+          if (jumpAfterSave) {
+            goToProject(formData.projectId, projectName)
+            resolve()
+            return
+          }
           onlyErrorToast(-1, $t('所选窗口 {names} 已在该项目中', { names: namesStr }))
           return
         }
 
         await batchModifyWindow({ ids, projectId: formData.projectId, requestType: ProfileReqType.MoveProject }, !props.isProjectProfile)
           .then(() => {
-            const projectName = options.find(item => item.value === formData.projectId)!.label
             datas.forEach((item) => {
               item.projectName = projectName
               item.projectId = Number(formData.projectId)
-              item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
+              item.labelInfo = item.labelInfo!.filter((it: any) => !isMemberLabelId(it.labelId))
               item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
             })
             invalidateProfilesListCacheForProjectId(formData.projectId)
             if (props.isProjectProfile) {
               invalidateProfilesListCacheScope()
+            }
+            if (jumpAfterSave) {
+              goToProject(formData.projectId, projectName)
             }
           })
       }

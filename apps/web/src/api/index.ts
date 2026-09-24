@@ -21,18 +21,30 @@ import { installEtagCache } from '/@/api/etag-cache'
 import { getBaseUrl, getGatewayConfig, reGetGatewayConfigByCountryChange } from '/@/api/getGatewayConfig'
 import { getCommonHeaders, getDeviceId, getInviteCode, needDeviceIdApis } from '/@/api/util'
 import { useSimpleLocale } from '/@/stores/locale'
-import { useUserStore } from '/@/stores/user'
+import { isOfficialSiteSession, useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { handleResponseHeaders } from '/@/api/message/'
 import { emitter } from '/@/utils/eventBus'
 import { debounce } from 'es-toolkit'
 import { isMainWindow } from '/@/utils'
 import { markSessionLost } from '/@/utils/sessionLost'
-// import { AxiosError } from 'axios'
+import { supportsApp4_0_7 } from '/@/utils/app-supports'
+import { PROTOCOL_AUTO_LOGIN_PENDING } from '/@/constants/storage-key'
 
 console.log('VITE_BASE_URL', import.meta.env.VITE_BASE_URL)
 
-let commonHeaders
+/** 官网协议 token 按 web 身份请求；密码/OAuth 登录不受影响 */
+function isOfficialSiteAuth() {
+  return isOfficialSiteSession() || Boolean(useUserStore().isOfficialSiteToken)
+}
+
+/** 官网 token 在 Limit 列表/权限接口上可能 403，拦截器不能先清登录态 */
+const OFFICIAL_SITE_PASS_403_URLS = [
+  '/user_get_workspace_list',
+  '/user_get_team_permissions',
+]
+
+let commonHeaders: any
 let deviceId = ''
 let inviteCode: string
 
@@ -45,6 +57,39 @@ const closeOtherWindow = debounce(() => {
 const showBackDefaultWorkspace = debounce(() => {
   emitter.emit('backDefaultWorkspace')
 }, 200)
+
+/** 被移出的是本次请求头里的空间，不能用切换后的当前空间 */
+function readWorkspaceIdHeader(headers: { workspaceId?: unknown, get?: (name: string) => unknown } | undefined) {
+  const raw = headers?.workspaceId ?? headers?.get?.('workspaceId')
+  if (raw === undefined || raw === null || raw === '') {
+    return undefined
+  }
+  const workspaceId = Number(raw)
+  return Number.isFinite(workspaceId) ? workspaceId : undefined
+}
+
+/** 低版本客户端没有 closeByWorkspace，只关已经出现在已打开列表里的窗口 */
+async function closeRemovedWorkspaceBrowsers(workspaceId: number) {
+  if (!globalThis.isElectron) {
+    return
+  }
+  if (supportsApp4_0_7()) {
+    try {
+      await globalThis.electronAPI.send('browser:closeByWorkspace', workspaceId)
+      return
+    }
+    catch (error) {
+      console.error('[API] closeByWorkspace failed, fallback to opened browsers', error)
+    }
+  }
+  const openedBrowsers = await globalThis.electronAPI.send('browser:getOpenedBrowser')
+  const dirIds = openedBrowsers.flatMap(item =>
+    Number(item.workspaceId) === workspaceId && item.dirId ? [item.dirId] : [],
+  )
+  if (dirIds.length > 0) {
+    await globalThis.electronAPI.send('browser:batchClose', dirIds)
+  }
+}
 
 export function createHttpClient(
   Client: typeof HttpClient,
@@ -68,8 +113,8 @@ export function createHttpClient(
 
   httpClient.instance.interceptors.request.use(async (config) => {
     const baseURL = getBaseUrl() || await getGatewayConfig()
-    commonHeaders ||= await getCommonHeaders()
     inviteCode ??= await getInviteCode()
+    const officialSiteAuth = globalThis.isElectron && isOfficialSiteAuth()
 
     if (needDeviceIdApis.some(api => config.url?.includes(api))) {
       deviceId ||= await getDeviceId()
@@ -83,10 +128,14 @@ export function createHttpClient(
       config.baseURL = `https://${globalThis.$lastSelectedNetworkNode.gate}`
     }
 
-    Object.assign(config.headers, {
-      ...commonHeaders,
-      ...config.headers,
-    })
+    // 官网 token 不带 Electron source:app / R-DEVICE-NAME，否则 Limit 会拒；密码登录仍走原 commonHeaders
+    if (!officialSiteAuth) {
+      commonHeaders ||= await getCommonHeaders()
+      Object.assign(config.headers, {
+        ...commonHeaders,
+        ...config.headers,
+      })
+    }
 
     console.debug('baseURL', baseURL)
     config.baseURL ||= baseURL
@@ -95,7 +144,7 @@ export function createHttpClient(
     const { currentWorkspace } = useWorkspaceStore()
     const { currentLocale } = useSimpleLocale()
     config.headers.token ||= token
-    config.headers.source = globalThis.isElectron ? 'app' : 'web'
+    config.headers.source = globalThis.isElectron && !officialSiteAuth ? 'app' : 'web'
     config.headers.language = currentLocale
     config.headers.appVersion = appVersion
     config.headers.webVersion = __WEB_VERSION__
@@ -139,6 +188,13 @@ export function createHttpClient(
       return response
     }
     else if (code === 403) {
+      if (
+        (isOfficialSiteAuth() && OFFICIAL_SITE_PASS_403_URLS.some(path => url?.includes(path)))
+        || (globalThis.isElectron && sessionStorage.getItem(PROTOCOL_AUTO_LOGIN_PENDING))
+      ) {
+        console.warn('[API] skip 403 logout for official-site/protocol-pending', url)
+        return response
+      }
       markSessionLost() // 同上，仅记录首次失效时间
       closeOtherWindow()
       // 未登录，跳转登录页；强制升级弹窗由 useForceUpgradeOnSessionLostReturn 在用户回到 APP 时触发
@@ -149,11 +205,18 @@ export function createHttpClient(
     }
     // 没有空间权限或被移出空间
     else if (code === 418) {
+      const removedWorkspaceId = readWorkspaceIdHeader(response.config.headers)
+      if (removedWorkspaceId !== undefined) {
+        await closeRemovedWorkspaceBrowsers(removedWorkspaceId).catch((error) => {
+          console.error('[API] close removed workspace browsers failed', error)
+        })
+      }
       const workspaceStore = useWorkspaceStore()
       await workspaceStore.fetchWorkspaceList()
       const defaultId = workspaceStore.defaultWorkspace?.id
-      if (defaultId)
+      if (defaultId) {
         await workspaceStore.setCurrentWorkspace(defaultId)
+      }
       globalThis.electronAPI.send('mcp:close')
       return response
     }

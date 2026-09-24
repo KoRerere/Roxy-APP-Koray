@@ -1,89 +1,74 @@
 <script setup lang="ts">
+import { useEventListener, useMutationObserver, useResizeObserver } from '@vueuse/core'
+
 defineOptions({
   inheritAttrs: false,
 })
 
+const { showScrollbar = false } = defineProps<{
+  /** 为 true 时显示滚动条；默认隐藏，避免短列表也露出轨道 */
+  showScrollbar?: boolean
+}>()
+
+// 根节点只负责限高和遮罩定位；class/padding 落到滚动层，避免 pb 把底部遮罩挤到内容区外
 const scrollRef = useTemplateRef<HTMLElement>('scroll')
 const showTopMask = ref(false)
 const showBottomMask = ref(false)
 
+/** 根据滚动位置更新上下边缘遮罩 */
 function updateMask() {
   const el = scrollRef.value
-  if (!el)
-    return
-
-  const { scrollTop, scrollHeight, clientHeight } = el
-
-  const canScroll = scrollHeight > clientHeight + 1
-  if (!canScroll) {
-    showTopMask.value = false
-    showBottomMask.value = false
+  if (!el) {
     return
   }
 
-  showTopMask.value = scrollTop > 0
-  showBottomMask.value = scrollTop + clientHeight < scrollHeight - 1
+  const { scrollTop, scrollHeight, clientHeight } = el
+  const canScroll = scrollHeight > clientHeight + 1
+  showTopMask.value = canScroll && scrollTop > 0
+  showBottomMask.value = canScroll && scrollTop + clientHeight < scrollHeight - 1
 }
 
-function handleScroll() {
-  updateMask()
-}
+useEventListener(scrollRef, 'scroll', updateMask, { passive: true })
+useResizeObserver(scrollRef, updateMask)
+useMutationObserver(scrollRef, updateMask, { childList: true, subtree: true })
 
-let stopResizeObserver: (() => void) | undefined
-
-onMounted(() => {
-  updateMask()
-
+/** 滚到内容底部，露出新展开的表单 */
+function scrollToBottom() {
   const el = scrollRef.value
-  if (!el)
+  if (!el) {
     return
-
-  const ro = new ResizeObserver(() => updateMask())
-  ro.observe(el)
-
-  stopResizeObserver = () => ro.disconnect()
-})
-
-onScopeDispose(() => {
-  stopResizeObserver?.()
-})
+  }
+  el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+}
 
 defineExpose({
   updateMask,
+  scrollToBottom,
 })
 </script>
 
 <template>
-  <div class="relative overflow-hidden">
-    <div v-if="showTopMask" class="mask top-mask" />
-    <div ref="scroll" class="overflow-y-auto scroll" v-bind="$attrs" @scroll="handleScroll">
+  <div class="relative min-h-0 flex flex-col">
+    <div ref="scroll" class="min-h-0 grow overflow-y-auto" :class="{ 'hide-scrollbar': !showScrollbar }" v-bind="$attrs">
       <slot />
     </div>
-    <div v-if="showBottomMask" class="mask bottom-mask" />
+    <div
+      v-show="showTopMask"
+      class="pointer-events-none absolute inset-x-0 top-0 z-10 h-8 bg-gradient-to-b from-[var(--colors-background-bg-overlay)] to-transparent"
+    />
+    <div
+      v-show="showBottomMask"
+      class="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-[var(--colors-background-bg-overlay)] to-transparent"
+    />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.scroll::-webkit-scrollbar {
+.hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-.mask {
-  position: absolute;
-  width: 100%;
-  height: 30px;
-  flex-shrink: 0;
-  pointer-events: none;
-  z-index: 10;
-
-  &.top-mask {
-    top: 0;
-    background: linear-gradient(0deg, transparent 0%, var(--colors-background-bg-overlay) 100%);
-  }
-
-  &.bottom-mask {
-    bottom: 0;
-    background: linear-gradient(180deg, transparent 0%, var(--colors-background-bg-overlay) 100%);
-  }
+.hide-scrollbar {
+  scrollbar-width: none;
 }
 </style>

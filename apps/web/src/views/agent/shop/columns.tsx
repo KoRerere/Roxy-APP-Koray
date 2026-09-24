@@ -63,7 +63,7 @@ export function getRawColumns(options?: any) {
       headerRender: ({ column }: { column: any }) => <RemarkHeader column={column}></RemarkHeader>,
       slot: 'remark',
       _cache: {
-        extend: false,
+        extend: true,
       },
     },
     {

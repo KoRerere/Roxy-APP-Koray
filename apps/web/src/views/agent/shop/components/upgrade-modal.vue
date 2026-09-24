@@ -3,6 +3,7 @@ import OutboundIp from '/@/views/agent/shop/components/outbound-ip.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import currency from 'currency.js'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
+import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook.ts'
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -27,6 +28,7 @@ const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing } = usePay()
 const { showFreedomActivityModal } = useFreedomActivity()
+const { showLuckyDrawAfterPay } = useMidAutumnActivity()
 const shopLabels = useProxyShopLabels()
 
 const columns = [
@@ -75,8 +77,9 @@ async function getPeriodList() {
   const { code, data, msg } = await API.proxy.userGetProxyBandwidthUpgradePriceListList({ proxyId: dataList[0].id })
   loading.value = false
   onlyErrorToast(code, msg)
-  if (code !== 0)
+  if (code !== 0) {
     return
+  }
 
   const purchaseTimePrice = data.proxyBandwidthPriceList.map((item) => {
     return { label: `${item.bandwidthSpeed}Mbps`, value: item.bandwidthSpeed, ...item }
@@ -111,12 +114,14 @@ async function onPay() {
       bandwidthSpeed: periodValue.value.value,
     })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
     (payType === PayWay.Balance
       ? Promise.resolve()
       : openProcessing(data, 'silent'))
       .then(() => {
+        showLuckyDrawAfterPay()
         showFreedomActivityModal()
         emit('close')
         emit('success')

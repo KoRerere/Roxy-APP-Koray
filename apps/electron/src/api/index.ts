@@ -8,7 +8,7 @@ import { browserManager } from '/@/modules/browser'
 import { ipcSender } from '/@/modules/ipc/sender'
 import { store } from '/@/modules/store'
 import { getCommonRequestHeaders } from '/@/utils'
-import { electronAdapter } from '/@/utils/request/electronAdapter'
+// import { electronAdapter } from '/@/utils/request/electronAdapter'
 import { attachAxiosLogger } from './axiosLogger'
 // const agent = new https.Agent({
 //   rejectUnauthorized: false,
@@ -23,6 +23,18 @@ export const httpClient = new HttpClient({
 })
 
 let commonRequestHeaders
+
+// 打开窗口后会同步打开状态（userMdfWindowSyncV2Create）。权限系统有误报，正常请求也会返回 418，
+// 拦截器据此关窗会导致窗口无法保持打开。后端修复前暂停。
+// /** 被移出的是本次请求头里的空间，不能用之后切换到的当前空间 */
+// function readWorkspaceIdHeader(headers: { workspaceId?: unknown, get?: (name: string) => unknown } | undefined) {
+//   const raw = headers?.workspaceId ?? headers?.get?.('workspaceId')
+//   if (raw === undefined || raw === null || raw === '') {
+//     return undefined
+//   }
+//   const workspaceId = Number(raw)
+//   return Number.isFinite(workspaceId) ? workspaceId : undefined
+// }
 
 // 开启请求日志
 if (appCliStartArgs['roxy-log-level'] === 'debug') {
@@ -87,6 +99,13 @@ httpClient.instance.interceptors.response.use((response) => {
       executeUninstall()
     }
   }
+  // 打开窗口后的 userMdfWindowSyncV2Create 在权限误报时也会返回 418，此处关窗会导致窗口无法打开。后端修复前暂停。
+  // else if (code === 418) {
+  //   const removedWorkspaceId = readWorkspaceIdHeader(response.config.headers)
+  //   if (removedWorkspaceId !== undefined) {
+  //     browserManager.closeByWorkspace(removedWorkspaceId)
+  //   }
+  // }
   handleResponse(response)
   return response
 })

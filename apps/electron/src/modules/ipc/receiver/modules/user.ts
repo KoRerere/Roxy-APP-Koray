@@ -11,7 +11,7 @@ import { initDictCache } from '/@/modules/dict'
 import { mcpManager } from '/@/modules/mcp'
 import { openAPIServer } from '/@/modules/openapi'
 import { workspaceSwitchBridge } from '/@/modules/openapi/workspaceSwitchBridgeInstance'
-import { fetchUserConfig, store } from '/@/modules/store'
+import { fetchUserConfig, forceSaveConfig, store } from '/@/modules/store'
 import { closeAllSyncDialogs } from '/@/modules/sync-control/common'
 import { aliOSS, uploadOssFile } from '/@/utils'
 
@@ -58,9 +58,14 @@ export function setupUserIpc(ipcMain: IPCMainInstance) {
     closeAllSyncDialogs()
     openAPIServer.stop()
     await mcpManager.closeMcpServer({ waitForExit: true })
-    await browserManager.closeAll({ ensureServerSync: true, syncProgressReason: 'logout' }).finally(() => {
+    await browserManager.closeAll({ ensureServerSync: true, syncProgressReason: 'logout' }).finally(async () => {
       store.token = ''
+      store.workspaceId = undefined
+      store.workspaceType = undefined
+      store.allWorkspaceId = []
+      store.sharedWorkspaceList = []
       Reflect.deleteProperty(store, 'userId')
+      await forceSaveConfig()
     })
   })
 

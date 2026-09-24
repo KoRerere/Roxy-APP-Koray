@@ -11,6 +11,8 @@ const emit = defineEmits(['confirm'])
 const { userPayInfo } = storeToRefs(useUserStore())
 const billingLabels = useBillingEntityLabels()
 const dialogRef = inject<any>('dialogRef')
+/** 兑换码订阅不送抽奖次数，成功页不展示入口 */
+const showLottery = computed(() => dialogRef.value?.data?.showLottery !== false)
 
 const featureTexts = computed(() => {
   const labels = billingLabels.value
@@ -78,7 +80,7 @@ function close() {
         </div>
       </CardItem>
       <CardItem class="w-full" as="div" :translate-z="1">
-        <LotteryEntry />
+        <LotteryEntry v-if="showLottery" class="-mt-7 mb-5" @open-lucky-draw="close" />
         <RxButton class="w-full" outlined severity="secondary" size="lg" :label="$t('确认')" @click="close" />
       </CardItem>
     </CardBody>

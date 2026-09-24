@@ -4,7 +4,7 @@ import { $t } from '/@/locales/index.js'
 import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 import { useProjectEntityLabels } from '/@/composables/useProjectEntityLabels'
 import { isEmptyValue } from '/@/utils'
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
+import { toLabelId, toSubmitLabelIds, useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { useRoleStore } from '/@/stores/role'
 import { usePermission } from '/@/hooks/usePermission'
@@ -73,7 +73,7 @@ async function selectProject(event: MouseEvent) {
 }
 
 async function selectTags(event: MouseEvent) {
-  const value = metaData.value?.labelIds?.map((item: any) => `${item}`)
+  const value = metaData.value?.labelIds?.map(item => toLabelId(item))
   const [tagList, memberList] = await Promise.all([
     getTags(),
     metaData.value?.projectId ? getProjectMember(metaData.value!.projectId) : Promise.resolve([]),
@@ -89,7 +89,7 @@ async function selectTags(event: MouseEvent) {
     menuProps: {
       onHide: ({ value: labelIds }: any) => {
         if (!isEq(value, toRaw(labelIds))) {
-          metaData.value!.labelIds = (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value))
+          metaData.value!.labelIds = toSubmitLabelIds(labelIds)
         }
       },
     },

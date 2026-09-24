@@ -4,6 +4,7 @@ import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import type { WindowMetaData } from './components/type'
+import { toLabelId } from './hooks/useMate'
 import AccordionInputs from './components/accordion-inputs.vue'
 import BasicInfo from './components/basic-info.vue'
 import previewCard from './components/preview-card.vue'
@@ -59,7 +60,7 @@ onBeforeMount(async () => {
   metaData.value = {
     projectName: data!.projectName,
     projectId: Number(data!.projectId),
-    labelIds: data!.labelIds,
+    labelIds: (data!.labelIds || []).map(id => toLabelId(id)),
     windowRemark: data!.windowRemark,
   }
   formInitialized.value = true

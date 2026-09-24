@@ -1,21 +1,36 @@
 <script setup lang="ts">
 import { getImage } from '/@/utils/basic'
 import { useCampaignStore } from '/@/stores/campaign'
+import { usePay } from '/@/views/pay/wallet/hook.tsx'
+import { useUserStore } from '/@/stores/user'
+import { OrderType } from '/@/enums/pay'
+import { emitter } from '/@/utils/eventBus'
+import { formatRechargeBenefitText } from './hook'
 
-const { seasonalActivity } = storeToRefs(useCampaignStore())
+const { seasonalActivity, currentActivity, maxBonus } = storeToRefs(useCampaignStore())
+const { getUserPayInfo } = useUserStore()
+const { walletRecharge, openProcessing } = usePay()
 
 const imgSrc = `url('${getImage('campaing/mid-autumn-festival/wallet_banner_bg.jpg')}')`
 
-const giveAway = [
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 50, giveAway: 5, discount: 10 }),
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 100, giveAway: 20, discount: 20 }),
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 500, giveAway: 150, discount: 30 }),
-  $t('充值 {amount} 送 {giveAway}({discount})', { amount: 1000, giveAway: 400, discount: 40 }),
-]
+const giveAway = computed(() => currentActivity.value.recharge_benefits.map(formatRechargeBenefitText))
+
+/** 与钱包页充值按钮共用同一套结算弹窗，完成后刷新余额与账单 */
+function onCharge() {
+  walletRecharge({
+    next: (data) => {
+      openProcessing(data, OrderType.Recharge)
+        .finally(() => {
+          emitter.emit('updateBillList')
+          getUserPayInfo()
+        })
+    },
+  })
+}
 </script>
 
 <template>
-  <div v-if="seasonalActivity.midAutumnFestival" class="h-27 relative flex flex-col justify-center gap-1.5 py-3.5 px-4 rounded-2 overflow-hidden banner">
+  <div v-if="seasonalActivity.midAutumnFestival" class="h-27 relative flex flex-col justify-center gap-1.5 py-3.5 px-4 rounded-2 overflow-hidden cursor-pointer banner" @click.stop="onCharge">
     <div class="flex items-center gap-2">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -31,14 +46,12 @@ const giveAway = [
         </defs>
       </svg>
       <div class="title">
-        {{ $t('充值返利 · 满送大酬宾') }}
+        {{ $t('充值有礼！最高加送 {discount}%', { discount: maxBonus }) }}
       </div>
     </div>
-    <i18n-t class="color-white text-3.25  leading-4.5" tag="div" scope="global" :keypath="$t('充值越多，返利越高！最高 {discount} 充值金额', { discount: '{discount}' })">
-      <template #discount>
-        <span class="font-600 bouns">{{ $t('赠送 {discount}%', { discount: 40 }) }}</span>
-      </template>
-    </i18n-t>
+    <div class="color-white text-3.25 leading-4.5">
+      {{ $t('充得越多送得越猛，一次充足更划算！') }}
+    </div>
     <div class="mt-1 flex items-center gap-5">
       <div v-for="item in giveAway" :key="item" class="flex items-center gap-1.5">
         <SvgIcon name="base/rx_ic_check_line" color="var(--colors-icon-icon-success)" />

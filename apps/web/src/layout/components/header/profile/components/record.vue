@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import ActivityRule from '/@/views/campaign/spring-festival/activity-rule.vue'
+import RedeemCodeModal from '/@/views/pay/wallet/components/redeem-code-modal.vue'
 import { API } from '/@/api'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useDialog } from '/@/hooks/useDialog'
 import { useResponseToast } from '/@/hooks/useResponseToast'
+import { usePay } from '/@/views/pay/wallet/hook.tsx'
 import { copyText } from '/@/utils'
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const [showModal] = useDialog()
 const [showToast] = useResponseToast()
+const { planSuccess } = usePay()
 const { seasonalActivity } = storeToRefs(useCampaignStore())
 
 const statusStrMap = {
@@ -22,6 +25,7 @@ const columns = [
   {
     title: $t('奖励类型'),
     key: 'rewardType',
+    slot: 'type',
   },
   {
     title: $t('兑换码'),
@@ -52,6 +56,31 @@ function onCopy(code: string) {
   showToast(0, $t('复制成功'))
 }
 
+/** 打开兑换弹窗并预填当前兑换码，成功后关闭列表避免仍显示「有效」 */
+function onRedeem(redeemCode: string) {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    slots: {
+      container: ({ hideModal }) => h(RedeemCodeModal, {
+        defaultCode: redeemCode,
+        onClose: hideModal,
+        onConfirm: async (code: string) => {
+          const { code: resultCode, msg } = await API.pay.userRedeemWindowCodeCreate({ code })
+          showToast(resultCode, msg)
+          if (resultCode !== 0) {
+            return
+          }
+          planSuccess(true)
+          hideModal()
+          emit('close')
+        },
+      }),
+    },
+  })
+}
+
 function giftRule() {
   showModal({
     showHeader: false,
@@ -69,7 +98,7 @@ function giftRule() {
 <template>
   <div class="w-200 inline-flex flex-col pa-6 pt-4 gap-4">
     <div class="h-9 flex justify-between items-center">
-      <span class="header">{{ $t('🎁兑换码') }}</span>
+      <span class="header">{{ $t('🎁 兑换码') }}</span>
       <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="20" color="var(--colors-icon-icon-secondary)" @click="$emit('close')" />
     </div>
     <div class="h-70 overflow-hidden">
@@ -79,6 +108,14 @@ function giftRule() {
         <template #table-empty>
           <CustomEmpty :title="$t('暂无兑换码')" />
         </template>
+
+        <template #type="{ data }">
+          <div class="flex items-center">
+            <div>{{ data.rewardType }}</div>
+            <SvgIcon v-if="data.codeDesc" v-tooltip="data.codeDesc" class="cursor-pointer" size="13" name="base/rx_ic_info" color="var(--colors-icon-icon-note)" />
+          </div>
+        </template>
+
         <template #codeHeader="slotProps">
           <div class="flex items-center gap-1.5" :class="(slotProps as any).class">
             <span>{{ slotProps.column.title }}</span>
@@ -94,7 +131,10 @@ function giftRule() {
           </div>
         </template>
         <template #actions="{ data }">
-          <RxButton v-if="data.status === 0" size="xxs" variant="text" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy(data.code)" />
+          <div class="flex items-center gap-2">
+            <RxButton v-if="data.status === 0" size="xxs" variant="text" icon="base/rx_ic_copy" :label="$t('复制')" @click="onCopy(data.code)" />
+            <RxButton v-if="data.status === 0" size="xxs" variant="text" icon="base/rx_ic_medal" :label="$t('兑换')" @click="onRedeem(data.code)" />
+          </div>
         </template>
       </RyTable>
     </div>

@@ -1,6 +1,7 @@
 import type { Ref } from 'vue'
 import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
 import { ProfileReqType } from '/@/enums'
+import { toLabelId } from '/@/views/browser/create/hooks/useMate'
 import { buildCustomFilterParamsFromMenu } from '/@/views/browser/list/profiles/utils/filterParams'
 import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 
@@ -69,8 +70,9 @@ function handleCopyId(ctx: OpCtx) {
 
 async function handleRestart(ctx: OpCtx) {
   const dirIds = ctx.datas.filter(item => item.openLimitStatus).toSorted((a, b) => a.windowSortNum! - b.windowSortNum!).map(item => item.dirId!)
-  if (dirIds.length)
+  if (dirIds.length) {
     globalThis.electronAPI.send('browser:batchRelaunch', dirIds)
+  }
 }
 
 function handleClose(ctx: OpCtx) {
@@ -84,9 +86,10 @@ async function handleAddTag(ctx: OpCtx) {
   else {
     ctx.addTag({
       confirmNext: ({ params, res }: any) => {
+        const labelId = toLabelId(res.data.id)
         ctx.updateProfileMeta({
-          labelInfo: [...ctx.data.labelInfo!, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
-          labelIds: [...ctx.data.labelIds!, res.data.id],
+          labelInfo: [...ctx.data.labelInfo!, { labelColor: params.color, labelName: params.name, labelId }],
+          labelIds: [...(ctx.data.labelIds || []).map(id => toLabelId(id)), labelId],
           requestType: ProfileReqType.SelectLabel,
         }, ctx.data)
       },

@@ -7,7 +7,7 @@ import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { RxAlert } from '/@/components/rx-alert'
 import currency from 'currency.js'
-
+import { useCampaignStore } from '/@/stores/campaign'
 import { discountCalculate } from '/@/views/pay/subscribe/util.ts'
 import { useRoleStore } from '/@/stores/role'
 import { useUserStore } from '/@/stores/user'
@@ -25,6 +25,7 @@ const billingLabels = useBillingEntityLabels()
 
 const { isOwner } = storeToRefs(useRoleStore())
 const { userPayInfo } = storeToRefs(useUserStore())
+const { seasonalActivity, currentActivity } = storeToRefs(useCampaignStore())
 const { mixpanelTrack } = useUserStore()
 const { getOfficialWebsite } = useSimpleLocale()
 const { showFreedomActivityModal } = useFreedomActivity()
@@ -85,10 +86,16 @@ const detail = computed(() => {
         value: item.value,
       },
       {
+        label: $t('赠送'),
+        value: item.value,
+        visible: seasonalActivity.value.midAutumnFestival && currentActivity.value.team_bogo,
+        slot: 'bonus',
+      },
+      {
         label: $t('单价'),
         value: currency(item.cost).format(),
       },
-    ],
+    ].filter(item => item.visible !== false),
   })).concat([
     // 身份折扣文案暂不对外展示，折扣仍参与计价
     // {
@@ -242,6 +249,12 @@ const alertProps = computed(() => {
         <ActivityInfoMidAutumnFestival />
       </div>
       <Detail class="w-88" :list="detail">
+        <template #bonus="{ item, classes }">
+          <div class="flex justify-between tt-success" :class="classes">
+            <div>{{ item.label }}</div>
+            <div>{{ item.value }}</div>
+          </div>
+        </template>
         <template #oldprice="{ item }">
           <div class="flex justify-between">
             <div class="details-label">

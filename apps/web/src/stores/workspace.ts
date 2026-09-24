@@ -6,7 +6,7 @@ import { debounce } from 'es-toolkit'
 import type { WorkspaceType } from '/@/enums'
 import { Role } from '/@/enums'
 import { hidePageLoading, isMainWindow, showPageLoading } from '/@/utils'
-import { useUserStore } from '/@/stores/user'
+import { isOfficialSiteSession, useUserStore } from '/@/stores/user'
 import { useCommonStore } from '/@/stores/common'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { usePermissionStore } from '/@/stores/permission'
@@ -16,6 +16,7 @@ import { emitter } from '/@/utils/eventBus'
 import { useListCacheStore } from '/@/stores/listCache'
 import { useProxyStore } from '/@/stores/proxy'
 import { createPerfTimer } from '/@/utils/perf-log'
+import { PROTOCOL_AUTO_LOGIN_PENDING } from '/@/constants/storage-key'
 import type { UnwrapRowsType, UnwrapRowType, UserGetPublicWorkspaceListListData, UserGetUserPayInfoListData, UserGetWorkspaceListListData } from '@roxy/backend-api'
 
 type Workspace = UnwrapRowType<UserGetWorkspaceListListData>
@@ -32,6 +33,23 @@ let workspaceSwitchTask: Promise<void> = Promise.resolve()
 
 function getUserStore() {
   return useUserStore()
+}
+
+function isOfficialSiteWorkspaceAuth() {
+  return isOfficialSiteSession() || Boolean(getUserStore().isOfficialSiteToken)
+}
+
+function workspaceFromUserInfo(): Workspace | undefined {
+  const info = getUserStore().userInfo
+  if (!info?.workspaceId) {
+    return undefined
+  }
+  return {
+    id: info.workspaceId,
+    workspaceType: info.workspaceType,
+    role: info.role,
+    workspaceDefault: 1,
+  }
 }
 
 function getProxyStore() {
@@ -188,11 +206,28 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       code: result.code,
     })
 
-    // 如果获取团队列表失败，则清除用户信息
+    // 密码登录仍按原逻辑：列表失败或空列表清登录态。官网协议 token 能过 getUserInfo 时用 userInfo 进当前空间。
     if (result.code !== 0 || !result.data?.rows?.length) {
+      if (isOfficialSiteWorkspaceAuth()) {
+        const fallback = workspaceFromUserInfo()
+        if (fallback) {
+          console.warn('[Workspace] fetchWorkspaceList official-site fallback to userInfo', result.code)
+          workspaceList.value = [fallback]
+          return {
+            code: 0,
+            msg: result.msg,
+            data: { rows: workspaceList.value },
+          }
+        }
+      }
+      if (sessionStorage.getItem(PROTOCOL_AUTO_LOGIN_PENDING)) {
+        console.warn('[Workspace] fetchWorkspaceList skipped logout during protocol auto-login', result.code)
+        return result
+      }
       getUserStore().clearUserInfo()
       navigateToLogin()
       onlyErrorToast(-1, $t('获取团队列表失败，请重新登录'), { summary: $t('提示'), life: 5000 })
+      return result
     }
 
     const list = [

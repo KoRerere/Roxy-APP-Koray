@@ -1,6 +1,6 @@
 <script setup lang="tsx">
 import { isEmptyValue } from '/@/utils'
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
+import { isMemberLabelId, useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { ProfileReqType } from '/@/enums'
 
@@ -51,7 +51,7 @@ async function openMenu(event: any) {
  * 切换项目删除人员标签
  */
 function deleteMembers() {
-  const labelInfo = props.labels.filter(item => !`${item.labelId}`.startsWith('u_'))
+  const labelInfo = props.labels.filter(item => !isMemberLabelId(item.labelId))
   const labelIds = labelInfo.map(item => item.labelId)
   return { labelInfo, labelIds }
 }

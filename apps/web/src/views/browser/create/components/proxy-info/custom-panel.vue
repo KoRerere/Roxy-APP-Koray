@@ -188,7 +188,7 @@ const inputs = [
   {
     type: 'text',
     name: 'proxyUserName',
-    label: $t('用户名'),
+    label: $t('代理 IP 用户名'),
     value: initial.proxyUserName ?? '',
     props: {
       placeholder: $t('请输入用户名'),
@@ -199,7 +199,7 @@ const inputs = [
   {
     type: 'text',
     name: 'proxyPassword',
-    label: $t('密码'),
+    label: $t('代理 IP 密码'),
     value: initial.proxyPassword ?? '',
     props: {
       placeholder: $t('请输入密码'),

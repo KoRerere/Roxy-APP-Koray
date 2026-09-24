@@ -16,6 +16,7 @@ import { useUserStore } from '/@/stores/user'
 import { PayWay } from '/@/enums/pay'
 import { BuyEntryType, BuyProxyListType, ProxyOrderType } from '/@/enums/proxy'
 import { usePay } from '/@/views/pay/wallet/hook'
+import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook'
 import { purchaseMonthsToDays } from '/@/views/pay/subscribe/util'
 import { getProxyPurchaseNotes } from '/@/views/agent/shop/utils/proxy-purchase-notes'
 import ExclusivePriceRow from '/@/views/campaign/new-user/exclusive-price-row.vue'
@@ -37,6 +38,7 @@ const styles = useCssModule()
 const [showModal] = useDialog()
 const [_, onlyErrorToast] = useResponseToast()
 const { openProcessing, maybeShowFirstConsumeReferralPopup } = usePay()
+const { showLuckyDrawAfterPay } = useMidAutumnActivity()
 const { getOfficialWebsite } = useSimpleLocale()
 const { info: networkInfo } = storeToRefs(useNetworkStore())
 const { userPayInfo } = storeToRefs(useUserStore())
@@ -105,8 +107,9 @@ const ipUnitDisplay = computed(() => {
       showOriginal: subscriptionMonths.proxyPrice < catalog,
     }
   }
-  if (purchaseMember >= 2)
+  if (purchaseMember >= 2) {
     return { price: catalog, original: catalog, showOriginal: false }
+  }
   const newPrice = newUserBenefitStore.newUserIpUnitPrice('residential')
   return { price: newPrice, original: catalog, showOriginal: newPrice < catalog }
 })
@@ -223,8 +226,9 @@ function createPurchaseMemberConfig(purchaseMember = 1) {
             size="md"
             onUpdate:modelValue={(value: number) => {
               nextTick(() => {
-                if (!value)
+                if (!value) {
                   item.value = 1
+                }
               })
             }}
           />
@@ -248,8 +252,9 @@ async function initConfig() {
 }
 
 function onCountryChange(selected: Record<string, any>) {
-  if (selected.purchaseCountry.value === proxyData.value.purchaseCountry.value)
+  if (selected.purchaseCountry.value === proxyData.value.purchaseCountry.value) {
     return
+  }
 
   proxyData.value = {
     ...selected,
@@ -291,15 +296,19 @@ async function onPay() {
       businessId,
     })
     onlyErrorToast(code, msg)
-    if (code !== 0)
+    if (code !== 0) {
       return
+    }
     (payType === PayWay.Balance
       ? Promise.resolve()
       : openProcessing(data, 'silent'))
       .then(() => {
         void newUserBenefitStore.refreshBenefitIfEligible()
         buySuccess(data)
-        maybeShowFirstConsumeReferralPopup()
+        maybeShowFirstConsumeReferralPopup(() => {
+          // 等推广弹窗关掉再抽奖，查看详情跳走后也要弹出抽奖盘
+          showLuckyDrawAfterPay()
+        })
       })
   }
 }
@@ -307,8 +316,9 @@ async function onPay() {
 async function buySuccess(orderInfo: any) {
   const { code, data, msg } = await API.proxy.userGetUserBuyProxyListList({ orderNo: orderInfo.orderNo, type: BuyProxyListType.Use } as any)
   onlyErrorToast(code, msg)
-  if (code !== 0 || !data.rows?.length)
+  if (code !== 0 || !data.rows?.length) {
     return
+  }
   emit('success', data.rows[0])
   emit('close')
 }

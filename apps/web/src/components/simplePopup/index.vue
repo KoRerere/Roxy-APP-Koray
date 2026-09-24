@@ -45,7 +45,7 @@ async function onSubmit(formData: any) {
     <div v-if="content" class="content">{{ content }}</div>
     <TsForm id="simpleform" v-focustrap :inputs="inputs" @submit="onSubmit" />
     <component v-if="afterRender" :is="afterRender" />
-    <slot name="footer">
+    <slot name="footer" :close="close" :loading="loading" :cancel-text="cancelText" :confirm-text="confirmText" form-id="simpleform">
       <div class="flex justify-end items-center self-stretch gap-3">
         <RxButton size="sm" text severity="secondary" :label="cancelText" @click="close" />
         <RxButton size="sm" type="submit" form="simpleform" :label="confirmText" :loading="loading" />

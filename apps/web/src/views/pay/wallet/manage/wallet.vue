@@ -18,7 +18,6 @@ defineEmits(['refresh'])
 
 const router = useRouter()
 const route = useRoute()
-const redirectAction = route.query[REDIRECT_ACTION] as string
 const { userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
 const { walletRecharge, openProcessing } = usePay()
@@ -55,11 +54,26 @@ function onCharge() {
   })
 }
 
-onMounted(() => {
-  if (redirectAction === 'open-wallet-modal') {
-    onCharge()
+function tryOpenWalletModal() {
+  if (route.query[REDIRECT_ACTION] !== 'open-wallet-modal') {
+    return
   }
-})
+
+  onCharge()
+
+  // 消费一次性动作参数，避免切 tab 重挂载或刷新时再次弹出
+  const query = { ...route.query }
+  delete query[REDIRECT_ACTION]
+  router.replace({ query })
+}
+
+watch(
+  () => route.query[REDIRECT_ACTION],
+  () => {
+    tryOpenWalletModal()
+  },
+  { immediate: true },
+)
 
 useEmitterEvent('updateAutoRenewList', getUserPayInfo)
 </script>

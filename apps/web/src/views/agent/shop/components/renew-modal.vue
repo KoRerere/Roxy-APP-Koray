@@ -5,6 +5,7 @@ import currency from 'currency.js'
 import { addDays, format } from 'date-fns'
 import { useToast } from 'primevue/usetoast'
 import { useFreedomActivity } from '/@/views/campaign/freedom/hook'
+import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook'
 import { API } from '/@/api'
 import { useThemeStore } from '/@/stores/theme'
 import { useUserStore } from '/@/stores/user'
@@ -55,6 +56,7 @@ const [_, onlyErrorToast] = useResponseToast()
 const toast = useToast()
 const { openProcessing } = usePay()
 const { showFreedomActivityModal } = useFreedomActivity()
+const { showLuckyDrawAfterPay } = useMidAutumnActivity()
 const { beforeToggleAutoRenew } = useConfirmAutoRenew()
 const shopLabels = useProxyShopLabels()
 
@@ -324,6 +326,7 @@ async function onPay() {
       ? Promise.resolve()
       : openProcessing(data, 'silent'))
       .then(() => {
+        showLuckyDrawAfterPay()
         showFreedomActivityModal()
         emit('close')
         emit('success')

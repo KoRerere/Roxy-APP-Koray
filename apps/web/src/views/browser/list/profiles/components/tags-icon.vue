@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import RxAvatar from '/@/components/rx-avatar'
 import { RxSvgIcon } from '/@/components/rx-icon/'
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
+import { isMemberLabelId, toLabelId, toSubmitLabelIds, useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { usePopupMenu } from '/@/hooks/usePopupMenu'
 import { ProfileReqType } from '/@/enums'
@@ -27,18 +27,19 @@ const loading = ref(false)
 
 const _members = computed(() =>
   (labels || [])
-    .filter((item: any) => `${item.labelId}`.startsWith('u_'))
+    .filter((item: any) => isMemberLabelId(item.labelId))
     .map(item => ({ ...item, color: item.labelColor, name: item.labelName, tooltip: item.labelName })),
 )
-const _tags = computed(() => (labels || []).filter((item: any) => !`${item.labelId}`.startsWith('u_')))
+const _tags = computed(() => (labels || []).filter((item: any) => !isMemberLabelId(item.labelId)))
 
 async function openMenu(event: MouseEvent) {
-  if (disabled || loading.value)
+  if (disabled || loading.value) {
     return
+  }
 
   loading.value = true
   const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(Number(projectId)) : [] as Operation[]])
-  const value = labels?.map((item: any) => `${item.labelId}`)
+  const value = labels?.map((item: any) => toLabelId(item.labelId))
   const options: Operation[] = memberList.concat(tagList)
   loading.value = false
 
@@ -56,17 +57,17 @@ async function openMenu(event: MouseEvent) {
             const { avatar, avatarColor, userId, userName, color, id, name } = item._origin
             const data = userId
               ? { avatar, labelColor: avatarColor, labelId: `u_${userId}`, labelName: userName }
-              : { labelColor: color, labelId: id, labelName: name }
+              : { labelColor: color, labelId: toLabelId(id), labelName: name }
             acc.push(data)
           }
           return acc
         }, [])
 
         if (!isEq(value, toRaw(labelIds))) {
-          // u_ 开头的表示人员 id
+          // u_ 开头的表示人员 id，其余为标签 string id
           emit('update', {
             labelInfo,
-            labelIds: (labelIds as string[] || []).map(value => value.startsWith('u_') ? value : Number(value)),
+            labelIds: toSubmitLabelIds(labelIds),
             requestType: ProfileReqType.SelectLabel,
           })
         }
@@ -92,12 +93,13 @@ function isEq(oldIds: any, newIds: any) {
 }
 
 function onAddTag() {
-  const oldIds = labels.map((item: any) => item.labelId)
+  const oldIds = labels.map((item: any) => toLabelId(item.labelId))
   addTag({
     confirmNext: ({ params, res }: any) => {
+      const labelId = toLabelId(res.data.id)
       emit('update', {
-        labelInfo: [...labels, { labelColor: params.color, labelName: params.name, labelId: res.data.id }],
-        labelIds: [...oldIds, res.data.id],
+        labelInfo: [...labels, { labelColor: params.color, labelName: params.name, labelId }],
+        labelIds: [...oldIds, labelId],
         requestType: ProfileReqType.SelectLabel,
       })
     },

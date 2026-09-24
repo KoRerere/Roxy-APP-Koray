@@ -9,10 +9,12 @@ import { PayWay } from '/@/enums/pay'
 import { useThemeStore } from '/@/stores/theme'
 import { useSimpleLocale } from '/@/stores/locale'
 
-const { confirmText = $t('确认'), rechargeAmount = 0, payType = PayWay.Card, onConfirm } = defineProps<{
+const { confirmText = $t('确认'), rechargeAmount = 0, payType = PayWay.Card, hideSubmit = false, onConfirm } = defineProps<{
   rechargeAmount?: number
   confirmText?: string
   payType?: PayWay
+  /** 为 true 时不渲染内置提交按钮，由父级底栏调用 submit */
+  hideSubmit?: boolean
   onConfirm: (stripeResult: any) => void | Promise<void>
 }>()
 
@@ -133,9 +135,10 @@ function handleElementChange({ error }: any) {
   }
 }
 
-async function handleSubmit(event: Event) {
+/** 提交 Stripe 绑卡或支付；无 event 时由父级底栏直接调用 */
+async function handleSubmit(event?: Event) {
   $rechargeModal?.preventModalClose()
-  event.preventDefault()
+  event?.preventDefault()
 
   if (!stripe.value || !cardNumber) {
     onlyErrorToast(-1, 'stripe initialization failed, please check stripe key configuration!')
@@ -193,6 +196,11 @@ async function stripePayment() {
 
   return { error, result: { ...paymentIntent, _PRE_ORDER: { code, data, msg } } }
 }
+
+defineExpose({
+  submit: handleSubmit,
+  isLoading,
+})
 </script>
 
 <template>
@@ -218,7 +226,7 @@ async function stripePayment() {
         </div>
       </div>
     </div>
-    <RxButton class="mt-1 w-full" type="submit" size="lg" :loading="isLoading" :label="confirmText" />
+    <RxButton v-if="!hideSubmit" class="mt-1 w-full" type="submit" size="lg" :loading="isLoading" :label="confirmText" />
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center justify-between">
         <slot name="after" />

@@ -21,7 +21,7 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { usePermission } from '/@/hooks/usePermission'
 import { copyText, deepClone } from '/@/utils'
-import { useMateGroup } from '/@/views/browser/create/hooks/useMate'
+import { isMemberLabelId, useMateGroup } from '/@/views/browser/create/hooks/useMate'
 import { useTagsActions } from '/@/views/browser/list/tags/hook'
 import { getAccountColumns } from './columns'
 import { getAccountAdvancedSearch, getAccountFilters, getAccountOperation, getAccountSorts } from './operation'
@@ -528,7 +528,7 @@ async function onMoveToProject(data: any) {
             datas.forEach((item) => {
               item.projectName = projectName === '无项目' ? $t('默认分组') : projectName
               item.projectId = Number(formData.projectId)
-              item.labelInfo = item.labelInfo!.filter((it: any) => !it.labelId.startsWith?.('u_'))
+              item.labelInfo = item.labelInfo!.filter((it: any) => !isMemberLabelId(it.labelId))
               item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
             })
             invalidateAccountListCache(LIST_CACHE_NAMESPACE.ECOMMERCE_ACCOUNT_LIST, { projectId: String(formData.projectId) })
