@@ -15,7 +15,7 @@ import {
   useDeviceDetection,
 } from '/@/views/ecommerce/devices/hooks/useDeviceDetection'
 import type { BindRiskFormContext, EcommerceDeviceInfo } from '/@/views/ecommerce/accounts/ecommerce-window-mode'
-import { PROXY_BIND_RISK_NOT_REMIND_KEY } from '/@/views/ecommerce/accounts/ecommerce-window-mode'
+import { isPresentBusinessId, PROXY_BIND_RISK_NOT_REMIND_KEY } from '/@/views/ecommerce/accounts/ecommerce-window-mode'
 import { API } from '/@/api'
 import { ProxyType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -33,7 +33,7 @@ interface Props {
   /** 待绑定的平台 displayId */
   displayId: string
   /** 账号窗口 ID（列表绑定场景传入，取账号 id） */
-  windowId?: number
+  windowId?: string | number
   /** 表单中的账号平台与绑定设备信息 */
   formContext: BindRiskFormContext
   /** 设备完整信息，用于连通性检测；缺省时按 proxyId 拉取详情 */
@@ -288,7 +288,8 @@ async function runCheck(options: { skipDeviceCheck?: boolean } = {}) {
     const apiPromise = API.proxy.userCheckProxyBindRiskCreate({
       proxyId: props.proxyId,
       displayId: props.displayId,
-      ...(props.windowId != null ? { windowId: props.windowId } : {}),
+      // 文档仍把 windowId 标成 number，断言不改变请求里的原始窗口 ID
+      ...(isPresentBusinessId(props.windowId) ? { windowId: props.windowId as number } : {}),
     })
 
     const { code, data, msg } = await animateRiskCheckingProgress(apiPromise)

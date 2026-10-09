@@ -90,7 +90,7 @@ export function useQuickCreate() {
     const target = projects.find(item => item.projectDefault) ?? projects[0]
     return {
       projectName: target?.label || $t('未指定项目'),
-      projectId: target ? Number(target.value) : undefined,
+      projectId: target?.value,
       labelIds: [],
       windowRemark: '',
       projectDefault: target ? 1 : 0,

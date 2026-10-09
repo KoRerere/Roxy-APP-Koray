@@ -67,13 +67,15 @@ function expandProxyList(list: Record<string, any>[], proxyMethod: string) {
   })
 }
 
-/** moduleId / id：0 与空视为未关联代理库 */
-export function resolveProxyModuleId(...values: unknown[]) {
+/**
+ * moduleId / id：0 与空视为未关联代理库。
+ * 真实 ID 保持字符串，Number() 会把超出安全整数的代理 ID 截断。
+ */
+export function resolveProxyModuleId(...values: unknown[]): string | 0 {
   const raw = pickPresent(...values)
-  if (raw === undefined)
+  if (raw === undefined || raw === 0 || raw === '0')
     return 0
-  const n = Number(raw)
-  return Number.isFinite(n) && n !== 0 ? n : 0
+  return String(raw)
 }
 
 /**

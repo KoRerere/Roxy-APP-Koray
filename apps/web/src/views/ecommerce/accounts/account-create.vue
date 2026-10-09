@@ -70,7 +70,7 @@ async function createAccount() {
       stripEcommerceLegacyTopLevelFields(baseParams)
       const fields = form.getRequestFields()
       // 记录是否在创建表单内完成设备绑定，供返回列表后跳过绑定引导
-      boundDuringCreate = Number(fields.moduleId) > 0
+      boundDuringCreate = fields.moduleId != null && fields.moduleId !== '' && fields.moduleId !== 0 && String(fields.moduleId) !== '0'
       return fields
     },
     onSuccess: () => {

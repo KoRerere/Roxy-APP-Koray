@@ -722,7 +722,7 @@ async function onMoveToProject(data: any) {
     onConfirm: async (formData: any) => {
       if (formData.projectId) {
         const projectName = options.find(item => item.value === formData.projectId)?.label
-        const ids = datas.filter((item: any) => item.projectId !== Number(formData.projectId)).map((item: any) => item.id)
+        const ids = datas.filter((item: any) => String(item.projectId) !== String(formData.projectId)).map((item: any) => item.id)
         if (!ids.length) {
           if (jumpAfterSave) {
             goToProject(formData.projectId, projectName)
@@ -737,7 +737,7 @@ async function onMoveToProject(data: any) {
           .then(() => {
             datas.forEach((item) => {
               item.projectName = projectName
-              item.projectId = Number(formData.projectId)
+              item.projectId = formData.projectId
               item.labelInfo = item.labelInfo!.filter((it: any) => !isMemberLabelId(it.labelId))
               item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
             })

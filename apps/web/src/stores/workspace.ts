@@ -100,7 +100,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     }
   }
 
-  function syncElectronWorkspaceId(workspaceId: number, workspaceType?: number) {
+  function syncElectronWorkspaceId(workspaceId: string | number, workspaceType?: number) {
     if (isMainWindow) {
       globalThis.electronAPI.send('user:setWorkspaceId', workspaceId, workspaceType)
     }
@@ -278,7 +278,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   async function getPermissionByWorkspace(
-    workspaceId: number,
+    workspaceId: string | number,
     options?: { pendingSwitch?: boolean },
   ) {
     const endGetPermission = createPerfTimer('workspace:getPermissionByWorkspace', {
@@ -296,7 +296,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     })
 
     // 切换前预拉目标空间权限时 currentWorkspace 仍是旧值，需允许写入
-    if (!options?.pendingSwitch && workspaceId !== currentWorkspace.value?.id) {
+    if (!options?.pendingSwitch && String(workspaceId) !== String(currentWorkspace.value?.id ?? '')) {
       return
     }
 
@@ -304,7 +304,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   async function setCurrentWorkspace(
-    workspaceId: number,
+    workspaceId: string | number,
     options?: { silent?: boolean, force?: boolean, restartApiServer?: boolean },
   ) {
     const endSetCurrentWorkspace = createPerfTimer('workspace:setCurrentWorkspace', {
@@ -317,7 +317,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       isSwitchingWorkspace.value = true
       try {
         const previousWorkspaceId = currentWorkspace.value?.id
-        if (previousWorkspaceId !== undefined && previousWorkspaceId !== workspaceId) {
+        if (previousWorkspaceId !== undefined && String(previousWorkspaceId) !== String(workspaceId)) {
           useListCacheStore().clearAll()
           getProxyStore().clearProxyVendors()
         }
@@ -375,7 +375,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
 
   /** 静默准备 workspace 上下文（默认 silent），不触发全局 loading 与进空间副作用 */
   async function prepareWorkspace(
-    workspaceId: number,
+    workspaceId: string | number,
     options?: { silent?: boolean, force?: boolean, restartApiServer?: boolean },
   ) {
     return setCurrentWorkspace(workspaceId, {
@@ -386,7 +386,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   }
 
   /** 正式进空间：关闭 silent 并触发 loading + 进空间副作用 */
-  async function enterWorkspace(workspaceId?: number) {
+  async function enterWorkspace(workspaceId?: string | number) {
     workspaceEntrySilent.value = false
 
     isMainWindow && showPageLoading()
@@ -401,7 +401,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       return
     }
 
-    if (currentWorkspace.value.id === targetId) {
+    if (String(currentWorkspace.value.id) === String(targetId)) {
       if (isMainWindow) {
         syncElectronWorkspaceId(targetId, currentWorkspace.value.workspaceType)
         rememberLastWorkspace()
@@ -418,7 +418,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
    */
   workspaceChangeChannel.onmessage = (event) => {
     console.log('Received message:', event.data)
-    if (event.data.workspaceId !== currentWorkspace.value?.id) {
+    if (String(event.data.workspaceId) !== String(currentWorkspace.value?.id ?? '')) {
       setCurrentWorkspace(event.data.workspaceId, {
         restartApiServer: event.data.restartApiServer,
       })

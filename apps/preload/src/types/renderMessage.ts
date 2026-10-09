@@ -77,7 +77,7 @@ export interface RenderMessage {
   /** 关闭所有窗口 */
   'browser:closeAll': () => void
   /** 关闭指定空间已打开和启动中的窗口 */
-  'browser:closeByWorkspace': (workspaceId: number) => void
+  'browser:closeByWorkspace': (workspaceId: string | number) => void
   /** 批量删除窗口 */
   'browser:batchRemove': (dirIds: string[]) => void
   /** 获取已打开的窗口 */
@@ -129,7 +129,7 @@ export interface RenderMessage {
   /** 用户退出登录 */
   'user:logout': () => void
   /** 切换空间时设置当前空间 ID；可选附带 workspaceType 供工作台文案适配 */
-  'user:setWorkspaceId': (workspaceId: number, workspaceType?: number) => void
+  'user:setWorkspaceId': (workspaceId: string | number, workspaceType?: number) => void
   /** 用户上传头像  */
   'user:uploadAvatar': (avatarPath: string) => Promise<string>
   /** 用户上传评价图片 */

@@ -405,7 +405,7 @@ export async function restoreLastWindowOpenStatus() {
           console.log('customParamsByDirId', customParamsByDirId)
 
           await browserManager.batchLaunch(dirIds, {
-            workspaceId: Number(workspaceId),
+            workspaceId,
             customParamsByDirId,
           })
         }

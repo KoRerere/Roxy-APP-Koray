@@ -42,7 +42,7 @@ async function loadPlatformOptions() {
 const linkedAccountIds = computed(() => {
   const ids = new Set<string>()
   for (const item of windowPlatformList.value ?? []) {
-    if (item?.id != null && item.id !== '' && Number(item.id) !== 0) {
+    if (item?.id != null && item.id !== '' && item.id !== 0 && String(item.id) !== '0') {
       ids.add(String(item.id))
     }
   }

@@ -55,8 +55,9 @@ export function useMateGroup() {
     return data.rows.map(item => ({ label: item.projectName, value: `${item.project_id}`, projectDefault: item.projectDefault, _origin: item }))
   }
 
-  async function getProjectMember(projectId: number): Promise<Operation[]> {
-    const { data } = await API.limit.userGetMemberInfoByProjectIdList({ projectId })
+  async function getProjectMember(projectId: string | number): Promise<Operation[]> {
+    // 文档仍把 projectId 标成 number。断言不改运行时值，避免 Number() 截断大整数
+    const { data } = await API.limit.userGetMemberInfoByProjectIdList({ projectId: projectId as number })
     return data.rows.map(item => ({
       value: `u_${item.userId}`,
       _origin: item,

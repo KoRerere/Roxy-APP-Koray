@@ -4,7 +4,7 @@ import type { ProxyExpireStatus, ProxyOrderStatus, ProxyType } from '/@/enums/pr
 export interface AccountPlatform {
   countryCode?: string
   displayName?: string
-  id?: number
+  id?: string | number
   name?: string
   platformIcon?: string
   platformIconDark?: string
@@ -17,7 +17,7 @@ export interface EcommerceWindowPlatformItem {
   displayName: string
   /** 级联选择器选中路径的展示文案，与表单 cascade 组件一致 */
   displayPlatform: string
-  displayId: number
+  displayId: string | number
   platformIcon?: string
   platformIconDark?: string
   platformUserName?: string
@@ -27,7 +27,7 @@ export interface EcommerceWindowPlatformItem {
 }
 
 export interface EcommerceDeviceInfo {
-  id?: number
+  id?: string | number
   lastCountry?: string
   lastCity?: string
   lastIp?: string
@@ -62,7 +62,8 @@ export interface EcommerceBasicInfo {
 
 export interface EcommerceRequestFields {
   windowName: string
-  moduleId: number
+  /** 未关联为 0，已关联的代理模块 ID 保持字符串 */
+  moduleId: string | number
   windowPlatformList: EcommerceWindowPlatformItem[]
   proxyInfoList?: Record<string, unknown>[]
   proxyMethod?: string
@@ -70,6 +71,11 @@ export interface EcommerceRequestFields {
   lastCountry?: string
   lastIp?: string
   [key: string]: unknown
+}
+
+/** 0 / 空不是有效业务 ID。真实 ID 保持字符串，不能用 Number() 判断。 */
+export function isPresentBusinessId(value: unknown): value is string | number {
+  return value != null && value !== '' && value !== 0 && String(value) !== '0'
 }
 
 export const ECOMMERCE_LEGACY_TOP_LEVEL_FIELDS = [
@@ -257,7 +263,7 @@ export function createEmptyEcommerceBasicInfo(): EcommerceBasicInfo {
 /** 从代理/窗口源数据映射设备展示字段（id 由调用方解析） */
 function buildDeviceInfo(
   source: Record<string, unknown>,
-  id: number | undefined,
+  id: string | number | undefined,
 ): EcommerceDeviceInfo {
   return {
     id,
@@ -275,15 +281,16 @@ function buildDeviceInfo(
 }
 
 export function buildDeviceInfoFromProxy(proxy: Record<string, unknown>): EcommerceDeviceInfo {
-  return buildDeviceInfo(proxy, Number(proxy.id) || undefined)
+  const id = proxy.id
+  return buildDeviceInfo(proxy, isPresentBusinessId(id) ? String(id) : undefined)
 }
 
 function buildDeviceInfoFromSource(source: Record<string, unknown>): EcommerceDeviceInfo | null {
-  const moduleId = Number(source.moduleId)
-  if (!moduleId)
+  const moduleId = source.moduleId
+  if (!isPresentBusinessId(moduleId))
     return null
 
-  return buildDeviceInfo(source, moduleId)
+  return buildDeviceInfo(source, String(moduleId))
 }
 
 function normalizeAccountPlatform(value: unknown): AccountPlatform | null {
@@ -442,7 +449,7 @@ export function resolveBindRiskSubmitPlan(
     return { shouldCheck: false, params }
 
   // 未选择设备时不做绑定风险检测
-  if (!Number(info.moduleId))
+  if (!isPresentBusinessId(info.moduleId))
     return { shouldCheck: false, params }
 
   if (!original)
@@ -584,7 +591,7 @@ export function buildWindowPlatformList(
     platformUrl,
     displayName: String(platform.displayName ?? '').trim(),
     displayPlatform: buildAccountPlatformDisplayLabel(options, platform),
-    displayId: Number(platform.id) || 0,
+    displayId: isPresentBusinessId(platform.id) ? String(platform.id) : 0,
     platformIcon,
     platformIconDark,
     platformUserName: info.platformUserName.trim(),
@@ -602,8 +609,7 @@ function buildChooseDeviceFields(source: {
 }): Pick<EcommerceRequestFields, 'moduleId' | 'proxyMethod' | 'lastCity' | 'lastCountry' | 'lastIp'> & {
   proxyCategory?: string
 } {
-  const moduleId = Number(source.moduleId)
-  if (!moduleId) {
+  if (!isPresentBusinessId(source.moduleId)) {
     return {
       moduleId: 0,
       proxyCategory: 'noproxy',
@@ -615,7 +621,7 @@ function buildChooseDeviceFields(source: {
   }
 
   return {
-    moduleId,
+    moduleId: String(source.moduleId),
     proxyMethod: 'choose',
     lastCity: source.lastCity ?? '',
     lastCountry: source.lastCountry ?? '',

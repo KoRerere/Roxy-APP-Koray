@@ -83,24 +83,31 @@ const filtersMenu = ref()
 const dataList = ref()
 const checkedMessage = ref<Record<string, ProxyCheckStatus>>({})
 
+/** 0 / 空不是有效设备 ID，真实 ID 保持原值 */
+function hasBusinessId(value: unknown) {
+  return value != null && value !== '' && value !== 0 && String(value) !== '0'
+}
+
 /** 打开抽屉时的预选 id（编辑回显 / 列表换绑），只取一次避免后续被清空 */
-const presetSelectedId = Number(outerData?.id) > 0 ? Number(outerData.id) : undefined
+const presetSelectedId = hasBusinessId(outerData?.id) ? String(outerData.id) : undefined
 
 /** 初始选中：先用外部 data 占位，列表返回后替换为同行引用以便 radio 正确勾选 */
 const selection = ref<DeviceItem | Record<string, unknown> | undefined>(
   presetSelectedId
-    ? { ...toRaw(outerData), id: presetSelectedId }
+    ? { ...toRaw(outerData) }
     : undefined,
 )
 
 /** 列表行就绪后，用当前页真实行对象对齐 selection（PrimeVue dataKey 比对更稳） */
 function syncSelectionWithRows(rows: DeviceItem[]) {
-  const selectedId = selection.value?.id != null ? Number(selection.value.id) : presetSelectedId
+  const selectedId = selection.value?.id != null && hasBusinessId(selection.value.id)
+    ? String(selection.value.id)
+    : presetSelectedId
   if (!selectedId || !rows?.length) {
     return
   }
 
-  const matched = rows.find(row => Number(row.id) === selectedId)
+  const matched = rows.find(row => String(row.id) === selectedId)
   if (matched) {
     selection.value = matched
   }

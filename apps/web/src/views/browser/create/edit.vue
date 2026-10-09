@@ -59,7 +59,7 @@ onBeforeMount(async () => {
   oldFieldsFormat()
   metaData.value = {
     projectName: data!.projectName,
-    projectId: Number(data!.projectId),
+    projectId: data!.projectId == null || data!.projectId === '' ? undefined : String(data!.projectId),
     labelIds: (data!.labelIds || []).map(id => toLabelId(id)),
     windowRemark: data!.windowRemark,
   }

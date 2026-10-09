@@ -14,7 +14,7 @@ export interface ConfirmBindRiskBeforeSubmitOptions {
   /** 编辑时的原始绑定上下文，用于判断设备/平台是否变更 */
   original?: BindRiskOriginalContext
   /** 账号窗口 ID（编辑场景传入） */
-  windowId?: number
+  windowId?: string | number
 }
 
 /** 账号基础信息表单对外暴露的能力 */

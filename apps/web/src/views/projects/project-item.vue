@@ -23,7 +23,14 @@ const { check } = usePermission()
 const { invalidateCache: invalidateListCache } = useListCacheActions()
 
 const projectRef = useTemplateRef('project')
-const projectId = ref(Number(route.params.id))
+
+/** 路由里的项目 ID 保持字符串，Number() 会截断大整数 */
+function readRouteId(value: unknown) {
+  const raw = Array.isArray(value) ? value[0] : value
+  return raw == null || raw === '' ? '' : String(raw)
+}
+
+const projectId = ref(readRouteId(route.params.id))
 const projectName = ref(String(route.query.title))
 const members = ref()
 
@@ -39,7 +46,7 @@ function refreshProjectProfiles() {
 }
 
 watch(() => route.params.id, (value) => {
-  projectId.value = Number(value)
+  projectId.value = readRouteId(value)
   projectName.value = String(route.query.title)
   getMemberByCurrentProject()
 })
@@ -54,7 +61,8 @@ onMounted(() => {
 
 async function getMemberByCurrentProject() {
   const { code, data } = await API.limit.userGetMemberInfoByProjectIdList({
-    projectId: projectId.value,
+    // 文档类型仍是 number，请求里保持路由上的原始项目 ID
+    projectId: projectId.value as number,
     type: 'show_list',
   })
   if (code === 0) {

@@ -92,7 +92,7 @@ function clearPresetTemplate() {
 /** 是否为有效的已有代理 id（0 / 空视为无） */
 function hasChooseId(item: ProxyInfoItem | null | undefined) {
   const id = item?.id
-  return id !== undefined && id !== null && id !== '' && Number(id) !== 0
+  return id !== undefined && id !== null && id !== '' && id !== 0 && String(id) !== '0'
 }
 
 /** 根据已有 proxyInfoList 推断初始 tab，并种子对应草稿 */

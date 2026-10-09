@@ -9,7 +9,7 @@ import { usePermission } from '/@/hooks/usePermission'
 import { useWorkspaceStore } from '/@/stores/workspace'
 
 const { projectId, projectName } = defineProps<{
-  projectId?: number
+  projectId?: string | number
   projectName?: string
 }>()
 
@@ -48,7 +48,8 @@ function removeMember(member: any) {
     },
     accept: async () => {
       const { code, msg } = await API.team.userDelProjectMemberCreate({
-        projectId: projectId!,
+        // 文档类型仍是 number，删除成员时原样提交项目 ID
+        projectId: projectId as number,
         userId: member.userId,
       })
       showToast(code, msg)

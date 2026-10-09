@@ -38,7 +38,7 @@ async function openMenu(event: MouseEvent) {
   }
 
   loading.value = true
-  const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(Number(projectId)) : [] as Operation[]])
+  const [tagList, memberList] = await Promise.all([getTags(), projectId ? getProjectMember(projectId) : [] as Operation[]])
   const value = labels?.map((item: any) => toLabelId(item.labelId))
   const options: Operation[] = memberList.concat(tagList)
   loading.value = false

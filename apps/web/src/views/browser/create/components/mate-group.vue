@@ -41,7 +41,7 @@ onMounted(async () => {
     const targetId = route.query.projectId || (!isOwner.value && projects[0].value)
     const targetProject = projects.find(item => targetId ? item.value === targetId : item.projectDefault)
     if (targetProject) {
-      metaData.value!.projectId = Number(targetProject.value)
+      metaData.value!.projectId = targetProject.value
       metaData.value!.projectName = targetProject.label
       metaData.value!.projectDefault = 1
     }
@@ -63,7 +63,7 @@ async function selectProject(event: MouseEvent) {
       onHide: ({ value: projectId }: any) => {
         if (!isEmptyValue(projectId) && projectId !== value) {
           const project = operation.find((item: any) => item.value === projectId)
-          metaData.value!.projectId = Number(projectId)
+          metaData.value!.projectId = String(projectId)
           metaData.value!.projectName = project?.label || projectLabels.value.unspecified
           metaData.value!.projectDefault = project?.projectDefault || 0
         }

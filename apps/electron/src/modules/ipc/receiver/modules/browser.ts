@@ -54,8 +54,8 @@ export function setupBrowserIpc(ipcMain: IPCMainInstance) {
   })
 
   /** 被移出空间时，只关闭该空间的窗口 */
-  ipcMain.on('browser:closeByWorkspace', (_event, workspaceId: number) => {
-    browserManager.closeByWorkspace(Number(workspaceId))
+  ipcMain.on('browser:closeByWorkspace', (_event, workspaceId: string | number) => {
+    browserManager.closeByWorkspace(workspaceId)
   })
 
   /** 批量重启浏览器 */

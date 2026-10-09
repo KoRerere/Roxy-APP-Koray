@@ -516,7 +516,7 @@ async function onMoveToProject(data: any) {
     ],
     onConfirm: async (formData: any) => {
       if (formData.projectId) {
-        const ids = datas.filter(item => item.projectId !== Number(formData.projectId)).map(item => item.id)
+        const ids = datas.filter(item => String(item.projectId) !== String(formData.projectId)).map(item => item.id)
         if (!ids.length) {
           onlyErrorToast(-1, $t('所选账号 {names} 已在该分组中', { names: namesStr }))
           return
@@ -527,7 +527,7 @@ async function onMoveToProject(data: any) {
             const projectName = options.find(item => item.value === formData.projectId)!.label
             datas.forEach((item) => {
               item.projectName = projectName === '无项目' ? $t('默认分组') : projectName
-              item.projectId = Number(formData.projectId)
+              item.projectId = formData.projectId
               item.labelInfo = item.labelInfo!.filter((it: any) => !isMemberLabelId(it.labelId))
               item.labelIds = item.labelInfo!.map((it: any) => it.labelId)
             })

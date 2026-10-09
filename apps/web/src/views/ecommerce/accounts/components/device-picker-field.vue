@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h } from 'vue'
 import BindDevice from '/@/views/ecommerce/accounts/components/bind-device.vue'
-import { buildDeviceInfoFromProxy } from '/@/views/ecommerce/accounts/ecommerce-window-mode'
+import { buildDeviceInfoFromProxy, isPresentBusinessId } from '/@/views/ecommerce/accounts/ecommerce-window-mode'
 import type { EcommerceDeviceInfo } from '/@/views/ecommerce/accounts/ecommerce-window-mode'
 import DeviceSelectList from '/@/views/ecommerce/devices/device-select-list.vue'
 import { useDrawer } from '/@/hooks/useDrawer'
@@ -28,14 +28,14 @@ const { check } = usePermission()
 const drawerInstance = useDrawer()
 
 const canSelect = computed(() => check('Profiles_select_proxy'))
-const hasSelection = computed(() => Number(modelValue) > 0 && deviceInfo)
+const hasSelection = computed(() => isPresentBusinessId(modelValue) && deviceInfo)
 
 function buildDrawerData() {
-  if (!Number(modelValue))
+  if (!isPresentBusinessId(modelValue))
     return undefined
 
   return {
-    id: Number(modelValue),
+    id: modelValue,
     lastCountry: deviceInfo?.lastCountry,
     lastCity: deviceInfo?.lastCity,
     lastIp: deviceInfo?.lastIp,

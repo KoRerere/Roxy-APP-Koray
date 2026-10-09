@@ -3,6 +3,7 @@ import ProxyBindRiskModal from '/@/views/ecommerce/accounts/components/bind-risk
 import {
   buildBindRiskFormContextFromWindow,
   getWindowPlatformDisplayId,
+  isPresentBusinessId,
   PROXY_BIND_RISK_NOT_REMIND_KEY,
   shouldCheckProxyBindRiskForDeviceChange,
 } from '/@/views/ecommerce/accounts/ecommerce-window-mode'
@@ -16,7 +17,7 @@ export interface ProxyBindRiskCheckOptions {
   proxyId: string | number
   displayId?: string | number
   /** 账号窗口 ID（列表绑定场景传入，取账号 id） */
-  windowId?: number
+  windowId?: string | number
   formContext: BindRiskFormContext
   /** 设备完整信息，用于绑定前连通性检测；缺省时弹窗内按 proxyId 拉取 */
   deviceProxy?: Record<string, unknown>
@@ -76,13 +77,13 @@ export function useProxyBindRiskCheck() {
     accounts: Record<string, unknown>[],
     proxy: Record<string, unknown>,
   ): Promise<ProxyBindRiskCheckResult> {
-    const newModuleId = Number(proxy.id) || 0
-    if (!newModuleId)
+    const newModuleId = proxy.id
+    if (!isPresentBusinessId(newModuleId))
       return 'continue'
 
     const { data: platformOptions } = await API.platform.userGetPlatformUrlTreeList()
     const options = platformOptions ?? []
-    const checksByDisplayId = new Map<string, { formContext: BindRiskFormContext, windowId?: number }>()
+    const checksByDisplayId = new Map<string, { formContext: BindRiskFormContext, windowId?: string | number }>()
 
     for (const row of accounts) {
       if (!shouldCheckProxyBindRiskForDeviceChange(row, newModuleId, options))
@@ -92,7 +93,7 @@ export function useProxyBindRiskCheck() {
       if (!displayId || checksByDisplayId.has(displayId))
         continue
 
-      const windowId = Number(row.id) || undefined
+      const windowId = isPresentBusinessId(row.id) ? row.id : undefined
       checksByDisplayId.set(displayId, {
         formContext: buildBindRiskFormContextFromWindow(row, proxy),
         windowId,

@@ -21,23 +21,24 @@ export function useElectronWorkspaceSelection() {
     'user:workspace-select-requested',
     async ({ requestId, workspaceId }) => {
       console.log('[workspace-select] renderer request received', { requestId, workspaceId })
-      const numericWorkspaceId = Number(workspaceId)
+      // 团队 ID 保持原始字符串，不限制十进制，方便以后改成十六进制
+      const workspaceIdText = String(workspaceId ?? '').trim()
       try {
-        if (!Number.isSafeInteger(numericWorkspaceId) || numericWorkspaceId <= 0) {
-          throw new Error('workspaceId must be a positive integer')
+        if (!workspaceIdText) {
+          throw new Error('workspaceId is empty')
         }
 
-        await workspaceStore.setCurrentWorkspace(numericWorkspaceId, {
+        await workspaceStore.setCurrentWorkspace(workspaceIdText, {
           restartApiServer: false,
         })
         await nextTick()
 
         console.log('[workspace-select] renderer workspace state', {
-          requestedWorkspaceId: numericWorkspaceId,
+          requestedWorkspaceId: workspaceIdText,
           currentWorkspaceId: workspaceStore.currentWorkspace?.id,
           workspaceIds: workspaceStore.workspaceList.map(item => item.id),
         })
-        if (String(workspaceStore.currentWorkspace?.id) !== String(numericWorkspaceId)) {
+        if (String(workspaceStore.currentWorkspace?.id) !== workspaceIdText) {
           throw new Error('workspace not found or inaccessible')
         }
 
@@ -45,7 +46,7 @@ export function useElectronWorkspaceSelection() {
 
         await globalThis.electronAPI.send(
           'user:setWorkspaceId',
-          numericWorkspaceId,
+          workspaceIdText,
           workspaceStore.currentWorkspace.workspaceType,
         )
         await globalThis.electronAPI.send('mcp:close').catch((error) => {
@@ -53,10 +54,10 @@ export function useElectronWorkspaceSelection() {
         })
         await globalThis.electronAPI.send('user:workspace-select-result', {
           requestId,
-          workspaceId: numericWorkspaceId,
+          workspaceId: workspaceIdText,
           success: true,
         })
-        console.log('[workspace-select] renderer request succeeded', { requestId, workspaceId: numericWorkspaceId })
+        console.log('[workspace-select] renderer request succeeded', { requestId, workspaceId: workspaceIdText })
       }
       catch (error) {
         console.error('[workspace-select] renderer request failed', { requestId, workspaceId, error })

@@ -107,8 +107,8 @@ export function isEcommerceBoundDeviceOpenable(device: {
   orderStatus?: ProxyOrderStatus | number
   proxyType?: ProxyType | number
 }): boolean {
-  const moduleId = Number(device.moduleId)
-  if (!moduleId || device.proxyCategory === 'noproxy')
+  const moduleId = device.moduleId
+  if (moduleId == null || moduleId === '' || moduleId === 0 || String(moduleId) === '0' || device.proxyCategory === 'noproxy')
     return false
 
   if (device.proxyExpireStatus === ProxyExpireStatus.expired)
@@ -396,7 +396,7 @@ export function getDeviceListFilterFromRoute(query: LocationQuery): Partial<Prox
  * 传入 deviceId 时附带 action=renew，供设备页自动打开续费弹窗
  */
 export function buildExpiredBoundDeviceListRoute(deviceId?: string | number) {
-  const hasDeviceId = deviceId != null && Number(deviceId) > 0
+  const hasDeviceId = deviceId != null && deviceId !== '' && deviceId !== 0 && String(deviceId) !== '0'
   return {
     name: 'ecommerce-device-list' as const,
     query: {

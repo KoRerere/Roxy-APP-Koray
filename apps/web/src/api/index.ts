@@ -64,12 +64,11 @@ function readWorkspaceIdHeader(headers: { workspaceId?: unknown, get?: (name: st
   if (raw === undefined || raw === null || raw === '') {
     return undefined
   }
-  const workspaceId = Number(raw)
-  return Number.isFinite(workspaceId) ? workspaceId : undefined
+  return String(raw)
 }
 
 /** 低版本客户端没有 closeByWorkspace，只关已经出现在已打开列表里的窗口 */
-async function closeRemovedWorkspaceBrowsers(workspaceId: number) {
+async function closeRemovedWorkspaceBrowsers(workspaceId: string) {
   if (!globalThis.isElectron) {
     return
   }
@@ -84,7 +83,7 @@ async function closeRemovedWorkspaceBrowsers(workspaceId: number) {
   }
   const openedBrowsers = await globalThis.electronAPI.send('browser:getOpenedBrowser')
   const dirIds = openedBrowsers.flatMap(item =>
-    Number(item.workspaceId) === workspaceId && item.dirId ? [item.dirId] : [],
+    String(item.workspaceId) === workspaceId && item.dirId ? [item.dirId] : [],
   )
   if (dirIds.length > 0) {
     await globalThis.electronAPI.send('browser:batchClose', dirIds)

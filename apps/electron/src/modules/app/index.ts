@@ -162,13 +162,7 @@ export async function dispatchRoxyAction(argv: readonly string[], source: 'secon
       const dirId = values['dir-id']
       const workspaceId = values['workspace-id']
       if (typeof dirId === 'string' && dirId && typeof workspaceId === 'string' && workspaceId) {
-        const wid = Number(workspaceId)
-        if (Number.isFinite(wid) && wid > 0) {
-          openBrowserWindow(dirId, wid)
-        }
-        else {
-          console.debug('launch-browser: workspace-id is not valid', { dirId, workspaceId, argv })
-        }
+        openBrowserWindow(dirId, workspaceId)
       }
       else {
         console.debug('launch-browser: params is not valid', { dirId, workspaceId, argv })

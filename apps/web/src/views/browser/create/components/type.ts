@@ -1,6 +1,7 @@
 export interface WindowMetaData {
   projectName?: string
-  projectId?: number
+  /** 项目 ID 为字符串，避免大整数经 Number() 丢精度 */
+  projectId?: string
   labelIds?: string[]
   windowRemark?: string
   projectDefault?: number

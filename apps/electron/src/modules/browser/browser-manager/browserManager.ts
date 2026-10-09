@@ -92,7 +92,7 @@ export class BrowserManager {
   /** 已经打开过的空间 ID */
   #openedWorkspaceIds = new Set<number>()
   /** 正在按空间关窗的 ID。关窗同步再次返回 418 时不能重入，否则会反复关闭同一批窗口 */
-  #closingWorkspaceIds = new Set<number>()
+  #closingWorkspaceIds = new Set<string>()
   /** 需要定时同步窗口打开状态的空间 ID */
   get #needSyncWindowOpenStatusWorkspaceIds() {
     return [...this.#openedWorkspaceIds].filter(workspaceId => store.allWorkspaceId?.includes(workspaceId))
@@ -273,7 +273,7 @@ export class BrowserManager {
 
   /** 批量启动浏览器 */
   async batchLaunch(dirIds: string[], options?: {
-    workspaceId?: number
+    workspaceId?: string | number
     customParams?: any
     customParamsByDirId?: Record<string, any>/** 按 dirId 合并，优先级高于 customParams */
   }) {
@@ -344,13 +344,15 @@ export class BrowserManager {
    * 关闭指定空间已打开和启动中的指纹浏览器，其它空间不动。
    * 由 418 拦截器同步调用，因此不能等待仍占用本次请求的启动流程；启动中的窗口在启动结束后再关一次。
    */
-  closeByWorkspace(workspaceId: number) {
-    if (!Number.isFinite(workspaceId) || this.#closingWorkspaceIds.has(workspaceId)) {
+  closeByWorkspace(workspaceId: string | number) {
+    const workspaceIdText = String(workspaceId ?? '').trim()
+    // 团队 ID 保持原始字符串比较，不限制十进制，方便以后改成十六进制
+    if (!workspaceIdText || this.#closingWorkspaceIds.has(workspaceIdText)) {
       return
     }
-    this.#closingWorkspaceIds.add(workspaceId)
+    this.#closingWorkspaceIds.add(workspaceIdText)
 
-    const belongsToWorkspace = (id: unknown) => Number(id) === workspaceId
+    const belongsToWorkspace = (id: unknown) => String(id ?? '') === workspaceIdText
     const openedDirIds = [...this.openedBrowserMap.entries()]
       .filter(([, browserItem]) => belongsToWorkspace(browserItem.winInfo.workspaceId))
       .map(([dirId]) => dirId)
@@ -370,7 +372,7 @@ export class BrowserManager {
     }
 
     void Promise.all(tasks).finally(() => {
-      this.#closingWorkspaceIds.delete(workspaceId)
+      this.#closingWorkspaceIds.delete(workspaceIdText)
     })
   }
 
@@ -682,7 +684,7 @@ export class BrowserManager {
   }
 
   /** 获取窗口列表 */
-  private async getWindowList(dirIds: string[], workspaceId?: number) {
+  private async getWindowList(dirIds: string[], workspaceId?: string | number) {
     const commonParams = { page_index: 1, page_size: 500, isDelete: 0, sourceType: 'open' }
     const winInfoList = await API.window.userGetWindowInfoV2List({ ...commonParams, dirIds: dirIds.join(',') }, {
       headers: { workspaceId },

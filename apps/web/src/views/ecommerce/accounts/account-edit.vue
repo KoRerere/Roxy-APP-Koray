@@ -59,7 +59,7 @@ onBeforeMount(async () => {
   oldFieldsFormat()
   metaData.value = {
     projectName: data!.projectName,
-    projectId: Number(data!.projectId),
+    projectId: data!.projectId == null || data!.projectId === '' ? undefined : String(data!.projectId),
     labelIds: (data!.labelIds || []).map(id => toLabelId(id)),
     windowRemark: data!.windowRemark,
   }
@@ -76,7 +76,8 @@ async function saveAccount() {
     return
   }
 
-  const windowId = Number(route.query.id) || undefined
+  const queryWindowId = Array.isArray(route.query.id) ? route.query.id[0] : route.query.id
+  const windowId = queryWindowId ? queryWindowId : undefined
   if (!await form.confirmBindRiskBeforeSubmit({
     original: bindRiskOriginalContext.value,
     windowId,

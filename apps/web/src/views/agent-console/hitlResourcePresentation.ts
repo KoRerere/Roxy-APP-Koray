@@ -20,7 +20,7 @@ interface HitlResourcePresentationOptions {
   workspaceName?: string
 }
 
-type PlatformLookupParams = UserGetPlatformInfoV2ListParams & { id: number }
+type PlatformLookupParams = UserGetPlatformInfoV2ListParams & { id: string }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
@@ -188,14 +188,14 @@ async function loadProxyNames(ids: readonly string[]): Promise<Map<string, strin
 
 async function loadPlatformAccountNames(ids: readonly string[]): Promise<Map<string, string>> {
   const entries = await Promise.all(ids.map(async (id): Promise<[string, string] | undefined> => {
-    const numericId = Number(id)
-    if (!Number.isInteger(numericId)) {
+    if (!id) {
       return undefined
     }
 
     try {
+      // 平台账号 ID 按原始字符串查询。文档尚未把 id 改成 string，Number() 会截断大整数
       const query: PlatformLookupParams = {
-        id: numericId,
+        id,
         page_index: 1,
         page_size: 1,
       }

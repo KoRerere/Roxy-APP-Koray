@@ -180,7 +180,9 @@ export function useDeviceDetection() {
     options: RunDeviceDetectionOptions = {},
   ): Promise<DeviceDetectionResult> {
     const { isDirect, enableHistoryCheck = true } = options
-    const id = Number(formData.id) || undefined
+    const id = formData.id != null && formData.id !== '' && formData.id !== 0 && String(formData.id) !== '0'
+      ? formData.id
+      : undefined
 
     const result = await testProxy({
       ...formData,

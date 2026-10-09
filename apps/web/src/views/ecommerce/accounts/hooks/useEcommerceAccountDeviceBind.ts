@@ -31,7 +31,7 @@ interface DeviceBindPayload {
 
 /** 电商账号是否已绑定设备（与列表操作、测速筛选口径一致） */
 export function hasBoundEcommerceDevice(row: Pick<EcommerceAccountDeviceBindRow, 'proxyCategory' | 'moduleId'>) {
-  return row.proxyCategory !== 'noproxy' && Number(row.moduleId) > 0
+  return row.proxyCategory !== 'noproxy' && row.moduleId != null && row.moduleId !== '' && row.moduleId !== 0 && String(row.moduleId) !== '0'
 }
 
 /** 解析设备选择结果，供 API 提交与本地行同步共用 */
@@ -129,9 +129,10 @@ export function useEcommerceAccountDeviceBind() {
     options: { proxyMethod?: string, onHide?: () => void, onSuccess?: () => void } = {},
   ) {
     const proxyData = buildProxyData(account)
-    const moduleId = Number(proxyData.id)
-    // 统一数字 id，供 DeviceSelectList 按 dataKey 回显当前绑定设备
-    const selectedDevice = moduleId > 0 ? { ...proxyData, id: moduleId } : undefined
+    // 保留原始 ID。Number() 会截断大整数，设备列表按同一 ID 回显时会对不上
+    const selectedDevice = proxyData.id != null && proxyData.id !== '' && proxyData.id !== 0 && String(proxyData.id) !== '0'
+      ? proxyData
+      : undefined
 
     drawerInstance.showDrawer({
       title: $t('选择设备'),

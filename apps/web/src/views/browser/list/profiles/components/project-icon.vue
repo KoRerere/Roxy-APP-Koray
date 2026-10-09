@@ -37,7 +37,7 @@ async function openMenu(event: any) {
         if (!isEmptyValue(projectId) && projectId !== value) {
           emit('update', {
             projectName: operation.find(item => item.value === projectId)!.label,
-            projectId: Number(projectId),
+            projectId,
             requestType: ProfileReqType.MoveProject,
             ...deleteMembers(),
           })
