@@ -30,8 +30,8 @@ export function createProjectFormSchemas(labels: ProjectEntityLabels) {
 /** @deprecated 普通模式静态 schema，新代码请使用 createProjectFormSchemas */
 export const projectFormSchemas = createProjectFormSchemas(createProjectEntityLabels(false))
 
-export function getInviteUsersFormSchemas(projectIds = [], labels = createProjectEntityLabels(false)) {
-  let allProjectIds: number[] = []
+export function getInviteUsersFormSchemas(projectIds: Array<string | number> = [], labels = createProjectEntityLabels(false)) {
+  let allProjectIds: Array<string | number> = []
   return defineFormSchema([
     {
       field: 'email',
@@ -79,7 +79,8 @@ export function getInviteUsersFormSchemas(projectIds = [], labels = createProjec
       rule: {
         trigger: 'blur',
         validator(zod) {
-          return zod.number()
+          // 项目 ID 运行时是字符串，文档类型仍可能是 number，两种都要能通过
+          return zod.union([zod.string().min(1), zod.number()])
             .array()
             .min(1, labels.selectPlaceholder)
         },

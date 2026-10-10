@@ -16,7 +16,7 @@ interface PropsType {
   email?: string
   phone?: string
   role?: Role
-  projectIds?: number[]
+  projectIds?: Array<string | number>
   disableds?: string[]
   handleOk?: (formModel: any) => any | Promise<any>
 }
