@@ -158,7 +158,7 @@ const scriptFormValidationError = computed(() => {
     return $t('请输入模板名称')
   if (!isEditing.value && sourceValue.value == null)
     return $t('请选择或上传脚本')
-  if (scriptParamsErrors.value.length) {
+  if (showScriptParamsValidation.value && scriptParamsErrors.value.length) {
     return $t('有 {count} 个脚本参数填写有误，请检查标红内容后重试。', {
       count: scriptParamsErrors.value.length,
     })
@@ -482,12 +482,16 @@ function buildMetadata() {
   }
 }
 
-function normalizeScriptParams() {
+function normalizeScriptParams(validateParams: boolean) {
   const schema = parseScriptParamsSchema(activeMetadata.value.optionsSchema)
   if (!schema)
     return {}
   if (scriptSchemaError.value)
     throw new ScriptParamsFormError(scriptSchemaError.value)
+
+  if (!validateParams) {
+    return buildScriptParams(scriptParamsData.value)
+  }
 
   scriptParamsErrors.value = validateScriptParamsData(
     createScriptParamsFormSchema(schema),
@@ -530,9 +534,9 @@ async function saveTemplate(saveAndRun: boolean) {
     return
   }
   if (templateType.value === 'script') {
-    showScriptParamsValidation.value = true
+    showScriptParamsValidation.value = saveAndRun
     try {
-      scriptParams.value = normalizeScriptParams()
+      scriptParams.value = normalizeScriptParams(saveAndRun)
     }
     catch (error) {
       if (error instanceof ScriptParamsFormError && scriptParamsErrors.value.length) {
