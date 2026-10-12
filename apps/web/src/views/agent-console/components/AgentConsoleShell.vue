@@ -12,10 +12,14 @@ import { provideProfileMonitorContext } from '../composables/useProfileMonitorCo
 import AgentDeleteConfirmDialog from './AgentDeleteConfirmDialog.vue'
 import AgentSidebar from './AgentSidebar.vue'
 import SelectWindowGuide from './SelectWindowGuide.vue'
-import FeedbackDialog from './dialog/FeedbackDialog.vue'
 import RenameConversationDialog from './dialog/RenameConversationDialog.vue'
 import ProfileMonitorPanel from './ProfileMonitorPanel.vue'
 import { perfLog } from '/@/utils/perf-log'
+import { isMainWindow } from '/@/utils'
+
+const AgentLiveChat = defineAsyncComponent(() => import('/@/components/business/live-chat/live-chat.vue'))
+// 主窗口和云手机已由全局组件挂载客服，Agent 只补齐独立窗口。
+const showAgentLiveChat = !isMainWindow && !globalThis.isCloudPhoneApp
 
 interface AgentSidebarExpose {
   getNewChatElement: () => HTMLElement | null
@@ -447,24 +451,6 @@ function openRenameConversationDialog(conversationId: string) {
   })
 }
 
-function openFeedbackDialog() {
-  dialog.open(FeedbackDialog, {
-    props: {
-      modal: true,
-      blockScroll: true,
-      closeOnEscape: false,
-      dismissableMask: false,
-      draggable: false,
-      showHeader: false,
-      style: { width: 'min(520px, calc(100vw - 32px))' },
-      pt: {
-        root: 'agent-console-dialog agent-console-feedback-dialog',
-        content: '!p-0 !overflow-hidden',
-      },
-    },
-  })
-}
-
 function dismissOnboardingNewChatGuide() {
   onboardingNewChatGuideVisible.value = false
   onboardingNewChatGuideTarget.value = null
@@ -656,7 +642,7 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
       :update-info="agentUpdateInfo"
       @delete-conversation="confirmDeleteConversation"
       @new-chat="handleStartNewChat"
-      @open-feedback="openFeedbackDialog"
+      @open-feedback="$showLiveChat"
       @rename-conversation="openRenameConversationDialog"
       @resize-start="startAgentSidebarResize"
       @resize-step="resizeAgentSidebarBy"
@@ -762,6 +748,7 @@ provideProfileMonitorContext(taskMonitorOpen, taskMonitorAvailable, runningTaskC
       :visible="onboardingNewChatGuideVisible"
       @dismiss="dismissOnboardingNewChatGuide"
     />
+    <AgentLiveChat v-if="showAgentLiveChat" />
   </div>
 </template>
 
