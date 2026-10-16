@@ -104,7 +104,28 @@ export function getProxyTypePriceForSelectedDuration(
   proxyType: { proxyPriceListFmt?: DurationOption[] },
   durationValue?: number,
 ) {
-  if (durationValue == null)
+  if (durationValue == null) {
     return undefined
+  }
   return proxyType.proxyPriceListFmt?.find(row => row.value === durationValue)
+}
+
+/** 选项列最大宽度，对应 UnoCSS `w-38` */
+const OPTION_COLUMN_MAX = '9.5rem'
+/** 选项间距上限，对应 UnoCSS `gap-3` */
+const OPTION_GAP_MAX = '0.75rem'
+/** 选项间距下限，对应 UnoCSS `gap-1.5` */
+const OPTION_GAP_MIN = '0.375rem'
+
+/**
+ * 购买选项网格样式。
+ * 列宽最大 w-38，间距在 gap-1.5 到 gap-3 之间；宽度不够时先缩小间距，间距到下限后再等比收缩列宽，避免折行。
+ */
+export function getOptionGridStyle(count: number) {
+  const columns = Math.max(count, 1)
+  const gapCount = Math.max(columns - 1, 1)
+  return {
+    gridTemplateColumns: `repeat(${columns}, minmax(0, ${OPTION_COLUMN_MAX}))`,
+    columnGap: `max(${OPTION_GAP_MIN}, min(${OPTION_GAP_MAX}, (100% - ${columns} * ${OPTION_COLUMN_MAX}) / ${gapCount}))`,
+  }
 }

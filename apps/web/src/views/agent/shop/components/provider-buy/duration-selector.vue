@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { getOptionGridStyle } from './utils'
 import type { DurationOption } from './utils'
 import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 
@@ -10,15 +11,17 @@ const modelValue = defineModel<DurationOption>()
 
 const styles = useCssModule()
 const labels = useProxyPurchaseLabels()
+
+const durationGridStyle = computed(() => getOptionGridStyle(options.length))
 </script>
 
 <template>
-  <div class="flex gap-2 col-span-2">
+  <div class="flex gap-2 col-span-2 w-full min-w-0">
     <div class="w-22 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap">
       {{ labels.entityDuration }}
     </div>
-    <div class="flex gap-3 flex-wrap">
-      <div v-for="option in options" :key="option.value" class="w-38 h-10 flex items-center justify-center leading-none cursor-pointer select-none"
+    <div class="grid flex-1 min-w-0 justify-start pr-7" :style="durationGridStyle">
+      <div v-for="option in options" :key="option.value" class="max-w-38 min-w-0 h-10 flex items-center justify-center leading-none cursor-pointer select-none whitespace-nowrap"
            :class="[styles.period, styles.radio, modelValue?.value === option.value ? styles.active : '']" @click="modelValue = option"
       >
         {{ option.label }}

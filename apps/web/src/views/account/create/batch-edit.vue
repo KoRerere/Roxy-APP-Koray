@@ -115,7 +115,8 @@ const inputs = [
   },
   {
     type: 'text',
-    label: '2FA',
+    label: $t('2FA 密钥'),
+    tooltip: $t('仅当平台账号已开启双重验证时填写，填写后可用于自动生成验证码。'),
     name: 'platformEfa',
     props: {
       placeholder: $t('请输入 2FA 密钥'),

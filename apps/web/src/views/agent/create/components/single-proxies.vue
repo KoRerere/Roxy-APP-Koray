@@ -439,7 +439,7 @@ defineExpose({
       </template>
     </TutorialVideo>
     <!-- min-h-0 让 flex 子项可收缩，仅表单区域滚动 -->
-    <div class="flex-1 min-h-0 flex flex-col gap-4 overflow-y-auto scrollbar">
+    <div class="flex-1 min-h-0 flex flex-col gap-4 pb-2 overflow-y-auto scrollbar">
       <TsForm v-if="inputs" ref="form" :inputs="inputs" />
       <!-- 检测成功展示结果；失败且开启广告时展示底部购买引导 -->
       <RxAlert ref="alert" v-model:visible="alertVisible" class="shrink-0 !w-full" type="success" :title="$t('测试成功')">

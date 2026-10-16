@@ -69,7 +69,7 @@ const columns = computed(() => {
     },
     {
       key: 'platformEfa',
-      title: '2FA',
+      title: $t('2FA 密钥'),
       getText: (data: any) => data.platformEfa || '--',
     },
     {
@@ -131,7 +131,7 @@ function parseValue() {
   const { platformIcon = '', platformIconDark = '' } = input.value._rows.find((item: any) => item.platformUrl === input.value.value) || {}
 
   dataList.value = [...new Set(list)].map((str, index) => {
-    const { platform, username, password, twoFactor, linkedEmail, remark } = parseIntelligent(str)
+    const { platform, username, password, twoFactor, /* linkedEmail, */ remark } = parseIntelligent(str)
     return {
       id: index,
       platformUrl: platform || input.value.value,

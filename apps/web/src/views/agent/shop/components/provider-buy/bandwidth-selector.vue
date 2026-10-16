@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { I18nT } from 'vue-i18n'
 import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
+import { getOptionGridStyle } from './utils'
 import type { BandwidthOption } from './utils'
 import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 
@@ -14,6 +15,8 @@ const modelValue = defineModel<number | undefined>()
 
 const styles = useCssModule()
 const labels = useProxyPurchaseLabels()
+
+const bandwidthGridStyle = computed(() => getOptionGridStyle(options.length))
 </script>
 
 <template>
@@ -24,14 +27,14 @@ const labels = useProxyPurchaseLabels()
       </template>
     </I18nT>
   </div>
-  <div v-else class="flex gap-2">
+  <div v-else class="flex gap-2 w-full min-w-0">
     <div class="min-w-22 h-10 flex items-center gap-1 tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap">
       <span>{{ labels.entityBandwidth }}</span>
       <SvgIcon v-tooltip.top="labels.bandwidthUpgradeTooltip" class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
     </div>
-    <div class="flex gap-3 flex-wrap">
+    <div class="grid flex-1 min-w-0 justify-start pr-7" :style="bandwidthGridStyle">
       <div v-for="option in options" :key="option.value" v-tooltip.top="{ value: option.bandwidthSpeedDesc }"
-           class="w-38 h-10 flex items-center justify-center leading-none cursor-pointer select-none"
+           class="max-w-38 min-w-0 h-10 flex items-center justify-center leading-none cursor-pointer select-none whitespace-nowrap"
            :class="[styles.period, styles.radio, modelValue === option.value ? styles.active : '']" @click="modelValue = option.value"
       >
         {{ option.label }}
