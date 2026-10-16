@@ -92,6 +92,7 @@ function clearExpiredLocalStorageKey() {
       return
     }
     localStorage.removeItem(localStorageKey)
+    localStorage.removeItem(`${localStorageKey}:dismissToday`)
   })
 }
 </script>

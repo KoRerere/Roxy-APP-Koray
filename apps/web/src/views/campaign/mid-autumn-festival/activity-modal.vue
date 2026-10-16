@@ -16,7 +16,7 @@ import { emitter } from '/@/utils/eventBus'
 import { REDIRECT_ACTION } from '/@/constants/search-params-key'
 import { formatRechargeBenefitText, useMidAutumnActivity } from './hook'
 
-const emit = defineEmits(['close', 'confirm'])
+const emit = defineEmits(['close', 'confirm', 'dismissToday'])
 
 const router = useRouter()
 // const { userPayInfo } = storeToRefs(useUserStore())
@@ -210,7 +210,10 @@ function showInfo() {
 
 <template>
   <div class="flex-1 flex flex-col gap-1.5 overflow-hidden">
-    <RxButton class="self-end" size="xxs" severity="secondary" icon="base/rx_ic_delete" :label="$t('关闭')" @click="$emit('close')" />
+    <div class="flex self-end gap-2">
+      <RxButton size="xxs" severity="secondary" icon="base/rx_ic_delete" :label="$t('今日不再提醒')" @click="emit('dismissToday')" />
+      <RxButton size="xxs" severity="secondary" icon="base/rx_ic_delete" :label="$t('关闭')" @click="$emit('close')" />
+    </div>
     <div class="flex-1 min-h-0 w-270 grid rounded-3 overflow-hidden content">
       <RxMaskScroll class="flex flex-col gap-4 pa-6 pt-7">
         <div class="flex gap-8 items-center">

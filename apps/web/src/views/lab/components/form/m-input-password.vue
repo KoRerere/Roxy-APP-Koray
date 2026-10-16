@@ -83,4 +83,9 @@ const attrs = useAttrs()
     line-height: var(--Line-Height-text-xs, 16px);
   }
 }
+
+// 明文展示密码时用等宽字体，遮罩圆点仍沿用 Inter
+:deep(.p-inputtext[type='text']) {
+  font-family: 'JetBrains Mono';
+}
 </style>

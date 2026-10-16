@@ -19,6 +19,8 @@ const POPUP_MARKS = [
 ] as const
 
 const activityNextOpenStorageKey = `${localStorageKey}:nextOpen`
+/** 整机共用的静默截止时间，重启后仍生效，直到本地次日 0 点 */
+const dismissTodayStorageKey = `${localStorageKey}:dismissToday`
 
 const { isZh } = storeToRefs(useSimpleLocale())
 const { seasonalActivity } = storeToRefs(useCampaignStore())
@@ -27,7 +29,7 @@ const [showModal] = useDialog()
 const dialogInstance = ref<UseDialogInstance>()
 /**
  * 本会话是否已关掉弹窗。
- * 用 sessionStorage：应用重启会清空会话，因此每次启动都会再弹一次。
+ * 用 sessionStorage：应用重启会清空会话，因此未点「今日不再提醒」时，每次启动都会再弹一次。
  */
 const activityOpened = ref(safeParseJSON(sessionStorage.getItem(localStorageKey)))
 const activityCountdown = ref<ReturnType<typeof enhanceCountdown>>()
@@ -50,6 +52,41 @@ function markDismissed() {
   sessionStorage.setItem(localStorageKey, JSON.stringify(true))
 }
 
+/** 本地次日 0 点。用本地年月日构造，避免日期库把参数当成 options */
+function getTomorrowStart(now = new Date()) {
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime()
+}
+
+/**
+ * 读取静默截止时间。
+ * 不用 useLocalStorage 的 number 序列化：它会把非数字内容 parseFloat 成 NaN 再写回，静默判断就永远不成立。
+ */
+function readDismissUntil() {
+  const until = Number(localStorage.getItem(dismissTodayStorageKey))
+  if (!Number.isFinite(until) || until <= 0) {
+    localStorage.removeItem(dismissTodayStorageKey)
+    return 0
+  }
+  return until
+}
+
+/** 本地次日 0 点之前不再自动弹出 */
+function isDismissedToday() {
+  return Date.now() < readDismissUntil()
+}
+
+/**
+ * 记到本地次日 0 点，并清掉当天尚未触发的锚点。
+ * 必须先停倒计时再删 session，否则到点回调仍会把弹窗打开。
+ */
+function silenceUntilTomorrow() {
+  const until = getTomorrowStart()
+  localStorage.setItem(dismissTodayStorageKey, String(until))
+  activityCountdown.value?.stop()
+  activityCountdown.value = undefined
+  sessionStorage.removeItem(activityNextOpenStorageKey)
+}
+
 /** 关闭后才预约下一个时间点；未关闭时不会叠出新弹窗 */
 function onDismiss() {
   dialogInstance.value = undefined
@@ -66,11 +103,25 @@ function requestModal(force = false) {
     return
   }
 
+  // 启动、到点、过期补弹都走这里。静默期内一律不打开，force 也不能绕过
+  if (isDismissedToday()) {
+    scheduleReopen()
+    return
+  }
+
   if (!force && activityOpened.value) {
     scheduleReopen()
     return
   }
 
+  openActivityModal()
+}
+
+/** 侧栏入口。静默只拦住自动弹出，手动点开不受影响 */
+function openManually() {
+  if (!seasonalActivity.value.midAutumnFestival || dialogInstance.value) {
+    return
+  }
   openActivityModal()
 }
 
@@ -90,6 +141,10 @@ function openActivityModal() {
         onClose: () => {
           void hideModal().then(closed => closed && onDismiss())
         },
+        onDismissToday: () => {
+          silenceUntilTomorrow()
+          void hideModal().then(closed => closed && onDismiss())
+        },
       }),
     },
   })
@@ -98,6 +153,19 @@ function openActivityModal() {
 /** 预约严格晚于当前时刻的下一个本地时间弹出点 */
 function scheduleReopen() {
   if (activityCountdown.value) {
+    return
+  }
+
+  // 静默期内不走 10:00 / 15:00 / 21:30，并丢掉已过期的补弹时间，避免次日 0 点被当成立刻打开
+  if (isDismissedToday()) {
+    sessionStorage.removeItem(activityNextOpenStorageKey)
+    const until = readDismissUntil()
+    activityCountdown.value = enhanceCountdown(until, () => { }, {
+      onEnd: () => {
+        activityCountdown.value = undefined
+        scheduleReopen()
+      },
+    })
     return
   }
 
@@ -148,7 +216,7 @@ function getNextPopupAt(now = Date.now()) {
 </script>
 
 <template>
-  <div class="relative h-10 flex items-center justify-center rounded-1.5 select-none cursor-pointer overflow-hidden" @click="requestModal(true)">
+  <div class="relative h-10 flex items-center justify-center rounded-1.5 select-none cursor-pointer overflow-hidden" @click="openManually">
     <img v-if="collapsed" class="block w-full aspect-square" :src="imgSrc">
     <template v-else>
       <div class="relative w-full z-1 pl-3 pr-2.5 flex items-center justify-between">
