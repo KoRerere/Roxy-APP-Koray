@@ -262,13 +262,16 @@ async function onRenewNow() {
           </div>
         </template>
         <template #expire="{ data }">
-          <span v-if="buildExpireBadge(data).tone !== 'plain'" class="h-6 inline-flex items-center px-1.5 rounded-1 text-3 font-500 leading-normal whitespace-nowrap" :class="buildExpireBadge(data).tone === 'error'
-            ? 'error'
-            : 'warn'"
-          >
-            {{ buildExpireBadge(data).text }}
-          </span>
-          <span v-else class="tt-tertiary">{{ buildExpireBadge(data).text }}</span>
+          <div class="inline-flex items-center gap-2.5">
+            <span class="tt-tertiary">{{ data.expireDate }}</span>
+            <span v-if="buildExpireBadge(data).tone !== 'plain'" class="h-6 inline-flex items-center px-1.5 rounded-1 text-3 font-500 leading-normal whitespace-nowrap" :class="buildExpireBadge(data).tone === 'error'
+              ? 'error'
+              : 'warn'"
+            >
+              {{ buildExpireBadge(data).text }}
+            </span>
+            <span v-else class="tt-tertiary">{{ buildExpireBadge(data).text }}</span>
+          </div>
         </template>
         <template #price="{ data }">
           <template v-if="buildRenewalPriceText(data)">

@@ -204,7 +204,7 @@ const promoDiscountDesc = computed(() => {
   if (!off90 && !off180 && !off360) {
     return ''
   }
-  return $t('首次长续专享: {day90} 天享 {zhe90} 折，{day180} 天享 {zhe180} 折，{day360} 天享 {zhe360} 折', {
+  return $t('首次续费 IP 优惠: {day90} 天 IP 享 {zhe90} 折，{day180} 天 IP 享 {zhe180} 折，{day360} 天 IP 享 {zhe360} 折', {
     day90: 90,
     zhe90: percentOffToZhe(off90),
     off90,
@@ -371,7 +371,7 @@ async function onPay() {
       <div class="flex flex-col gap-5">
         <div class="flex flex-col gap-3">
           <div class="tt-primary text-3.5 font-500 leading-5">
-            {{ $t('续费时长:') }}
+            {{ $t('IP 续费时长:') }}
           </div>
           <div class="flex gap-4">
             <div v-for="item in periods" :key="item.value" class="relative h-10 flex items-center px-5 leading-none cursor-pointer select-none period radio"
@@ -390,7 +390,7 @@ async function onPay() {
           </div>
           <div class="flex gap-2 items-center text-3.5 leading-5 w-full">
             <span class="promo-desc">{{ promoDiscountDesc }}</span>
-            <span class="promo-hint">{{ $t('( 三档可选，每个 IP 仅可享 1 次 )') }}</span>
+            <span class="promo-hint">{{ $t('( 每个 IP 仅可享 1 次 )') }}</span>
             <!-- 无身份折扣时不存在叠加取优，不必展示该提示 -->
             <!-- 身份折扣文案暂不对外展示，取优逻辑仍生效 -->
             <!-- <SvgIcon v-if="userPayInfo.proxyDiscount" v-tooltip.top="{ value: $t('该优惠不与身份优惠叠加，系统自动选取最优折扣'), showDelay: 300 }" class="shrink-0 cursor-pointer" name="base/rx_ic_info" size="16"
