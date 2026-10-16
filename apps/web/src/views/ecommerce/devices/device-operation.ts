@@ -184,7 +184,7 @@ export function getDeviceOperation(data: DeviceItem | DeviceItem[]) {
     //   power: check('Proxy_List_refresh_proxy'),
     //   tooltip: $t('刷新设备'),
     //   disabled: isDirect || !canRefresh,
-    //   disabledTooltip: !canRefresh ? $t('未配置刷新URL') : undefined,
+    //   disabledTooltip: !canRefresh ? $t('未配置动态代理 IP 刷新 URL') : undefined,
     // },
     {
       name: 'renew',

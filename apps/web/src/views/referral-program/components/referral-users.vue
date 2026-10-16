@@ -18,13 +18,13 @@ const columns = [
   //   key: 'source',
   // },
   {
-    title: $t('非代理返利比例'),
+    title: $t('非代理 IP 返利比例'),
     key: 'youGet',
     classes: 'text-orange-400',
     getText: (data: Data) => `${data.youGet}%`,
   },
   {
-    title: $t('代理返利比例'),
+    title: $t('代理 IP 返利比例'),
     key: 'proxyYouGet',
     classes: 'text-orange-400',
     getText: (data: Data) => `${data.proxyYouGet}%`,

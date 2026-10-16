@@ -8,6 +8,8 @@ interface Props {
   content?: string
   placeholder?: string
   label?: string
+  /** 按钮模式只留图标，label 仅在未填写时作为 tooltip */
+  hideLabel?: boolean
   mode?: 'icon' | 'button'
   disabled?: boolean
   onConfirm?: (formData: any) => Promise<void> | void
@@ -19,6 +21,8 @@ const props = defineProps<Props>()
 const { showSimpleDialog } = useSimpleDialog()
 
 const hasRemark = computed(() => props.value)
+/** 已填写展示备注正文；未填写回退到按钮原文案 */
+const remarkTooltip = computed(() => props.value?.trim() || props.label || '')
 
 function onRemark() {
   if (props.disabled)
@@ -47,9 +51,9 @@ function onRemark() {
 </script>
 
 <template>
-  <RxButton v-if="mode === 'button'" v-tooltip.top="value" class="!gap-0 !text-0 !min-w-auto" :disabled="disabled" outlined severity="secondary" @click.stop="onRemark">
+  <RxButton v-if="mode === 'button'" v-tooltip.top="remarkTooltip" class="!gap-0 !text-0 !min-w-auto" :disabled="disabled" outlined severity="secondary" @click.stop="onRemark">
     <RxSvgIcon :name="hasRemark ? 'base/rx_ic_doc_fill' : 'base/rx_ic_doc_add'" :class="{ disabled, light: hasRemark }" />
-    <span v-if="label" class="ml-2 text-[12px] ellipsis-1">{{ label }}</span>
+    <span v-if="label && !hideLabel" class="ml-2 text-[12px] ellipsis-1">{{ label }}</span>
     <!-- 占位用span用于保持按钮的高度 -->
     <span class="p-button-label" data-pc-section="label">&nbsp;</span>
   </RxButton>

@@ -165,7 +165,7 @@ async function openBuyProxy() {
 
 <template>
   <div class="w-full flex items-start proxy-info">
-    <InputLabel class="shrink-0 max-w-25 !min-w-25 text-right" :label="$t('代理 IP')" :tooltip="$t('代理是使用特定 IP 地址进行网络访问的方式，平台会获取您的 IP 地址来追踪您，强烈建议配置此项！')" />
+    <InputLabel class="shrink-0 max-w-25 !min-w-25 text-right" :label="$t('代理 IP')" :tooltip="$t('代理 IP 是使用特定 IP 地址进行网络访问的方式，平台会获取您的 IP 地址来追踪您，强烈建议配置此项！')" />
     <div class="min-w-0 flex-1 flex flex-col gap-4">
       <div class="flex flex-col items-start gap-4 w-full">
         <div class="guide1 buy-proxy-alert relative w-full min-h-12 pl-3.5 pr-3 py-2.5 rounded-2 flex items-center justify-between gap-4 overflow-hidden select-none">

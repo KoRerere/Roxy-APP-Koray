@@ -20,6 +20,11 @@ export function supportsApp4_0_7() {
   return isNewerOrEqualVersion('4.0.7')
 }
 
+/** 当前客户端是否 ≥ v4.0.9（browser:openBatchLayout IPC 的 cascade、lastClosed） */
+export function supportsApp4_0_9() {
+  return isNewerOrEqualVersion('4.0.9')
+}
+
 /**
  * 是否启用自动化脚本库与录制入口。
  * Electron 端由主进程 env ENABLE_SCRIPT_RECORDING=yes 控制；

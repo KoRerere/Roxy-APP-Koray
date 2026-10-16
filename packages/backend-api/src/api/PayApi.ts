@@ -74,6 +74,7 @@ import {
   UserGetWindowSubscriptionUpgradeMessageListParams,
   UserManageSubscriptionListData,
   UserManageSubscriptionListParams,
+  UserMidAutumnClaimCaptchaTriggerListData,
   UserMidAutumnLotteryDrawCreateData,
   UserMidAutumnLotteryPrizesListData,
   UserPayCaptchaTriggerListData,
@@ -1163,6 +1164,22 @@ export class PayApi<SecurityDataType = unknown> {
       method: "POST",
       body: data,
       type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Pay
+   * @name UserMidAutumnClaimCaptchaTriggerList
+   * @summary 中秋寻宝：领取前获取图形验证码 scene
+   * @request GET:/user_mid_autumn_claim_captcha_trigger
+   * @response `200` `UserMidAutumnClaimCaptchaTriggerListData`
+   */
+  userMidAutumnClaimCaptchaTriggerList = (params: RequestParams = {}) =>
+    this.http.request<UserMidAutumnClaimCaptchaTriggerListData, any>({
+      path: `/user_mid_autumn_claim_captcha_trigger`,
+      method: "GET",
       format: "json",
       ...params,
     });

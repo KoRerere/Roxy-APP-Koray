@@ -137,26 +137,27 @@ function oldFieldsFormat() {
     <ViewsHeader show-back :title="$t('编辑窗口')" />
     <div class="px-16 flex flex-1 min-h-0 overflow-hidden overflow-x-auto">
       <div class="w-full h-full flex min-h-0 gap-8 ma-auto" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
-        <AccordionInputs class="min-h-0 min-w-0 flex-1" :accordions="accordions" :inputs-group="inputsGroup">
-          <template #before>
-            <BasicInfo :window-inputs="windowInputs" />
-          </template>
-        </AccordionInputs>
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+          <AccordionInputs class="min-h-0 min-w-0 flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+            <template #before>
+              <BasicInfo :window-inputs="windowInputs" />
+            </template>
+          </AccordionInputs>
+          <div class="footer flex shrink-0 items-center justify-end gap-2 px-4 py-4 min-h-16">
+            <MateGroup v-model="metaData" class="flex-1" is-edit />
+            <RxButton v-tooltip.top="canSave ? '' : $t('正在同步指纹，请稍后')" severity="primary" :label="$t('保存')" :disabled="!canSave" :loading="loading" @click="createProfile" />
+          </div>
+        </div>
         <previewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" is-edit :on-shuffle="onShuffle" />
       </div>
     </div>
-    <div class="px-16">
-      <div class="mx-auto relative flex items-center justify-end gap-2 py-4 min-h-16 footer" :class="[collapsed ? 'max-w-192' : 'max-w-285']">
-        <MateGroup v-model="metaData" class="flex-1" is-edit />
-        <RxButton v-tooltip.top="canSave ? '' : $t('正在同步指纹，请稍后')" severity="primary" :label="$t('保存')" :disabled="!canSave" :loading="loading" @click="createProfile" />
-      </div>
-    </div>
-    <div class="foot-separator" />
   </div>
 </template>
 
 <style lang="scss" scoped>
 .footer {
+  border-top: 1px solid var(--colors-border-divider);
+
   :deep(.p-button) {
     max-width: 150px;
   }
@@ -166,15 +167,5 @@ function oldFieldsFormat() {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-}
-
-.foot-separator {
-  position: absolute;
-  bottom: 65.6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  height: 1px;
-  background-color: var(--colors-border-divider);
 }
 </style>

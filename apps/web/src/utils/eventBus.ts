@@ -7,12 +7,26 @@ import type { ResourceUpdateMessage } from '@roxy/electron-preload'
 
 export type PayWallType = 'synchronizer' | 'createProfileTemplates' | 'transfer'
 
+/** 版本提醒配置里的标题和正文 */
+export interface AppUpgradeRemindCopy {
+  /** 当前档位标题 */
+  title: string
+  /** 当前档位正文 */
+  content: string
+}
+
 /** 更新公告弹窗参数（前置升级 / 历史日志 / 兼容入口） */
 export interface ShowAppUpgradeDialogPayload {
   tips: Array<{ content?: string, [key: string]: any }>
   actionMode?: 'dismiss' | 'upgrade'
   /** upgrade 模式下用于 quitAndInstall */
   updateItem?: Partial<ResourceUpdateMessage>
+  /** 配置接口返回的标题和说明，显示在新特性正文上方 */
+  remindCopy?: AppUpgradeRemindCopy
+  /** 用户关掉或选择暂不更新 */
+  onDismiss?: () => void
+  /** 用户确认重启并更新 */
+  onConfirmUpgrade?: () => void
 }
 
 export type MittEvents = {

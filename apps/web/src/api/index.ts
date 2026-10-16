@@ -1,5 +1,6 @@
 import {
   ApiApi,
+  AppStatisticsApi,
   AppTrackingEventApi,
   BaseApi,
   HttpClient,
@@ -242,6 +243,7 @@ export const API = {
   logging: new LoggingApi(httpClient),
   team: new TeamApi(httpClient),
   base: new BaseApi(httpClient),
+  appStatistics: new AppStatisticsApi(httpClient),
   platform: new PlatformApi(httpClient),
   limit: new LimitApi(httpClient),
   api: new ApiApi(httpClient),

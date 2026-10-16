@@ -9,7 +9,7 @@ interface Props {
   filter: ReturnType<typeof useProxyFilter>
 }
 
-const { title = $t('筛选代理'), filter } = defineProps<Props>()
+const { title = $t('筛选代理 IP'), filter } = defineProps<Props>()
 
 const { showDrawer, hideDrawer } = useDrawer()
 

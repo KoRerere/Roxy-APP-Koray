@@ -12,22 +12,22 @@ export function getColumns(labels: ProxyCreateLabels = createProxyCreateLabels('
     },
     {
       key: 'host',
-      title: $t('主机'),
+      title: labels.host,
       getText: (data: any) => data.host || '--',
     },
     {
       key: 'port',
-      title: $t('端口'),
+      title: labels.port,
       getText: (data: any) => data.port || '--',
     },
     {
       key: 'proxyUserName',
-      title: $t('用户名'),
+      title: labels.username,
       getText: (data: any) => data.proxyUserName || '--',
     },
     {
       key: 'proxyPassword',
-      title: $t('密码'),
+      title: labels.password,
       getText: (data: any) => data.proxyPassword || '--',
     },
   ]
@@ -43,7 +43,7 @@ export function getColumns(labels: ProxyCreateLabels = createProxyCreateLabels('
     ? []
     : [{
         key: 'refreshUrl',
-        title: $t('刷新 URL'),
+        title: labels.refreshUrl,
         width: 100,
         getText: (data: any) => data.refreshUrl || '--',
       }]

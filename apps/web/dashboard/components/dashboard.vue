@@ -10,6 +10,7 @@ import { createProfileInfoList, fingerprintInfoList } from '../constants'
 import { getLocalWebServerURL, getTimeOffset } from '../utils'
 import { createDashboardEntityLabels } from '/@/composables/useDashboardEntityLabels'
 import { WorkspaceType } from '/@/enums'
+import { i18n } from '/@/locales'
 import { genDriver } from '/@/utils'
 import { isEcommerceWorkspace } from '/@/utils/workspace-mode'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
@@ -172,6 +173,30 @@ async function showTourGuide() {
   }
 }
 
+/** ip123.in 中文、俄语分别使用 /zh、/ru，其余语言统一使用 /en */
+const IP123_PREFIXED_LOCALES = new Set(['zh', 'ru'])
+
+/**
+ * 按当前界面语言打开 ip123.in。
+ * Roxy 的 zh-CN / ru 映射到站点语言码；英文及其他语言走 /en。
+ */
+function openIp123(page: 'home' | 'browser') {
+  const primary = String(i18n.global.locale.value || '')
+    .toLowerCase()
+    .split(/[-_]/)[0] ?? ''
+  const prefix = IP123_PREFIXED_LOCALES.has(primary) ? `/${primary}` : '/en'
+  const path = page === 'browser' ? `${prefix}/browser/` : `${prefix}/`
+  window.open(`https://ip123.in${path}`, '_blank')
+}
+
+function lookupProxy() {
+  openIp123('home')
+}
+
+function fingerprintDetection() {
+  openIp123('browser')
+}
+
 onBeforeMount(() => {
   getWindowInfo()
   proxyDetection()
@@ -211,12 +236,13 @@ onBeforeMount(() => {
         <RxSvgIcon v-else class="city-logo" :class="{ fail: !isTestSuccess }" :name="isTestSuccess ? `country-code/${proxyInfo.country_code}` : 'base/rx_ic_internet_error'" />
         <Teleport defer :to="ipLocationEl" :disabled="!isMobile || !ipLocationEl">
           <div class="operate" :style="{ marginTop: isMobile ? 'var(--spacing-2xl, 16px)' : '' }">
-            <RxButton v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew" class="btn" :label="$t('刷新 URL')" outlined
+            <RxButton v-if="windowInfo.refreshUrl" v-model:loading="refreshUrlLoading" icon="base/rx_ic_renew" class="btn" :label="$t('动态代理 IP 刷新 URL')" outlined
                       :disabled="refreshUrlLoading || testProxyLoading" @click="refreshURL"
             />
             <rx-button v-model:loading="testProxyLoading" class="btn" icon="base/rx_ic_speed_test" :label="dashboardLabels.testProxy" outlined :disabled="refreshUrlLoading || testProxyLoading"
                        @click="proxyDetection"
             />
+            <rx-button class="flex-row-reverse" icon="base/rx_ic_outlink" :label="dashboardLabels.lookupProxy" @click="lookupProxy" />
           </div>
         </Teleport>
       </div>
@@ -258,8 +284,11 @@ onBeforeMount(() => {
         </div>
 
         <div class="list">
-          <div class="title">
-            {{ $t('指纹信息') }}
+          <div class="w-full flex justify-between items-center">
+            <div class="title">
+              {{ $t('指纹信息') }}
+            </div>
+            <rx-button class="flex-row-reverse" icon="base/rx_ic_outlink" outlined :label="$t('指纹检测')" @click="fingerprintDetection" />
           </div>
           <template v-for="item in fingerprintInfoList" :key="item.label">
             <div class="item">

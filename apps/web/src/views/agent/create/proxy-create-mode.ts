@@ -30,6 +30,16 @@ export interface ProxyCreateLabels {
   emptyList: string
   deleteFailHeader: string
   protocolColumnTitle: string
+  host: string
+  port: string
+  username: string
+  password: string
+  usernamePlaceholder: string
+  passwordPlaceholder: string
+  refreshUrl: string
+  refreshUrlPlaceholder: string
+  refreshUrlTooltip: string
+  ipDetect: string
   successRouteName: string
   emptyTable: string
   batchHelpLine: string
@@ -64,6 +74,16 @@ interface ProxyCreateLabelsBase {
   emptyList: string
   deleteFailHeader: string
   protocolColumnTitle: string
+  host: string
+  port: string
+  username: string
+  password: string
+  usernamePlaceholder: string
+  passwordPlaceholder: string
+  refreshUrl: string
+  refreshUrlPlaceholder: string
+  refreshUrlTooltip: string
+  ipDetect: string
   successRouteName: string
   emptyTable: string
   batchHelpLine: string
@@ -94,6 +114,16 @@ const PROXY_LABELS: ProxyCreateLabelsBase = {
   emptyList: $t('暂无代理 IP'),
   deleteFailHeader: $t('删除失败代理 IP'),
   protocolColumnTitle: $t('代理 IP 类型'),
+  host: $t('代理 IP 主机'),
+  port: $t('代理 IP 端口'),
+  username: $t('代理 IP 用户名'),
+  password: $t('代理 IP 密码'),
+  usernamePlaceholder: $t('请输入代理 IP 账号'),
+  passwordPlaceholder: $t('请输入代理 IP 密码'),
+  refreshUrl: $t('刷新 URL'),
+  refreshUrlPlaceholder: $t('动态代理 IP 专用，静态代理 IP 无需填写'),
+  refreshUrlTooltip: $t('如代理 IP 服务商未提供刷新 URL，则无需配置。填写后可点击右侧刷新按钮请求更换当前出口 IP。'),
+  ipDetect: $t('代理 IP 检测'),
   successRouteName: 'agent-list',
   emptyTable: $t('暂未添加代理 IP'),
   batchHelpLine: $t('一行一个代理 IP，一次最多添加 500 个；'),
@@ -124,6 +154,16 @@ const DEVICE_LABELS: ProxyCreateLabelsBase = {
   emptyList: $t('暂无设备'),
   deleteFailHeader: $t('删除失败设备'),
   protocolColumnTitle: $t('设备类型'),
+  host: $t('主机'),
+  port: $t('端口'),
+  username: $t('用户名'),
+  password: $t('密码'),
+  usernamePlaceholder: $t('请输入用户名'),
+  passwordPlaceholder: $t('请输入密码'),
+  refreshUrl: $t('刷新 URL'),
+  refreshUrlPlaceholder: $t('请输入刷新 URL'),
+  refreshUrlTooltip: $t('请在填写后点击图标进行测试。'),
+  ipDetect: $t('IP 检测'),
   successRouteName: 'ecommerce-device-list',
   emptyTable: $t('暂未添加设备'),
   batchHelpLine: $t('一行一个设备，一次最多添加 500 个；'),

@@ -12,14 +12,15 @@ const isDeviceMode = computed(() => labels.value.mode === 'device')
 const ipv6Host = 'fe80::1:9dc0:f1ab:90a3'
 
 function replaceRulesInto_UP(template: string) {
-  return template.replace('{username}:{password}', $t('用户名:密码'))
+  const credentialLabel = isDeviceMode.value ? $t('用户名:密码') : $t('代理 IP 用户名:代理 IP 密码')
+  return template.replace('{username}:{password}', credentialLabel)
 }
 
 function replaceRulesInto_RN(template: string) {
   // 电商模式无刷新 URL，示例中直接去掉该片段
   const withRefresh = isDeviceMode.value
     ? template.replace('[RefreshURL]', '')
-    : template.replace('[RefreshURL]', `<span class="text-green whitespace-nowrap">[${$t('刷新 URL')}]</span>`)
+    : template.replace('[RefreshURL]', `<span class="text-green whitespace-nowrap">[${$t('动态代理 IP 刷新 URL')}]</span>`)
   return withRefresh.replace('{Notes}', `<span class="text-blue whitespace-nowrap">{${$t('备注')}}</span>`)
 }
 
@@ -57,14 +58,14 @@ const contents = computed(() => {
 
 <template>
   <div v-bind="$attrs" class="break-keep-all example">
-    <div>{{ isDeviceMode ? $t('示例（备注为选填）') : $t('示例（刷新 URL 与备注为选填）') }}: </div>
+    <div>{{ isDeviceMode ? $t('示例（备注为选填）') : $t('示例（动态代理 IP 刷新 URL 与备注为选填）') }}: </div>
     <div v-for="(rule, index) in contents" :key="index" v-html="rule.content" />
     <br>
     <div class="help">
       <span v-if="ipType === IPType.IPV6">1. </span>{{ labels.batchHelpLine }}
     </div>
     <div v-if="ipType === IPType.IPV6" class="help">
-      {{ $t('2. IPV6 的主机需填写在 [ ] 内；') }}
+      {{ isDeviceMode ? $t('2. IPV6 的主机需填写在 [ ] 内；') : $t('2. IPV6 的代理 IP 主机需填写在 [ ] 内；') }}
     </div>
   </div>
 </template>

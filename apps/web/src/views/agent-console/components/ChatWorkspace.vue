@@ -680,7 +680,7 @@ async function maybeShowAiBatchCreateGuide() {
   }
 
   aiBatchCreateGuideTarget.value = target
-  aiBatchCreateGuideLabel.value = $t('支持粘贴/拖入代理信息文件和账号信息文件')
+  aiBatchCreateGuideLabel.value = $t('支持粘贴/拖入代理 IP 信息文件和账号信息文件')
   aiBatchCreateGuideVisible.value = true
   if (!forced) {
     markAiBatchCreateGuideShown(accountId)

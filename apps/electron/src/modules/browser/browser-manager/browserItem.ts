@@ -10,6 +10,7 @@ import { openAPICommonHeaders } from '/@/constants/common'
 import { CoreType } from '/@/modules/browser/browser-manager/adapter'
 import { getInvalidUrls, getNeedSyncLocalFileMap } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
+import { readFirefoxXulstoreBounds, writeLastWindowBounds } from '/@/modules/browser/browser-manager/lastWindowBounds'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { coreManager } from '/@/modules/browser/core-manager'
 import { fileOperations } from '/@/modules/fileOperations'
@@ -255,6 +256,8 @@ export class BrowserItem {
         await this.afterLaunchTask.saveCookiesNow().catch((e) => {
           console.warn('[BrowserItem] Firefox cookie save in handleOnDisconnected failed:', e)
         })
+        // 必须在 emit close 之前写完：后续会按「文件已存在」跳过内存补写，且下次启动会覆盖 xulstore
+        await this.persistFirefoxLastWindowBounds(dirId)
       }
       const uploadDataPromise = this.uploadData()
       emitter.emit(`close-${dirId}`, uploadDataPromise)
@@ -288,6 +291,19 @@ export class BrowserItem {
         await this.afterLaunchTask.saveCookiesNow().catch((error) => {
           console.warn(`[BrowserItem] saveCookiesNow before close failed (${this.winInfo.dirId}):`, error)
         })
+        // 主动关闭时 CDP 还在，读到的是最终位置；用户点窗口关闭按钮则进程已退出，改由断开回调用采样补写
+        const dirId = this.winInfo.dirId
+        if (dirId) {
+          const bounds = await this.afterLaunchTask.captureChromeWindowBounds().catch((error) => {
+            console.warn(`[BrowserItem] capture chrome window bounds failed (${dirId}):`, error)
+            return null
+          })
+          if (bounds) {
+            await writeLastWindowBounds(dirId, bounds).catch((error) => {
+              console.warn(`[BrowserItem] write last window bounds failed (${dirId}):`, error)
+            })
+          }
+        }
       }
       // 有些时候浏览器进程被关闭了，但是 puppeteer 进程还在，这里需要手动关闭
       await this.#browser.close()
@@ -304,6 +320,20 @@ export class BrowserItem {
       const decryptedProxyEncryptInfo = await decryptAESGCM(proxyEncryptInfo)
       Object.assign(this.winInfo, decryptedProxyEncryptInfo)
     }
+  }
+
+  /** Firefox 退出后 xulstore 已落盘，抄到独立文件，避免下次启动按配置覆盖后丢失真实位置 */
+  private async persistFirefoxLastWindowBounds(dirId: string) {
+    const bounds = await readFirefoxXulstoreBounds(this.userDataDir).catch((error) => {
+      console.warn(`[BrowserItem] read firefox xulstore bounds failed (${dirId}):`, error)
+      return null
+    })
+    if (!bounds) {
+      return
+    }
+    await writeLastWindowBounds(dirId, bounds).catch((error) => {
+      console.warn(`[BrowserItem] write last window bounds failed (${dirId}):`, error)
+    })
   }
 
   /** 关闭浏览器后需要同步的数据 */

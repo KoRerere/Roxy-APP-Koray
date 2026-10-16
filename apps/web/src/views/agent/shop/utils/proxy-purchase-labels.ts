@@ -49,7 +49,7 @@ interface ProxyPurchaseLabelsBase {
 const PROXY_PURCHASE_LABELS: ProxyPurchaseLabelsBase = {
   entityType: $t('代理 IP 类型'),
   entityInfo: $t('代理 IP 信息'),
-  entityBandwidth: $t('代理 IP 带宽'),
+  entityBandwidth: $t('IP 带宽'),
   entityQuantity: $t('代理 IP 数量'),
   entityPrice: $t('代理 IP 价格'),
   entityQuantityLabel: $t('代理 IP 数量:'),

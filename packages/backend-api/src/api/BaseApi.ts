@@ -59,6 +59,7 @@ import {
   GetUninstallReasonQuestionListListData,
   GetValidatorTokenInfoListData,
   GetValidatorTokenInfoListParams,
+  GetVersionUpdateRemindListData,
   LoginCreateData,
   LoginCreatePayload,
   LoginFacebookCreateData,
@@ -2621,6 +2622,22 @@ export class BaseApi<SecurityDataType = unknown> {
   userGetNewUserBenefitConfigList = (params: RequestParams = {}) =>
     this.http.request<UserGetNewUserBenefitConfigListData, any>({
       path: `/user_get_new_user_benefit_config`,
+      method: "GET",
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 免登录。查询管理后台写入 Redis 的唯一配置，与 admin_get_version_update_remind 同一份数据。没有记录时 exists 为 false，并返回空表单。latestVersion 取各端已发布 public 版本的最大值。versionRules、triggerRule.previewText、strongRemind.triggerText 按落后版本数生成。
+   *
+   * @tags Base
+   * @name GetVersionUpdateRemindList
+   * @summary 查询版本更新提醒
+   * @request GET:/get_version_update_remind
+   * @response `200` `GetVersionUpdateRemindListData` 成功
+   */
+  getVersionUpdateRemindList = (params: RequestParams = {}) =>
+    this.http.request<GetVersionUpdateRemindListData, any>({
+      path: `/get_version_update_remind`,
       method: "GET",
       format: "json",
       ...params,

@@ -23,7 +23,6 @@ import type { UserGetWindowInfoListListData } from '@roxy/backend-api'
 import { emitter } from '/@/utils/eventBus.ts'
 import { useVisibilityAwareInterval } from '/@/hooks/useVisibilityAwareInterval'
 import {
-  isAppForceUpgrade,
   isAppUpdateReadyToAnnounce,
   tryShowPreUpgradeFeatureTips,
 } from './try-show-pre-upgrade-tips'
@@ -73,7 +72,7 @@ const isDownloading = computed(() => {
   return [...clientUpdates.value, ...kernelUpdates.value].some(item => item.status === 'downloading')
 })
 
-// APP 是否强制升级（含 web 活动包；时段提醒只用 isAppForceUpgradeReady）
+// 强制升级只反映在按钮标记上，不参与提醒弹窗的出现时机
 const isForceUpgrade = computed(() => {
   const hasAppForceUpgrade = clientUpdates.value.some(item => item.type === 'app' && item.status === 'downloaded' && item.originUpgradeData?.forceUpgrade)
   const hasWebForceUpgrade = clientUpdates.value.some(item => item.type === 'web' && item.status === 'downloaded' && item.newFeatureTips?.activityInfo?.[simpleLocale.currentLocale!]?.imageList?.length > 0 && item.newFeatureTips?.isActivity)
@@ -106,22 +105,23 @@ function applyClientUpdate(data: ResourceUpdateMessage) {
     clientUpdates.value = clientUpdates.value.filter(data => data.type === 'app')
   }
 
+  const appUpdate = clientUpdates.value.find(item => item.type === 'app')
   void tryShowPreUpgradeFeatureTips(
-    data,
+    appUpdate ?? data,
     simpleLocale.currentLocale,
     () => clientUpdates.value.find(item => item.type === 'app'),
   )
 }
 
-/** 强制更新安装包已就绪：长驻时按 8 小时间隔补弹，就绪后 3 天内有效 */
-const isAppForceUpgradeReady = computed(() => {
+/** 安装包已就绪才检查提醒时刻。页面开着时用分钟级轮询赶上普通提醒的钟点 */
+const isAppUpdateReady = computed(() => {
   const appUpdate = clientUpdates.value.find(item => item.type === 'app')
-  return isAppUpdateReadyToAnnounce(appUpdate) && isAppForceUpgrade(appUpdate)
+  return isAppUpdateReadyToAnnounce(appUpdate)
 })
 
-function tickForceUpgradeReminder() {
+function tickUpgradeReminder() {
   const appUpdate = clientUpdates.value.find(item => item.type === 'app')
-  if (!isAppUpdateReadyToAnnounce(appUpdate) || !isAppForceUpgrade(appUpdate)) {
+  if (!isAppUpdateReadyToAnnounce(appUpdate)) {
     return
   }
 
@@ -132,7 +132,7 @@ function tickForceUpgradeReminder() {
   )
 }
 
-useVisibilityAwareInterval(tickForceUpgradeReminder, 60 * 1000, isAppForceUpgradeReady)
+useVisibilityAwareInterval(tickUpgradeReminder, 60 * 1000, isAppUpdateReady)
 
 async function checkForUpdates() {
   // 直接消费主进程返回值回填状态，避免依赖 app:resource-update 推送时序

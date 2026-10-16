@@ -5,9 +5,11 @@ import DeviceDetectResultModal from '/@/views/ecommerce/devices/components/devic
 import TsForm from '/@/views/lab/components/form/index.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import RxButton from '/@/components/rx-button'
+import CheckChannelOfficialLink from '/@/views/agent/create/components/check-channel-official-link.vue'
 import RemarkIcon from '/@/components/remark-icon'
 import { RxAlert } from '/@/components/rx-alert'
 import { getDictMap, getImage, isEmptyValue, parseProxyUrl, strConcat } from '/@/utils'
+import { mapCheckChannelOptions } from '/@/views/agent/create/check-channel'
 import { IPType, ProxyCheckStatus, ProxyType } from '/@/enums/proxy'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
@@ -106,15 +108,16 @@ const inputs = ref([
 
         const $dict_map = await getDictMap()
         const dictKey = value === IPType.IPV6 ? 'ipv6-query-channels' : 'checkChannel'
+        const options = mapCheckChannelOptions($dict_map[dictKey])
         const currentCheckChannel = formRef.value?.getFieldState('checkChannel')?.value
-        const isExist = $dict_map[dictKey]?.find(item => item.value === currentCheckChannel)
-        const defaultCheckChannel = isExist ? currentCheckChannel : $dict_map[dictKey]?.[0]?.value
+        const isExist = options.find(item => item.value === currentCheckChannel)
+        const defaultCheckChannel = isExist ? currentCheckChannel : options[0]?.value
 
         if (value === IPType.IPV6) {
           formRef.value?.setInputsProps({
             checkChannel: {
               value: defaultCheckChannel,
-              options: $dict_map['ipv6-query-channels'],
+              options,
             },
           })
         }
@@ -122,7 +125,7 @@ const inputs = ref([
           formRef.value?.setInputsProps({
             checkChannel: {
               value: isExist ? defaultCheckChannel : (userConfig.value.ipChecker || defaultCheckChannel),
-              options: $dict_map.checkChannel,
+              options,
             },
           })
         }
@@ -207,7 +210,13 @@ const inputs = ref([
         render: (props: any) => {
           return (
             <div class="w-full flex justify-between items-center gap-1.5 overflow-hidden">
-              <TsFormSelect size="md" {...props} />
+              <TsFormSelect size="md" {...props}>
+                {{
+                  'option-extra': ({ option }: { option?: { external?: boolean, value?: string } }) => (
+                    <CheckChannelOfficialLink option={option} />
+                  ),
+                }}
+              </TsFormSelect>
               <RxButton
                 class="flex-shrink-0"
                 size="md"
@@ -256,7 +265,7 @@ async function getInputs() {
 
     props.checkChannel = {
       value: defaultCheckChannel,
-      options: $dict_map[dictKey],
+      options: mapCheckChannelOptions($dict_map[dictKey]),
     }
   }
 

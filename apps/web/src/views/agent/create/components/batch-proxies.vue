@@ -14,6 +14,8 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 
 import { useUserStore } from '/@/stores/user'
 import { concurrentControl, getDictMap, parseProxyUrl, setOperationLoading, setRowsLoading, sleep } from '/@/utils'
+import { mapCheckChannelOptions } from '../check-channel'
+import CheckChannelOfficialLink from './check-channel-official-link.vue'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { useProxyCreateLabels } from '../proxy-create-mode'
 import ProxyAdvertiseBanner from './proxy-advertise-banner.vue'
@@ -156,14 +158,16 @@ const missMessage = computed(() => {
 watch(ipType, async (newVal) => {
   const $dict_map = await getDictMap()
   const dictKey = newVal === IPType.IPV6 ? 'ipv6-query-channels' : 'checkChannel'
-  ipCheckerConfig.props.options = $dict_map[dictKey]
-  ipCheckerConfig.value = $dict_map[dictKey]!.find((item: any) => item.value === userConfig.value.ipChecker) || $dict_map[dictKey]![0]
+  const options = mapCheckChannelOptions($dict_map[dictKey])
+  ipCheckerConfig.props.options = options
+  ipCheckerConfig.value = options.find(item => item.value === userConfig.value.ipChecker) || options[0]
 })
 
 onBeforeMount(async () => {
   const [$dict_map, userConfig] = await Promise.all([getDictMap(), getUserConfig()])
-  ipCheckerConfig.value = $dict_map.checkChannel!.find((item: any) => item.value === userConfig!.ipChecker)
-  ipCheckerConfig.props.options = $dict_map.checkChannel
+  const checkChannelOptions = mapCheckChannelOptions($dict_map.checkChannel)
+  ipCheckerConfig.value = checkChannelOptions.find(item => item.value === userConfig!.ipChecker) || checkChannelOptions[0]
+  ipCheckerConfig.props.options = checkChannelOptions
   protocolOptions.value = $dict_map.protocol
   protocolValue.value = $dict_map.protocol![0]!.value
   ipTypeOptions.value = $dict_map.ipType
@@ -257,7 +261,7 @@ function tableOperation(data: any) {
           icon: 'base/rx_ic_refresh',
           quick: true,
           disabled: !data.refreshUrl,
-          disabledTooltip: $t('未配置刷新URL'),
+          disabledTooltip: $t('未配置动态代理 IP 刷新 URL'),
         }]),
     {
       name: 'test',
@@ -545,7 +549,11 @@ async function onSave() {
           <div class="flex justify-between information-actions">
             <div class="flex items-center gap-2.5">
               <div>
-                <TsFormSelect v-model="ipCheckerConfig.value" class="!w-32" v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange" />
+                <TsFormSelect v-model="ipCheckerConfig.value" class="!w-32" overlay-auto-width v-bind="ipCheckerConfig.props" @change="ipCheckerConfig.onChange">
+                  <template #option-extra="{ option }">
+                    <CheckChannelOfficialLink :option="option" />
+                  </template>
+                </TsFormSelect>
               </div>
               <div class="flex items-center gap-1.5">
                 <RxCheckbox v-model="isDuplicate" :pt="{ root: 'items-center', box: '!w-4 !h-4' }" input-id="wrap" binary />

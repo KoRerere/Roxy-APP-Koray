@@ -7,8 +7,10 @@ import RxButton from '/@/components/rx-button'
 import RemarkIcon from '/@/components/remark-icon'
 import TutorialVideo from '/@/views/tutorial/components/tutorial-video.vue'
 import { RxAlert } from '/@/components/rx-alert'
+import CheckChannelOfficialLink from './check-channel-official-link.vue'
 
 import { deepClone, getDictMap, isEmptyValue, parseProxyUrl, strConcat } from '/@/utils'
+import { mapCheckChannelOptions } from '../check-channel'
 import ProxyAdvertiseBanner from './proxy-advertise-banner.vue'
 import { IPType, ProxyType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
@@ -71,7 +73,7 @@ const inputs = computed(() => [
     props: {
       placeholder: isDeviceMode.value
         ? $t('示例（备注为选填）:\n192.168.0.1:8000:用户名:密码{notes}\n用户名:密码{at}192.168.0.1:8000{notes}', { at: '@', notes: `{${$t('备注')}}` })
-        : $t('示例（刷新 URL 与备注为选填）:\n192.168.0.1:8000:用户名:密码[刷新 URL]{notes}\n用户名:密码{at}192.168.0.1:8000[刷新 URL]{notes}', { at: '@', notes: `{${$t('备注')}}` }),
+        : $t('示例（动态代理 IP 刷新 URL 与备注为选填）:\n192.168.0.1:8000:代理 IP 用户名:代理 IP 密码[动态代理 IP 刷新 URL]{notes}\n代理 IP 用户名:代理 IP 密码{at}192.168.0.1:8000[动态代理 IP 刷新 URL]{notes}', { at: '@', notes: `{${$t('备注')}}` }),
       rows: 3,
       size: 'md',
       onBlur: (event: Event) => {
@@ -122,14 +124,15 @@ const inputs = computed(() => [
       onValueChange: async (value: string) => {
         const $dict_map = await getDictMap()
         const dictKey = value === IPType.IPV6 ? 'ipv6-query-channels' : 'checkChannel'
-        const isExist = $dict_map[dictKey]?.find(item => item.value === data.checkChannel)
-        const defaultCheckChannel = isExist ? data.checkChannel : $dict_map[dictKey]?.[0]?.value
+        const options = mapCheckChannelOptions($dict_map[dictKey])
+        const isExist = options.find(item => item.value === data.checkChannel)
+        const defaultCheckChannel = isExist ? data.checkChannel : options[0]?.value
 
         if (value === IPType.IPV6) {
           formRef.value?.setInputsProps({
             checkChannel: {
               value: defaultCheckChannel,
-              options: $dict_map['ipv6-query-channels'],
+              options,
             },
           })
         }
@@ -137,7 +140,7 @@ const inputs = computed(() => [
           formRef.value?.setInputsProps({
             checkChannel: {
               value: isExist ? defaultCheckChannel : (userConfig.value.ipChecker || defaultCheckChannel),
-              options: $dict_map.checkChannel,
+              options,
             },
           })
         }
@@ -164,7 +167,7 @@ const inputs = computed(() => [
         value: data.host ?? null,
         required: true,
         props: {
-          placeholder: $t('主机'),
+          placeholder: labels.value.host,
           size: 'md',
         },
       },
@@ -178,7 +181,7 @@ const inputs = computed(() => [
         itemClass: 'flex-1.5/5',
         value: data.port?.split?.('/')?.[0] ?? null,
         props: {
-          placeholder: $t('端口'),
+          placeholder: labels.value.port,
           size: 'md',
           useGrouping: false,
         },
@@ -196,20 +199,20 @@ const inputs = computed(() => [
   {
     type: 'text',
     name: 'proxyUserName',
-    label: $t('用户名'),
+    label: labels.value.username,
     value: data.proxyUserName ?? '',
     props: {
-      placeholder: $t('请输入用户名'),
+      placeholder: labels.value.usernamePlaceholder,
       size: 'md',
     },
   },
   {
     type: 'text',
     name: 'proxyPassword',
-    label: $t('密码'),
+    label: labels.value.password,
     value: data.proxyPassword ?? '',
     props: {
-      placeholder: $t('请输入密码'),
+      placeholder: labels.value.passwordPlaceholder,
       size: 'md',
     },
   },
@@ -219,11 +222,11 @@ const inputs = computed(() => [
     : [{
         type: 'text',
         name: 'refreshUrl',
-        label: $t('刷新URL'),
-        tooltip: $t('请在填写后点击下方刷新按钮测试。'),
+        label: labels.value.refreshUrl,
+        tooltip: labels.value.refreshUrlTooltip,
         value: data.refreshUrl ?? '',
         props: {
-          placeholder: $t('请输入刷新URL'),
+          placeholder: labels.value.refreshUrlPlaceholder,
           icon: 'base/rx_ic_refresh',
           size: 'md',
           onIconClick: async () => {
@@ -239,7 +242,7 @@ const inputs = computed(() => [
     separator: true,
   },
   {
-    label: $t('IP 检测'),
+    label: labels.value.ipDetect,
     name: 'checkChannel',
     tooltip: $t('若 IP 检测结果有误，请尝试切换下方查询渠道并重试。'),
     props: {
@@ -248,7 +251,13 @@ const inputs = computed(() => [
     render: (props: any) => {
       return (
         <div class="w-full flex justify-between items-center gap-1.5 overflow-hidden">
-          <TsFormSelect size="md" {...props} />
+          <TsFormSelect size="md" {...props}>
+            {{
+              'option-extra': ({ option }: { option?: { external?: boolean, value?: string } }) => (
+                <CheckChannelOfficialLink option={option} />
+              ),
+            }}
+          </TsFormSelect>
           <RxButton class="flex-shrink-0" size="md" severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" disabled={loading.value} label={labels.value.testAction} onClick={onCheckProxyStatus} />
         </div>
       )
@@ -274,6 +283,8 @@ async function getInputs() {
 
   const proxyCategory = (data.proxyCategory || data.protocol)?.split('/')[0]
 
+  const checkChannelOptions = mapCheckChannelOptions($dict_map[dictKey])
+
   formRef.value?.setInputsProps({
     ipType: {
       value: data.ipType || $dict_map.ipType![0]?.value,
@@ -285,7 +296,7 @@ async function getInputs() {
     },
     checkChannel: {
       value: defaultCheckChannel,
-      options: $dict_map[dictKey],
+      options: checkChannelOptions,
     },
   })
 }

@@ -10,11 +10,12 @@ import Detail from '/@/views/pay/subscribe/components/detail.vue'
 import SvgIcon from '/@/components/rx-icon/src/svg-icon.vue'
 import { ProxyIpType } from '/@/enums/proxy'
 import { getProxyTypePriceForSelectedDuration } from './utils'
-import type { BandwidthOption, BusinessUseOption, DurationOption, ProxyTypeOption } from './utils'
+import type { BusinessUseOption, DurationOption, ProxyTypeOption } from './utils'
 import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 import ExclusivePriceRow from '/@/views/campaign/new-user/exclusive-price-row.vue'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { useConfirmAutoRenew } from '/@/views/pay/wallet/components/useConfirmAutoRenew'
+import { useRolaJump } from '/@/views/agent/shop/hooks/useRolaJump'
 
 const {
   isCN,
@@ -22,7 +23,6 @@ const {
   loadingProxyType,
   currentInventory,
   proxyTypeOptions,
-  proxySpeedOptions,
   subscriptionMonths,
   businessUse,
   details,
@@ -37,7 +37,6 @@ const {
   loadingProxyType: boolean
   currentInventory: number
   proxyTypeOptions: ProxyTypeOption[]
-  proxySpeedOptions: BandwidthOption[]
   subscriptionMonths?: DurationOption
   businessUse?: BusinessUseOption
   details: any[]
@@ -60,10 +59,10 @@ const ONE_BUY_MAX = 1000
 
 const purchaseMember = defineModel<number>('purchaseMember', { required: true })
 const proxyTypeValue = defineModel<number | undefined>('proxyTypeValue')
-const proxySpeedValue = defineModel<number | undefined>('proxySpeedValue')
 /** 购买时是否同时开启自动续费，开启前需弹窗确认 */
 const isAuto = defineModel<boolean>('isAuto', { default: false })
 const { beforeToggleAutoRenew } = useConfirmAutoRenew()
+const { jumpToRola } = useRolaJump()
 
 const styles = useCssModule()
 const CID = `${getCurrentInstance()?.uid ?? ''}-ptype`
@@ -153,12 +152,6 @@ function listUnitDisplay(item: ProxyTypeOption) {
     <RxAlert v-if="isDirect && labels.mode === 'proxy'" class="!w-full shrink-0" type="warn" :content="$t('专为跨境电商深度优化，仅可访问电商网站，限 Roxy 生态内合规使用。Roxy 持续助力中国跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
     <RxAlert v-if="isDirect && labels.mode === 'device'" class="!w-full shrink-0" type="warn" :content="$t('设备限 Roxy 生态内合规使用。Roxy 持续助力跨境电商高质量发展，倡导安全、健康的互联网环境。')" />
     <div class="flex flex-col gap-2">
-      <div v-if="proxyTypeValue != null" class="flex flex-col gap-1.5 pa-4 quantity">
-        <div class="tt-primary text-3.5 font-600 leading-normal">
-          {{ labels.entityQuantityLabel }}
-        </div>
-        <RxStepInput v-model="purchaseMember" size="lg" :min="1" :max="Math.min(Math.max(1, currentInventory), ONE_BUY_MAX)" @update:model-value="inputPurchaseMember" />
-      </div>
       <Detail :list="details">
         <template #title="props">
           <div class="flex items-center gap-2">
@@ -173,57 +166,43 @@ function listUnitDisplay(item: ProxyTypeOption) {
         <template #type>
           <div class="relative">
             <RxLoading :model-value="loadingProxyType" :opacity="0.1" />
-            <div class="flex flex-col gap-1.5">
-              <label v-for="item in proxyTypeOptions" :key="item.id" class="w-full flex items-start gap-1.5 select-none cursor-pointer" :for="`${CID}_${item.id}`">
+            <div class="flex flex-col gap-2">
+              <label v-for="item in proxyTypeOptions" :key="item.id" class="w-full flex flex-col gap-1 px-3 py-2 select-none cursor-pointer" :class="[styles.radio, proxyTypeValue === item.id ? styles.active : '']" :for="`${CID}_${item.id}`">
                 <RadioButton v-model="proxyTypeValue" class="!hidden" :input-id="`${CID}_${item.id}`" :value="item.id" name="proxy-provider-type" />
-                <div class="w-full flex flex-col gap-1 min-w-0">
-                  <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                    <div class="shrink-0 details-radio" :class="{ checked: proxyTypeValue === item.id }" />
-                    <div class="tt-secondary text-3.5 leading-5 truncate" :class="{ premium: item.proxyType === ProxyIpType.Residential }">
-                      {{ item.typeName }}
-                    </div>
-                    <SvgIcon v-if="item.desc" v-tooltip.top="item.desc" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <div class="text-3.5 leading-5 truncate" :class="item.proxyType === ProxyIpType.Residential ? 'premium' : (proxyTypeValue === item.id ? styles.activeText : 'tt-secondary')">
+                    {{ item.typeName }}
                   </div>
-                  <div v-if="listUnitDisplay(item)" class="pl-5.5 flex gap-1.5 shrink-0 whitespace-nowrap">
-                    <span class="tt-secondary text-3.25 font-[DingTalk_JinBuTi] leading-4.5">
-                      {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.price).format() }) }}
-                    </span>
-                    <span v-if="listUnitDisplay(item)!.showOriginal" class="tt-tertiary text-3 leading-4.5 line-through">
-                      {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.original).format() }) }}
-                    </span>
-                  </div>
+                  <SvgIcon v-if="item.desc" v-tooltip.top="item.desc" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
+                </div>
+                <div v-if="listUnitDisplay(item)" class="flex gap-1.5 shrink-0 whitespace-nowrap">
+                  <span class="text-3.25 font-[DingTalk_JinBuTi] leading-4.5" :class="proxyTypeValue === item.id ? styles.activeText : 'tt-secondary'">
+                    {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.price).format() }) }}
+                  </span>
+                  <span v-if="listUnitDisplay(item)!.showOriginal" class="tt-tertiary text-3 leading-4.5 line-through">
+                    {{ $t('{month}/个', { month: currency(listUnitDisplay(item)!.original).format() }) }}
+                  </span>
                 </div>
               </label>
               <div v-if="showFirstIpHint && newUserOfferKind" class="tt-tertiary text-3 leading-4.5">
                 {{ $t('首条 IP 享受 {price} 新用户价，不与其他折扣叠加', { price: currency(newUserBenefitStore.newUserIpUnitPrice(newUserOfferKind)).format() }) }}
               </div>
+              <div class="flex items-center py-2.5 px-3 gap-1.5 min-w-0 cursor-pointer select-none" @click="jumpToRola()">
+                <span class="tt-secondary font-[DingTalk_JinBuTi] text-3.5 leading-normal shrink-0">{{ $t('动态代理 IP') }}</span>
+                <span class="px-2 rounded-full shrink-0" :class="styles.rola">Rola IP</span>
+                <SvgIcon class="ml-auto shrink-0" name="base/rx_ic_arrow_top_right" size="14" color="var(--colors-icon-icon-note)" />
+              </div>
             </div>
           </div>
         </template>
-        <template #speed="{ item }">
-          <div class="flex flex-col gap-3">
-            <RxDivider class="col-span-4" line-style="dashed" line-only line-color="var(--colors-border-divider-dashed)" />
-            <div v-if="isDirect">
-              <I18nT tag="div" class="tt-secondary font-[DingTalk_JinBuTi] text-3.5 leading-4 select-none" :keypath="$t('电商直连 IP 默认支持 {value}', { value: '{value}' })" scope="global">
-                <template #value>
-                  <span class="bandwidth">100Mbps</span>
-                </template>
-              </I18nT>
+        <template #quantity="{ item, classes }">
+          <div class="flex items-center justify-between gap-2">
+            <div :class="classes">
+              {{ item.label }}
             </div>
-            <template v-else>
-              <div class="flex items-center gap-1">
-                <span class="tt-secondary text-3.5">{{ item.label }}</span>
-                <SvgIcon v-tooltip.top="labels.bandwidthUpgradeTooltip" class="cursor-pointer" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
-              </div>
-              <div class="grid grid-cols-4 gap-1.5">
-                <div v-for="option in proxySpeedOptions" :key="option.value" v-tooltip.top="{ value: option.bandwidthSpeedDesc }"
-                     class="col-span-2 h-10 flex items-center justify-center px-3 leading-none cursor-pointer select-none tt-primary !text-3.5"
-                     :class="[styles.period, styles.radio, proxySpeedValue === option.value ? styles.active : '']" @click="proxySpeedValue = option.value"
-                >
-                  {{ option.label }}
-                </div>
-              </div>
-            </template>
+            <div class="quantity-step shrink-0">
+              <RxStepInput v-model="purchaseMember" container-class="w-32" size="lg" :min="1" :max="Math.min(Math.max(1, currentInventory), ONE_BUY_MAX)" @update:model-value="inputPurchaseMember" />
+            </div>
           </div>
         </template>
         <template #unitPrice="{ item, classes }">
@@ -285,7 +264,7 @@ function listUnitDisplay(item: ProxyTypeOption) {
 <style lang="scss" module>
 .radio {
   border-radius: 8px;
-  border: 3px solid var(--colors-background-bg-page);
+  border: 3px solid transparent;
   box-shadow: inset 0px 0px 0px 1px var(--colors-border-border-base);
   background: var(--colors-background-bg-action);
   transition: all 0.3s;
@@ -296,20 +275,14 @@ function listUnitDisplay(item: ProxyTypeOption) {
 
   &.active {
     border-color: var(--colors-border-border-brand);
-    background: var(--pattern-pay-gradient-selected-start);
+    // background: var(--pattern-pay-gradient-selected-start);
     box-shadow: none;
-
-    &.period {
-      color: var(--colors-text-text-brand);
-      font-weight: 600;
-    }
   }
 }
 
-.period {
-  color: var(--colors-text-text-primary);
-  font-size: 16px;
-}
+// .activeText {
+//   color: var(--colors-text-text-brand);
+// }
 
 .direct {
   color: #fff;
@@ -317,6 +290,14 @@ function listUnitDisplay(item: ProxyTypeOption) {
   font-size: 12px;
   line-height: 18px;
   background: linear-gradient(90deg, #11ce46 0%, #31e163 100%);
+}
+
+.rola {
+  color: var(--component-dropdown-text-active);
+  font-family: 'DingTalk JinBuTi';
+  font-size: 12px;
+  line-height: 18px;
+  background: linear-gradient(90deg, #1eed58 0%, #11a3fd 137.63%);
 }
 </style>
 
@@ -330,76 +311,40 @@ function listUnitDisplay(item: ProxyTypeOption) {
   -webkit-text-fill-color: transparent;
 }
 
-.quantity {
-  border-radius: 6px;
-  border: 1px solid var(--colors-border-border-action, #c7d1d6);
-  background: var(--colors-background-bg-action, #fff);
-
+.quantity-step {
   :deep(.step) {
-    border: none;
-    gap: 24px;
+    border: 1px solid var(--colors-border-border-action, #c7d1d6);
+    background: var(--colors-background-bg-action, #fff);
+  }
 
-    .p-inputtext {
-      padding: 4px 0;
-      font-size: 32px;
-      font-weight: 600;
-      box-shadow: none;
+  :deep(.p-inputnumber) {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
 
-      &:focus,
-      &:hover {
-        border-radius: 4px;
-        background: var(--colors-background-bg-action-hover);
-      }
-    }
+  :deep(.p-inputtext) {
+    box-shadow: none;
 
-    .p-button {
-      box-shadow: none;
-
-      svg {
-        font-size: 32px;
-        font-weight: 600;
-      }
-
-      &:disabled {
-        background: transparent;
-        opacity: 0.8;
-      }
+    &:focus,
+    &:hover {
+      border-radius: 4px;
+      background: var(--colors-background-bg-action-hover);
     }
   }
-}
 
-.bandwidth {
-  background: linear-gradient(90deg, #11ce46 0%, #31e163 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  :deep(.p-button) {
+    flex: none;
+    box-shadow: none;
+
+    &:disabled {
+      background: transparent;
+      opacity: 0.8;
+    }
+  }
 }
 
 .details {
-  &-radio {
-    position: relative;
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--colors-border-border-brand);
-    border-radius: 50%;
-
-    &.checked {
-      border-width: 2px;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 8px;
-        height: 8px;
-        background: var(--colors-border-border-brand);
-        border-radius: 50%;
-      }
-    }
-  }
-
   &-label {
     font-family: 'DingTalk JinBuTi';
     font-size: 15px;

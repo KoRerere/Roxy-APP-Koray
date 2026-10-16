@@ -21,8 +21,9 @@ const tabsValue = ref('single')
 async function saveAccount(formData: any) {
   const { code, msg } = await API.platform.userAddPlatformInfoCreate(formData)
   showToast(code, msg)
-  if (code === 0)
+  if (code === 0) {
     invalidateAccountListCache(LIST_CACHE_NAMESPACE.ACCOUNT_LIST)
+  }
 }
 </script>
 

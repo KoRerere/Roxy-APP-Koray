@@ -157,6 +157,47 @@ export function computeWindowGridLayouts(
   return out
 }
 
+/** 层叠错位（DIP），约一个标题栏高度，能看到后面窗口的边缘 */
+const CASCADE_OFFSET = 32
+/** 最多错位级数，超出后从头再叠，避免一直挪出屏幕 */
+const CASCADE_MAX_STEPS = 8
+
+/** 层叠布局可调参数 */
+export interface CascadeLayoutOptions {
+  /** 相邻窗口的横纵错位，默认 32 */
+  offset?: number
+  /** 最多错位级数，默认 8 */
+  maxSteps?: number
+}
+
+/**
+ * 层叠只算左上角错位，宽高沿用各窗口自己的 openWidth / openHeight。
+ * 超过可错位级数后从头叠下一轮，避免完全重叠。
+ */
+export function createCascadePlacer(workArea: VirtualWorkAreaUnion, opts: CascadeLayoutOptions = {}) {
+  const offset = Math.max(1, opts.offset ?? CASCADE_OFFSET)
+  const maxSteps = Math.max(0, opts.maxSteps ?? CASCADE_MAX_STEPS)
+  const fitSteps = Math.max(0, Math.min(
+    maxSteps,
+    Math.floor((Math.max(workArea.width, 1) - 1) / offset),
+    Math.floor((Math.max(workArea.height, 1) - 1) / offset),
+  ))
+  const cycle = fitSteps + 1
+  let index = 0
+
+  return {
+    /** 下一个窗口的左上角（DIP） */
+    next(): { x: number, y: number } {
+      const stackIndex = index % cycle
+      index += 1
+      return {
+        x: Math.round(workArea.originX + stackIndex * offset),
+        y: Math.round(workArea.originY + stackIndex * offset),
+      }
+    },
+  }
+}
+
 /** 与其它逻辑解耦的稳定空间排序（左→右、上→下） */
 export function sortDisplaysSpatial(displays: DisplayLayoutInput[]): DisplayLayoutInput[] {
   return [...displays].sort((a, b) =>

@@ -219,7 +219,7 @@ function showInfo() {
               <img class="h-5" :src="eventTitleSrc">
             </div>
             <div class="title">
-              {{ $t('中秋狂欢季 · 四重豪礼开抢') }}
+              {{ $t('金秋狂欢季 · 四重豪礼享不停') }}
             </div>
             <div class="flex items-center gap-2 color-white/80 text-4 leading-5.5">
               <span>{{ $t('官网寻隐藏惊喜') }}</span>

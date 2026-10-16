@@ -87,9 +87,15 @@ function setInputsProps(map: Record<string, any>, inputs: Input[]) {
     if (item.items?.length) {
       setInputsProps(map, item.items)
     }
-    else if (Object.hasOwn(map, item.name)) {
-      const { value, ...props } = map[item.name]
-      Reflect.set(item, 'props', { ...item.props, ...props })
+    else if (item.name && Object.hasOwn(map, item.name)) {
+      // label 属于字段本身，不能写进输入组件 props，否则动态标签无法刷新
+      const { value, label, ...props } = map[item.name] ?? {}
+      if (label !== undefined) {
+        item.label = label
+      }
+      if (Object.keys(props).length > 0) {
+        Reflect.set(item, 'props', { ...item.props, ...props })
+      }
       // 用 undefined 判断：避免合法 falsy（如 0、''）被跳过导致字段未写入
       if (value !== undefined) {
         Reflect.set(initialValues, item.name, value)

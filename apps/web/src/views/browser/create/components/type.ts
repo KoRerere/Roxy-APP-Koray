@@ -14,6 +14,8 @@ export interface Accordions {
 
 export interface FormPanel {
   title?: string
+  /** 标题旁的说明，悬停信息图标时展示 */
+  tooltip?: string
   value: string
   groupIndex: number
   /** 同一手风琴面板内追加渲染的 inputsGroup 下标（如基础设置合并窗口剩余字段 + 原 basicInputs） */

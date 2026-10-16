@@ -2,9 +2,15 @@
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import TsFormInputText from '/@/views/lab/components/form/m-input-text.vue'
 import TsFormPassword from '/@/views/lab/components/form/m-input-password.vue'
+import PlatformUrlSelect from '/@/views/account/create/components/platform-url-select.vue'
 import PlatformIcon from '/@/views/account/list/components/platform-icon.vue'
 import InputLabel from '/@/components/ry-form/input-label.vue'
 import RxButton from '/@/components/rx-button'
+import { resolveAccountLoginLabels } from '/@/views/account/create/account-login-labels'
+import { toPlatformSelectOptions } from '/@/views/account/create/components/platform-select'
+import type { PlatformIconValue, PlatformSelectOption } from '/@/views/account/create/components/platform-select'
+import { toPlatformAbbrOptions } from '../window-name'
+import type { PlatformAbbrOption } from '../window-name'
 import { useConfirm } from 'primevue/useconfirm'
 import { useThemeStore } from '/@/stores/theme'
 import { API } from '/@/api'
@@ -17,7 +23,9 @@ const windowPlatformList = defineModel<any[]>('modelValue', { default: () => [] 
 const confirm = useConfirm()
 const { realTheme } = storeToRefs(useThemeStore())
 
-const platformOptions = ref<{ label: string, value: string, image?: string, darkImage?: string }[]>([])
+const platformOptions = ref<PlatformSelectOption[]>([])
+/** 带缩写的平台库，用于把网址对齐成 TK / FB 这类标签前缀 */
+const platformAbbrCatalog = ref<PlatformAbbrOption[]>([])
 const loadedAccounts = ref<Record<string, any>[]>([])
 const listLoading = ref(false)
 /** 避免打开下拉时的并发刷新把较新结果覆盖掉 */
@@ -30,12 +38,8 @@ onMounted(() => {
 
 async function loadPlatformOptions() {
   const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
-  platformOptions.value = (rows ?? []).map(item => ({
-    image: item.platformIcon,
-    darkImage: item.platformIconDark,
-    label: item.platformUrl!,
-    value: item.platformUrl!,
-  }))
+  platformOptions.value = toPlatformSelectOptions(rows)
+  platformAbbrCatalog.value = toPlatformAbbrOptions(rows)
 }
 
 /** 已挂到窗口上的账号库 id，下拉里不再重复出现 */
@@ -134,6 +138,8 @@ function createLinkedSnapshot(row: Record<string, any>) {
     platformUserName: row.platformUserName ?? '',
     platformPassword: row.platformPassword ?? '',
     platformEfa: row.platformEfa ?? '',
+    platformIcon: row.platformIcon ?? '',
+    platformIconDark: row.platformIconDark ?? '',
   }
 }
 
@@ -192,6 +198,8 @@ function detachIfLinkedAccountEdited(item: any) {
     || item.platformUserName !== snap.platformUserName
     || item.platformPassword !== snap.platformPassword
     || item.platformEfa !== snap.platformEfa
+    || item.platformIcon !== snap.platformIcon
+    || item.platformIconDark !== snap.platformIconDark
 
   if (!changed) {
     return
@@ -207,11 +215,25 @@ watch(windowPlatformList, (list) => {
   ensureLinkedSnapshots(list)
 }, { immediate: true })
 
-function onPlatformChange(item: any, value: string) {
-  const platform = platformOptions.value.find(opt => opt.value === value)
+function onPlatformUrl(item: any, value: string) {
   item.platformUrl = value
-  item.platformIcon = platform?.image || ''
-  item.platformIconDark = platform?.darkImage || ''
+  detachIfLinkedAccountEdited(item)
+}
+
+/**
+ * 写入图标下拉的结果。
+ * 打开页面时的自动对齐不算用户修改，避免把未改过的关联账号解绑。
+ */
+function onPlatformIcons(item: any, icons: PlatformIconValue) {
+  item.platformIcon = icons.platformIcon
+  item.platformIconDark = icons.platformIconDark
+  if (!icons.fromUser) {
+    if (item._linkedSnapshot) {
+      item._linkedSnapshot.platformIcon = icons.platformIcon
+      item._linkedSnapshot.platformIconDark = icons.platformIconDark
+    }
+    return
+  }
   detachIfLinkedAccountEdited(item)
 }
 
@@ -262,36 +284,42 @@ function removeAccount(item: any) {
 function accountKey(item: any, index: number) {
   return item._tempId || item.id || index
 }
+
+/** 登录账号、密码标签：有缩写时带上平台缩写，否则用通用文案 */
+function accountLoginLabels(item: { platformUrl?: string, platformAbbr?: string }) {
+  return resolveAccountLoginLabels(item, platformAbbrCatalog.value)
+}
 </script>
 
 <template>
   <div class="w-full flex items-start account-platform">
-    <InputLabel class="shrink-0 max-w-25 !min-w-25 text-right" :label="$t('平台账号')" :tooltip="$t('可为窗口绑定多个平台账号')" />
+    <InputLabel class="shrink-0 max-w-25 !min-w-25 text-right" :label="$t('平台账号')" :tooltip="$t('用于将平台登录账号与当前窗口关联，方便区分和管理不同业务账号。不绑定平台账号也可以正常创建窗口。')" />
     <div class="min-w-0 flex-1 flex flex-col gap-3">
       <div v-for="(item, index) in windowPlatformList" :key="accountKey(item, index)" class="flex items-center pa-4 gap-4 rounded-2 panel">
         <div class="flex-1 min-w-0 grid gap-x-3 gap-y-3 items-center account-fields">
           <div class="tt-tertiary text-3 text-right">
-            {{ $t('平台') }}
+            {{ $t('待绑定平台') }}
           </div>
-          <TsFormSelect v-model="item.platformUrl" class="min-w-0" :options="platformOptions" option-value="value" editable :dark-mode="realTheme === 'dark'" :placeholder="$t('请选择或输入平台网址')"
-                        :on-change="({ value }: any) => onPlatformChange(item, value)"
+          <PlatformUrlSelect class="min-w-0" :url="item.platformUrl" :icon="item.platformIcon" :icon-dark="item.platformIconDark" :options="platformOptions" :dark-mode="realTheme === 'dark'"
+                             :placeholder="$t('请选择或输入平台网址')" @update:url="(value) => onPlatformUrl(item, value)" @icons="(icons) => onPlatformIcons(item, icons)"
           />
           <div class="tt-tertiary text-3 text-right">
-            {{ $t('账号') }}
+            {{ accountLoginLabels(item).account }}
           </div>
           <TsFormInputText :model-value="item.platformUserName" class="min-w-0" :placeholder="$t('请输入账号')"
                            @update:model-value="(value: string) => onAccountFieldUpdate(item, 'platformUserName', value)"
           />
           <div class="tt-tertiary text-3 text-right">
-            {{ $t('密码') }}
+            {{ accountLoginLabels(item).password }}
           </div>
           <TsFormPassword :model-value="item.platformPassword" class="min-w-0" :placeholder="$t('请输入密码')"
                           @update:model-value="(value: string) => onAccountFieldUpdate(item, 'platformPassword', value)"
           />
-          <div class="tt-tertiary text-3 text-right">
-            2FA
+          <div class="flex items-center justify-end gap-1">
+            <span class="tt-tertiary text-3 text-right">{{ $t('2FA 密钥') }}</span>
+            <SvgIcon v-tooltip="$t('仅当平台账号已开启双重验证时填写，填写后可用于自动生成验证码。')" name="base/rx_ic_info" size="12" color="var(--colors-icon-icon-note)" />
           </div>
-          <TsFormInputText :model-value="item.platformEfa" class="min-w-0" :placeholder="$t('请输入2FA')" @update:model-value="(value: string) => onAccountFieldUpdate(item, 'platformEfa', value)" />
+          <TsFormInputText :model-value="item.platformEfa" class="min-w-0" :placeholder="$t('请输入 2FA 密钥 （选填）')" @update:model-value="(value: string) => onAccountFieldUpdate(item, 'platformEfa', value)" />
         </div>
         <SvgIcon class="mt-2 shrink-0 cursor-pointer" name="base/rx_ic_bin_1" color="var(--colors-icon-icon-tertiary)" @click="removeAccount(item)" />
       </div>

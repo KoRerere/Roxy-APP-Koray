@@ -46,7 +46,7 @@ const SPECIAL_TOOL_LABELS: Array<[string, string, string]> = [
   ['roxy_profile_open', $t('打开窗口'), $t('已打开窗口')],
   ['roxy_profile_close', $t('关闭窗口'), $t('已关闭窗口')],
   ['roxy_profile_delete', $t('删除窗口'), $t('已删除窗口')],
-  ['roxy_proxy_detect_channels', $t('获取代理检测通道'), $t('已获取代理检测通道')],
+  ['roxy_proxy_detect_channels', $t('获取代理 IP 检测通道'), $t('已获取代理 IP 检测通道')],
   ['roxy_proxy_list', $t('获取代理 IP 列表'), $t('已获取代理 IP 列表')],
   ['roxy_proxy_get', $t('获取代理 IP 详情'), $t('已获取代理 IP 详情')],
   ['roxy_proxy_create', $t('创建代理 IP'), $t('已创建代理 IP')],

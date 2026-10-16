@@ -4,6 +4,7 @@ import RxButton from '/@/components/rx-button'
 import RxInputGroup from '/@/components/rx-input-group.vue'
 import RxToggleSwitch from '/@/components/rx-toggle-switch'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
+import CheckChannelOfficialLink from '/@/views/agent/create/components/check-channel-official-link.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
 import type {
@@ -14,6 +15,7 @@ import { $t } from '/@/locales'
 import { createProxyShopLabels } from '/@/views/agent/shop/utils/proxy-shop-labels'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { getDictMap, strConcat } from '/@/utils'
+import { mapCheckChannelOptions } from '/@/views/agent/create/check-channel'
 import { NetworkType, ProxyCheckStatus, ProxyProtocol } from '/@/enums'
 
 const DEFAULT_PROXY_HOST = '127.0.0.1'
@@ -90,7 +92,7 @@ export function useNetworkPanel() {
               },
             },
             {
-              label: $t('代理协议'),
+              label: $t('代理 IP 协议'),
               name: 'proxyProtocol',
               value: softConfig?.proxyProtocol ?? ProxyProtocol.SOCKS5,
               props: {
@@ -112,7 +114,7 @@ export function useNetworkPanel() {
               },
             },
             {
-              label: $t('代理信息'),
+              label: $t('代理 IP 信息'),
               name: 'proxyHostPort',
               value: [resolveProxyHost(softConfig?.proxyHost), (softConfig?.proxyPort ?? 0) > 0 ? softConfig?.proxyPort : null],
               oldValue: [resolveProxyHost(softConfig?.proxyHost), (softConfig?.proxyPort ?? 0) > 0 ? softConfig?.proxyPort : null],
@@ -139,7 +141,9 @@ export function useNetworkPanel() {
                   <RxInputGroup
                     {...item.props}
                     modelValue={item.value}
-                    onUpdate:modelValue={(val: (string | number | null)[]) => { item.value = val }}
+                    onUpdate:modelValue={(val: (string | number | null)[]) => {
+                      item.value = val
+                    }}
                     onBlur={() => saveLocalConfig(item)}
                   />
                 )
@@ -148,7 +152,7 @@ export function useNetworkPanel() {
             {
               label: () => (
                 <span>
-                  {$t('代理账号')}
+                  {$t('代理 IP 账号')}
                   <span class="text-[color:var(--colors-text-text-tertiary)]">{` (${$t('选填')})`}</span>
                 </span>
               ),
@@ -156,7 +160,7 @@ export function useNetworkPanel() {
               value: softConfig?.proxyUsername ?? '',
               oldValue: softConfig?.proxyUsername ?? '',
               props: {
-                placeholder: $t('请输入代理账号'),
+                placeholder: $t('请输入代理 IP 账号'),
                 class: 'w-[180px]',
               },
               hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.Custom,
@@ -166,7 +170,9 @@ export function useNetworkPanel() {
                   <InputText
                     {...item.props}
                     modelValue={item.value}
-                    onUpdate:modelValue={(val: string) => { item.value = val }}
+                    onUpdate:modelValue={(val: string) => {
+                      item.value = val
+                    }}
                     type="text"
                     onBlur={() => saveLocalConfig(item)}
                   />
@@ -176,7 +182,7 @@ export function useNetworkPanel() {
             {
               label: () => (
                 <span>
-                  {$t('代理密码')}
+                  {$t('代理 IP 密码')}
                   <span class="text-[color:var(--colors-text-text-tertiary)]">{` (${$t('选填')})`}</span>
                 </span>
               ),
@@ -184,7 +190,7 @@ export function useNetworkPanel() {
               value: softConfig?.proxyPassword ?? '',
               oldValue: softConfig?.proxyPassword ?? '',
               props: {
-                placeholder: $t('请输入代理密码'),
+                placeholder: $t('请输入代理 IP 密码'),
                 class: 'w-[180px]',
               },
               hide: (_: Items, sectionItems: Items[]) => getNetworkModeValue(sectionItems) !== NetworkType.Custom,
@@ -194,7 +200,9 @@ export function useNetworkPanel() {
                   <InputText
                     {...item.props}
                     modelValue={item.value}
-                    onUpdate:modelValue={(val: string) => { item.value = val }}
+                    onUpdate:modelValue={(val: string) => {
+                      item.value = val
+                    }}
                     type="password"
                     onBlur={() => saveLocalConfig(item)}
                   />
@@ -229,8 +237,9 @@ export function useNetworkPanel() {
                       timezone: item.value.timezone,
                     })}
                     onUpdate:visible={(visible: boolean) => {
-                      if (!visible)
+                      if (!visible) {
                         item.value = null
+                      }
                     }}
                   />
                 ),
@@ -258,8 +267,9 @@ export function useNetworkPanel() {
                     title={$t('检测成功')}
                     content={$t('位置: {code}/{country}\nIP: {ip}', { code: item.value.country_code, country: item.value.country, ip: item.value.ip })}
                     onUpdate:visible={(visible: boolean) => {
-                      if (!visible)
+                      if (!visible) {
                         item.value = null
+                      }
                     }}
                   />
                 ),
@@ -287,8 +297,9 @@ export function useNetworkPanel() {
                     title={$t('检测成功')}
                     content={$t('位置: {code}/{country}\nIP: {ip}', { code: item.value.country_code, country: item.value.country, ip: item.value.ip })}
                     onUpdate:visible={(visible: boolean) => {
-                      if (!visible)
+                      if (!visible) {
                         item.value = null
+                      }
                     }}
                   />
                 ),
@@ -320,7 +331,7 @@ export function useNetworkPanel() {
               props: {
                 filter: false,
                 optionValue: 'value',
-                options: $dict_map.checkChannel,
+                options: mapCheckChannelOptions($dict_map.checkChannel),
               },
               component: ({ item, ...props }: { item: Items, props: any }) => {
                 return (
@@ -329,7 +340,13 @@ export function useNetworkPanel() {
                     {...props}
                     name={item.name}
                     onChange={() => saveUserConfig(item)}
-                  />
+                  >
+                    {{
+                      'option-extra': ({ option }: { option?: { external?: boolean, value?: string } }) => (
+                        <CheckChannelOfficialLink option={option} />
+                      ),
+                    }}
+                  </TsFormSelect>
                 )
               },
             },

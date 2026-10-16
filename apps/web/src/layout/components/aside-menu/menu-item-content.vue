@@ -19,27 +19,27 @@ const roxyClawStore = useRoxyClawStore()
 const { buyProxy } = useProxy()
 const { isZh } = storeToRefs(useSimpleLocale())
 
-const isCollapsed = defineModel('open', { default: false })
+const isCollapsed = defineModel<boolean>('open', { default: false })
 const badgeMap = defineModel<Record<NonNullable<RouteRecordNameGeneric>, boolean>>('badgeMap', { default: () => ({}) })
 
 const canOpen = computed(() => props.item.children?.some(n => !n.meta?.hideInMenu))
 
 if (canOpen.value) {
   isCollapsed.value = true
+  // 叶子菜单没有子级可展开，不需要跟着路由和侧栏收起状态各挂一个监听
+  watchEffect(() => {
+    if (route.matched.some(n => n.name === props.item.name)) {
+      isCollapsed.value = false
+    }
+    if (props.collapsed) {
+      isCollapsed.value = true
+    }
+  })
 }
 
 function toggle() {
   isCollapsed.value = !isCollapsed.value
 }
-
-watchEffect(() => {
-  if (route.matched.some(n => n.name === props.item.name)) {
-    isCollapsed.value = false
-  }
-  if (props.collapsed) {
-    isCollapsed.value = true
-  }
-})
 
 function handleClickItem(event: Event, navigate: UseLinkReturn['navigate']) {
   if (props.item.meta?.type === 'button') {

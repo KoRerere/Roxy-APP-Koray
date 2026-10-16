@@ -25,16 +25,24 @@ async function refreshLocalNetwork() {
 </script>
 
 <template>
-  <div class="flex items-center gap-2 tt-tertiary text-3">
-    <span>{{ $t('当前环境使用本机网络：') }}</span>
-    <SvgIcon :name="(`country-code/${network.info?.country_code}` as SvgNames)" fallback="base/rx_ic_earth" />
-    <span class="font-500">
-      {{ strConcat(network.info?.country_code, strConcat('·', network.info?.city)) || '--' }}
-    </span>
-    <span class="font-500">{{ network.info?.ip || '--' }}</span>
-    <SvgIcon class="cursor-pointer" :class="{ 'pi-spin': refreshing }" :name="refreshing ? 'base/rx_ic_progress_bar' : 'base/rx_ic_refresh'" size="14" color="var(--colors-icon-icon-tertiary)"
-             @click="refreshLocalNetwork"
-    />
+  <div class="flex flex-col gap-1 tt-tertiary text-3">
+    <div class="flex items-center gap-2 ">
+      <span>{{ $t('当前环境使用本机网络：') }}</span>
+      <SvgIcon :name="(`country-code/${network.info?.country_code}` as SvgNames)" fallback="base/rx_ic_earth" />
+      <span class="font-500">
+        {{ strConcat(network.info?.country_code, strConcat('·', network.info?.city)) || '--' }}
+      </span>
+      <span class="font-500">{{ network.info?.ip || '--' }}</span>
+      <SvgIcon class="cursor-pointer" :class="{ 'pi-spin': refreshing }" :name="refreshing ? 'base/rx_ic_progress_bar' : 'base/rx_ic_refresh'" size="14" color="var(--colors-icon-icon-tertiary)"
+               @click="refreshLocalNetwork"
+      />
+    </div>
+    <div class="tt-warning">
+      {{ $t('* 多个窗口或业务账号共用同一出口 IP，可能增加账号关联或平台风控风险。') }}
+    </div>
+    <div class="tt-warning">
+      {{ $t('* 建议为每个窗口配置独立代理 IP。') }}
+    </div>
   </div>
 </template>
 

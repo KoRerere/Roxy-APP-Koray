@@ -1,7 +1,7 @@
 import type { BrowserItem } from './browserItem'
 import type { BrowserLaunchOptions, IBrowser } from '/@/modules/browser/browser-manager/adapter'
 import type { proxyDetection } from '/@/utils'
-import { readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { access, readdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { API } from '/@/api'
 // import { appConfig } from '/@/constants'
@@ -30,6 +30,39 @@ const firefoxBackgroundAutomationPrefs = [
   'user_pref("dom.min_background_timeout_value_without_budget_throttling", 0);',
   'user_pref("dom.timeout.enable_budget_timer_throttling", false);',
 ]
+
+/** 旧版 Chrome 把会话放在 Default 根目录，而不是 Sessions/ */
+const LEGACY_SESSION_FILES = ['Current Session', 'Last Session', 'Current Tabs', 'Last Tabs'] as const
+
+/**
+ * 以前的最小化启动会把 Sessions 挪到 Sessions.roxy-held。
+ * 功能已去掉，普通打开时把还没还回去的会话放回原处，避免标签页丢在暂存目录里。
+ */
+async function restoreHeldChromeSessionsIfNeeded(userDataDir: string) {
+  const profileDir = join(userDataDir, 'Default')
+  const sessionsDir = join(profileDir, 'Sessions')
+  const heldDir = join(profileDir, 'Sessions.roxy-held')
+  if (!(await pathExists(sessionsDir)) && await pathExists(heldDir))
+    await rename(heldDir, sessionsDir)
+
+  for (const name of LEGACY_SESSION_FILES) {
+    const source = join(profileDir, name)
+    const held = `${source}.roxy-held`
+    if (!(await pathExists(source)) && await pathExists(held))
+      await rename(held, source).catch(() => {})
+  }
+}
+
+/** access 用来判断路径在不在，不把 ENOENT 当成失败 */
+async function pathExists(path: string) {
+  try {
+    await access(path)
+    return true
+  }
+  catch {
+    return false
+  }
+}
 
 /** 最后一次发送的消息 */
 export interface LastMessage {
@@ -392,7 +425,7 @@ export class BeforeLaunchTask {
       ...firefoxDefaultCLIArgs,
     ]
 
-    // 窗口大小：全屏用 -maximized，自定义用 -width / -height
+    // 窗口大小：全屏用 -maximized
     if (!positionSwitch) {
       args.push('-maximized')
     }
@@ -643,6 +676,9 @@ export class BeforeLaunchTask {
         console.log('new pinnedExtensions', pinnedExtensions)
         preferences.extensions.pinned_extensions = pinnedExtensions
       }
+
+      // 旧的最小化启动会把 Sessions 挪走。功能已去掉，普通打开时把还没还回去的会话放回原处。
+      await restoreHeldChromeSessionsIfNeeded(this.browserItem.userDataDir).catch(() => {})
 
       // 读取上次记录的 colorScheme，仅当发生变化时才更新主题偏好，避免每次启动都无谓写入。
       const colorScheme = store.browserColorScheme || 'system'

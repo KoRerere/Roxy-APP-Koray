@@ -1,6 +1,12 @@
 <script lang="ts" setup>
 import PlatformIcon from '/@/views/account/list/components/platform-icon.vue'
+import PlatformUrlFormField from '/@/views/account/create/components/platform-url-form-field.vue'
 import TsForm from '/@/views/lab/components/form/index.vue'
+import { resolveAccountLoginLabels } from '/@/views/account/create/account-login-labels'
+import { toPlatformSelectOptions } from '/@/views/account/create/components/platform-select'
+import type { PlatformIconValue } from '/@/views/account/create/components/platform-select'
+import { toPlatformAbbrOptions } from '/@/views/browser/create/window-name'
+import type { PlatformAbbrOption } from '/@/views/browser/create/window-name'
 import { API } from '/@/api'
 
 import { deepClone } from '/@/utils'
@@ -27,33 +33,59 @@ const platformUrlIds = ref<any[]>([])
 
 const formRef = useTemplateRef<any>('account')
 
-const platformRow = ref<any[]>([])
 const themeStore = useThemeStore()
+/** 平台库缩写，切换账号或改网址时用来刷新登录字段标签 */
+const platformAbbrCatalog = ref<PlatformAbbrOption[]>([])
+
+/**
+ * 图标下拉的结果写回当前账号。
+ * 打开时的自动对齐同步进原始快照，避免未编辑就因补图标而解除关联。
+ */
+function onPlatformIcons(icons: PlatformIconValue) {
+  if (!activeBar.value) {
+    return
+  }
+  activeBar.value.platformIcon = icons.platformIcon
+  activeBar.value.platformIconDark = icons.platformIconDark
+  const raw = activeBar.value.id ? rawRelatedMap[activeBar.value.id] : undefined
+  if (!icons.fromUser && raw) {
+    raw.platformIcon = icons.platformIcon
+    raw.platformIconDark = icons.platformIconDark
+  }
+}
+
+/**
+ * 按当前网址刷新账号、密码标签。
+ * 还在原账号网址上时沿用该账号自带缩写；改成别的平台后按新网址匹配。
+ */
+function syncLoginLabels(platformUrl?: string) {
+  const account = activeBar.value
+  const currentUrl = platformUrl ?? String(formRef.value?.getFieldState('platformUrl')?.value ?? account?.platformUrl ?? '')
+  const storedUrl = String(account?.platformUrl ?? '')
+  const labels = resolveAccountLoginLabels({
+    platformUrl: currentUrl,
+    platformAbbr: currentUrl === storedUrl ? account?.platformAbbr : undefined,
+  }, platformAbbrCatalog.value)
+  formRef.value?.setInputsProps({
+    platformUserName: { label: labels.account },
+    platformPassword: { label: labels.password },
+  })
+}
 
 const inputs = [
   {
-    type: 'select',
     label: $t('平台'),
     name: 'platformUrl',
+    render: PlatformUrlFormField,
     props: {
       placeholder: $t('请输入或选择平台网址'),
-      optionValue: 'value',
-      editable: true,
-      getOptions: async () => {
-        const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
-        return rows.map(item => ({
-          image: item.platformIcon,
-          label: item.platformUrl,
-          value: item.platformUrl,
-        }))
-      },
-      onChange: ({ value, props }: any) => {
-        const platform = props.options.find((item: any) => item.value === value)
-        Reflect.set(activeBar.value, 'platformIcon', platform.platformIcon)
-        Reflect.set(activeBar.value, 'platformIconDark', platform.platformIconDark)
-        Reflect.set(activeBar.value, 'invalid', !value)
-        // formRef.value?.setValues({ platformName: platform.value.replace(/^https?:\/\//, '').replace(/\/.*$/, '') })
-      },
+      darkMode: themeStore.realTheme === 'dark',
+      icon: activeBar.value?.platformIcon || '',
+      iconDark: activeBar.value?.platformIconDark || '',
+      syncKey: activeBar.value?.tid || '',
+      options: [],
+      onIcons: onPlatformIcons,
+      onUrlChange: syncLoginLabels,
     },
     resolver: (zod: any) => zod.string().url($t('请输入正确的平台网址')),
   },
@@ -67,7 +99,7 @@ const inputs = [
   // },
   {
     type: 'text',
-    label: $t('账号'),
+    label: $t('平台登录账号'),
     name: 'platformUserName',
     props: {
       placeholder: $t('请输入账号'),
@@ -75,7 +107,7 @@ const inputs = [
   },
   {
     type: 'password',
-    label: $t('密码'),
+    label: $t('平台登录密码'),
     name: 'platformPassword',
     props: {
       placeholder: $t('请输入密码'),
@@ -102,13 +134,7 @@ const inputs = [
 watch(() => themeStore.realTheme, () => {
   formRef.value?.setInputsProps({
     platformUrl: {
-      options: platformRow.value.map(item => ({
-        image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
-        platformIconDark: item.platformIconDark,
-        platformIcon: item.platformIcon,
-        label: item.platformUrl,
-        value: item.platformUrl,
-      })),
+      darkMode: themeStore.realTheme === 'dark',
     },
   })
 })
@@ -116,23 +142,26 @@ watch(() => themeStore.realTheme, () => {
 onMounted(async () => {
   setFormValues(activeBar.value)
   const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
-  platformRow.value = rows
+  platformAbbrCatalog.value = toPlatformAbbrOptions(rows)
   formRef.value?.setInputsProps({
     platformUrl: {
-      options: rows.map(item => ({
-        image: themeStore.realTheme === 'dark' ? item.platformIconDark : item.platformIcon,
-        platformIconDark: item.platformIconDark,
-        platformIcon: item.platformIcon,
-        label: item.platformUrl,
-        value: item.platformUrl,
-      })),
+      options: toPlatformSelectOptions(rows),
     },
   })
+  syncLoginLabels()
 })
 
 function setFormValues(data: any = {}) {
   const values = Object.fromEntries(inputs.map(item => [item.name, data[item.name]]))
   formRef.value?.setValues(values)
+  formRef.value?.setInputsProps({
+    platformUrl: {
+      icon: data.platformIcon || '',
+      iconDark: data.platformIconDark || '',
+      syncKey: data.tid || '',
+    },
+  })
+  syncLoginLabels(String(data.platformUrl ?? ''))
 }
 
 function setOriginValues() {
@@ -170,6 +199,7 @@ function addPlatform() {
   _datalist.value.push(empty)
   activeBar.value = _datalist.value[_datalist.value.length - 1]!
   formRef.value?.reset()
+  setFormValues(activeBar.value)
 }
 
 function removePlatform() {

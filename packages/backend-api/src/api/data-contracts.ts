@@ -4902,6 +4902,86 @@ export interface UserGetNewUserBenefitConfigListData {
   msg: string;
 }
 
+export interface GetVersionUpdateRemindListData {
+  /** 0 成功，500 查询失败 */
+  code: number;
+  /** 提示信息 */
+  msg: string;
+  /** 唯一配置。没有记录时 exists 为 false，其余是空表单默认值 */
+  data: {
+    /** 是否已有配置。false 表示 Redis 里还没有这条记录 */
+    exists: boolean;
+    /** 是否启用。没有记录时表单默认 true */
+    enabled: boolean;
+    /** 各端已发布 public 版本中的最大值，不入库 */
+    latestVersion: string;
+    /** 按 behindVersions 生成，只用于展示 */
+    versionRules: {
+      level: string;
+      text: string;
+    }[];
+    /** 提醒开始时间，格式 yyyy-MM-dd HH:mm */
+    startTime: string;
+    /** 提醒结束时间。长期有效时为空字符串 */
+    endTime: string;
+    /** 是否长期有效 */
+    longTerm: boolean;
+    /** 触发规则 */
+    triggerRule: {
+      /** 落后满几个版本走强提醒。默认 3，范围 1-99 */
+      behindVersions: number;
+      /** 由 behindVersions 生成 */
+      previewText: string;
+      /** 补弹说明，系统固定文案 */
+      supplementText: string;
+    };
+    /** 普通提醒。落后 1 到 N-1 个版本 */
+    normalRemind: {
+      /** 提醒周期，每 N 天 */
+      cycleDays: number;
+      /** 每日提醒次数 */
+      dailyTimes: number;
+      /** 提醒时间点。多个用英文逗号分隔，不校验时间格式；数组入库后也会拼成这个字符串 */
+      remindTime: string;
+      title: {
+        zh: string;
+        en: string;
+        ru: string;
+      };
+      content: {
+        zh: string;
+        en: string;
+        ru: string;
+      };
+    };
+    /** 强提醒。频率和时间系统默认，标题正文可配置 */
+    strongRemind: {
+      /** 固定 false，频率和时间不可配置 */
+      configurable: boolean;
+      /** 触发条件，随 behindVersions 变化 */
+      triggerText: string;
+      /** 提醒频率 */
+      frequency: string;
+      /** 强提醒时间，不是 normalRemind.remindTime */
+      remindTime: string;
+      title: {
+        zh: string;
+        en: string;
+        ru: string;
+      };
+      content: {
+        zh: string;
+        en: string;
+        ru: string;
+      };
+    };
+    /** 创建时间。没有记录时为空字符串 */
+    createTime: string;
+    /** 更新时间。没有记录时为空字符串 */
+    updateTime: string;
+  };
+}
+
 export interface UserGetWindowInfoListListParams {
   /**
    * 分页索引, int, 非必传, 默认1
@@ -8700,37 +8780,134 @@ export interface UserGetProxyListMergedListData {
 }
 
 export interface UserGetProxyVendorListListData {
+  /** 0 成功 */
   code: number;
-  data: {
-    carouselList: string[];
-    createTime: string;
-    vendorDiscountDesc: string;
-    vendorDiscountTitle: string;
-    iconList: string[];
-    id: number;
-    isJump: number;
-    isNew: number;
-    isOfficial: boolean;
-    jumpInfo: {
-      apiKey: string;
-      isToken: boolean;
-      jumpUrl: string;
-      password: string;
-      thirdUuid: string;
-      username: string;
-    };
-    proxyTypeList: string[];
-    sort: number;
-    status: number;
-    updateTime: string;
-    vendorAdv: string[];
-    vendorDesc: string;
-    vendorDiscount: number | null;
-    vendorIcon: string;
-    vendorName: string;
-    vendorWebsite: string;
-  }[];
+  /** 提示信息 */
   msg: string;
+  /** 厂商列表，按 sort 升序 */
+  data: {
+    /** 厂商 ID */
+    id?: number;
+    /** 厂商名称 */
+    vendorName?: string;
+    /** 厂商官网 */
+    vendorWebsite?: string;
+    /** 厂商图标 */
+    vendorIcon?: string;
+    /** 折扣，无折扣时为 null */
+    vendorDiscount?: number;
+    /** 状态，1 启用 */
+    status?: number;
+    /** 是否跳转第三方，1 是 0 否 */
+    isJump?: number;
+    /** 是否展示新标签，1 是 0 否 */
+    isNew?: number;
+    /** 是否官方 */
+    isOfficial?: boolean;
+    /** 排序，越小越靠前 */
+    sort?: number;
+    /** 创建时间 */
+    createTime?: string;
+    /** 更新时间 */
+    updateTime?: string;
+    /** 代理类型。新数据按请求语言直接返回；旧数据仍是类型名数组并走原翻译 */
+    proxyTypeList?: string[];
+    /** 厂商描述，按语言返回 */
+    vendorDesc?: string;
+    /** 独家折扣标题，按语言返回，无则为空串 */
+    vendorDiscountTitle?: string;
+    /** 独家折扣说明，按语言返回，无则为空串 */
+    vendorDiscountDesc?: string;
+    /** 卖点。字符串数组，无图标。按请求语言返回 */
+    vendorAdv?: string[];
+    /** 适用场景。对象数组，只有浅色 icon，无 iconDark。无数据时为 [] */
+    vendorSceneList?: {
+      /** 场景标题。英文/俄文：Scraping、Multi-Account、Ads */
+      title: string;
+      /** 浅色图标 */
+      icon: string;
+    }[];
+    /** 优惠券列表。coupon 为面额，threshold 为使用门槛。无数据时为 [] */
+    couponList?: {
+      /** 面额 */
+      coupon: number;
+      /** 门槛，0 表示无门槛 */
+      threshold: number;
+    }[];
+    /** 厂商关联图标列表 */
+    iconList?: string[];
+    /** 轮播图。英文用 carouselListEn，其他语言用 carouselList */
+    carouselList?: string[];
+    /** 跳转信息。isJump 不为 1 时为空对象 {} */
+    jumpInfo?: {
+      /** 厂商级跳转地址，已按语言拼好 */
+      jumpUrl: string;
+      /** 是否携带登录态。为 true 时才会创建本地账号 */
+      isToken: boolean;
+      /** 第三方账号 */
+      username: string;
+      /** 第三方密码 */
+      password: string;
+      /** 第三方 apiKey */
+      apiKey: string;
+      /** 第三方用户标识 */
+      thirdUuid: string;
+      /** 赠送类型：coupon 优惠券，traffic_package 流量包。未创建账号时为空串 */
+      giftType: string;
+    };
+    /** 设计稿④ 介绍与特性。库中无数据时 title、content 为空串，list 为 []。特性只有浅色 icon */
+    introList?: {
+      title: string;
+      /** 介绍正文 */
+      content: string;
+      list: {
+        /** 特性标题 */
+        title: string;
+        /** 特性正文 */
+        content: string;
+        /** 价格文案，没有则为空串 */
+        priceText: string;
+        /** 浅色图标 */
+        icon: string;
+      }[];
+    };
+    /** 设计稿⑨ 动态代理类型。仅 Rola-IP 的 list 项有 jumpUrl，按顺序对应 4 个购买页 */
+    dynamicProxyTypeList?: {
+      /** 区块标题。英文 Dynamic Proxy Types，俄文 Типы динамических прокси */
+      title: string;
+      content: string;
+      list: {
+        /** 英文 Mobile Proxy，俄文 Мобильные прокси */
+        title: string;
+        /** 英文 4G/5G carrier IPs · Exceptional quality for sensitive use */
+        content: string;
+        /** 英文 From $2.00/GB，俄文 От $2.00/GB */
+        priceText: string;
+        /** 浅色图标 */
+        icon: string;
+        /** 深色图标 */
+        iconDark: string;
+        /** 生产为 https://console.rola-ip.co/zh/dynamic/mobile/price */
+        jumpUrl: string;
+      }[];
+    };
+    /** 设计稿⑬ 适用场景详情。list 项同时有 icon、iconDark */
+    useCaseList?: {
+      /** 英文 Use Cases，俄文 Сценарии */
+      title: string;
+      content: string;
+      list: {
+        /** 英文 Ad Verification，俄文 Проверка рекламы */
+        title: string;
+        content: string;
+        priceText: string;
+        /** 浅色图标 */
+        icon: string;
+        /** 深色图标 */
+        iconDark: string;
+      }[];
+    };
+  }[];
 }
 
 export interface UserGetProxyBusinessSceneListListParams {
@@ -9324,6 +9501,89 @@ export interface UserBatchSetProxyAutoRenewalCreateData {
     successList: number[];
   };
   msg: string;
+}
+
+export interface UserGetProxyExpiringSoonListListParams {
+  /** @example "1" */
+  page_index?: string;
+  /** @example "15" */
+  page_size?: string;
+  /**
+   * checkOnly=1 只返回 total 和 hasBoundProfile
+   * @example "1"
+   */
+  checkOnly?: string;
+}
+
+export interface UserGetProxyExpiringSoonListListData {
+  /** 0 表示成功 */
+  code: number;
+  msg: string;
+  data: {
+    /** 7 日内未过期的临期 IP 总数，弹窗标题用这个数 */
+    total: number;
+    /** 这些临期 IP 里，当前是否至少有 1 条绑了窗口。false 时【窗口管理】不弹窗。每次请求按最新绑定实时计算 */
+    hasBoundProfile: boolean;
+    /** 当前页列表。checkOnly=1 时这里是空数组 */
+    rows: {
+      /** 代理 ID，勾选、续费时用。雪花 ID 会返回字符串 */
+      id: number;
+      /** Outbound IP，出口 IP */
+      lastIp: string;
+      /** 最近检测出的国家/地区，和 lastCity 拼成 HK/HongKong */
+      lastCountry: string;
+      /** 最近检测出的城市 */
+      lastCity: string;
+      /** 购买时的国家代码，用来画国旗 */
+      country: string;
+      /** Linked Profiles，当前绑定的窗口。空数组表示未绑定，展示 -- */
+      profiles: {
+        id?: number;
+        name?: string;
+        sortNum?: number;
+      }[];
+      /** Purpose，代理用途，按当前语言返回 */
+      businessUse: string;
+      /** 亮色图标 */
+      sceneIcon?: string;
+      /** 暗色图标 */
+      sceneIconDark?: string;
+      /** 到期时间 */
+      expireDate: string;
+      /** 第 7 天到期，仍在提醒范围内 */
+      remainDays: number;
+      /** 4～7 天，黄色 */
+      expireRemindStatus: number;
+      /** Renewal Price，折后月单价，单位美元。展示为 $5.50 / 30 days */
+      renewalPrice: number;
+      /** Note，备注。空字符串表示没有备注 */
+      remark: string;
+    }[];
+  };
+}
+
+export interface UserRegisterProxyProviderUserV2CreatePayload {
+  /** 代理供应商 ID，必传，int */
+  proxyProviderId: number;
+}
+
+export interface UserRegisterProxyProviderUserV2CreateData {
+  /** 0 成功 */
+  code: number;
+  msg: string;
+  data: {
+    /** 供应商账号 apiKey，仅新注册成功时有 */
+    apiKey: string;
+    /** 赠送类型：coupon 优惠券 */
+    giftType: string;
+    giftInfo: {
+      couponList: {
+        discount: string;
+      }[];
+      /** 中文描述 */
+      description: string;
+    };
+  };
 }
 
 export interface UserGetPlatformInfoListParams {
@@ -11431,7 +11691,7 @@ export interface UserGetDurationDiscountsByDaysListParams {
    * renew:续费
    * @example "renew"
    */
-  orderlype?: string;
+  orderType?: string;
 }
 
 export interface UserGetDurationDiscountsByDaysListData {
@@ -11537,32 +11797,30 @@ export interface UserMidAutumnLotteryDrawCreateData {
   code: number;
   /** 提示文案 */
   msg: string;
-  /** 本次抽中的这一条奖品（每次只抽 1 条） */
   data: {
-    /** 抽奖记录主键 mid_autumn_lottery_record.id */
+    /** 本次抽中的记录 id */
     id: number;
-    /** 档位：third(≥$30) / fourth(≥$20) / participate_a(≥$12) / participate_b(<$12) */
+    /** 奖品档位 */
     prizeTier: string;
-    /** 奖品类型：window=窗口 / proxy=机房代理 / points=AI积分 */
+    /** window / proxy / points */
     prizeType: string;
-    /** 奖品明细（随 prizeType 变化） */
     prizePayload: {
-      /** 本例为代理：赠送 7 天；window 还有 windows；points 则为 points */
+      windows: number;
       days: number;
     };
-    /** 触发抽奖的消费品类：profile / proxy / points */
+    /** 在奖品文案前加「恭喜获得」（en: Congratulations! / ru: Поздравляем!） */
+    prizeContent: string;
+    /** 仅 window 有值 */
+    desc: string;
     consumeCategory: string;
-    /** 触发订单实付（美分），1440=$14.40 → participate_a */
     consumeAmountCents: number;
-    /** 触发抽奖的原消费订单号 */
     sourceOrderNo: string;
-    /** 本次到账生成的赠送订单号 */
+    /** 本次到账赠送单号 */
     grantOrderNo: string;
     /** 本次抽奖到账时间 */
     drawTime: string;
-    /** 消费成功预生成该条记录的时间 */
     createTime: string;
-    /** 抽完后剩余待抽次数（0=已抽完） */
+    /** 抽完后剩余待抽次数 */
     pendingCount: number;
   };
 }
@@ -12559,6 +12817,7 @@ export interface GetMidAutumnEggStatusListData {
 
 export interface UserMidAutumnClaimEggCreatePayload {
   positionId: string;
+  captchaVerifyParam: string;
 }
 
 export interface UserMidAutumnClaimEggCreateData {
@@ -12567,7 +12826,7 @@ export interface UserMidAutumnClaimEggCreateData {
   /** 提示文案；成功通常为空，失败如「找找其他的彩蛋」 */
   msg: string;
   data: {
-    /** 领取结果：1=坑位领不到  3=本账号已领过  4=成功  5=活动下架（2=未登录走鉴权） */
+    /** 领取结果：1=坑位领不到  3=本账号已领过  4=成功  5=活动下架（2=未登录走鉴权） 6：今日投放领完 */
     claimStatus: number;
     /** 彩蛋类型：jade_rabbit=玉兔  mooncake=月饼 */
     eggType: string;
@@ -12582,6 +12841,16 @@ export interface UserMidAutumnClaimEggCreateData {
     /** 活动名称（中文） */
     activityName: string;
   };
+}
+
+export interface UserMidAutumnClaimCaptchaTriggerListData {
+  code: number;
+  data: {
+    EncryptedSceneId: string;
+    captcha: boolean;
+    sceneId: string;
+  };
+  msg: string;
 }
 
 export interface UserCalculatePointsPriceListParams {

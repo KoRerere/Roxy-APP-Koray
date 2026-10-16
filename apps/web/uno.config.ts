@@ -35,8 +35,9 @@ export default defineConfig({
       name: 'lang',
       match: (matcher) => {
         const m = /^lang-([\w-]+):(.*)$/.exec(matcher)
-        if (!m)
+        if (!m) {
           return
+        }
         return {
           matcher: m[2],
           selector: s => `html:lang(${m[1]}) ${s}`,
@@ -61,6 +62,7 @@ export default defineConfig({
     'tt-brand': 'text-[var(--colors-text-text-brand)]',
     'tt-placeholder': 'text-[var(--colors-text-text-placeholder)]',
     'tt-warning': 'text-[var(--colors-text-text-warning)]',
+    'tt-error': 'text-[var(--colors-text-text-error)]',
     'tt-success': 'text-[var(--colors-text-text-success)]',
   },
   theme: {

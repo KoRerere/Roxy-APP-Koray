@@ -539,8 +539,8 @@ export function useSubscribe() {
 
   /** 显示 APP 更新公告弹窗（前置升级 / 上次更新日志） */
   async function showAppUpgradeDialog(payload: ShowAppUpgradeDialogPayload) {
-    const { tips, actionMode = 'dismiss', updateItem } = payload
-    if (!tips?.length) {
+    const { tips, actionMode = 'dismiss', updateItem, remindCopy } = payload
+    if (!tips?.length && !remindCopy?.title && !remindCopy?.content) {
       return
     }
 
@@ -549,6 +549,9 @@ export function useSubscribe() {
     const header = actionMode === 'upgrade'
       ? $t('检测到新版本 v{appVersion}', { appVersion: headerVersion })
       : $t('v{appVersion} 更新概览', { appVersion: headerVersion })
+
+    // 点升级时关闭弹窗也会走到 handleCancel，用标记把升级和暂不更新分开
+    let confirmedUpgrade = false
 
     showModal({
       // 标题含版本号，不能当去重 key；挂机后再触发间隔提醒时复用同一层
@@ -560,11 +563,17 @@ export function useSubscribe() {
         mask: 'z-1002',
       },
       draggable: false,
+      handleCancel: () => {
+        if (actionMode === 'upgrade' && !confirmedUpgrade) {
+          payload.onDismiss?.()
+        }
+      },
       slots: {
         default: ({ handleCancel }) => {
           return (
             <AppUpgradeTips
               actionMode={actionMode}
+              remindCopy={remindCopy}
               onSkip={() => {
                 handleCancel()
                 if (actionMode === 'dismiss') {
@@ -572,11 +581,13 @@ export function useSubscribe() {
                 }
               }}
               onUpgrade={() => {
+                confirmedUpgrade = true
+                payload.onConfirmUpgrade?.()
                 handleCancel()
                 // 自动弹窗已展示更新内容，不再二次确认，直接走现有安装流程
                 globalThis.electronAPI.send('app:quitAndInstall', updateItem || { type: 'app' })
               }}
-              newFeatureTips={tips}
+              newFeatureTips={tips ?? []}
             />
           )
         },

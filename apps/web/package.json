@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "dev": "pnpm -w run sync:web-app-version:dev && dotenvx run -f .env.development -- vite dev",
-    "build:dev": "pnpm -w run sync:web-app-version:dev && dotenvx run -f .env.development -- vite build --mode development",
-    "build:prod": "pnpm -w run sync:web-app-version:prod && dotenvx run -f .env.production -- vite build",
+    "build:dev": "pnpm -w run check:zh-proxy && pnpm -w run sync:web-app-version:dev && dotenvx run -f .env.development -- vite build --mode development",
+    "build:prod": "pnpm -w run check:zh-proxy && pnpm -w run sync:web-app-version:prod && dotenvx run -f .env.production -- vite build",
     "preview": "vite build && vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",

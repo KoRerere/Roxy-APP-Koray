@@ -1,43 +1,91 @@
 <script setup lang="ts">
-import { isObject } from '/@/utils';
-import type { ActionsItem } from './type'
+import { isObject } from '/@/utils'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import type { ActionsItem, ActionsItemMultiple } from './type'
 
-const { model, total } = defineProps<{
+const { model, total, busy = false } = defineProps<{
   total: number
   model: ActionsItem[]
+  /** 表级操作锁，由 table 传入 */
+  busy?: boolean
 }>()
 
 const emit = defineEmits(['more'])
 
 const selectedProduct = defineModel<any[]>('selection')
+const loadingMap = ref<Record<string, boolean>>({})
 
-const quickGourp = computed(() => {
-  return Object.entries(model.reduce((acc, { multiple, ...item }) => {
-    if (!multiple || !isObject(multiple) || item.onlyQuick) return acc
-    const { name = 'default', render, ...props } = multiple
+function isBatchItem(item: ActionsItem) {
+  return item.visible !== false && !item.onlyQuick && !!item.multiple
+}
+
+const quickGroup = computed(() => {
+  return Object.entries(model.reduce<Record<string, any[]>>((acc, item) => {
+    if (!isBatchItem(item) || !isObject(item.multiple) || item.separator) {
+      return acc
+    }
+    const multiple = item.multiple as ActionsItemMultiple
+    const { name = 'default', render, showLabel, iconProps, discountBadge, ...props } = multiple
     acc[name] ??= []
     acc[name].push({
       ...item,
       render,
-      props: {
-        disabled: item.disabled,
-        ...props,
-      },
+      showLabel,
+      iconProps,
+      discountBadge,
+      props,
     })
     return acc
   }, {}))
     .toSorted((a, b) => a[0].localeCompare(b[0]))
-    .map(([_, value]) => value)
+    .map(([, value]) => value)
 })
 
-const showMore = computed(() => quickGourp.value.length < model.length)
+/** 更多菜单是全量批量操作；快捷区只是其中带外观配置的子集 */
+const showMore = computed(() => {
+  const batchCount = model.filter(isBatchItem).length
+  const quickCount = quickGroup.value.reduce((sum, list) => sum + list.length, 0)
+  return batchCount > quickCount
+})
+
+function actionKey(item: ActionsItem) {
+  return String(item.key ?? item.icon ?? item.label ?? '')
+}
+
+function isItemLoading(item: ActionsItem) {
+  return !!loadingMap.value[actionKey(item)]
+}
 
 async function onCommand(event: Event, item: any) {
-  const result = await item.command?.({ originalEvent: event, item, data: selectedProduct })
-  // 如果返回 false 代表中断，不清空选择项
-  if (result !== false) {
-    selectedProduct.value = []
+  // busy/disabled 必须在进入 command 前拦住：CSS 禁用挡不住点击
+  if (item.disabled || busy || isItemLoading(item)) {
+    return
   }
+  const token = actionKey(item)
+  loadingMap.value[token] = true
+  try {
+    const result = await item.command?.({ originalEvent: event, item, data: selectedProduct.value })
+    if (result !== false) {
+      selectedProduct.value = []
+    }
+  }
+  finally {
+    loadingMap.value[token] = false
+  }
+}
+
+function onMore(event: Event) {
+  if (busy) {
+    return
+  }
+  emit('more', event)
+}
+
+function onClear() {
+  if (busy) {
+    return
+  }
+  selectedProduct.value = []
 }
 </script>
 
@@ -52,16 +100,35 @@ async function onCommand(event: Event, item: any) {
           <span class="baritem-light">{{ total }}</span>
         </template>
       </i18n-t>
-      <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#FAFAFA" @click="selectedProduct = []" />
+      <RxSvgIcon class="cursor-pointer" name="base/rx_ic_delete" color="#FAFAFA" @click="onClear" />
     </div>
-    <div v-for="(list, index) in quickGourp" :key="index" class="flex items-center icons">
-      <template v-for="{ render, ...item } in list" :key="item.key ?? item.icon">
-        <component v-if="render" :is="render" :item="item"></component>
-        <RxButton v-else text severity="secondary" :icon="item.icon" v-bind="item.props" @click="onCommand($event, item)"></RxButton>
+    <div v-for="(list, index) in quickGroup" :key="index" class="icons" :class="{ 'has-label': list.some(item => item.showLabel) }">
+      <template v-for="item in list" :key="item.key ?? item.icon">
+        <component :is="item.render" v-if="item.render" :item="item" />
+        <div
+          v-else
+          v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }"
+          class="icon-item"
+          :class="{ disabled: item.disabled || busy }"
+          @click="onCommand($event, item)"
+        >
+          <RxSvgIcon
+            class="pointer-events-none"
+            :name="isItemLoading(item) ? 'base/rx_ic_progress_bar' : item.icon"
+            :class="{ 'animate-spin': isItemLoading(item) }"
+            color="#FAFAFA"
+            v-bind="isItemLoading(item) ? {} : item.iconProps"
+          />
+          <span v-if="item.showLabel" class="icon-label">{{ item.label }}</span>
+          <span v-if="item.discountBadge" class="discount-badge">{{ item.discountBadge }}</span>
+        </div>
       </template>
     </div>
-    <div class="icons">
-      <RxButton v-if="showMore" text severity="secondary" icon="base/rx_ic_more-v" @click.stop="emit('more', $event)"></RxButton>
+    <div :class="{ 'pointer-events-none opacity-40': busy }">
+      <slot />
+    </div>
+    <div v-if="showMore" class="icons cursor-pointer" :class="{ disabled: busy }" @click.stop="onMore($event)">
+      <RxSvgIcon name="base/rx_ic_more-v" class="pointer-events-none" color="#FAFAFA" />
     </div>
   </div>
 </template>
@@ -72,42 +139,78 @@ async function onCommand(event: Event, item: any) {
   gap: 4px;
   border-radius: 8px;
   background: var(--pattern-actionbar-bg, #111213);
-  box-shadow: 0px 3px 8px 0px rgba(0, 0, 0, 0.07), 0px 2px 5px 0px rgba(0, 0, 0, 0.07), 0px 1px 1px 0px rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0px 3px 8px 0px rgba(0, 0, 0, 0.07),
+    0px 2px 5px 0px rgba(0, 0, 0, 0.07),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.07);
+}
+
+.baritem,
+.icons {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--pattern-actionbar-btn-border, #34393d);
+  background: var(--pattern-actionbar-btn, #2c2e30);
+  white-space: nowrap;
 }
 
 .baritem {
-  padding: var(--spacing-lg, 8px) var(--spacing-xl, 12px);
   gap: 6px;
-  border-radius: 5px;
-  border: 1px solid var(--pattern-actionbar-btn-border, #34393D);
-  background: var(--pattern-actionbar-btn, #2C2E30);
-
-  color: var(--pattern-actionbar-text-subtle, #AFB7BB);
+  color: var(--pattern-actionbar-text-subtle, #afb7bb);
   font-size: 13px;
   line-height: var(--Line-Height-text-xs, 16px);
   user-select: none;
 
   &-light {
-    color: var(--pattern-actionbar-text, #FAFAFA);
+    color: var(--pattern-actionbar-text, #fafafa);
     font-weight: 600;
   }
 }
 
 .icons {
-  border-radius: 5px;
-  border: 1px solid var(--pattern-actionbar-btn-border, #34393D);
-  background: var(--pattern-actionbar-btn, #2C2E30);
+  gap: 12px;
+  color: var(--pattern-actionbar-text, #fafafa);
 
-  :deep(.p-button-text.p-button-secondary) {
-    color: var(--pattern-actionbar-text, #FAFAFA);
+  &.has-label {
+    padding: 0;
 
-    svg {
-      color: var(--pattern-actionbar-text, #FAFAFA);
+    .icon-item {
+      padding: 8px 12px;
     }
   }
 }
 
+.icon-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--pattern-actionbar-text, #fafafa);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.icon-label {
+  white-space: nowrap;
+}
+
+.discount-badge {
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #fc9d12;
+  color: #fff;
+  font-size: 12px;
+  line-height: normal;
+  white-space: nowrap;
+}
+
 .disabled {
   cursor: not-allowed;
+  opacity: 0.4;
+  pointer-events: none;
 }
 </style>

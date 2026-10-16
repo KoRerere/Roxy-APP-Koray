@@ -153,21 +153,19 @@ async function onSaveAndRun() {
 
     <div class="flex min-h-0 flex-1 overflow-hidden overflow-x-auto px-6">
       <div class="ma-auto flex h-full min-h-0 w-full gap-8" :class="[collapsed ? 'min-w-192 max-w-192' : 'min-w-240 max-w-285']">
-        <AccordionInputs class="min-h-0 min-w-0 flex-1" :accordions="accordions" :inputs-group="inputsGroup">
-          <template #before>
-            <!-- 等 initialize 完成再挂载，避免 async onBeforeMount 竞态下 ProxyInfo 用空列表 hydrate -->
-            <BasicInfo v-if="formInitialized" :window-inputs="windowInputs" :autofill-window-name="false" />
-          </template>
-        </AccordionInputs>
+        <div class="flex min-h-0 min-w-0 flex-1 flex-col">
+          <AccordionInputs class="min-h-0 min-w-0 flex-1" :accordions="accordions" :inputs-group="inputsGroup">
+            <template #before>
+              <!-- 等 initialize 完成再挂载，避免 async onBeforeMount 竞态下 ProxyInfo 用空列表 hydrate -->
+              <BasicInfo v-if="formInitialized" :window-inputs="windowInputs" :autofill-window-name="false" />
+            </template>
+          </AccordionInputs>
+          <div class="footer flex shrink-0 items-center justify-end gap-2 px-4 py-4 min-h-16">
+            <RxButton v-tooltip.top="canSave ? '' : $t('正在生成新指纹，请稍后')" severity="secondary" outlined :label="$t('保存并运行')" :disabled="!canSave" :loading="saving || loading" @click="onSaveAndRun" />
+            <RxButton v-tooltip.top="canSave ? '' : $t('正在生成新指纹，请稍后')" :label="$t('保存配置')" :disabled="!canSave" :loading="saving || loading" @click="saveTemplate(false)" />
+          </div>
+        </div>
         <PreviewCard v-model:collapsed="collapsed" :inputs-group="inputsGroup" :is-batch="false" :create-count="1" :is-import="false" :on-shuffle="shuffleFingerprint" />
-      </div>
-    </div>
-
-    <div class="relative shrink-0 px-6">
-      <div class="foot-separator" />
-      <div class="mx-auto flex min-h-16 items-center justify-end gap-2 py-4" :class="[collapsed ? 'max-w-192' : 'max-w-285']">
-        <RxButton v-tooltip.top="canSave ? '' : $t('正在生成新指纹，请稍后')" severity="secondary" outlined :label="$t('保存并运行')" :disabled="!canSave" :loading="saving || loading" @click="onSaveAndRun" />
-        <RxButton v-tooltip.top="canSave ? '' : $t('正在生成新指纹，请稍后')" :label="$t('保存配置')" :disabled="!canSave" :loading="saving || loading" @click="saveTemplate(false)" />
       </div>
     </div>
   </div>
@@ -205,13 +203,7 @@ async function onSaveAndRun() {
   border-radius: var(--radius-2xl, 8px);
 }
 
-.foot-separator {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  height: 1px;
-  background-color: var(--colors-border-divider);
+.footer {
+  border-top: 1px solid var(--colors-border-divider);
 }
 </style>

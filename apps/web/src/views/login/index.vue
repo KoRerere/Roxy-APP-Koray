@@ -24,6 +24,7 @@ import { getWorkspaceTypeLandingRoute } from '/@/utils/workspace-mode'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { clearMpDistinctId, getInviteCode, getMpDistinctId } from '/@/api/util'
 import { markNewUserBenefitShowOnLogin } from '/@/views/campaign/new-user/useNewUserBenefitModal'
+import { markProxyExpireRemindLogin } from '/@/views/agent/shop/components/expire-remind/silence'
 import { useWindowSize } from '@vueuse/core'
 import { markSessionLost } from '/@/utils/sessionLost'
 import { OFFICIAL_SITE_REDIRECT_SESSION, PROTOCOL_AUTO_LOGIN_PENDING } from '/@/constants/storage-key'
@@ -275,6 +276,8 @@ async function jumpHome(intoWorkspaceId?: number) {
   // }
 
   await enterWorkspace(intoWorkspaceId ?? userInfo.value.workspaceId)
+  // 进入主界面后的这一次提醒不受 30 分钟冷却约束
+  markProxyExpireRemindLogin()
   const name = getWorkspaceTypeLandingRoute(
     workspaceStore.currentWorkspace?.workspaceType ?? userInfo.value.workspaceType,
     userInfo.value.role,
@@ -446,7 +449,7 @@ provideLoginContext({
 
         <div class="sign-card">
           <SignForm v-if="currentComp === 'signForm'" ref="signForm" v-model="signFormData" v-bind="currentCompProps" :invite-discount-info="inviteDiscountInfo"
-                    @register="val => signFormSwitchRegister = val"
+                    @register="(val: boolean) => signFormSwitchRegister = val"
           />
           <EmailCodeInputOtp v-else-if="currentComp === 'emailCodeInputOtp'" type="signUp" v-bind="currentCompProps" />
           <ResetPassword v-else-if="currentComp === 'resetPassword'" v-bind="currentCompProps" />

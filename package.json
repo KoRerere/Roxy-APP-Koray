@@ -60,6 +60,7 @@
     "openapi": "pnpm -F @roxy/backend-api run openapi",
     "openapi:agent": "pnpm -F @roxy/agent-api run openapi",
     "genLanguage": "pnpm -F web run genLanguage",
+    "check:zh-proxy": "tsx scripts/check-zh-proxy-wording.ts",
     "postinstall": "npm run build:pkg && npm run install:electron",
     "lint": "turbo run lint",
     "lint:fix": "eslint . --fix",

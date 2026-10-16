@@ -360,7 +360,7 @@ const agentBg = computed(() => isDark.value ? getImage('mcp/agent-bg-dark.png') 
           {{ $t('欢迎使用 Roxy  ') }}
         </div>
         <p class="agent-desc mt-1.5">
-          {{ $t('您可以尝试打开多个浏览器窗口，并为它们设置不同的项目、平台账号、代理等') }}
+          {{ $t('您可以尝试打开多个浏览器窗口，并为它们设置不同的项目、平台账号、代理 IP 等') }}
         </p>
         <div class="flex gap-2 items-center">
           <div v-for="item in [

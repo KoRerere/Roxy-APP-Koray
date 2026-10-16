@@ -24,32 +24,24 @@ function panelRenderGroups(panel: FormPanel) {
   <div class="flex-ovh-1 min-h-0 min-w-0 w-full flex-col">
     <div v-if="props.accordions" class="content min-h-0 min-w-0 flex-1 overflow-y-auto pb-4">
       <slot name="before" />
-      <WindowFormRenderer
-        v-for="panel in outsidePanels"
-        :key="panel.value"
-        class="px-4"
-        :inputs="props.inputsGroup[panel.groupIndex]"
-        :inputs-group="props.inputsGroup"
-        :variant="panel.variant"
-        :excluded-fields="panel.excludedFields"
+      <WindowFormRenderer v-for="panel in outsidePanels" :key="panel.value" class="px-4" :inputs="props.inputsGroup[panel.groupIndex]" :inputs-group="props.inputsGroup" :variant="panel.variant"
+                          :excluded-fields="panel.excludedFields"
       />
       <RxAccordion :value="props.accordions.value" multiple>
         <AccordionPanel v-for="panel in accordionPanels" :key="panel.value" :value="panel.value" :pt="{ root: '!border-dashed' }">
           <AccordionHeader v-slot="{ active }" as="div">
             <div class="flex items-center gap-3 header">
               <SvgIcon class="header-icon" :name="active ? 'base/rx_ic_minus' : 'base/rx_ic_plus'" size="20" />
-              <span>{{ panel.title }}</span>
+              <span class="inline-flex items-center gap-1">
+                <span>{{ panel.title }}</span>
+                <SvgIcon v-if="panel.tooltip" v-tooltip.top="{ value: panel.tooltip, showDelay: 500 }" name="base/rx_ic_info" size="14" color="var(--colors-icon-icon-note)" />
+              </span>
             </div>
           </AccordionHeader>
           <AccordionContent>
             <div class="flex flex-col gap-4">
-              <WindowFormRenderer
-                v-for="(groupIndex, renderIndex) in panelRenderGroups(panel)"
-                :key="`${panel.value}-${groupIndex}`"
-                :inputs="props.inputsGroup[groupIndex]"
-                :inputs-group="props.inputsGroup"
-                :variant="renderIndex === 0 ? panel.variant : 'settings'"
-                :excluded-fields="renderIndex === 0 ? panel.excludedFields : undefined"
+              <WindowFormRenderer v-for="(groupIndex, renderIndex) in panelRenderGroups(panel)" :key="`${panel.value}-${groupIndex}`" :inputs="props.inputsGroup[groupIndex]"
+                                  :inputs-group="props.inputsGroup" :variant="renderIndex === 0 ? panel.variant : 'settings'" :excluded-fields="renderIndex === 0 ? panel.excludedFields : undefined"
               />
             </div>
           </AccordionContent>

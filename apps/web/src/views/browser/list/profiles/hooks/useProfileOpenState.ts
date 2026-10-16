@@ -10,6 +10,7 @@ import { useUserStore } from '/@/stores/user'
 import { useWorkspaceStore } from '/@/stores/workspace'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { compare } from 'compare-versions'
+import { supportsApp4_0_9 } from '/@/utils/app-supports'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { getWorkspaceNamePrefix } from '/@/utils/workspace'
 import { windowManager } from '/@/utils/windowManager'
@@ -34,6 +35,19 @@ export type ProfileOpenMessage = Partial<MainMessageResult<Partial<BrowserProces
 }
 
 type Data = ProfileRow
+
+/** 按批量打开布局启动。旧客户端没有层叠和上次关闭位置时退回堆叠。 */
+function launchBrowsersWithLayout(dirIds: string[], layout?: string) {
+  if (layout === 'grid') {
+    globalThis.electronAPI.send('browser:chunkBrowsersByScreen', dirIds)
+    return
+  }
+  if (supportsApp4_0_9() && (layout === 'cascade' || layout === 'lastClosed')) {
+    globalThis.electronAPI.send('browser:openBatchLayout', { dirIds, layout })
+    return
+  }
+  globalThis.electronAPI.send('browser:batchLaunch', dirIds)
+}
 
 /** 创建打开成功消息，与 Electron launch-process-message 结构保持一致 */
 export function createOpenSuccessMessage(dirId: string): ProfileOpenMessage {
@@ -252,12 +266,7 @@ export function useProfileOpenState() {
       }
 
       if (userInfo.value.onboardingTaskStatus?.batchOpenWindowNoPromptStatus !== false) {
-        if (userConfig.value.batchOpenLayout === 'grid') {
-          globalThis.electronAPI.send('browser:chunkBrowsersByScreen', dirIds)
-        }
-        else {
-          globalThis.electronAPI.send('browser:batchLaunch', dirIds)
-        }
+        launchBrowsersWithLayout(dirIds, userConfig.value.batchOpenLayout)
         return
       }
 
@@ -274,12 +283,7 @@ export function useProfileOpenState() {
               hideModal()
             },
             onConfirm: (value) => {
-              if (value === 'grid') {
-                globalThis.electronAPI.send('browser:chunkBrowsersByScreen', dirIds)
-              }
-              else {
-                globalThis.electronAPI.send('browser:batchLaunch', dirIds)
-              }
+              launchBrowsersWithLayout(dirIds, value)
               hideModal()
             },
           }),

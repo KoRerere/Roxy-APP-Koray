@@ -45,7 +45,7 @@ export interface BillingEntityLabels {
   unlimitedEntityQuota: string
   /** 若要增加窗口上限，请{terms}{text}新套餐。 */
   upgradeForMoreEntitiesKeypath: string
-  /** 窗口订阅、成员、团队：享 {profile} 折扣，代理：享 {proxy} 折扣 */
+  /** 窗口订阅、成员、团队：享 {profile} 折扣，代理 IP：享 {proxy} 折扣 */
   subscribeIdentityDiscount: string
   /** 永久享受窗口订阅...代理 IP... */
   subscribeIdentityDiscountPermanentKeypath: string
@@ -161,7 +161,7 @@ export function createBillingEntityLabels(isEcommerce: boolean): BillingEntityLa
     nextBillEntities: ({ count, amount, date }) => $t('下个计费周期，套餐已更改：\n窗口数量：{count}\n计费金额：{amount}\n账单日期：{date}', { count, amount, date }),
     unlimitedEntityQuota: $t('无限窗口'),
     upgradeForMoreEntitiesKeypath: $t('若要增加窗口上限，请{terms}{text}新套餐。', { terms: '{terms}', text: '{text}' }),
-    subscribeIdentityDiscount: $t('窗口订阅、成员、团队：享 {profile} 折扣，代理：享 {proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' }),
+    subscribeIdentityDiscount: $t('窗口订阅、成员、团队：享 {profile} 折扣，代理 IP：享 {proxy} 折扣', { profile: '{profile}', proxy: '{proxy}' }),
     subscribeIdentityDiscountPermanentKeypath: $t('永久享受窗口订阅、团队成员、团队：{profile} 折扣，代理 IP ：{proxy} 折扣{points}', { profile: '{profile}', proxy: '{proxy}', points: '{points}' }),
     entityUsageInsufficient: $t('窗口用量不足'),
     entityUsageInsufficientTeamDetail: $t('当前团队下的可创建窗口数量已到达上限，请删除不需要的窗口或者联系团队的拥有者进行升级。'),

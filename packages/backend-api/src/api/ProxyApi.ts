@@ -54,6 +54,8 @@ import {
   UserGetProxyDeviceDetailListData,
   UserGetProxyDeviceDetailListParams,
   UserGetProxyDurationDiscountsByDaysListData,
+  UserGetProxyExpiringSoonListListData,
+  UserGetProxyExpiringSoonListListParams,
   UserGetProxyListMergedListData,
   UserGetProxyListMergedListParams,
   UserGetProxyModuleListData,
@@ -99,6 +101,8 @@ import {
   UserRedeemProxyCodeCreatePayload,
   UserRegisterProxyProviderUserCreateData,
   UserRegisterProxyProviderUserCreatePayload,
+  UserRegisterProxyProviderUserV2CreateData,
+  UserRegisterProxyProviderUserV2CreatePayload,
   UserRenewDeviceProxySettlementCreateData,
   UserRenewDeviceProxySettlementCreatePayload,
   UserReportProxyOutOfStockCreateData,
@@ -1196,6 +1200,47 @@ export class ProxyApi<SecurityDataType = unknown> {
   ) =>
     this.http.request<UserBatchSetProxyAutoRenewalCreateData, any>({
       path: `/user_batch_set_proxy_auto_renewal`,
+      method: "POST",
+      body: data,
+      type: ContentType.Json,
+      format: "json",
+      ...params,
+    });
+  /**
+   * No description
+   *
+   * @tags Proxy
+   * @name UserGetProxyExpiringSoonListList
+   * @summary 代理IP即将到期提醒列表
+   * @request GET:/user_get_proxy_expiring_soon_list
+   * @response `200` `UserGetProxyExpiringSoonListListData`
+   */
+  userGetProxyExpiringSoonListList = (
+    query: UserGetProxyExpiringSoonListListParams,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserGetProxyExpiringSoonListListData, any>({
+      path: `/user_get_proxy_expiring_soon_list`,
+      method: "GET",
+      query: query,
+      format: "json",
+      ...params,
+    });
+  /**
+   * @description 与 /user_register_proxy_provider_user 入参相同。旧接口成功时 data 仍是 apiKey 字符串。本接口 data 为对象，并按 giftType 返回赠送内容：traffic_package 为 200M 流量包，coupon 为一张 8% 和一张 12% 优惠券。
+   *
+   * @tags Proxy
+   * @name UserRegisterProxyProviderUserV2Create
+   * @summary 注册代理供应商用户 V2
+   * @request POST:/user_register_proxy_provider_user_v2
+   * @response `200` `UserRegisterProxyProviderUserV2CreateData` 业务码在 body.code：0 成功，466 用户已存在，101 参数错误
+   */
+  userRegisterProxyProviderUserV2Create = (
+    data: UserRegisterProxyProviderUserV2CreatePayload,
+    params: RequestParams = {},
+  ) =>
+    this.http.request<UserRegisterProxyProviderUserV2CreateData, any>({
+      path: `/user_register_proxy_provider_user_v2`,
       method: "POST",
       body: data,
       type: ContentType.Json,

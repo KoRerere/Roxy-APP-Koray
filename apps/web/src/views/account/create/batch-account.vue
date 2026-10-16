@@ -4,6 +4,9 @@ import ParseTextarea from '/@/views/agent/create/components/parse-textarea.vue'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useSimpleDialog } from '/@/components/simplePopup'
 
+import { resolveAccountLoginLabels } from '/@/views/account/create/account-login-labels'
+import { toPlatformAbbrOptions } from '/@/views/browser/create/window-name'
+import type { PlatformAbbrOption } from '/@/views/browser/create/window-name'
 import { API } from '/@/api'
 import { LIST_CACHE_NAMESPACE, useListCacheActions } from '/@/stores/listCache'
 import { useThemeStore } from '/@/stores/theme'
@@ -17,50 +20,10 @@ const [showToast, onlyErrorToast] = useResponseToast()
 const { showSimpleDialog } = useSimpleDialog()
 const { invalidateCache: invalidateAccountListCache } = useListCacheActions()
 
-const columns = [
-  {
-    key: 'platformUrl',
-    title: $t('平台'),
-    getText: (data: any) => data.platformUrl || '--',
-  },
-  // {
-  //   key: 'platformName',
-  //   title: $t('平台名'),
-  //   slot: 'name',
-  // },
-  {
-    key: 'platformUserName',
-    title: $t('账号'),
-    getText: (data: any) => data.platformUserName || '--',
-  },
-  {
-    key: 'platformPassword',
-    title: $t('密码'),
-    getText: (data: any) => data.platformPassword || '--',
-  },
-  {
-    key: 'platformEfa',
-    title: '2FA',
-    getText: (data: any) => data.platformEfa || '--',
-  },
-  // {
-  //   key: 'platformEmail',
-  //   title: $t('关联邮箱'),
-  //   getText: (data: any) => data.platformEmail || '--',
-  // },
-  {
-    key: 'platformRemarks',
-    title: $t('备注'),
-    slot: 'remark',
-  },
-  {
-    title: $t('操作'),
-    slot: 'actions',
-  },
-]
-
 const proxiesText = ref('')
 const dataList = ref<any[]>([])
+/** 顶部所选平台的缩写表，表头账号/密码文案按它变化 */
+const platformAbbrCatalog = ref<PlatformAbbrOption[]>([])
 const input = ref<Record<string, any>>({
   type: 'select',
   name: 'platformUrl',
@@ -72,6 +35,7 @@ const input = ref<Record<string, any>>({
     getOptions: async () => {
       const { data: { rows } } = await API.platform.userGetPlatformInfoList({})
       input.value._rows = rows
+      platformAbbrCatalog.value = toPlatformAbbrOptions(rows)
       return formatPlatformOptions(rows)
     },
   },
@@ -80,6 +44,44 @@ const input = ref<Record<string, any>>({
 
 watch(() => themeStore.realTheme, () => {
   input.value.props.options = formatPlatformOptions(input.value._rows)
+})
+
+/** 批量添加共用顶部平台，表头跟着所选网址的缩写变 */
+const columns = computed(() => {
+  const labels = resolveAccountLoginLabels({
+    platformUrl: String(input.value.value ?? ''),
+  }, platformAbbrCatalog.value)
+  return [
+    {
+      key: 'platformUrl',
+      title: $t('平台'),
+      getText: (data: any) => data.platformUrl || '--',
+    },
+    {
+      key: 'platformUserName',
+      title: labels.account,
+      getText: (data: any) => data.platformUserName || '--',
+    },
+    {
+      key: 'platformPassword',
+      title: labels.password,
+      getText: (data: any) => data.platformPassword || '--',
+    },
+    {
+      key: 'platformEfa',
+      title: '2FA',
+      getText: (data: any) => data.platformEfa || '--',
+    },
+    {
+      key: 'platformRemarks',
+      title: $t('备注'),
+      slot: 'remark',
+    },
+    {
+      title: $t('操作'),
+      slot: 'actions',
+    },
+  ]
 })
 
 function formatPlatformOptions(dataList: any[]) {

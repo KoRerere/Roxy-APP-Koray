@@ -950,7 +950,7 @@ async function bindChosenProxyToProfiles(datas: Data[], formData: any) {
   })
 }
 
-/** 手动添加的自定义代理绑定到窗口 */
+/** 手动添加的自定义 IP绑定到窗口 */
 async function bindCustomProxyToProfiles(datas: Data[], formData: Record<string, any>) {
   const { id, ...restForm } = formData
   const { code, msg } = await API.window.userMdfWindowDataBatchCreate({

@@ -103,12 +103,12 @@ const createdProfileCount = computed(() => Math.min(3, Math.floor(progress.value
 const visibleCreatedProfiles = computed(() => createdProfiles.slice(0, createdProfileCount.value))
 const createExecutionLines = computed(() => [
   $t('正在读取批量创建配置…'),
-  ...createdProfiles.map((profile, index) => $t('{order} {name} 已创建，独立代理 {proxy} 已配置。', {
+  ...createdProfiles.map((profile, index) => $t('{order} {name} 已创建，独立代理 IP {proxy} 已配置。', {
     order: [$t('第一个窗口'), $t('第二个窗口'), $t('第三个窗口')][index],
     name: profile.name,
     proxy: profile.proxy,
   })),
-  $t('创建完成：3 个窗口均已创建，并已配置独立代理。'),
+  $t('创建完成：3 个窗口均已创建，并已配置独立代理 IP。'),
 ])
 const publishProfiles = ['TikTok-1', 'TikTok-2', 'TikTok-3', 'TikTok-4']
 const publishExecutionLines = computed(() => [

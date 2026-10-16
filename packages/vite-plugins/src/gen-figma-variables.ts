@@ -108,12 +108,11 @@ async function genCssVariable(files: { fileName: string, body: Record<string, an
 
 function flattenObject(obj: Record<string, any>, prefix = '') {
   function processValue(value: any) {
-    if (typeof value !== 'string') return value;
-    const varMatch = value.match(/^\{(.*)\}$/);
-    if (varMatch) {
-      return `var(--${varMatch[1].replace(/\./g, '-')})`;
-    }
-    return value;
+    if (typeof value !== 'string') return value
+    // 整段 {a.b.c}，以及 rgb(from ...) 内部的别名，都要换成 CSS 变量
+    return value.replace(/\{([^{}]+)\}/g, (_, tokenPath: string) => {
+      return `var(--${tokenPath.replace(/\./g, '-')})`
+    })
   }
 
   return Object.keys(obj).reduce((acc, key) => {

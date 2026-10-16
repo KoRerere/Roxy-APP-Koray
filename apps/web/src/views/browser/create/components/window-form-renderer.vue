@@ -6,6 +6,7 @@ import Position from '/@/views/browser/create/components/position.vue'
 import { $t } from '/@/locales/index.js'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText, findInputByName } from '/@/utils/'
+import { useSuggestedWindowName } from '../hooks/useSuggestedWindowName'
 import AccountItem from './account.vue'
 import CookiesItem from './cookies.vue'
 import OsSwitch from './os-switch.vue'
@@ -34,12 +35,25 @@ const renderedInputs = computed(() => {
     return !props.excludedFields.includes(input.name)
   })
 
-  while (filteredInputs[0]?.separator)
+  while (filteredInputs[0]?.separator) {
     filteredInputs.shift()
-  while (filteredInputs.at(-1)?.separator)
+  }
+  while (filteredInputs.at(-1)?.separator) {
     filteredInputs.pop()
+  }
 
   return filteredInputs as never[]
+})
+
+const windowNameInput = computed<any>(() => renderedInputs.value.find((input: { name?: string }) => input?.name === 'windowName'))
+
+/** 批量创建名称只回填日期序号，不带平台缩写和代理国家 */
+useSuggestedWindowName({
+  serialOnly: true,
+  enabled: () => Boolean(windowNameInput.value && !windowNameInput.value.dirId),
+  getNameInput: () => windowNameInput.value,
+  getAccounts: () => [],
+  getProxyList: () => [],
 })
 
 const cookiePlatformUrls = computed(() => {
@@ -68,9 +82,12 @@ function onCopy(dirId: string) {
           <span class="text-3 font-[JetBrains_Mono]">ID:{{ input.dirId }}</span>
           <span class="text-3 font-[JetBrains_Mono] color-blue cursor-pointer" @click="onCopy(input.dirId)">{{ $t('复制') }}</span>
         </div>
-        <div class="flex min-w-0 w-full items-center">
+        <div class="flex min-w-0 w-full items-start">
           <InputLabel class="shrink-0" v-bind="input" />
-          <RxInputText v-model="input.value" class="min-w-0 flex-1" v-bind="input" />
+          <div class="min-w-0 flex-1 flex flex-col gap-1">
+            <RxInputText v-model="input.value" class="min-w-0 flex-1" v-bind="input" />
+            <span v-if="!input.dirId" class="text-2.75 tt-inactive">{{ $t('* 系统自动生成窗口名称，也可手动修改。') }}</span>
+          </div>
         </div>
       </div>
     </template>

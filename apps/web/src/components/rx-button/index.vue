@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ButtonProps } from 'primevue/button'
-import { RxSvgIcon, type SvgNames } from '/@/components/rx-icon/'
+import { RxSvgIcon } from '/@/components/rx-icon/'
+import type { SvgNames } from '/@/components/rx-icon/'
 
 interface Props extends /* @vue-ignore */ Omit<ButtonProps, 'size'> {
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | (string & {})
@@ -22,6 +23,10 @@ const btnElRef = useTemplateRef('btnEl')
 const _loading = ref(false)
 
 async function handleClick(e: MouseEvent) {
+  // disabled 尚未刷到 DOM 时，原生 button 仍可能把 click 递进来
+  if (disabled || _loading.value || outerLoading.value) {
+    return
+  }
   if (props.onClick) {
     _loading.value = true
     try {
@@ -41,7 +46,7 @@ defineExpose({
 </script>
 
 <template>
-  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :disabled="disabled || _loading || outerLoading" :loading="_loading || outerLoading" :class="['rx_button', size]">
+  <Button ref="btnEl" v-bind="{ ...$attrs, ...props, onClick: handleClick }" :disabled="disabled || _loading || outerLoading" :loading="_loading || outerLoading" class="rx_button" :class="[size]">
     <template v-if="icon || $slots.icon" #icon>
       <slot name="icon">
         <RxSvgIcon :name="(icon as SvgNames)" :class="{ 'animate-spin': rotate }" class="animate-duration-2500" />
@@ -176,7 +181,9 @@ defineExpose({
 
 .p-button {
   font-weight: 500;
-  box-shadow: 0px 4px 4px -1px rgba(0, 0, 0, 0.02), 0px 1px 1px 0px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0px 4px 4px -1px rgba(0, 0, 0, 0.02),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.06);
 
   svg {
     transition: color var(--button-transition-duration);
@@ -219,7 +226,7 @@ defineExpose({
   }
 
   &.p-button-secondary {
-    background: var(--colors-background-bg-action, #FFF);
+    background: var(--colors-background-bg-action, #fff);
 
     svg {
       color: var(--colors-icon-icon-secondary);

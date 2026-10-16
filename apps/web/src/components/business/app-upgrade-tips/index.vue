@@ -5,8 +5,14 @@ const props = withDefaults(defineProps<{
   newFeatureTips: Record<string, any>[]
   /** dismiss：了解/完成；upgrade：重启并更新 / 暂不更新 */
   actionMode?: 'dismiss' | 'upgrade'
+  /** 版本提醒配置的标题和说明，显示在新特性正文上方 */
+  remindCopy?: {
+    title: string
+    content: string
+  }
 }>(), {
   actionMode: 'dismiss',
+  newFeatureTips: () => [],
 })
 
 const emit = defineEmits<{
@@ -40,7 +46,7 @@ const formatFeatures = computed(() => {
   return features.value.map((item, index) => {
     return {
       ...item,
-      content: item.content.replace(
+      content: (item.content ?? '').replace(
         /<video[^>]*>\s*<source\s+src="([^"]+)"[^>]*><\/video>/gi,
         (_: unknown, src: string) => `<roxy-video-player scale src="${src}" data-page="${index}" />`,
       ),
@@ -126,6 +132,14 @@ function onHtmlClick(e: MouseEvent) {
 
 <template>
   <div ref="appUpgradeTips" class="app-upgrade-tips">
+    <div v-if="props.remindCopy?.title || props.remindCopy?.content" class="mb-4 flex flex-col gap-1.5">
+      <div v-if="props.remindCopy.title" class="tt-primary text-3.5 font-600 leading-5.5">
+        {{ props.remindCopy.title }}
+      </div>
+      <div v-if="props.remindCopy.content" class="tt-secondary whitespace-pre-wrap text-3.25 leading-5">
+        {{ props.remindCopy.content }}
+      </div>
+    </div>
     <template v-for="(item, index) in formatFeatures" :key="index">
       <div class="feature-content" :class="{ active: page === index }" @click="onHtmlClick" v-html="item.content" />
     </template>

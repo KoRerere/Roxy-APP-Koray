@@ -52,7 +52,7 @@ const inputs = computed(() => {
   return [
     {
       type: 'radio',
-      label: $t('代理类型'),
+      label: $t('代理 IP 类型'),
       name: 'proxyCategory',
       props: {
         name: 'proxyCategory',
@@ -266,7 +266,7 @@ async function onTestExtract() {
   }
 
   showFailureAlert(
-    (typeof checkResult.error === 'string' && checkResult.error) || $t('代理测试失败'),
+    (typeof checkResult.error === 'string' && checkResult.error) || $t('代理 IP 测试失败'),
     $t('测试失败'),
   )
 }

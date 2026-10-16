@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import { h } from 'vue'
 // import currency from 'currency.js'
 import { genDriver, sleep } from '/@/utils'
@@ -13,6 +14,7 @@ import RxButton from '/@/components/rx-button'
 // import RaffleModal from './raffle-modal.vue'
 // import ProxyBindRiskModal from '/@/views/ecommerce/accounts/components/bind-risk-modal.vue'
 import ReferralModal from '/@/views/referral-program/components/referral-modal.vue'
+import ProxyTrafficUnlockedModal from '/@/views/agent/shop/components/proxy-traffic-unlocked-modal.vue'
 // import BillingCenterRoleModal from './warn-tips-modal.vue'
 // import ActivityPlanModal from '/@/views/campaign/freedom/activity-plan-modal.vue'
 // ============ table ===================
@@ -24,6 +26,7 @@ import ReferralModal from '/@/views/referral-program/components/referral-modal.v
 // ============ form ========================
 // import TsForm from './components/form/index.vue'
 import Test from '/@/views/lab/components/test.vue'
+import { API } from '/@/api'
 
 // ===================
 
@@ -47,6 +50,30 @@ function autoRenew() {
   })
 }
 
+/** 预览注册奖励弹窗：优惠券或流量包，说明文案对应接口 description */
+function openTrafficUnlocked(giftType: 'coupon' | 'traffic_package') {
+  showModal({
+    showHeader: false,
+    modal: true,
+    blockScroll: true,
+    style: { width: '480px' },
+    pt: {
+      content: '!p-0',
+    },
+    slots: {
+      container: ({ hideModal }) => h(ProxyTrafficUnlockedModal, {
+        giftType,
+        giftInfo: {
+          couponList: [],
+          description: giftType === 'coupon' ? '8% 无门槛 + 满 $100 享 12%' : '动态住宅代理 IP · 200MB',
+        },
+        onClose: hideModal,
+        onClaim: hideModal,
+      }),
+    },
+  })
+}
+
 function getToastMessage(options: { msg: string, reCheck?: () => void }) {
   return (
     <div class="flex flex-col gap-2">
@@ -57,7 +84,6 @@ function getToastMessage(options: { msg: string, reCheck?: () => void }) {
           text
           name="base/rx_ic_reload"
           size="xxs"
-          label={$t('检查代理配置')}
           onClick={() => {
             router.push({ name: 'agent-list' })
           }}
@@ -428,10 +454,28 @@ const ipItems = [
 ]
 
 const ipValues = ref([192, 168, 134, 22])
+
+const options = [
+  {
+    image: 'https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/platform_icon/Facebook.png?version=2.1',
+    darkImage: 'https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/platform_icon/Facebook_dark.png?version=2.1',
+    label: 'https://www.facebook.com/',
+    value: 'https://www.facebook.com/',
+  },
+  {
+    image: 'https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/platform_icon/tiktok.png?version=2.1',
+    darkImage: 'https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/platform_icon/tiktok_dark.png?version=2.1',
+    label: 'https://www.tiktok.com/',
+    value: 'https://www.tiktok.com/',
+  },
+]
+
+API.base.getVersionUpdateRemindList()
 </script>
 
 <template>
   <div class="relative inline-flex flex-col items-start pa-4 gap-4 w-full h-full overflow-visible">
+    <img class="block size-4 wcis" src="https://lumibrowser.oss-cn-shenzhen.aliyuncs.com/public/static/proxy_icon/proxy_rola/Automatic_IP_Rotation.svg" alt="">
     <div>
       <RxInputGroup v-model="ipValues" :items="ipItems" class="max-w-xs" />
     </div>
@@ -452,7 +496,21 @@ const ipValues = ref([192, 168, 134, 22])
 
     <!-- <wcisTable display-key="wcisman" :table-filters="_tableFilters" :columns="_columns" :model="_originalModel" :data-list="_datalist" selection-mode="multiple" /> -->
 
-    <RxButton label="auto renew" @click="autoRenew" />
+    <div class="flex gap-2">
+      <RxButton label="auto renew" @click="autoRenew" />
+      <RxButton label="流量解锁弹窗" @click="openTrafficUnlocked('traffic_package')" />
+      <RxButton label="专属折扣弹窗" @click="openTrafficUnlocked('coupon')" />
+    </div>
+
+    <div class="inline-flex gap-2">
+      <TsFormSelect class="!w-90" size="xxs" :options="options" placeholder="请选择" filter>
+        <template #option-extra>
+          <div>
+            <SvgIcon name="base/rx_ic_2fa" />
+          </div>
+        </template>
+      </TsFormSelect>
+    </div>
     <!-- <RxButton label="open2" @click="_open2" /> -->
     <!-- <ScrollPanel class="w-100 h-100">
       <p>
@@ -512,6 +570,10 @@ const ipValues = ref([192, 168, 134, 22])
 </template>
 
 <style lang="scss" scoped>
+.wcis {
+  filter: invert(47%) sepia(97%) saturate(3062%) hue-rotate(345deg) brightness(101%) contrast(101%);
+}
+
 /* 聚光灯已 Teleport 到 body（.mamba-spotlight-ring--body），#mamba 保留 .mamba-ripple-wrap 供 driver 选择器 */
 
 .mamba-spotlight-ring--body {

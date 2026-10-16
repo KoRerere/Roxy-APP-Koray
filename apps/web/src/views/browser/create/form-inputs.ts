@@ -587,7 +587,7 @@ export async function getInputsGroup(data: any = {}, showToast: any = () => { },
     {
       type: 'textarea',
       label: 'Cookies',
-      placeholder: $t('支持格式: JSON、Netscape、Name=Value\nName=Value 未写 domain 时，将按行从下方平台账号的网址自动填充'),
+      placeholder: $t('选填\n支持格式: JSON、Netscape、Name=Value\nName=Value 未写 domain 时，将按行从平台账号的网址自动填充'),
       name: 'cookie',
       value: isEmptyValue(data?.cookie) ? '' : stringifyCookies(data.cookie),
       validator(input: any) {

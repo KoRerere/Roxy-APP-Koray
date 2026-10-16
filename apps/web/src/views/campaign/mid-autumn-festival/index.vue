@@ -152,7 +152,7 @@ function getNextPopupAt(now = Date.now()) {
     <img v-if="collapsed" class="block w-full aspect-square" :src="imgSrc">
     <template v-else>
       <div class="relative w-full z-1 pl-3 pr-2.5 flex items-center justify-between">
-        <span class="color-white text-3.25 font-700 leading-4.5">{{ $t('月满人团圆 · 中秋送豪礼') }}</span>
+        <span class="color-white text-3.25 font-700 leading-4.5">{{ $t('金秋狂欢季 · 豪礼享不停') }}</span>
         <SvgIcon name="base/rx_ic_arrow_right_2" color="#ffffff" />
       </div>
       <img draggable="false" class="absolute inset-0 w-full h-full" :src="getImage('campaing/mid-autumn-festival/banner_bg_mini.png')">

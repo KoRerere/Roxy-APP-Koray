@@ -27,7 +27,7 @@ const columns = [
   {
     title: $t('下一次账单日期'),
     key: 'startTime',
-    getText: (row: any) => row.startTime || '--',
+    slot: 'date',
   },
 ]
 
@@ -100,6 +100,12 @@ useEmitterEvent('updateAutoRenewList', () => {
             <span class="price">{{ currency(data.amount).format() }}</span>
             <span>/</span>
             <span class="days">{{ $t('{day} 天', { day: data.days }) }}</span>
+          </div>
+        </template>
+        <template #date="{ data }">
+          <div class="flex items-center gap-4">
+            <span>{{ data.startTime }}</span>
+            <RxTag v-if="data.isLastDeduct" readonly :label="$t('下次扣费')" />
           </div>
         </template>
       </RyTable>

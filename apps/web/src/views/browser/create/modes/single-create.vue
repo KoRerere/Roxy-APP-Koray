@@ -100,20 +100,17 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
               <BasicInfo :window-inputs="windowInputs" show-template :template-label="profileTemplate.label" @show-templates="showTemplates" />
             </template>
           </AccordionInputs>
+          <div class="footer flex shrink-0 items-center justify-end gap-2 px-4 py-4 min-h-16">
+            <MateGroup v-model="metaData" class="flex-1" />
+            <SplitButton severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
+            <RxButton v-tooltip.top="canSubmit ? '' : $t('正在生成新指纹，请稍后')" class="guide2" :label="$t('创建窗口')" :disabled="!canSubmit" :loading="loading" @click.stop="createProfile(false)" />
+          </div>
         </div>
         <PreviewCard v-model:collapsed="collapsed" :inputs-group="previewInputs" :is-batch="isBatch" :create-count="createCount" :is-import="false" :on-shuffle="shuffleFingerprint"
                      :choose-preset="choosePreset"
         />
       </div>
     </div>
-    <div class="px-16">
-      <div class="mx-auto relative flex items-center justify-end gap-2 py-4 min-h-16 footer" :class="[collapsed ? 'max-w-192' : 'max-w-285']">
-        <MateGroup v-model="metaData" class="flex-1" />
-        <SplitButton severity="secondary" :label="$t('存为新模板')" :model="items" @click.stop="saveTemplatePopup($event)" />
-        <RxButton v-tooltip.top="canSubmit ? '' : $t('正在生成新指纹，请稍后')" class="guide2" :label="$t('创建窗口')" :disabled="!canSubmit" :loading="loading" @click.stop="createProfile(false)" />
-      </div>
-    </div>
-    <div class="foot-separator" />
   </div>
 </template>
 
@@ -144,6 +141,8 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
 }
 
 .footer {
+  border-top: 1px solid var(--colors-border-divider);
+
   :deep(.p-button) {
     max-width: 150px;
   }
@@ -153,15 +152,5 @@ async function singleCreateProfile(params: any, openBrowser: boolean) {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-}
-
-.foot-separator {
-  position: absolute;
-  bottom: 65.6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  height: 1px;
-  background-color: var(--colors-border-divider);
 }
 </style>

@@ -11,7 +11,7 @@ import type { SvgNames } from '/@/components/rx-icon/'
 import type { ProxyInfoItem } from './types'
 
 const emit = defineEmits<{
-  /** 底部「创建代理」：交给外壳切到自定义代理 tab */
+  /** 底部「创建代理」：交给外壳切到自定义 tab */
   create: []
 }>()
 
@@ -180,7 +180,7 @@ async function randomChoose() {
   try {
     const { code, data, msg } = await API.proxy.userGetRandomAvailableProxyMergedList()
     if (code !== 0 || !data) {
-      showToast(code !== 0 ? code : -1, msg || $t('暂无可用代理'))
+      showToast(code !== 0 ? code : -1, msg || $t('暂无可用代理 IP'))
       return
     }
     currentProxy.value = { ...toSelectOption(data), proxyMethod: 'choose' }
@@ -190,7 +190,6 @@ async function randomChoose() {
   }
 }
 
-/** 关闭下拉并切到自定义代理 tab */
 function onCreateProxy(close: () => void) {
   close()
   emit('create')
@@ -206,7 +205,7 @@ function applyCheckResult(result: Record<string, any>) {
 
 async function onTestProxy() {
   if (!currentProxy.value?.id) {
-    showToast(-1, $t('请先选择代理'))
+    showToast(-1, $t('请先选择代理 IP'))
     return
   }
   if (!globalThis.isElectron) {
@@ -276,7 +275,7 @@ async function onTestProxy() {
           </div>
         </template>
       </TsFormSelect>
-      <RxButton severity="secondary" variant="text" icon="base/rx_ic_shuffle" :loading="loading" @click="randomChoose" />
+      <RxButton v-tooltip.top="$t('从当前可选的代理 IP 中随机选择 1 个代理 IP')" severity="secondary" variant="text" icon="base/rx_ic_shuffle" :loading="loading" @click="randomChoose" />
       <RxButton severity="secondary" variant="outlined" icon="base/rx_ic_speed_test" :label="$t('测试代理 IP')" :loading="testing" @click="onTestProxy" />
     </div>
   </div>

@@ -166,7 +166,7 @@ export function useCommonUtil() {
     try {
       const params = buildCustomProxyCheckParams(settingsModule)
       if (!isValidCustomProxyParams(params)) {
-        onlyErrorToast(-1, $t('请先填写完整的代理信息'))
+        onlyErrorToast(-1, $t('请先填写完整的代理 IP 信息'))
         item.value = null
         return
       }

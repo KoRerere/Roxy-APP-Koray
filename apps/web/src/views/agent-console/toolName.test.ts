@@ -183,7 +183,7 @@ test('special tool labels match current tool names by contained local name', () 
   assert.equal(friendlyToolName('mcp_roxybrowser_openapi__roxy_profile_open', 'running'), '打开窗口')
   assert.equal(friendlyToolName('mcp_roxybrowser_openapi__roxy_proxy_get', 'success'), '已获取代理 IP 详情')
   assert.equal(friendlyToolName('mcp_roxybrowser_openapi__roxy_proxy_update', 'running'), '修改代理 IP')
-  assert.equal(friendlyToolName('mcp_roxybrowser_openapi__roxy_proxy_detect_channels', 'success'), '已获取代理检测通道')
+  assert.equal(friendlyToolName('mcp_roxybrowser_openapi__roxy_proxy_detect_channels', 'success'), '已获取代理 IP 检测通道')
   assert.equal(friendlyToolName('mcp_roxybrowser_openapi__roxy_platform_account_list', 'success'), '已获取平台账号列表')
   assert.equal(
     friendlyToolName('exec_command', 'running', { cmd: 'pnpm test\n  --runInBand' }),
@@ -262,7 +262,7 @@ test('roxybrowser openapi labels match the current browser preset tool names', (
     ['roxy_proxy_update', '修改代理 IP', '已修改代理 IP'],
     ['roxy_proxy_delete', '删除代理 IP', '已删除代理 IP'],
     ['roxy_proxy_detect', '检测代理 IP', '已检测代理 IP'],
-    ['roxy_proxy_detect_channels', '获取代理检测通道', '已获取代理检测通道'],
+    ['roxy_proxy_detect_channels', '获取代理 IP 检测通道', '已获取代理 IP 检测通道'],
     ['roxy_platform_account_list', '获取平台账号列表', '已获取平台账号列表'],
     ['roxy_platform_account_create', '创建平台账号', '已创建平台账号'],
     ['roxy_platform_account_update', '修改平台账号', '已修改平台账号'],

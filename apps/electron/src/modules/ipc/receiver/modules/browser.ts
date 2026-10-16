@@ -1,3 +1,4 @@
+import type { LastWindowBounds, WorkAreaRect } from '/@/modules/browser/browser-manager/lastWindowBounds'
 import type { IPCMainInstance } from '/@/modules/ipc/types'
 import type { ArrangeGridOptions, DisplayLayoutInput } from '/@/utils/windowGridLayout'
 import { app, screen } from 'electron'
@@ -8,11 +9,18 @@ import { app, screen } from 'electron'
 import { browserManager, coreManager } from '/@/modules/browser'
 import { CoreType } from '/@/modules/browser/browser-manager/adapter'
 import { registerChunkLayoutReflowShortcut, setChunkLayoutSnapshot, setupChunkReflowShortcutLifecycle } from '/@/modules/browser/browser-manager/chunkLayoutReflow'
+import { fitLastClosedBounds, readLastWindowBounds, toLastClosedLaunchParams } from '/@/modules/browser/browser-manager/lastWindowBounds'
 import { DefaultBrowserInstaller } from '/@/modules/shortcut-manager/DefaultBrowserInstaller'
 // import { ShortcutManager } from '/@/modules/shortcut-manager/ShortcutManager'
 import { store } from '/@/modules/store'
 // import { resourceUpdater } from '/@/modules/updater'
 import { buildChunkLaunchParamsByDirId, computeWindowGridLayouts, sortDisplaysSpatial } from '/@/utils/windowGridLayout'
+
+/** 与 preload `RenderMessage.browser:openBatchLayout` 对齐 */
+export type OpenBatchLayoutPayload = {
+  dirIds: string[]
+  layout: 'cascade' | 'lastClosed'
+}
 
 /** 与 preload `RenderMessage.browser:chunkBrowsersByScreen` 对齐 */
 export type ChunkBrowsersByScreenPayload
@@ -35,12 +43,76 @@ export type ChunkBrowsersByScreenPayload
 //   }
 // }
 
+/** 主屏在前，外接屏拔掉后把落在桌面外的窗口收回主屏 */
+function getWorkAreasPrimaryFirst(): WorkAreaRect[] {
+  try {
+    const primaryId = screen.getPrimaryDisplay().id
+    return screen.getAllDisplays()
+      .map(display => ({
+        x: display.workArea.x,
+        y: display.workArea.y,
+        width: display.workArea.width,
+        height: display.workArea.height,
+        isPrimary: display.id === primaryId,
+      }))
+      .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary))
+      .map(({ x, y, width, height }) => ({ x, y, width, height }))
+  }
+  catch (error) {
+    console.warn('[lastClosed] failed to read displays, keep saved bounds', error)
+    return []
+  }
+}
+
+function boundsChanged(from: LastWindowBounds, to: LastWindowBounds) {
+  return from.left !== to.left || from.top !== to.top || from.width !== to.width || from.height !== to.height
+}
+
 export function setupBrowserIpc(ipcMain: IPCMainInstance) {
   setupChunkReflowShortcutLifecycle(browserManager)
 
   /** 批量启动浏览器 */
   ipcMain.on('browser:batchLaunch', (_event, dirIds) => {
     browserManager.batchLaunch(dirIds)
+  })
+
+  /** 批量打开：层叠错位，或按各窗口上次关闭位置恢复 */
+  ipcMain.on('browser:openBatchLayout', async (_event, payload: OpenBatchLayoutPayload) => {
+    const dirIds = payload?.dirIds ?? []
+    if (!dirIds.length)
+      return
+
+    if (payload.layout === 'cascade')
+      return browserManager.batchLaunch(dirIds, { cascade: true })
+
+    if (payload.layout !== 'lastClosed')
+      return
+
+    const saved = await Promise.all(dirIds.map(async dirId => ({
+      dirId,
+      bounds: await readLastWindowBounds(dirId),
+    })))
+    // 主屏放前面：完全落在已拔掉的显示器上时，挪回主屏而不是任意一块剩余屏幕
+    const workAreas = getWorkAreasPrimaryFirst()
+    const customParamsByDirId: Record<string, ReturnType<typeof toLastClosedLaunchParams>> = {}
+    let relocateStep = 0
+    for (const { dirId, bounds } of saved) {
+      if (!bounds)
+        continue
+      const fitted = fitLastClosedBounds(bounds, workAreas, relocateStep)
+      if (fitted.relocated)
+        relocateStep += 1
+      if (boundsChanged(bounds, fitted.bounds)) {
+        console.log('[lastClosed] adjusted window bounds to current displays', {
+          dirId,
+          from: bounds,
+          to: fitted.bounds,
+          relocated: fitted.relocated,
+        })
+      }
+      customParamsByDirId[dirId] = toLastClosedLaunchParams(fitted.bounds)
+    }
+    return browserManager.batchLaunch(dirIds, { customParamsByDirId })
   })
 
   /** 批量关闭浏览器 */

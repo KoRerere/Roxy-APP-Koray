@@ -157,7 +157,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       power: check('Proxy_List_refresh_proxy'),
       tooltip: $t('刷新代理 IP'),
       disabled: hasExpired || hasPending || hasRefunded || isGift || isDirect || !canRefresh,
-      disabledTooltip: !canRefresh ? $t('未配置刷新URL') : undefined,
+      disabledTooltip: !canRefresh ? $t('未配置动态代理 IP 刷新 URL') : undefined,
     },
     {
       name: 'download',
@@ -165,7 +165,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       icon: 'base/rx_ic_download',
       tooltip: $t('下载'),
       power: check('Proxy_Store_download_proxy_info'),
-      disabled: hasExpired || hasPending || hasRefunded || isGift || blockDirectExport,
+      disabled: isDirect || hasExpired || hasPending || hasRefunded || isGift || blockDirectExport,
       multiple: true,
       multipleProps: {
         disabledTooltip: isGift ? $t('官方赠送的代理 IP 无法下载') : undefined,
@@ -178,7 +178,7 @@ export function tableOperation(data: ProxyItem | ProxyItem[]) {
       label: $t('扫码导出'),
       icon: 'base/rx_ic_qrcode',
       power: check('Proxy_Store_download_proxy_info'),
-      disabled: hasExpired || hasPending || hasRefunded || isGift || blockDirectExport,
+      disabled: isDirect || hasExpired || hasPending || hasRefunded || isGift || blockDirectExport,
       hideSubmenuIcon: !canShowQrcode,
       ...(canShowQrcode
         ? {
@@ -389,7 +389,7 @@ export function getAdvancedSearch() {
     },
     {
       key: 'username',
-      label: $t('用户名'),
+      label: $t('代理 IP 用户名'),
       icon: 'base/rx_ic_user_sm',
       syntax: 'name::',
     },

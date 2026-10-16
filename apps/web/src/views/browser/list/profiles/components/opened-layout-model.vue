@@ -2,6 +2,7 @@
 import { useProfileEntityLabels } from '/@/composables/useProfileEntityLabels'
 import { useOnboardingTaskStatus } from '/@/views/tutorial/hooks.ts'
 import { useCommonUtil } from '/@/layout/components/header/profile/components/settings-popup/useCommonUtil'
+import { supportsApp4_0_9 } from '/@/utils/app-supports'
 
 defineProps<{
   count: number
@@ -32,6 +33,20 @@ const layoutMode = [
     img: 'other/stack',
     value: 'stack',
   },
+  ...(supportsApp4_0_9()
+    ? [
+        {
+          label: $t('层叠'),
+          img: 'other/cascade',
+          value: 'cascade',
+        },
+        {
+          label: $t('跟随上次'),
+          img: 'other/restore',
+          value: 'lastClosed',
+        },
+      ]
+    : []),
 ]
 
 const activeLayoutMode = ref(layoutMode[0].value)
@@ -70,12 +85,12 @@ function onConfirm() {
       <div class="tt-primary text-3.5 leading-4">
         {{ $t('请选择您的窗口布局') }}
       </div>
-      <div class="flex gap-4">
-        <div v-for="item in layoutMode" :key="item.value" class="flex-1 flex flex-col gap-3 items-center justify-center" :class="{ active: activeLayoutMode === item.value }">
+      <div class="grid grid-cols-2 gap-4">
+        <div v-for="item in layoutMode" :key="item.value" class="flex flex-col gap-3 items-center justify-center" :class="{ active: activeLayoutMode === item.value }">
           <div class="self-stretch py-3.5 px-5.5 rounded-2 cursor-pointer radio" @click="activeLayoutMode = item.value">
             <SvgIcon :name="(item.img as any)" class="block mx-auto icon" size="64" />
           </div>
-          <div class="text">
+          <div class="text text-center">
             {{ item.label }}
           </div>
         </div>

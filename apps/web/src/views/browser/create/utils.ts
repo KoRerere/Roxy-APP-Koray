@@ -170,8 +170,8 @@ async function getExportColumns() {
       example: `${exampleText}1: 192.168.0.1:8800\n${exampleText}2: 192.168.0.1:8800:roxytest:roxypass\n${exampleText}3: 192.168.0.1:8800:roxytest:roxypass[http://refresh.roxy.com]\n${exampleText}4: ipv6:192.168.0.1:8800:roxytest:roxypass`,
       richText: [
         { text: `${$t('请务必按照此顺序格式填写:')}\n` },
-        { font: { color: { argb: 'EF4444' } }, text: `${$t('【主机:端口:用户名:密码[刷新URL]】')}\n` },
-        { font: { color: { argb: 'EF4444' } }, text: `${$t('其中 用户名、密码、[刷新URL] 为选填')}\n` },
+        { font: { color: { argb: 'EF4444' } }, text: `${$t('【代理 IP 主机:代理 IP 端口:代理 IP 用户名:代理 IP 密码[动态代理 IP 刷新 URL]】')}\n` },
+        { font: { color: { argb: 'EF4444' } }, text: `${$t('其中 代理 IP 用户名、代理 IP 密码、[动态代理 IP 刷新 URL] 为选填')}\n` },
         { text: $t('若网络协议为ipv6, 请在代理 IP 信息最前端添加 ipv6:') },
       ],
     },
@@ -521,8 +521,8 @@ export function getDefaultWindowName() {
 }
 
 /**
- * 与单窗创建一致：`yyMMdd-下一个窗口序号`。
- * 接口失败时返回 undefined，调用方保持空名称。
+ * 日期序号段：`yyMMdd-下一个窗口序号`。
+ * 平台缩写和国家码由 window-name 拼在这段前面；接口失败时返回 undefined，调用方保持空名称。
  */
 export async function fetchDefaultWindowName(): Promise<string | undefined> {
   try {

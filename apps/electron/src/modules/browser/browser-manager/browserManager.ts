@@ -18,6 +18,7 @@ import { beginQuitSyncProgress, finishQuitSyncProgress, updateQuitSyncProgress }
 import { BrowserItem } from '/@/modules/browser/browser-manager/browserItem'
 import { cacheToClear } from '/@/modules/browser/browser-manager/constants'
 import { sendErrorMessage } from '/@/modules/browser/browser-manager/message'
+import { parseLastWindowBounds, readLastWindowBounds, writeLastWindowBounds } from '/@/modules/browser/browser-manager/lastWindowBounds'
 import { getUserDataDirPath } from '/@/modules/browser/browser-manager/utils'
 import { coreManager } from '/@/modules/browser/core-manager'
 import { ipcSender } from '/@/modules/ipc/sender'
@@ -26,9 +27,26 @@ import { store } from '/@/modules/store'
 import { scheduleRestoreClientNetworkSnapshotUpdate } from '/@/modules/store/restoreClientNetwork'
 import { appUpdater } from '/@/modules/updater'
 import { asyncDebounce, getCachePath, getProxyEntityLabels } from '/@/utils'
-import { getCursorDisplayWorkArea } from '/@/utils/windowGridLayout'
+import { createCascadePlacer, getCursorDisplayWorkArea } from '/@/utils/windowGridLayout'
 
 const batchLaunchLimit = pLimit(5)
+
+/** 关闭路径没写成文件时，把运行中采样落到该窗口目录。已有有效文件则不覆盖，避免用更旧的 3 秒采样冲掉关闭前的一次读取 */
+async function persistSampledBoundsIfMissing(dirId: string) {
+  try {
+    if (await readLastWindowBounds(dirId)) {
+      return
+    }
+    const bounds = parseLastWindowBounds(store.waitingRestoreWindowBounds?.[dirId])
+    if (!bounds) {
+      return
+    }
+    await writeLastWindowBounds(dirId, bounds)
+  }
+  catch (error) {
+    console.warn(`[BrowserManager] persist last window bounds failed (${dirId}):`, error)
+  }
+}
 
 /** 退出/升级场景下的服务端同步参数 (大 payload + 多窗口) */
 const QUIT_SYNC_BATCH_SIZE = 6
@@ -219,6 +237,8 @@ export class BrowserManager {
           this.uploadDataQueue.set(dirId, uploadDataPromise)
           ipcSender.browser.onCloseSyncingData([dirId])
         }
+        // 主动关闭已写过文件。用户关窗口或崩溃时 CDP 已断，用内存里最近一次采样补写，且必须在 delete 清掉采样之前
+        await persistSampledBoundsIfMissing(dirId)
         this.openedBrowserMap.delete(dirId)
         void import('/@/modules/browser/automation-control').then(({ browserAutomationControlManager }) => {
           return browserAutomationControlManager.handleBrowserClosed(dirId)
@@ -276,19 +296,33 @@ export class BrowserManager {
     workspaceId?: string | number
     customParams?: any
     customParamsByDirId?: Record<string, any>/** 按 dirId 合并，优先级高于 customParams */
+    /** 层叠：只改坐标，宽高仍用各窗口的 openWidth / openHeight */
+    cascade?: boolean
   }) {
-    const { workspaceId, customParams, customParamsByDirId } = options ?? {}
+    const { workspaceId, customParams, customParamsByDirId, cascade } = options ?? {}
     console.log(`BrowserManager === Batch launching browsers`, dirIds)
 
     // 批量启动可能持续数十秒，基准屏幕只在入口取一次，避免中途鼠标移动导致同批窗口散落在不同显示器
     const windowPositionBase = getCursorDisplayWorkArea()
+    const cascadePlacer = cascade ? createCascadePlacer(windowPositionBase) : null
 
-    const mergeLaunchPayload = (winInfo: WindowItemType) => ({
-      ...winInfo,
-      windowPositionBase,
-      ...customParams,
-      ...(winInfo.dirId ? (customParamsByDirId?.[winInfo.dirId] ?? {}) : {}),
-    })
+    const mergeLaunchPayload = (winInfo: WindowItemType) => {
+      const merged: WindowItemType = {
+        ...winInfo,
+        windowPositionBase,
+        ...customParams,
+        ...(winInfo.dirId ? (customParamsByDirId?.[winInfo.dirId] ?? {}) : {}),
+      }
+      if (!cascadePlacer)
+        return merged
+
+      const { x, y } = cascadePlacer.next()
+      return {
+        ...merged,
+        positionSwitch: true,
+        windowAbsolutePosition: `${x},${y}`,
+      }
+    }
 
     const firstBatch = dirIds.slice(0, 5)
     const remainingIds = dirIds.slice(5)

@@ -18,7 +18,7 @@ import { $t } from '/@/locales'
 import { API } from '/@/api'
 import { DEFAULT_SIMULATION_DELAY, DEFAULT_SIMULATION_DELAY_RANGE, DEFAULT_SIMULATION_ENABLE, DEFAULT_SIMULATION_HUMAN_NOISE, DEFAULT_SIMULATION_SHORTCUT_KEYS } from '/@/constants/simulation-default'
 import { isLinux, isWindows } from '/@/utils/common'
-import { supportsApp4_0_0 } from '/@/utils/app-supports'
+import { supportsApp4_0_0, supportsApp4_0_9 } from '/@/utils/app-supports'
 import { MaximumLimitExceeded } from './index'
 import { getColorSchemeList } from '/@/stores/theme'
 import { getImage, isEmptyValue, isObject } from '/@/utils'
@@ -38,6 +38,17 @@ const TASK_BAR_PREVIEW_IMAGE_MAX_STYLE = {
   objectFit: 'contain',
 } as const
 
+/** 旧客户端没有层叠和上次关闭位置时，设置项回退为堆叠，避免下拉显示空值。已取消的最小化同样回退。 */
+function resolveBatchOpenLayout(layout?: string) {
+  if (layout === 'minimize') {
+    return 'stack'
+  }
+  if ((layout === 'cascade' || layout === 'lastClosed') && !supportsApp4_0_9()) {
+    return 'stack'
+  }
+  return layout || 'stack'
+}
+
 const taskbarPreviewImageSrc = ref<string | null>(null)
 
 function openTaskbarImagePreview(src: string, hideTooltip: () => void) {
@@ -53,15 +64,18 @@ export const TaskbarImagePreviewHost = defineComponent({
   name: 'TaskbarImagePreviewHost',
   setup() {
     function onKeydown(event: KeyboardEvent) {
-      if (event.key === 'Escape')
+      if (event.key === 'Escape') {
         closeTaskbarImagePreview()
+      }
     }
 
     watch(taskbarPreviewImageSrc, (src) => {
-      if (src)
+      if (src) {
         window.addEventListener('keydown', onKeydown)
-      else
+      }
+      else {
         window.removeEventListener('keydown', onKeydown)
+      }
     })
 
     onUnmounted(() => {
@@ -70,8 +84,9 @@ export const TaskbarImagePreviewHost = defineComponent({
     })
 
     return () => {
-      if (!taskbarPreviewImageSrc.value)
+      if (!taskbarPreviewImageSrc.value) {
         return null
+      }
 
       return (
         <Teleport to="body">
@@ -110,15 +125,17 @@ function TaskbarSettingPreviewImage({ src, onPreview }: { src: string, onPreview
 }
 
 function resolveTaskbarIconDisplay(data?: { taskbarIconDisplay?: string }) {
-  if (data?.taskbarIconDisplay === TaskbarIconDisplay.windowNum || data?.taskbarIconDisplay === TaskbarIconDisplay.windowName)
+  if (data?.taskbarIconDisplay === TaskbarIconDisplay.windowNum || data?.taskbarIconDisplay === TaskbarIconDisplay.windowName) {
     return data.taskbarIconDisplay
+  }
 
   return TaskbarIconDisplay.windowName
 }
 
 function resolveTaskbarTabDisplay(data?: { taskbarTabDisplay?: string }) {
-  if (data?.taskbarTabDisplay === TaskbarTabDisplay.tabTitle || data?.taskbarTabDisplay === TaskbarTabDisplay.windowName)
+  if (data?.taskbarTabDisplay === TaskbarTabDisplay.tabTitle || data?.taskbarTabDisplay === TaskbarTabDisplay.windowName) {
     return data.taskbarTabDisplay
+  }
 
   return TaskbarTabDisplay.windowName
 }
@@ -428,13 +445,19 @@ export function usePreferencesPanel() {
               label: $t('批量打开布局'),
               text: profileLabels.batchOpenLayoutDesc,
               name: 'batchOpenLayout',
-              value: data?.batchOpenLayout ?? 'stack',
+              value: resolveBatchOpenLayout(data?.batchOpenLayout),
               props: {
                 filter: false,
                 optionValue: 'value',
                 options: [
                   { label: $t('堆叠'), value: 'stack' },
                   { label: $t('网格'), value: 'grid' },
+                  ...(supportsApp4_0_9()
+                    ? [
+                        { label: $t('层叠'), value: 'cascade' },
+                        { label: $t('跟随上次'), value: 'lastClosed' },
+                      ]
+                    : []),
                 ],
               },
               component: ({ item, ...props }: { item: Items, props: any }) => {
@@ -637,8 +660,9 @@ export function usePreferencesPanel() {
                         max={100000}
                         onValueChange={() => {
                           nextTick(() => {
-                            if (isEmptyValue(item.value))
+                            if (isEmptyValue(item.value)) {
                               item.value = 8
+                            }
                             if (oldValue !== item.value) {
                               saveUserConfig(item)
                             }
@@ -735,8 +759,9 @@ export function usePreferencesPanel() {
                       max={100}
                       onValueChange={() => {
                         nextTick(() => {
-                          if (isEmptyValue(item.value))
+                          if (isEmptyValue(item.value)) {
                             item.value = 30
+                          }
                           if (oldValue !== item.value) {
                             saveUserConfig(item)
                           }

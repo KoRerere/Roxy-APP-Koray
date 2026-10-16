@@ -7,6 +7,9 @@ import PlatformInfoCell from '/@/views/account/list/components/platform-info-cel
 import RelatedProfilesCell from '/@/views/account/list/components/related-profiles-cell.vue'
 import ProfileSelect from '/@/views/account/list/components/profile-select.vue'
 import ExportAccounts from '/@/views/account/list/components/export-accounts.vue'
+import { resolveAccountLoginLabels } from '/@/views/account/create/account-login-labels'
+import { toPlatformAbbrOptions } from '/@/views/browser/create/window-name'
+import type { PlatformAbbrOption } from '/@/views/browser/create/window-name'
 import { API } from '/@/api'
 import { useConfirm } from 'primevue/useconfirm'
 import { useSimpleDialog } from '/@/components/simplePopup'
@@ -45,6 +48,27 @@ const canEdit = computed(() => !isViewer.value)
 const workspaceName = computed(() => getWorkspaceNamePrefix(workspaceStore.currentWorkspace?.workspaceName))
 const canViewPassword = computed(() => check(PlatformPermissionCode.ViewPassword))
 const canBatchExport = computed(() => check(PlatformPermissionCode.BatchExport))
+/** 行内修改账号/密码时，用平台库缩写生成字段标签 */
+const platformAbbrCatalog = ref<PlatformAbbrOption[]>([])
+let platformCatalogTask: Promise<void> | undefined
+
+/** 平台库只拉一次；失败时退回通用标签，并允许下次编辑再试 */
+function ensurePlatformAbbrCatalog() {
+  if (platformAbbrCatalog.value.length) {
+    return Promise.resolve()
+  }
+  platformCatalogTask ??= API.platform.userGetPlatformInfoList({}).then(({ code, data }) => {
+    if (code !== 0) {
+      platformCatalogTask = undefined
+      return
+    }
+    platformAbbrCatalog.value = toPlatformAbbrOptions(data?.rows)
+  }).catch((error: unknown) => {
+    platformCatalogTask = undefined
+    console.error('[account-list] failed to load platform catalog', error)
+  })
+  return platformCatalogTask
+}
 
 watch(isViewer, (viewer) => {
   const actionsColumn = columns.value.find(column => column.key === 'actions')
@@ -196,14 +220,27 @@ function editAccount(data?: Data) {
   })
 }
 
-function editField(data: Data, field: keyof Data, title: string, inputType: 'text' | 'password' | 'textarea' = 'text') {
+async function editField(data: Data, field: keyof Data, title: string, inputType: 'text' | 'password' | 'textarea' = 'text') {
   const hideValue = field === 'platformPassword' && !check(PlatformPermissionCode.ViewPassword)
+  const isLoginField = field === 'platformUserName' || field === 'platformPassword'
+  if (isLoginField) {
+    await ensurePlatformAbbrCatalog()
+  }
+  const labels = resolveAccountLoginLabels({
+    platformUrl: data.platformUrl,
+  }, platformAbbrCatalog.value)
+  const fieldLabel = field === 'platformUserName'
+    ? labels.account
+    : field === 'platformPassword'
+      ? labels.password
+      : undefined
   showSimpleDialog({
     title,
     inputs: [
       {
         type: inputType,
         name: field,
+        label: fieldLabel,
         value: hideValue ? '' : data?.[field],
         props: {
           placeholder: title,

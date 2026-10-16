@@ -16,7 +16,7 @@ interface Props {
   choosePreset?: (option: any) => void
   onShuffle: () => void
 }
-const { inputsGroup = [], onShuffle, choosePreset, isImport = false, isBatch = false } = defineProps<Props>()
+const { inputsGroup = [], onShuffle, /* choosePreset, */ isImport = false, isBatch = false } = defineProps<Props>()
 
 const { onboardingTaskStatus, closeGuideTipsAndUpdateTaskStatus } = useOnboardingTaskStatus()
 
@@ -66,7 +66,7 @@ const bannerMap = {
   ios: getImage('systeam/ios.webp'),
   android: getImage('systeam/android.webp'),
   windows: getImage('systeam/windows.webp'),
-  linux: getImage('systeam/linux.png'),
+  linux: getImage('systeam/linux.webp'),
 }
 
 const collapsed = defineModel<boolean>('collapsed', { default: false })
@@ -103,10 +103,12 @@ const systeam = computed(() => {
 
 function getPreview(list: any[]) {
   return list.flatMap((item) => {
-    if (item.preview)
+    if (item.preview) {
       return [item]
-    if (item.items?.length)
+    }
+    if (item.items?.length) {
       return item.items.filter((subItem: any) => subItem.preview)
+    }
     return []
   }).map(({ options, value, preview }) => {
     const actualValue = value?.value ?? value

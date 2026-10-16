@@ -4,6 +4,7 @@ import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import ActivityInfoProxy from '/@/views/campaign/mid-autumn-festival/activity-info-proxy.vue'
 import BusinessUseSelector from '/@/views/agent/shop/components/provider-buy/business-use-selector.vue'
 import CountrySelector from '/@/views/agent/shop/components/provider-buy/country-selector.vue'
+import BandwidthSelector from '/@/views/agent/shop/components/provider-buy/bandwidth-selector.vue'
 import DurationSelector from '/@/views/agent/shop/components/provider-buy/duration-selector.vue'
 import PurchaseSummary from '/@/views/agent/shop/components/provider-buy/purchase-summary.vue'
 import { API } from '/@/api'
@@ -138,10 +139,15 @@ const {
 /** 购买结算时一并提交；默认关闭，需用户确认后才会变为开启 */
 const isAuto = ref(false)
 
+/** 多个带宽档位，或电商直连需要展示默认 100Mbps 时，才把带宽钉在左侧底部 */
+const showBandwidth = computed(() =>
+  proxySpeedOptions.value.length > 1 || (isDirect.value && !!currentProxyType.value.showDefaultSupport100M),
+)
+
 const canPay = computed(() => check('Cost_Center_all'))
 const payTooltip = computed(() => {
   return !canPay.value
-    ? $t('暂无权限。如需开通，请联系团队拥有者，更改当前账号身份为管理者并开通‘充值/账单’权限。')
+    ? $t('暂无权限。如需开通，请联系团队拥有者，开通「充值/账单」权限。')
     : undefined
 })
 
@@ -242,24 +248,39 @@ async function onPay() {
 <template>
   <div class="relative flex-1 flex gap-5 overflow-hidden">
     <RxLoading v-model="loading" :opacity="0.9" />
-    <div class="py-5 flex-1 flex flex-col pl-8 gap-9 rounded-3 overflow-hidden overflow-y-auto selectors">
-      <div class="grid grid-cols-2 gap-y-6">
-        <ActivityInfoProxy class="mr-6 col-span-2" type="proxy" />
-        <BusinessUseSelector :options="businessUseOptions" :model-value="businessUse" @update:model-value="selectBusinessUse" />
-        <CountrySelector :options="countryOptions" :model-value="purchaseCountry" :loading="loadingPurchaseCountry" @update:model-value="selectCountry" />
+    <div class="flex-1 min-h-0 flex flex-col rounded-3 overflow-hidden bg-[var(--colors-background-bg-page)]">
+      <div class="flex-1 min-h-0 overflow-y-auto py-5 pl-8">
+        <div class="grid grid-cols-2 gap-y-6">
+          <ActivityInfoProxy class="mr-6 col-span-2" type="proxy" />
+          <BusinessUseSelector :options="businessUseOptions" :model-value="businessUse" @update:model-value="selectBusinessUse" />
+          <CountrySelector :options="countryOptions" :model-value="purchaseCountry" :loading="loadingPurchaseCountry" @update:model-value="selectCountry" />
+        </div>
+      </div>
+      <!-- 带宽和时长钉在左侧底部，国家列表只滚动上方区域 -->
+      <div class="relative z-1 shrink-0 flex flex-col gap-4 pl-8 py-5 pinned">
+        <template v-if="showBandwidth">
+          <BandwidthSelector v-model="proxySpeedValue" :options="proxySpeedOptions" :is-direct="isDirect" />
+          <RxDivider class="!pr-8" line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
+        </template>
         <DurationSelector v-model="subscriptionMonths" :options="durationOptions" />
       </div>
     </div>
-    <PurchaseSummary v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:proxy-speed-value="proxySpeedValue" v-model:is-auto="isAuto" :is-c-n="isCN"
-                     :is-direct="isDirect" :loading-proxy-type="loadingProxyType" :current-inventory="currentProxyType.inventory" :proxy-type-options="proxyTypeOptions"
-                     :proxy-speed-options="proxySpeedOptions" :subscription-months="subscriptionMonths" :business-use="businessUse" :details="details" :can-pay="canPay" :pay-tooltip="payTooltip"
-                     :official-website-url="getOfficialWebsite('/copyright/user')" :country-code="purchaseCountry?.value" :vendor-name="provider.vendorName" @pay="checkStock"
+    <PurchaseSummary v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:is-auto="isAuto" :is-c-n="isCN" :is-direct="isDirect"
+                     :loading-proxy-type="loadingProxyType" :current-inventory="currentProxyType.inventory" :proxy-type-options="proxyTypeOptions" :subscription-months="subscriptionMonths"
+                     :business-use="businessUse" :details="details" :can-pay="canPay" :pay-tooltip="payTooltip" :official-website-url="getOfficialWebsite('/copyright/user')" :country-code="purchaseCountry?.value"
+                     :vendor-name="provider.vendorName" @pay="checkStock"
     />
   </div>
 </template>
 
 <style lang="scss" scoped>
-.selectors {
+.pinned {
+  border-radius: 12px 12px 0 0;
   background: var(--colors-background-bg-page);
+  box-shadow:
+    0 1px 1px 0 rgba(0, 0, 0, 0.04),
+    0 2px 8px 0 rgba(0, 0, 0, 0.04),
+    0 3px 17px 0 rgba(0, 0, 0, 0.04),
+    0 4px 30px 0 rgba(0, 0, 0, 0.12);
 }
 </style>

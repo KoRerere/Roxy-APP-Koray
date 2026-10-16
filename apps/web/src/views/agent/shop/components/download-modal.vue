@@ -30,17 +30,17 @@ const inputs = computed(() => [
     label: shopLabels.value.downloadFormatLabel,
     value: {
       value: 'host_:_port_:_username_:_password',
-      label: $t('主机:端口:用户名:密码'),
+      label: $t('代理 IP 主机:代理 IP 端口:代理 IP 用户名:代理 IP 密码'),
     },
     props: {
       options: [
         {
           value: 'host_:_port_:_username_:_password',
-          label: $t('主机:端口:用户名:密码'),
+          label: $t('代理 IP 主机:代理 IP 端口:代理 IP 用户名:代理 IP 密码'),
         },
         {
           value: 'username_:_password_@_host_:_port',
-          label: $t('账号:密码{separator}主机:端口', { separator: '@' }),
+          label: $t('代理 IP 用户名:代理 IP 密码{separator}代理 IP 主机:代理 IP 端口', { separator: '@' }),
         },
       ],
     },

@@ -55,6 +55,12 @@ export type LocalFileActionResult
     | { action: 'downloaded-file', canceled: true }
     | { action: 'downloaded-file', canceled: false, filePath: string }
 
+/** 批量打开的层叠或上次关闭位置布局 */
+export type OpenBatchLayoutPayload = {
+  dirIds: string[]
+  layout: 'cascade' | 'lastClosed'
+}
+
 export type ChunkBrowsersByScreenPayload
   = | string[]
     | {
@@ -68,6 +74,8 @@ export type ChunkBrowsersByScreenPayload
 export interface RenderMessage {
   /** 批量启动窗口 */
   'browser:batchLaunch': (dirIds: string[]) => void
+  /** 按层叠或上次关闭位置批量启动窗口 */
+  'browser:openBatchLayout': (payload: OpenBatchLayoutPayload) => void
   /** 批量重启窗口 */
   'browser:batchRelaunch': (dirIds: string[]) => void
   /** 按屏幕分组启动窗口（可多传 gap/cols/rows/stackOffset） */

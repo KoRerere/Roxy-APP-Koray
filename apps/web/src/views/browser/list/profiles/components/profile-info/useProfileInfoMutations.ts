@@ -55,7 +55,7 @@ export function useProfileInfoMutations(options: {
     })
   }
 
-  /** 手动添加自定义代理并绑定到当前窗口 */
+  /** 手动添加自定义 IP并绑定到当前窗口 */
   function addCustomProxy(formData: Record<string, any>) {
     const row = unref(data)
     const { id, dirId } = row
@@ -85,8 +85,9 @@ export function useProfileInfoMutations(options: {
             silentUpdateProxy(row, params)
           },
         })
-        if (!ok)
+        if (!ok) {
           return false
+        }
       },
     })
   }

@@ -437,8 +437,7 @@ export function useProxyPurchasePricing(options: {
     // 身份折扣文案暂不对外展示，折扣仍参与计价
     // const businessUse = options.businessUse.value
     // const { proxyDiscount = 0 } = options.userPayInfo.value ?? {}
-    const currentProxyType = options.proxyTypeOptions.value.find(item => item.id === options.proxyTypeValue.value)
-    const { entityType, entityBandwidth, entityQuantity, entityPrice } = options.labels.value
+    const { entityType, entityQuantity, entityPrice } = options.labels.value
     const unitPrice = selectedUnit.value
     const isDeviceMode = options.labels.value.mode === 'device'
 
@@ -447,11 +446,6 @@ export function useProxyPurchasePricing(options: {
         title: 'title',
         items: [
           { label: entityType, slot: 'type', visible: !isDeviceMode },
-          {
-            label: entityBandwidth,
-            visible: options.proxySpeedOptions.value?.length > 1 || (isDirect.value && currentProxyType?.showDefaultSupport100M),
-            slot: 'speed',
-          },
         ].filter(item => item.visible !== false),
       },
       {
@@ -463,7 +457,7 @@ export function useProxyPurchasePricing(options: {
             proxyPrice: unitPrice?.proxyPrice ?? 0,
             originalProxyPrice: unitPrice?.originalProxyPrice ?? 0,
           },
-          { label: entityQuantity, value: options.purchaseMember.value },
+          { label: entityQuantity, slot: 'quantity' },
           { label: $t('国家/地区'), value: purchaseCountry?.label },
           { label: $t('订阅天数'), value: subscriptionMonths?.label },
           { label: $t('自动续费'), slot: 'autoRenew' },

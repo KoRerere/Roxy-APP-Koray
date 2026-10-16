@@ -9,7 +9,7 @@ import { filterInputsByNames } from '/@/utils'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { copyText } from '/@/utils/'
 import { useTableContext } from '../hooks/useContext'
-import { fetchDefaultWindowName, hasWindowName } from '../utils'
+import { useSuggestedWindowName } from '../hooks/useSuggestedWindowName'
 
 interface Props {
   /** 窗口组 inputs（inputsGroup[0]） */
@@ -18,7 +18,7 @@ interface Props {
   templateLabel?: string
   /** 是否展示模板选择（编辑页可不传） */
   showTemplate?: boolean
-  /** 空名称时是否按日期+序号预填；编辑快速创建配置时关闭，避免把一次性序号写进模板 */
+  /** 空名称时是否把建议名放到 placeholder；编辑快速创建配置时关闭，避免把一次性序号写进模板 */
   autofillWindowName?: boolean
 }
 
@@ -28,6 +28,8 @@ interface WindowNameInput {
   dirId?: string
   label?: string
   placeholder?: string
+  /** 与 placeholder 同步的建议名；提交时空名称用它，避免把提示文案提交上去 */
+  suggestedWindowName?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -61,34 +63,13 @@ const cookiePlatformUrls = computed(() => {
   return list.map((item: any) => item.platformUrl).filter(Boolean)
 })
 
-/** 连续 initialize 时丢弃过期回写，避免旧序号盖住新表单 */
-let fillSeq = 0
-
-watch(
-  () => nameInput.value,
-  (input) => {
-    // 批量/编辑/快速创建配置/已有名称（含模板回填）不抢写；仅单个创建空名称时预填
-    if (!props.autofillWindowName || isBatch.value || !input || input.dirId || hasWindowName(input.value)) {
-      return
-    }
-    void fillDefaultWindowName(input)
-  },
-  { immediate: true },
-)
-
-/** 按「yyMMdd-下一个窗口序号」预填，减少每次手填 */
-async function fillDefaultWindowName(input: WindowNameInput) {
-  const seq = ++fillSeq
-  const name = await fetchDefaultWindowName()
-  if (seq !== fillSeq || !name) {
-    return
-  }
-  // 请求返回前用户或模板可能已写入，不再覆盖
-  if (hasWindowName(input.value)) {
-    return
-  }
-  input.value = name
-}
+/** 单个创建带平台缩写和代理国家；批量创建只使用日期序号 */
+useSuggestedWindowName({
+  enabled: () => props.autofillWindowName && !isBatch.value,
+  getNameInput: () => nameInput.value,
+  getAccounts: () => accountsInput.value?.value,
+  getProxyList: () => proxyInput.value?.value,
+})
 
 function onCopy(dirId: string) {
   copyText(dirId)
@@ -114,9 +95,12 @@ function onCopy(dirId: string) {
             {{ $t('复制') }}
           </span>
         </div>
-        <div class="flex min-w-0 w-full items-center">
+        <div class="flex min-w-0 w-full items-start">
           <InputLabel class="shrink-0" :label="nameInput.label" />
-          <RxInputText v-model="nameInput.value" class="min-w-0 flex-1" :placeholder="nameInput.placeholder" />
+          <div class="min-w-0 flex-1 flex flex-col gap-1">
+            <RxInputText v-model="nameInput.value" :placeholder="nameInput.placeholder" />
+            <span class="text-2.75 tt-inactive">{{ $t('* 系统自动生成窗口名称，也可手动修改。') }}</span>
+          </div>
         </div>
       </div>
       <!-- 代理信息 -->

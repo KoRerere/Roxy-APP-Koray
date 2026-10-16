@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<Props>(), {
   iconColor: 'var(--colors-text-text-primary, #171c1f)',
   darkMode: false,
   showClear: false,
+  showDropdownIcon: true,
   checkmark: false,
   highlightOnSelect: true,
   scrollHeight: '14rem',
@@ -59,8 +60,8 @@ interface Props {
   disabled?: boolean
   invalid?: boolean
   showClear?: boolean
+  showDropdownIcon?: boolean
   checkmark?: boolean
-  /** 为 false 时不在列表中高亮已选项 */
   highlightOnSelect?: boolean
   emptyMessage?: string
   scrollHeight?: string
@@ -159,7 +160,7 @@ const hasValue = computed(() =>
 )
 
 /** 已选中且可清除时只保留清除按钮，避免箭头和 × 并排 */
-const showDropdownIcon = computed(() => !(props.showClear && hasValue.value))
+const dropdownIconVisible = computed(() => props.showDropdownIcon && !(props.showClear && hasValue.value))
 
 const rootAttrs = computed(() =>
   Object.fromEntries(
@@ -947,17 +948,23 @@ defineExpose({
           <img v-if="selectedTriggerVisual.type === 'image'" class="selectitem__image" :src="selectedTriggerVisual.src" alt="">
           <SvgIcon v-else :name="selectedTriggerVisual.name" :color="props.iconColor" fallback="base/rx_ic_earth" />
         </template>
-        <input :id="props.inputId" ref="input" type="text" class="m-input-select-input" :value="inputText" :placeholder="props.placeholder" :disabled="props.disabled" :tabindex="props.tabindex ?? 0"
-               role="combobox" :aria-expanded="visible" :aria-controls="panelId" :aria-label="props.ariaLabel" :aria-labelledby="props.ariaLabelledby" autocomplete="off" @focus="onEditableFocus"
-               @blur="onBlur" @input="onEditableInput" @keydown="onTriggerKeydown" @click="onEditableClick"
-        >
+        <div class="m-input-select-field">
+          <input :id="props.inputId" ref="input" type="text" class="m-input-select-input" :class="{ 'is-custom-placeholder': $slots.placeholder && !inputText }" :value="inputText" :placeholder="props.placeholder" :disabled="props.disabled" :tabindex="props.tabindex ?? 0"
+                 role="combobox" :aria-expanded="visible" :aria-controls="panelId" :aria-label="props.ariaLabel" :aria-labelledby="props.ariaLabelledby" autocomplete="off" @focus="onEditableFocus"
+                 @blur="onBlur" @input="onEditableInput" @keydown="onTriggerKeydown" @click="onEditableClick"
+          >
+          <!-- 输入为空时盖住原生 placeholder，便于放图标或图片；原生 placeholder 仍保留给读屏 -->
+          <span v-if="$slots.placeholder && !inputText" class="m-input-select-placeholder m-input-select-placeholder--overlay">
+            <slot name="placeholder" />
+          </span>
+        </div>
       </div>
       <span v-if="props.showClear && hasValue" class="m-input-select-clear" role="button" tabindex="-1" @mousedown.prevent @click="clearValue">
         <slot name="clearicon" :clear-callback="onClearClick">
           <SvgIcon name="base/rx_ic_delete" :size="16" color="var(--colors-icon-icon-secondary)" />
         </slot>
       </span>
-      <span v-if="showDropdownIcon" class="m-input-select-dropdown-icon" @mousedown.prevent @click="onDropdownIconClick">
+      <span v-if="dropdownIconVisible" class="m-input-select-dropdown-icon" @mousedown.prevent @click="onDropdownIconClick">
         <slot name="dropdownicon">
           <SvgIcon name="base/rx_ic_chevron_down" :size="16" color="var(--colors-icon-icon-secondary)" />
         </slot>
@@ -969,7 +976,7 @@ defineExpose({
             :tabindex="props.tabindex ?? 0" :name="props.name" role="combobox" :aria-expanded="visible" :aria-controls="panelId" :aria-label="props.ariaLabel" :aria-labelledby="props.ariaLabelledby"
             @click="onTriggerClick" @keydown="onTriggerKeydown" @focus="onClassicFocus" @blur="onBlur"
     >
-      <span class="m-input-select-value" :class="{ 'is-placeholder': !hasValue }">
+      <span class="m-input-select-value" :class="{ 'is-placeholder': !hasValue, 'is-custom-placeholder': !hasValue && !!$slots.placeholder }">
         <slot name="value" :value="selectedOption ?? currentValue" :placeholder="props.placeholder">
           <template v-if="hasValue">
             <div v-if="selectedOption" class="selectitem">
@@ -982,9 +989,11 @@ defineExpose({
               {{ displayLabel }}
             </template>
           </template>
-          <template v-else>
-            {{ props.placeholder }}
-          </template>
+          <span v-else class="m-input-select-placeholder">
+            <slot name="placeholder">
+              <span class="m-input-select-placeholder-text">{{ props.placeholder }}</span>
+            </slot>
+          </span>
         </slot>
       </span>
       <span v-if="props.showClear && hasValue" class="m-input-select-clear" role="button" tabindex="-1" @mousedown.prevent @click="clearValue">
@@ -992,7 +1001,7 @@ defineExpose({
           <SvgIcon name="base/rx_ic_delete" :size="16" color="var(--colors-icon-icon-secondary)" />
         </slot>
       </span>
-      <span v-if="showDropdownIcon" class="m-input-select-dropdown-icon">
+      <span v-if="dropdownIconVisible" class="m-input-select-dropdown-icon">
         <slot name="dropdownicon">
           <SvgIcon name="base/rx_ic_chevron_down" :size="16" color="var(--colors-icon-icon-secondary)" />
         </slot>
@@ -1121,6 +1130,43 @@ defineExpose({
     color: var(--select-placeholder-color, var(--colors-text-text-secondary));
     opacity: 0.54;
   }
+
+  /* 自定义占位含图标或图片时不整体变淡，避免图标被压灰 */
+  &.is-custom-placeholder {
+    opacity: 1;
+  }
+}
+
+.m-input-select-placeholder {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 6px);
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+
+  &--overlay {
+    position: absolute;
+    inset: 0;
+    width: auto;
+    color: var(--select-placeholder-color, var(--colors-text-text-secondary));
+    pointer-events: none;
+  }
+}
+
+.m-input-select-placeholder-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-input-select-field {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
 }
 
 .m-input-select-editable {
@@ -1148,6 +1194,11 @@ defineExpose({
   &::placeholder {
     color: var(--select-placeholder-color, var(--colors-text-text-secondary));
     opacity: 0.8;
+  }
+
+  &.is-custom-placeholder::placeholder {
+    color: transparent;
+    opacity: 0;
   }
 }
 

@@ -10,6 +10,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { appConfig } from '/@/constants'
 import { getWebEntryUrl } from '/@/modules/app/mainWindow'
+import { parseLastWindowBounds } from '/@/modules/browser/browser-manager/lastWindowBounds'
 import { store } from '/@/modules/store'
 import { SyncControlUtil } from '/@/modules/sync-control/util'
 
@@ -30,6 +31,8 @@ export class AfterLaunchTask {
   private cookieTimer: NodeJS.Timeout | null = null
   /** 窗口 bounds 定时同步定时器 */
   private windowBoundsTimer: NodeJS.Timeout | null = null
+  /** Chrome 主窗口 ID，关闭前再读一次 bounds 时复用，避免重复 getWindowForTarget */
+  private chromeWindowId: number | null = null
   /** 同一 profile 重复触发时跳过，避免 Firefox BiDi 被重复 releaseSession */
   private cookieRobotRunning = false
   /**
@@ -46,8 +49,9 @@ export class AfterLaunchTask {
   }
 
   private markFirefoxBidiIdle() {
-    if (this.firefoxBidiIdleResolved)
+    if (this.firefoxBidiIdleResolved) {
       return
+    }
     this.firefoxBidiIdleResolved = true
     this.firefoxBidiIdleDeferred.resolve()
   }
@@ -79,12 +83,14 @@ export class AfterLaunchTask {
    * 参考：https://chromedevtools.github.io/devtools-protocol/tot/Browser/#method-getWindowBounds
    */
   private async startWindowBoundsSync() {
-    if (!this.browser?.client || this.browserItem.isFirefox)
+    if (!this.browser?.client || this.browserItem.isFirefox) {
       return
+    }
 
     const Browser = this.browser.client.Browser
-    if (!Browser?.getWindowForTarget || typeof Browser.getWindowBounds !== 'function')
+    if (!Browser?.getWindowForTarget || typeof Browser.getWindowBounds !== 'function') {
       return
+    }
 
     try {
       // getWindowForTarget 需要一个有 web contents 的 target，取第一个真实页面的 targetId
@@ -98,6 +104,7 @@ export class AfterLaunchTask {
 
       // 通过 Browser.getWindowForTarget 获取当前窗口 ID（只需获取一次）
       const { windowId } = await Browser.getWindowForTarget({ targetId })
+      this.chromeWindowId = windowId
 
       this.windowBoundsTimer = setInterval(async () => {
         // 若 CDP client 已断开，停止定时器
@@ -108,13 +115,7 @@ export class AfterLaunchTask {
         }
         try {
           const { bounds } = await Browser.getWindowBounds({ windowId })
-          store.waitingRestoreWindowBounds ??= {}
-          store.waitingRestoreWindowBounds[this.browserItem.winInfo.dirId!] = {
-            left: bounds.left!,
-            top: bounds.top!,
-            width: bounds.width!,
-            height: bounds.height!,
-          }
+          this.rememberChromeWindowBounds(bounds)
         }
         catch (error) {
           console.error('Failed to get window bounds:', error)
@@ -124,6 +125,53 @@ export class AfterLaunchTask {
     catch (error) {
       console.error('Failed to start window bounds sync:', error)
     }
+  }
+
+  /**
+   * 关闭 CDP 前再读一次 Chrome 窗口位置。
+   * 用户直接关窗口时进程已退出，读不到，调用方改用内存里最近一次采样。
+   */
+  async captureChromeWindowBounds() {
+    if (this.browserItem.isFirefox || !this.browser?.client) {
+      return null
+    }
+    const Browser = this.browser.client.Browser
+    if (typeof Browser?.getWindowBounds !== 'function') {
+      return null
+    }
+    try {
+      let windowId = this.chromeWindowId
+      if (windowId == null) {
+        if (!Browser.getWindowForTarget) {
+          return null
+        }
+        const pages = await this.browser.pages()
+        const targetId = pages?.at(0)?.target()._targetId
+        if (!targetId) {
+          return null
+        }
+        windowId = (await Browser.getWindowForTarget({ targetId })).windowId
+        this.chromeWindowId = windowId
+      }
+      const { bounds } = await Browser.getWindowBounds({ windowId })
+      return this.rememberChromeWindowBounds(bounds)
+    }
+    catch (error) {
+      console.error('Failed to capture chrome window bounds:', error)
+      return null
+    }
+  }
+
+  /** 采样只进内存，供异常退出恢复和来不及落盘时补写；真正的上次关闭文件在关闭路径写入 */
+  private rememberChromeWindowBounds(bounds: { left?: number, top?: number, width?: number, height?: number }) {
+    const parsed = parseLastWindowBounds(bounds)
+    const dirId = this.browserItem.winInfo.dirId
+    if (!parsed || !dirId) {
+      return null
+    }
+    store.waitingRestoreWindowBounds ??= {}
+    store.waitingRestoreWindowBounds[dirId] = parsed
+    return parsed
   }
 
   /** 获取标签页 */
@@ -317,8 +365,9 @@ export class AfterLaunchTask {
       }
 
       const saveCookies = async () => {
-        if (!this.browser.client)
+        if (!this.browser.client) {
           return
+        }
 
         try {
           const { cookies } = await this.browser.client.Storage.getCookies()
@@ -422,8 +471,9 @@ export class AfterLaunchTask {
             try {
               const currentPages = await this.browser?.pages()
               const newPage = currentPages?.find(p => p.target()._targetId === target._targetId) as ChromePage | undefined
-              if (newPage)
+              if (newPage) {
                 setupNetworkListener(newPage)
+              }
             }
             catch (e) { }
           })
@@ -494,8 +544,9 @@ export class AfterLaunchTask {
               resolve = res
               reject = rej
             })
-            if (!document.body)
+            if (!document.body) {
               return null
+            }
 
             const escapeHTMLPolicy = (window as any).trustedTypes?.createPolicy?.('myEscapePolicy', {
               createHTML: (string: string) => string,
@@ -548,8 +599,9 @@ export class AfterLaunchTask {
 
   /** cookie robot 应跳过的 URL（Chrome / Firefox 内置页、扩展页等） */
   private shouldSkipCookieRobotUrl(url: string): boolean {
-    if (!url || url === 'about:blank')
+    if (!url || url === 'about:blank') {
       return true
+    }
     const skipPrefixes = [
       'chrome://',
       'devtools://',
@@ -557,10 +609,12 @@ export class AfterLaunchTask {
       'resource://',
       'view-source:',
     ]
-    if (skipPrefixes.some(prefix => url.startsWith(prefix)))
+    if (skipPrefixes.some(prefix => url.startsWith(prefix))) {
       return true
-    if (url.startsWith('about:') && url !== 'about:blank')
+    }
+    if (url.startsWith('about:') && url !== 'about:blank') {
       return true
+    }
     return false
   }
 
@@ -575,13 +629,15 @@ export class AfterLaunchTask {
    */
   async openUrls(urls: string[]): Promise<void> {
     const list = urls.filter(Boolean)
-    if (!list.length)
+    if (!list.length) {
       return
+    }
 
     if (this.browserItem.isFirefox) {
       const firefoxBrowser = await this.ensureFirefoxBiDiForCookieRobot()
-      if (!firefoxBrowser)
+      if (!firefoxBrowser) {
         return
+      }
       try {
         for (const url of list) {
           try {
@@ -625,8 +681,9 @@ export class AfterLaunchTask {
    * Firefox 在启动后会 releaseSession()；cookie robot / openUrls 需临时重连 BiDi。
    */
   private async ensureFirefoxBiDiForCookieRobot(): Promise<FirefoxBrowser | null> {
-    if (!this.browserItem.isFirefox)
+    if (!this.browserItem.isFirefox) {
       return null
+    }
 
     // 等待本 profile 启动后 releaseSession 完成，避免与并行 batchLaunch 中的 handleBrowserEvent 竞态
     await this.firefoxBidiIdleDeferred.promise
@@ -860,8 +917,9 @@ export class AfterLaunchTask {
                     const selectors = ['main', '[role="main"]', 'ytd-app', '#content', '#app', '#page']
                     for (const sel of selectors) {
                       const el = document.querySelector(sel)
-                      if (!el || !(el instanceof HTMLElement))
+                      if (!el || !(el instanceof HTMLElement)) {
                         continue
+                      }
                       const max = el.scrollHeight - el.clientHeight
                       if (max > bestMax) {
                         bestMax = max

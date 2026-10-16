@@ -11,11 +11,13 @@ import { useWorkspaceStore } from '/@/stores/workspace'
 import { MENU_COLLAPSED } from '../constants/storage-key'
 import { useSimpleLocale } from '/@/stores/locale'
 import { useRouteContext } from '/@/composables/useRouteContext'
+import { useProxyExpireRemindTrigger } from '/@/views/agent/shop/components/expire-remind/useProxyExpireRemindTrigger'
 
 const { isEcommerce } = useRouteContext()
 const { realTheme } = storeToRefs(useThemeStore())
 const { userPayInfo } = storeToRefs(useUserStore())
 const { currentWorkspace } = storeToRefs(useWorkspaceStore())
+const { currentLocale, isZh } = storeToRefs(useSimpleLocale())
 
 const payInfoLoading = computed(() => Boolean(currentWorkspace.value?.id && !userPayInfo.value?.subLevel))
 
@@ -29,8 +31,6 @@ watchEffect(() => {
   localStorage.setItem(MENU_COLLAPSED, collapsed.value ? '1' : '0')
 })
 
-const { currentLocale, isZh } = storeToRefs(useSimpleLocale())
-
 const imageSrc = computed(() => {
   const suffix = ['zh-CN', 'en'].includes(currentLocale.value!) ? currentLocale.value : 'en'
   const theme = realTheme.value === 'dark' ? 'dark' : 'light'
@@ -41,6 +41,8 @@ const imageSrcEcommerce = computed(() => {
   const theme = realTheme.value === 'dark' ? 'dark' : 'light'
   return isZh.value ? `/images/roxybrowser1_text_${theme}_zh-CN.svg` : `/images/roxybrowser_text_${theme}_en.svg`
 })
+
+useProxyExpireRemindTrigger()
 </script>
 
 <template>

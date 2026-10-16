@@ -81,8 +81,9 @@ function toggleDrawer(addType: 'create' | 'list', item?: any) {
 }
 
 function onEdit(item: any) {
-  if (!check('Profiles_edit_platform_outside'))
+  if (!check('Profiles_edit_platform_outside')) {
     return
+  }
 
   if (item.id) {
     toggleDrawer('list')
@@ -112,7 +113,7 @@ function replaceData(data: any) {
           {{ attrs.label }}
         </div>
         <div v-if="isBatch" class="flex items-center gap-2">
-          <TsFormSelect v-model="accountType" v-bind="input.props" />
+          <TsFormSelect v-model="accountType" v-bind="input.props" overlay-auto-width />
           <SvgIcon v-tooltip="{ value: $t('顺序分配: 账号顺序分配给窗口，一个窗口应用一个账号\n应用于所有窗口: 将账号应用到所有窗口'), showDelay: 300, pt: { root: '!max-w-65' } }" name="base/rx_ic_info"
                    color="var(--colors-icon-icon-note)"
           />

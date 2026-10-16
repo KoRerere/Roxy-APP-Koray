@@ -2,7 +2,7 @@
 import MInputSelect from '/@/views/lab/components/form/m-input-select.vue'
 import MInputMultiSelect from '/@/views/lab/components/form/m-input-multi-select.vue'
 import MInputDatePicker from '/@/views/lab/components/form/m-input-date-picker.vue'
-import type { Input, InputType } from '/@/views/lab/components/form/type';
+import type { Input, InputType } from '/@/views/lab/components/form/type'
 
 interface Props {
   filters: Input[]
@@ -39,10 +39,11 @@ function onUpdateModelValue() {
   hasChanged.value = true
 }
 
-function onHide(item: any) {
-  if (!hasChanged.value) return
+function onHide() {
+  if (!hasChanged.value) {
+    return
+  }
   hasChanged.value = false
-  console.log("🚀 ~ onHide ~ item:", item)
   emit('change')
 }
 </script>
@@ -50,7 +51,7 @@ function onHide(item: any) {
 <template>
   <div class="flex items-center gap-2">
     <template v-for="item in filters" :key="item.name">
-      <component :is="INPUT_TYPE_MAP[item.type]" v-bind="{ ...INPUT_TYPE_PROPS[item.type], ...item.props }" v-model="item.value" @update:modelValue="onUpdateModelValue" @hide="onHide(item)" />
+      <component :is="INPUT_TYPE_MAP[item.type]" v-bind="{ ...INPUT_TYPE_PROPS[item.type], ...item.props }" v-model="item.value" @update:model-value="onUpdateModelValue" @hide="onHide" />
     </template>
   </div>
 </template>

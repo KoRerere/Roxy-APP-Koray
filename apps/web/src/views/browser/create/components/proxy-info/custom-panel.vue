@@ -2,14 +2,16 @@
 import TsForm from '/@/views/lab/components/form/index.vue'
 import TsFormSelect from '/@/views/lab/components/form/m-input-select.vue'
 import RxButton from '/@/components/rx-button'
+import CheckChannelOfficialLink from '/@/views/agent/create/components/check-channel-official-link.vue'
 import { deepClone, getDictMap, isEmptyValue, parseProxyUrl } from '/@/utils'
+import { mapCheckChannelOptions } from '/@/views/agent/create/check-channel'
 import { IPType, ProxyType } from '/@/enums/proxy'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import type { ProxyInfoItem } from './types'
 
-/** 当前自定义代理条目；向外同步完整 proxy 对象 */
+/** 当前自定义 IP条目；向外同步完整 proxy 对象 */
 const model = defineModel<ProxyInfoItem | null>({ default: null })
 
 const [showToast] = useResponseToast()
@@ -80,7 +82,7 @@ async function resolveCheckChannel(ipType: string, currentChannel?: string) {
   ])
   const isIPV6 = ipType === IPType.IPV6
   const dictKey = isIPV6 ? 'ipv6-query-channels' : 'checkChannel'
-  const options = $dict_map[dictKey] ?? []
+  const options = mapCheckChannelOptions($dict_map[dictKey])
   const matched = options.find(item => item.value === currentChannel)
   // 仅当当前渠道属于目标字典时才保留，避免 IPv6 渠道在切回 IPv4 后被 currentChannel 粘住
   let checkChannel = matched ? currentChannel : options[0]?.value
@@ -108,7 +110,7 @@ const inputs = [
     label: $t('智能识别'),
     name: 'proxyRules',
     props: {
-      placeholder: $t('192.168.0.1:8000:用户名:密码[刷新 URL]\n用户名:密码{at}192.168.0.1:8000[刷新 URL]', {
+      placeholder: $t('192.168.0.1:8000:代理 IP 用户名:代理 IP 密码[动态代理 IP 刷新 URL]\n代理 IP 用户名:代理 IP 密码{at}192.168.0.1:8000[动态代理 IP 刷新 URL]', {
         at: '@',
         notes: `{${$t('备注')}}`,
       }),
@@ -155,7 +157,7 @@ const inputs = [
         value: initial.host ?? null,
         required: true,
         props: {
-          placeholder: $t('主机'),
+          placeholder: $t('代理 IP 主机'),
           onInput: scheduleSyncToModel,
           onBlur: scheduleSyncToModel,
         },
@@ -166,7 +168,7 @@ const inputs = [
         itemClass: 'flex-1',
         value: initial.port?.toString?.()?.split?.('/')?.[0] ?? null,
         props: {
-          placeholder: $t('端口'),
+          placeholder: $t('代理 IP 端口'),
           useGrouping: false,
           onInput: scheduleSyncToModel,
           onBlur: scheduleSyncToModel,
@@ -191,7 +193,7 @@ const inputs = [
     label: $t('代理 IP 用户名'),
     value: initial.proxyUserName ?? '',
     props: {
-      placeholder: $t('请输入用户名'),
+      placeholder: $t('请输入代理 IP 账号'),
       onInput: scheduleSyncToModel,
       onBlur: scheduleSyncToModel,
     },
@@ -202,7 +204,7 @@ const inputs = [
     label: $t('代理 IP 密码'),
     value: initial.proxyPassword ?? '',
     props: {
-      placeholder: $t('请输入密码'),
+      placeholder: $t('请输入代理 IP 密码'),
       onInput: scheduleSyncToModel,
       onBlur: scheduleSyncToModel,
     },
@@ -211,10 +213,10 @@ const inputs = [
     type: 'text',
     name: 'refreshUrl',
     label: $t('刷新 URL'),
-    tooltip: $t('请在填写后点击下方刷新按钮测试。'),
+    tooltip: $t('如代理 IP 服务商未提供刷新 URL，则无需配置。填写后可点击右侧刷新按钮请求更换当前出口 IP。'),
     value: initial.refreshUrl ?? '',
     props: {
-      placeholder: $t('请输入刷新 URL'),
+      placeholder: $t('动态代理 IP 专用，静态代理 IP 无需填写'),
       icon: 'base/rx_ic_refresh',
       onInput: scheduleSyncToModel,
       onBlur: scheduleSyncToModel,
@@ -228,9 +230,9 @@ const inputs = [
     },
   },
   {
-    label: $t('IP 检测'),
+    label: $t('代理 IP 检测'),
     name: 'checkChannel',
-    tooltip: $t('若 IP 检测结果有误，请尝试切换下方查询渠道并重试。'),
+    tooltip: $t('用于查询代理 IP 的出口位置及网络信息。如检测结果异常或不准确，可切换其他查询渠道后重新测试。'),
     value: initial.checkChannel ?? null,
     props: {
       optionValue: 'value',
@@ -239,7 +241,13 @@ const inputs = [
     render: (props: any) => {
       return (
         <div class="w-full flex justify-between items-center gap-1.5 overflow-hidden">
-          <TsFormSelect {...props} />
+          <TsFormSelect {...props}>
+            {{
+              'option-extra': ({ option }: { option?: { external?: boolean, value?: string } }) => (
+                <CheckChannelOfficialLink option={option} />
+              ),
+            }}
+          </TsFormSelect>
           <RxButton
             class="flex-shrink-0"
             severity="secondary"
@@ -325,7 +333,7 @@ function syncToModel() {
     ...rest,
     ...formData,
     _tempId: model.value?._tempId ?? Date.now().toString(32),
-    // 自定义代理不保留库 id，避免外壳误判为 choose
+    // 自定义 IP不保留库 id，避免外壳误判为 choose
     id: undefined,
     moduleId: 0,
     proxyCategory,
@@ -370,8 +378,12 @@ async function onCheckProxyStatus() {
   batchTestShowToast([{ ...result, proxyType: ProxyType.resource }], {
     reCheck: () => onCheckProxyStatus(),
   })
+  // 换成新对象，外壳才会把测速后的国家码同步进窗口名称
   if (model.value) {
-    Object.assign(model.value, result)
+    model.value = {
+      ...toRaw(model.value),
+      ...result,
+    }
   }
 }
 </script>

@@ -218,12 +218,14 @@ function onChoose(data: any) {
   }
 }
 
-async function testProxySpeed({ _checkRes, bindList: _bindList, ...data }: any, index: number) {
+async function testProxySpeed(item: Record<string, any>, index: number) {
+  const { _checkRes, bindList: _bindList, ...data } = toRaw(item)
   checkIndex[index] = true
-  const result = await checkProxy({ ...toRaw(data), apiCheck: false })
+  const result = await checkProxy({ ...data, apiCheck: false })
   checkIndex[index] = false
-  batchTestShowToast({ ...result, proxyType: data.proxyType ?? data.buyProxyType }, { reCheck: () => testProxySpeed(data, index) })
-  Object.assign(data, result)
+  batchTestShowToast({ ...result, proxyType: item.proxyType ?? item.buyProxyType }, { reCheck: () => testProxySpeed(item, index) })
+  // 参数解构会丢掉列表上的响应式对象，必须写回原条目，国家码才能进窗口名称
+  Object.assign(item, result)
 }
 
 function modifyProxyCount(item: any) {
@@ -253,7 +255,7 @@ function tooltipValue(item: any) {
     $t('代理 IP 信息'),
     item.ipType,
     `${item.protocol}${strConcat('://', item.host)}${strConcat(':', item.port)}`,
-    `${$t('刷新 URL')}: ${item.refreshUrl}`,
+    `${$t('动态代理 IP 刷新 URL')}: ${item.refreshUrl}`,
     `${$t('位置')}: ${item.lastCountry}${strConcat('/', item.lastCity) || ''}`,
     `${$t('检测时间')}: ${item.checkTime}`,
   ]

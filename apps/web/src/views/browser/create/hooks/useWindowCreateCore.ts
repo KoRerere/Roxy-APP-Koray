@@ -5,6 +5,8 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useUserStore } from '/@/stores/user'
 import { useCheckProxy } from '/@/views/agent/hooks'
 import { filterFieldByValue, findInputByName, getFormDataByList, isEmptyValue } from '/@/utils'
+import { hasWindowName } from '../utils'
+import { readSuggestedWindowName } from '../window-name'
 import { ensureApiExtractProxyInfo } from '../components/proxy-info/api-extract'
 import { buildUiProxyInfoList, toSingleWindowProxyParams } from '../components/proxy-info/proxy-params'
 import { ceateRandomFinger, getInputsGroup, switchMoblieInputVisible } from '../form-inputs'
@@ -189,6 +191,12 @@ export function useWindowCreateCore(options: UseWindowCreateCoreOptions = {}) {
       if (requestParams !== mergedParams)
         syncApiProxyInfoList(requestParams)
       const singleParams = toSingleWindowProxyParams(requestParams)
+      // 名称为空时提交 placeholder 上的建议名，不把提示文案写进窗口
+      if (!hasWindowName(singleParams.windowName)) {
+        const suggested = readSuggestedWindowName(findInputByName(mainSetting.value, 'windowName'))
+        if (suggested)
+          singleParams.windowName = suggested
+      }
       const response = await API.window.userAddWindowInfoV2Create(singleParams as any)
       onlyErrorToast(response.code, response.msg)
 

@@ -232,6 +232,48 @@ async function exportToJSON() {
   figma.ui.postMessage({ type: 'EXPORT_RESULT', files })
 }
 
+/**
+ * 按模式名解析颜色别名，直到得到具体 RGB。
+ * 被引用变量往往在另一个集合里，modeId 不能跨集合使用。
+ */
+async function resolveColorByModeName(variableId: string, modeName: string, seen = new Set<string>()) {
+  if (seen.has(variableId)) {
+    return null
+  }
+  seen.add(variableId)
+  const variable = await figma.variables.getVariableByIdAsync(variableId)
+  if (!variable) {
+    return null
+  }
+  const collection = await figma.variables.getVariableCollectionByIdAsync(variable.variableCollectionId)
+  const normalizedModeName = modeName.replace(/\s/g, '').toLowerCase()
+  const mode = collection?.modes.find(item => item.name.replace(/\s/g, '').toLowerCase() === normalizedModeName)
+    ?? collection?.modes.find(item => item.modeId === collection.defaultModeId)
+  const value = mode ? variable.valuesByMode[mode.modeId] : undefined
+  if (!value) {
+    return null
+  }
+  if (value.type === 'VARIABLE_ALIAS') {
+    return resolveColorByModeName(value.id, modeName, seen)
+  }
+  if (value.color?.type === 'VARIABLE_ALIAS') {
+    const base = await resolveColorByModeName(value.color.id, modeName, seen)
+    if (!base) {
+      return null
+    }
+    return { ...base, a: base.a * (value.opacity / 100) }
+  }
+  if (typeof value.r === 'number') {
+    return {
+      r: value.r,
+      g: value.g,
+      b: value.b,
+      a: typeof value.a === 'number' ? value.a : 1,
+    }
+  }
+  return null
+}
+
 async function processCollection({ name, modes, variableIds }) {
   const file = { fileName: `${name}.tokens`, body: {} }
   const filesPromises = modes.map(async (mode) => {
@@ -251,6 +293,17 @@ async function processCollection({ name, modes, variableIds }) {
         if (value.type === 'VARIABLE_ALIAS') {
           const variable = await figma.variables.getVariableByIdAsync(value.id)
           obj[prop] = `{${variable!.name.replace(/\//g, '.')}}`
+        }
+        else if (value.color?.type === 'VARIABLE_ALIAS') {
+          // 直接写成 rgba。var() / rgb(from) 依赖 :root 里的不透明原色，浏览器会丢掉无效声明。
+          const resolved = await resolveColorByModeName(value.color.id, mode.name)
+          if (resolved) {
+            const opacity = typeof value.opacity === 'number' ? value.opacity : 100
+            obj[prop] = rgbToHex({
+              ...resolved,
+              a: resolved.a * (opacity / 100),
+            })
+          }
         }
         else {
           obj[prop] = resolvedType === 'COLOR' ? rgbToHex(value) : value
@@ -346,9 +399,9 @@ function parseColor(color) {
     const expandedHex
       = hexValue.length === 3
         ? hexValue
-          .split('')
-          .map(char => char + char)
-          .join('')
+            .split('')
+            .map(char => char + char)
+            .join('')
         : hexValue
     return {
       r: Number.parseInt(expandedHex.slice(0, 2), 16) / 255,
@@ -366,16 +419,21 @@ function parseColor(color) {
 
 function hslToRgbFloat(h, s, l) {
   const hue2rgb = (p, q, t) => {
-    if (t < 0)
+    if (t < 0) {
       t += 1
-    if (t > 1)
+    }
+    if (t > 1) {
       t -= 1
-    if (t < 1 / 6)
+    }
+    if (t < 1 / 6) {
       return p + (q - p) * 6 * t
-    if (t < 1 / 2)
+    }
+    if (t < 1 / 2) {
       return q
-    if (t < 2 / 3)
+    }
+    if (t < 2 / 3) {
       return p + (q - p) * (2 / 3 - t) * 6
+    }
     return p
   }
 
