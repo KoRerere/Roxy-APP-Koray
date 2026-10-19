@@ -360,7 +360,7 @@ export function getOperation(row: any = {}) {
       label: $t('窗口操作'),
       icon: 'base/rx_ic_browser',
       multiple: true,
-      power: check(['Profiles_copy_window_id', 'Profiles_export_window'], 'any'),
+      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_edit'], 'any'),
       items: [
         {
           name: 'view',
@@ -386,6 +386,12 @@ export function getOperation(row: any = {}) {
           label: $t('导出窗口'),
           icon: 'base/rx_ic_export',
           power: check('Profiles_export_window'),
+        },
+        {
+          name: 'upgradeCore',
+          label: $t('升级内核'),
+          icon: 'base/rx_ic_chrome',
+          power: check('Profiles_edit'),
         },
       ],
     },
@@ -452,7 +458,7 @@ export function getOperation(row: any = {}) {
       ],
     },
     {
-      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy', 'Profiles_add_platform_outside', 'Profiles_select_platform', 'Cost_Center_all'], 'any'),
+      power: check(['Profiles_copy_window_id', 'Profiles_export_window', 'Profiles_edit', 'Profiles_select_proxy', 'Profiles_delete_proxy_outside', 'Profiles_speed_test_proxy', 'Profiles_add_platform_outside', 'Profiles_select_platform', 'Cost_Center_all'], 'any'),
       separator: true,
       multiple: true,
     },

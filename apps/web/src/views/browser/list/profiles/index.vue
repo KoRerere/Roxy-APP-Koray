@@ -52,6 +52,7 @@ import { useProfileOpenState } from '/@/views/browser/list/profiles/hooks/usePro
 import { useProfilesTable } from '/@/views/browser/list/profiles/hooks/useProfilesTable'
 import { useWindowModify } from '/@/views/browser/list/profiles/hooks/useWindowModify'
 import { createProfileOperationHandler } from '/@/views/browser/list/profiles/operationHandlers'
+import { useUpgradeCore } from '/@/views/browser/list/profiles/hooks/useUpgradeCore'
 import { buildCustomFilterParamsFromMenu } from '/@/views/browser/list/profiles/utils/filterParams'
 import { useSimpleLocale } from '/@/stores/locale'
 import { LIST_CACHE_NAMESPACE, useListCacheActions, useListCacheStore } from '/@/stores/listCache'
@@ -284,6 +285,13 @@ const { singleModifyWindow, batchModifyWindow, updateProfileMeta } = useWindowMo
   invalidateListCache: invalidateProfilesListCacheScope,
 })
 
+const { onUpgradeCore } = useUpgradeCore({
+  batchModifyWindow,
+  onlyErrorToast,
+  showToast,
+  getWorkspaceName: () => workspaceName.value!,
+})
+
 watch(() => props.currentFilter?.id, () => {
   void refreshOnTabSwitch()
 })
@@ -493,6 +501,7 @@ const operationHandler = createProfileOperationHandler({
   onEditCookies,
   openCookieRobot,
   onClearCache,
+  onUpgradeCore,
   exportProfile,
   deleteProfile,
   onTestProxy,

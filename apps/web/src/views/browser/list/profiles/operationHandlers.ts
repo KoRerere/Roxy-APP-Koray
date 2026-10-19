@@ -34,6 +34,8 @@ export interface ProfileOperationDeps {
   onEditCookies: (data: ProfileOpData | ProfileOpData[]) => Promise<void>
   openCookieRobot: (data: ProfileOpData | ProfileOpData[]) => Promise<void>
   onClearCache: (datas: ProfileOpData[]) => Promise<void>
+  /** 电商账号列表没有该入口，可不传 */
+  onUpgradeCore?: (datas: ProfileOpData[]) => Promise<void>
   exportProfile: (data: any) => void | Promise<void>
   deleteProfile: (datas: any, ids: number[]) => void | Promise<void>
   onTestProxy: (datas: ProfileOpData) => void | Promise<void>
@@ -129,6 +131,7 @@ const operationMap: Record<string, (ctx: OpCtx) => void | Promise<void>> = {
   editCookies: async ctx => ctx.onEditCookies(ctx.data),
   cookieRobot: async ctx => ctx.openCookieRobot(ctx.data),
   clearCache: async ctx => ctx.onClearCache(ctx.datas),
+  upgradeCore: async ctx => ctx.onUpgradeCore?.(ctx.datas),
   exportProfile: async ctx => ctx.exportProfile(ctx.datas),
   delete: async ctx => ctx.deleteProfile(ctx.datas, ctx.ids),
 }
