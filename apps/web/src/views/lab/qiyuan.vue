@@ -6,6 +6,9 @@ import { useResponseToast } from '/@/hooks/useResponseToast'
 
 const [showToast] = useResponseToast()
 const tableRef = useTemplateRef<InstanceType<typeof Table>>('labTable')
+const tableKey = ref(0)
+const requestCount = ref(0)
+const allowGated = ref(true)
 
 const selection = ref<any[]>([])
 const showHeader = ref(true)
@@ -88,6 +91,7 @@ function tableSort() {
 
 /** 本地分页，用来确认请求结果不会被 dataList 默认值挡住 */
 async function tableRequest(params: Record<string, any>) {
+  requestCount.value += 1
   await sleep(400)
   if (forceEmpty.value) {
     return { data: { rows: [], total: 0 } }
@@ -143,8 +147,25 @@ function tableModel(scope: LabTableActionScope): ActionsItem[] {
       key: 'edit',
       label: $t('编辑'),
       icon: 'base/rx_ic_shut_down',
+      quick: true,
       multiple: { name: 'G2', showLabel: true },
       command: () => showToast(0, $t('已编辑 {name}', { name: namesOf(data) })),
+    },
+    {
+      key: 'gated',
+      label: $t('受控操作'),
+      icon: 'base/rx_ic_2fa',
+      quick: true,
+      power: () => allowGated.value,
+      command: () => showToast(0, $t('已标记 {count} 行', { count: ([] as any[]).concat(data ?? []).length || 1 })),
+    },
+    {
+      key: 'secret',
+      label: $t('无权限'),
+      icon: 'base/rx_ic_brush',
+      quick: true,
+      power: false,
+      command: () => showToast(0, $t('无权限')),
     },
     {
       key: 'copy',
@@ -253,17 +274,33 @@ watch([forceEmpty, loadingMode], () => {
           <option value="skeleton">{{ $t('骨架屏') }}</option>
         </select>
       </label>
+      <label class="flex items-center gap-1">
+        <input v-model="allowGated" type="checkbox">
+        {{ $t('允许受控操作') }}
+      </label>
+      <button type="button" class="border border-solid border-[var(--colors-border-border-base)] rounded px-1 py-0.5" @click="tableKey += 1">
+        {{ $t('重新挂载') }}
+      </button>
+      <span>{{ $t('请求 {count} 次', { count: requestCount }) }}</span>
       <span>{{ $t('已选 {count} 行', { count: selection.length }) }}</span>
     </div>
 
     <div class="flex-1 overflow-hidden">
-      <Table ref="labTable" v-model:selection="selection" class="h-full" data-key="id" cache-key="qiyuan-lab" display-key="qiyuan-lab-columns" selection-mode="multiple" :columns="columns"
+      <Table :key="tableKey" ref="labTable" v-model:selection="selection" class="h-full" data-key="id" cache-key="qiyuan-lab" display-key="qiyuan-lab-columns" remember="qiyuan-lab" selection-mode="multiple" :columns="columns"
              :chrome="chrome" :loading="loadingMode" :model="tableModel" :table-filters="tableFilters" :table-sort="tableSort" :table-request="tableRequest" :is-row-disabled="isRowDisabled"
              :page-size="10"
       >
         <template v-if="customHeader" #header>
           <div class="flex-1 text-13px">
             {{ $t('自定义表头') }}
+          </div>
+        </template>
+        <template #filter-after>
+          <div class="basis-full flex flex-wrap gap-2 text-12px">
+            <span>{{ $t('实验表格') }}</span>
+            <span>{{ $t('打开') }}</span>
+            <span>{{ $t('编辑') }}</span>
+            <span>{{ $t('复制') }}</span>
           </div>
         </template>
         <template #toolbar>
@@ -284,8 +321,8 @@ watch([forceEmpty, loadingMode], () => {
         <template #status="{ data }">
           <span>{{ data.status === 'locked' ? $t('已锁定') : $t('可用') }}</span>
         </template>
-        <template #selection-actions="{ selection: rows, clear, busy }">
-          <RxButton text severity="secondary" size="xxs" :disabled="busy" :label="$t('自定义批量')" :on-click="() => { showToast(0, $t('已标记 {count} 行', { count: rows.length })); clear() }" />
+        <template #selection-actions="{ selection: rows, clear }">
+          <RxButton text severity="secondary" size="xxs" :label="$t('自定义批量')" :on-click="() => { showToast(0, $t('已标记 {count} 行', { count: rows.length })); clear() }" />
         </template>
       </Table>
     </div>

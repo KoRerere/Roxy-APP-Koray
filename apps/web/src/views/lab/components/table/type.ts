@@ -42,8 +42,16 @@ export interface ActionsItem {
   onlyQuick?: boolean
   /** 只出现在批量条，不进入行菜单 */
   onlyMultiple?: boolean
-  /** 为 false 时从当前菜单里拿掉 */
-  visible?: boolean
+  /**
+   * 对齐 PrimeVue MenuItem.visible，只决定这项在菜单里显不显示。
+   * 快捷区和批量条不受这个字段影响。
+   */
+  visible?: boolean | (() => boolean)
+  /**
+   * 权限。false 或函数返回 false 时，这项操作不存在。
+   * 表格只读结果，不改传入的原对象。
+   */
+  power?: boolean | (() => boolean)
   command?: (event: any) => any
   items?: ActionsItem[]
   suffixLabel?: string

@@ -25,8 +25,9 @@ export interface ListCacheEntry {
 export function buildScopeKey(scope: Record<string, unknown>): string {
   const keys = Object.keys(scope).sort()
   const normalized: Record<string, unknown> = {}
-  for (const key of keys)
+  for (const key of keys) {
     normalized[key] = scope[key]
+  }
   return JSON.stringify(normalized)
 }
 
@@ -56,8 +57,9 @@ export const useListCacheStore = defineStore('listCache', () => {
   const scrollOffsets = ref(new Map<string, number>())
 
   function get(namespace: string, workspaceId: string, scope: Record<string, unknown>): ListCacheEntry | null {
-    if (!workspaceId)
+    if (!workspaceId) {
       return null
+    }
     const key = buildCacheKey(namespace, workspaceId, scope)
     return entries.value.get(key) ?? null
   }
@@ -69,8 +71,9 @@ export const useListCacheStore = defineStore('listCache', () => {
   function touch(namespace: string, workspaceId: string, scope: Record<string, unknown>) {
     const key = buildCacheKey(namespace, workspaceId, scope)
     const entry = entries.value.get(key)
-    if (!entry)
+    if (!entry) {
       return
+    }
 
     entry.lastAccessedAt = Date.now()
     entries.value.set(key, entry)
@@ -79,16 +82,18 @@ export const useListCacheStore = defineStore('listCache', () => {
       const workspaceKey = buildWorkspaceKey(namespace, workspaceId)
       const order = projectDetailLru.value.get(workspaceKey) ?? []
       const index = order.indexOf(key)
-      if (index >= 0)
+      if (index >= 0) {
         order.splice(index, 1)
+      }
       order.push(key)
       projectDetailLru.value.set(workspaceKey, order)
     }
   }
 
   function set(namespace: string, workspaceId: string, scope: Record<string, unknown>, entry: ListCacheEntry) {
-    if (!workspaceId)
+    if (!workspaceId) {
       return
+    }
 
     const key = buildCacheKey(namespace, workspaceId, scope)
     const nextEntry: ListCacheEntry = {
@@ -101,22 +106,25 @@ export const useListCacheStore = defineStore('listCache', () => {
       const workspaceKey = buildWorkspaceKey(namespace, workspaceId)
       const order = projectDetailLru.value.get(workspaceKey) ?? []
       const index = order.indexOf(key)
-      if (index >= 0)
+      if (index >= 0) {
         order.splice(index, 1)
+      }
       order.push(key)
       projectDetailLru.value.set(workspaceKey, order)
 
       while (order.length > MAX_PROJECT_DETAIL_CACHES) {
         const evictKey = order.shift()
-        if (evictKey)
+        if (evictKey) {
           entries.value.delete(evictKey)
+        }
       }
     }
   }
 
   function invalidate(namespace: string, workspaceId: string, scope?: Record<string, unknown>) {
-    if (!workspaceId)
+    if (!workspaceId) {
       return
+    }
 
     if (scope) {
       const key = buildCacheKey(namespace, workspaceId, scope)
@@ -132,8 +140,9 @@ export const useListCacheStore = defineStore('listCache', () => {
 
     const prefix = `${namespace}:${workspaceId}:`
     for (const key of [...entries.value.keys()]) {
-      if (key.startsWith(prefix))
+      if (key.startsWith(prefix)) {
         entries.value.delete(key)
+      }
     }
     projectDetailLru.value.delete(buildWorkspaceKey(namespace, workspaceId))
   }
@@ -146,33 +155,38 @@ export const useListCacheStore = defineStore('listCache', () => {
 
   /** 离开列表时写入当前虚拟列表偏移；与 rows 是否仍有效无关 */
   function setScrollOffset(namespace: string, workspaceId: string, scope: Record<string, unknown>, offset: number) {
-    if (!workspaceId)
+    if (!workspaceId) {
       return
+    }
     scrollOffsets.value.set(buildCacheKey(namespace, workspaceId, scope), offset)
   }
 
   /** 只读快照；还原成功后再 clear，避免 spacer 未撑开时提前丢掉 */
   function peekScrollOffset(namespace: string, workspaceId: string, scope: Record<string, unknown>): number | null {
-    if (!workspaceId)
+    if (!workspaceId) {
       return null
+    }
     const key = buildCacheKey(namespace, workspaceId, scope)
-    if (!scrollOffsets.value.has(key))
+    if (!scrollOffsets.value.has(key)) {
       return null
+    }
     return scrollOffsets.value.get(key) ?? 0
   }
 
   /** 主动丢弃滚动快照（如表格刷新按钮），不碰行缓存 */
   function clearScrollOffset(namespace: string, workspaceId: string, scope?: Record<string, unknown>) {
-    if (!workspaceId)
+    if (!workspaceId) {
       return
+    }
     if (scope) {
       scrollOffsets.value.delete(buildCacheKey(namespace, workspaceId, scope))
       return
     }
     const prefix = `${namespace}:${workspaceId}:`
     for (const key of [...scrollOffsets.value.keys()]) {
-      if (key.startsWith(prefix))
+      if (key.startsWith(prefix)) {
         scrollOffsets.value.delete(key)
+      }
     }
   }
 
@@ -197,8 +211,9 @@ export function useListCacheActions() {
 
   function invalidateCache(namespace: ListCacheNamespace, scope?: Record<string, unknown>) {
     const workspaceId = workspaceStore.currentWorkspace?.id
-    if (!workspaceId)
+    if (!workspaceId) {
       return
+    }
     listCacheStore.invalidate(namespace, String(workspaceId), scope)
   }
 

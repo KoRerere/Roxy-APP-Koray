@@ -13,7 +13,9 @@ import { saveDisplaySettings, setDisplay } from './utils'
 // ============== 操作部分 ==============
 import Actions from './actions.vue'
 import SelectionActions from './selection-actions.vue'
-import { provideLabTableActionLock } from './action-lock'
+import { isMenuItemVisible, prepareActions } from './actions-model'
+import { createActionScopes } from './action-lock'
+import { clearTableScroll, dropTableMemory, peekTableScroll, readTableMemory, writeTableMemory, writeTableScroll, type LabTableMemory } from './list-cache'
 import { usePreventMask } from '/@/hooks/usePreventMask'
 
 // ========================= 分页 ==============
@@ -25,7 +27,8 @@ import TableReload from './table-reload.vue'
 
 defineOptions({ inheritAttrs: false })
 
-const { busy: actionBusy, run: runLockedAction } = provideLabTableActionLock()
+const BATCH_SCOPE = 'batch'
+const { isBusy: isScopeBusy, run: runScopedAction } = createActionScopes()
 
 const {
   dataKey = 'id',
@@ -41,6 +44,7 @@ const {
   loading = 'mask',
   chrome,
   isRowDisabled,
+  remember,
   tableRequest = () => ({}),
   tableFilters = () => [],
   tableSort: tableSortProp,
@@ -69,6 +73,11 @@ interface Props {
   chrome?: LabTableChrome
   /** 命中的行不可选，写入选中集时会被去掉 */
   isRowDisabled?: (row: any) => boolean
+  /**
+   * 记住这次列表。键由调用方自己拼好（例如带上项目），表格不关心工作区或旧缓存结构。
+   * 不传则每次挂载都重新请求。
+   */
+  remember?: string
   tableRequest?: (data: any) => any | Promise<any>
   tableFilters?: () => any | Promise<any>
   /** 提供后启用服务端排序：与列表请求参数 orderName / orderType 联动 */
@@ -144,6 +153,7 @@ const { showPreventMask, hidePreventMask } = usePreventMask()
 const selectionModel = defineModel<any>('selection')
 const internalSelection = ref<any>(selectionMode === 'multiple' ? [] : null)
 
+const rootEl = useTemplateRef<HTMLElement>('rootEl')
 const ctxmenuRef = useTemplateRef('ctxmenu')
 const contextMenuSelection = ref()
 const contextModel = ref<ActionsItem[]>([])
@@ -234,22 +244,40 @@ function clearSelection() {
   selectionState.value = emptySelection()
 }
 
+function rowScope(row: any) {
+  return `row:${String(row?.[dataKey] ?? '')}`
+}
+
+function actionIdentity(item: ActionsItem) {
+  return String(item.key ?? item.icon ?? item.label ?? '')
+}
+
+/** 同一行的不同操作、以及批量条上的不同操作，各自一把锁 */
+function actionPendingKey(actionScope: string, item: ActionsItem) {
+  return `${actionScope}:${actionIdentity(item)}`
+}
+
+function isActionPending(item: ActionsItem) {
+  return !!item.pendingKey && isScopeBusy(item.pendingKey)
+}
+
 function resolveModel(scope: LabTableActionScope) {
   const source = typeof model === 'function' ? model(scope) : model
   const payload = toRaw(scope.row ?? scope.rows)
-  return (source ?? []).filter(item => item.visible !== false).map(item => bindActionCommand(item, payload))
+  const actionScope = scope.row ? rowScope(scope.row) : BATCH_SCOPE
+  return prepareActions(source ?? []).map(item => bindActionCommand(item, payload, actionScope))
 }
 
-/** command 在 table 层挂锁。DataTable/冻结列槽里 inject 经常拿不到同一把锁，不能依赖子组件自己加锁 */
-function bindActionCommand(item: ActionsItem, payload: any): ActionsItem {
-  const next: ActionsItem = { ...item }
+/** 锁挂在这一项的 command 上。重复点同一项会得到 false，其它项照常进入 */
+function bindActionCommand(item: ActionsItem, payload: any, actionScope: string): ActionsItem {
+  const next: ActionsItem = { ...item, pendingKey: actionPendingKey(actionScope, item) }
   if (item.items?.length) {
-    next.items = item.items.map(child => bindActionCommand(child, payload))
+    next.items = item.items.map(child => bindActionCommand(child, payload, actionScope))
   }
   if (isLikeFunction(item.command)) {
     const original = item.command
     next.command = async (event: any) => {
-      return runLockedAction(() => original({ ...event, data: event?.data ?? payload }))
+      return runScopedAction(next.pendingKey, () => original({ ...event, data: event?.data ?? payload }))
     }
   }
   return next
@@ -261,11 +289,11 @@ function isBatchMenuItem(item: ActionsItem) {
 
 function menuItems(scope: LabTableActionScope) {
   const list = resolveModel(scope)
-  // 批量更多菜单是全量批量操作，含子菜单；行菜单排除 onlyMultiple
-  if (scope.rows) {
-    return list.filter(isBatchMenuItem)
-  }
-  return list.filter(item => !(item.onlyQuick || item.onlyMultiple))
+  // 批量更多菜单是全量批量操作，含子菜单；行菜单排除 onlyMultiple。visible 只在这里生效
+  const scoped = scope.rows
+    ? list.filter(isBatchMenuItem)
+    : list.filter(item => !(item.onlyQuick || item.onlyMultiple))
+  return scoped.filter(isMenuItemVisible)
 }
 
 function hasExecutableAction(items: ActionsItem[]) {
@@ -276,7 +304,7 @@ function wrapMenuCommand(item: ActionsItem, batch: boolean, data: any): ActionsI
   const next: ActionsItem = { ...item }
   if (item.items?.length) {
     next.items = item.items
-      .filter(child => child.visible !== false && (!batch || child.multiple !== false))
+      .filter(child => isMenuItemVisible(child) && (!batch || child.multiple !== false))
       .map(child => wrapMenuCommand(child, batch, data))
   }
   if (isLikeFunction(item.command)) {
@@ -306,9 +334,6 @@ async function openContextMenu(originalEvent: Event, scope: LabTableActionScope,
 }
 
 function onRowContextmenu(event: any) {
-  if (actionBusy.value) {
-    return
-  }
   const { data, originalEvent } = event
   if (isSkeletonPlaceholder(data) || isRowDisabled?.(data)) {
     return
@@ -317,31 +342,20 @@ function onRowContextmenu(event: any) {
 }
 
 function onSelectionContextmenu(event: any) {
-  if (actionBusy.value) {
-    return
-  }
   openContextMenu(event.originalEvent, { rows: event.data }, event.data)
 }
 
-const menuLoadingKey = ref<string>()
-
-function menuItemKey(item: ActionsItem) {
-  return String(item.key ?? item.icon ?? item.label ?? '')
+function menuHasPending(items: ActionsItem[] = contextModel.value): boolean {
+  return items.some(item => isActionPending(item) || (item.items?.length ? menuHasPending(item.items) : false))
 }
 
 async function onMenuCommand(event: Event, item: any) {
-  if (item.items?.length || item.separator || item.disabled || actionBusy.value) {
+  if (item.items?.length || item.separator || item.disabled || isActionPending(item)) {
     return
   }
-  const token = menuItemKey(item)
-  menuLoadingKey.value = token
-  try {
-    // command 已在 resolveModel 里挂锁，这里不能再套一层，否则 busy 时内层会直接跳过
-    await item.command?.({ originalEvent: event, item })
+  const result = await item.command?.({ originalEvent: event, item })
+  if (result !== false && !menuHasPending()) {
     ctxmenuRef.value?.hide()
-  }
-  finally {
-    menuLoadingKey.value = undefined
   }
 }
 
@@ -380,10 +394,30 @@ let _getConditionPromise: Promise<any> | undefined
 
 onBeforeMount(async () => {
   _getConditionPromise = _getCondition()
+  await _getConditionPromise
+  if (tryRestoreMemory()) {
+    _firstLoad.value = true
+    return
+  }
   if (immediate) {
     await _request()
   }
   _firstLoad.value = true
+})
+
+onMounted(() => {
+  void restoreScrollOffset()
+})
+
+watch(sourceRows, () => {
+  void restoreScrollOffset()
+})
+
+onBeforeUnmount(() => {
+  const top = readScrollTop()
+  if (top != null) {
+    writeTableScroll(remember, top)
+  }
 })
 
 function onFilterChange() {
@@ -435,16 +469,122 @@ async function _onSortChange(event: DataTableSortEvent) {
   await _request()
 }
 
+function collectFilterValues() {
+  const values: Record<string, unknown> = {}
+  for (const item of _filters.value ?? []) {
+    if (item?.name) {
+      values[item.name] = item.value
+    }
+  }
+  return values
+}
+
+function applyFilterValues(values: Record<string, unknown> | undefined) {
+  if (!values) {
+    return
+  }
+  for (const item of _filters.value ?? []) {
+    if (item?.name && Object.prototype.hasOwnProperty.call(values, item.name)) {
+      item.value = values[item.name]
+    }
+  }
+}
+
+function collectMemory(): Omit<LabTableMemory, 'scrollTop'> {
+  return {
+    rows: _dataList.value ?? [],
+    total: totalRecords.value,
+    page: { first: paginatorFirst.value, size: paginatorRows.value },
+    params: { ...(_outerParams.value ?? {}) },
+    filters: collectFilterValues(),
+    sort: { field: _sorts.sortField, order: _sorts.sortOrder },
+  }
+}
+
+function applyMemory(snapshot: LabTableMemory) {
+  _outerParams.value = { ...snapshot.params }
+  paginatorFirst.value = snapshot.page.first
+  if (snapshot.page.size) {
+    paginatorRows.value = snapshot.page.size
+  }
+  totalRecords.value = snapshot.total
+  _dataList.value = snapshot.rows
+  if (snapshot.sort?.field) {
+    _sorts.sortField = snapshot.sort.field
+    _sorts.sortOrder = snapshot.sort.order
+    serverSortEnabled.value = true
+  }
+  applyFilterValues(snapshot.filters)
+}
+
+/** 静态 dataList 不记快照，避免盖住调用方正在编辑的数组 */
+function tryRestoreMemory() {
+  if (dataList !== undefined) {
+    return false
+  }
+  const snapshot = readTableMemory(remember)
+  if (!snapshot) {
+    return false
+  }
+  applyMemory(snapshot)
+  return true
+}
+
+/** PrimeVue 普通表和虚拟列表的滚动节点不是同一个，只在这里认 */
+function findTableScroller() {
+  const root = rootEl.value
+  if (!root) {
+    return null
+  }
+  return root.querySelector<HTMLElement>('.p-virtualscroller')
+    ?? root.querySelector<HTMLElement>('.p-datatable-table-container')
+}
+
+function readScrollTop() {
+  return findTableScroller()?.scrollTop
+}
+
+let scrollTicket = 0
+
+/** 虚拟列表的占位高度是后补上的，scrollTop 写早了会被钳成 0 */
+async function restoreScrollOffset() {
+  const offset = peekTableScroll(remember)
+  if (!offset) {
+    return
+  }
+  const ticket = ++scrollTicket
+  const deadline = performance.now() + 480
+  while (performance.now() < deadline) {
+    if (ticket !== scrollTicket) {
+      return
+    }
+    await nextTick()
+    const el = findTableScroller()
+    if (el && el.scrollHeight - el.clientHeight >= offset) {
+      el.scrollTop = offset
+      if (el.scrollTop > 0) {
+        clearTableScroll(remember)
+        return
+      }
+    }
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  }
+}
+
 async function _request() {
   _loading.value = true
   try {
     await _getConditionPromise
     const response = await tableRequest(_getParams())
+    const failed = typeof response?.code === 'number' && response.code !== 0
     const data = response?.data ?? response
     _dataList.value = data?.rows || []
     totalRecords.value = data?.total ?? 0
     if (!selectionBound) {
       internalSelection.value = emptySelection()
+    }
+    if (!failed && dataList === undefined) {
+      writeTableMemory(remember, collectMemory())
     }
   }
   finally {
@@ -452,7 +592,11 @@ async function _request() {
   }
 }
 
-async function _onRefresh() {
+async function _onRefresh(dropMemory = false) {
+  // 只有用户点刷新才丢掉整条记忆。筛选、翻页、外部 refresh 成功后直接覆盖
+  if (dropMemory) {
+    dropTableMemory(remember)
+  }
   await beforeRefresh?.()
   await _request()
   await afterRefresh?.()
@@ -482,15 +626,15 @@ defineExpose({
 </script>
 
 <template>
-  <div class="w-full h-full flex flex-col" :class="wrapClass">
-    <div v-if="chromeView.header" class="w-full h-10 px-6 flex justify-end items-center">
+  <div ref="rootEl" class="w-full h-full flex flex-col" :class="wrapClass">
+    <div v-if="chromeView.header" class="w-full px-6 py-2 flex flex-wrap items-start justify-between gap-2">
       <slot name="header">
-        <div class="flex-1 flex flex-wrap gap-2">
+        <div class="flex flex-1 flex-wrap items-center gap-2 min-w-0 basis-64">
           <slot name="filter-before" />
           <TableFilter v-if="_filters?.length" :filters="_filters" @change="onFilterChange" />
           <slot name="filter-after" />
         </div>
-        <div class="flex items-center gap-2">
+        <div class="ml-auto flex shrink-0 items-center gap-2">
           <slot name="toolbar" />
           <Display
             v-if="displayKey"
@@ -499,7 +643,7 @@ defineExpose({
             :sort-order="serverSortEnabled ? _sorts.sortOrder : 0"
           />
           <RxDivider v-if="displayKey && chromeView.reload" class="!h-5" vertical line-only />
-          <TableReload v-if="chromeView.reload" :loading="_loading" @click="_onRefresh" />
+          <TableReload v-if="chromeView.reload" :loading="_loading" @click="_onRefresh(true)" />
         </div>
       </slot>
     </div>
@@ -582,11 +726,11 @@ defineExpose({
         >
           <template #body="{ data, index }">
             <Skeleton v-if="isSkeletonPlaceholder(data)" width="4rem" height="1rem" />
-            <slot v-else name="actions" :data="data" :index="index" :busy="actionBusy">
+            <slot v-else name="actions" :data="data" :index="index" :is-pending="isActionPending">
               <Actions
                 :model="resolveModel({ row: data })"
                 :data="data"
-                :busy="actionBusy"
+                :is-pending="isActionPending"
                 :show-menu="chromeView.actions !== 'quick'"
                 @more="onRowContextmenu({ originalEvent: $event, data, index })"
               />
@@ -600,10 +744,10 @@ defineExpose({
         v-model:selection="selectionState"
         :total="sourceRows?.length ?? 0"
         :model="batchModel"
-        :busy="actionBusy"
+        :is-pending="isActionPending"
         @more="onSelectionContextmenu({ originalEvent: $event, data: selectedRows })"
       >
-        <slot name="selection-actions" :selection="selectedRows" :clear="clearSelection" :busy="actionBusy" />
+        <slot name="selection-actions" :selection="selectedRows" :clear="clearSelection" />
       </SelectionActions>
 
       <RxLoading v-if="loading !== 'skeleton'" v-model="_loading" :opacity="0.9" />
@@ -617,7 +761,7 @@ defineExpose({
         <div v-else-if="item.render" class="w-full" @click.stop>
           <component :is="item.render" :item="item" />
         </div>
-        <a v-else-if="item.items?.length" v-bind="actionBusy ? {} : props.action" class="!pa-0" :class="{ 'opacity-40 pointer-events-none': actionBusy }">
+        <a v-else-if="item.items?.length" v-bind="props.action" class="!pa-0">
           <div class="flex items-center w-full gap-1.5 px-2.5 py-2 text-13px">
             <RxSvgIcon v-if="item.icon" :name="item.icon" :class="item.iconClass" />
             <span class="flex-1">{{ item.label }}</span>
@@ -628,13 +772,13 @@ defineExpose({
           v-else
           v-tooltip="{ value: item.menuTooltip, delay: 300 }"
           class="flex items-center w-full gap-1.5 px-2.5 py-2 text-13px cursor-pointer"
-          :class="{ 'opacity-40 pointer-events-none': item.disabled || menuLoadingKey }"
+          :class="{ 'opacity-40 pointer-events-none': item.disabled || isActionPending(item) }"
           @click.stop="onMenuCommand($event, item)"
         >
           <RxSvgIcon
-            v-if="item.icon || menuLoadingKey === menuItemKey(item)"
-            :name="menuLoadingKey === menuItemKey(item) ? 'base/rx_ic_progress_bar' : item.icon"
-            :class="[item.iconClass, menuLoadingKey === menuItemKey(item) && 'animate-spin']"
+            v-if="item.icon || isActionPending(item)"
+            :name="isActionPending(item) ? 'base/rx_ic_progress_bar' : item.icon"
+            :class="[item.iconClass, isActionPending(item) && 'animate-spin']"
           />
           <span class="flex-1">{{ item.label }}</span>
           <div v-if="item.suffixLabel || item.suffixIcon" class="flex items-center gap-1 shrink-0">

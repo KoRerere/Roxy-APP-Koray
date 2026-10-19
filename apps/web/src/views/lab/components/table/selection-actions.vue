@@ -3,11 +3,11 @@ import { isObject } from '/@/utils'
 import { RxSvgIcon } from '/@/components/rx-icon/'
 import type { ActionsItem, ActionsItemMultiple } from './type'
 
-const { model, total, busy = false } = defineProps<{
+const { model, total, isPending = () => false } = defineProps<{
   total: number
   model: ActionsItem[]
-  /** 表级操作锁，由 table 传入 */
-  busy?: boolean
+  /** 只标记正在执行的那一项 */
+  isPending?: (item: ActionsItem) => boolean
 }>()
 
 const emit = defineEmits(['more'])
@@ -16,7 +16,7 @@ const selectedProduct = defineModel<any[]>('selection')
 const loadingMap = ref<Record<string, boolean>>({})
 
 function isBatchItem(item: ActionsItem) {
-  return item.visible !== false && !item.onlyQuick && !!item.multiple
+  return !item.onlyQuick && !!item.multiple
 }
 
 const quickGroup = computed(() => {
@@ -53,12 +53,11 @@ function actionKey(item: ActionsItem) {
 }
 
 function isItemLoading(item: ActionsItem) {
-  return !!loadingMap.value[actionKey(item)]
+  return !!loadingMap.value[actionKey(item)] || isPending(item)
 }
 
 async function onCommand(event: Event, item: any) {
-  // busy/disabled 必须在进入 command 前拦住：CSS 禁用挡不住点击
-  if (item.disabled || busy || isItemLoading(item)) {
+  if (item.disabled || isItemLoading(item)) {
     return
   }
   const token = actionKey(item)
@@ -75,16 +74,10 @@ async function onCommand(event: Event, item: any) {
 }
 
 function onMore(event: Event) {
-  if (busy) {
-    return
-  }
   emit('more', event)
 }
 
 function onClear() {
-  if (busy) {
-    return
-  }
   selectedProduct.value = []
 }
 </script>
@@ -109,7 +102,7 @@ function onClear() {
           v-else
           v-tooltip.top="{ value: item.disabled ? item.disabledTooltip : '', showDelay: 500 }"
           class="icon-item"
-          :class="{ disabled: item.disabled || busy }"
+          :class="{ disabled: item.disabled || isItemLoading(item) }"
           @click="onCommand($event, item)"
         >
           <RxSvgIcon
@@ -124,10 +117,10 @@ function onClear() {
         </div>
       </template>
     </div>
-    <div :class="{ 'pointer-events-none opacity-40': busy }">
+    <div>
       <slot />
     </div>
-    <div v-if="showMore" class="icons cursor-pointer" :class="{ disabled: busy }" @click.stop="onMore($event)">
+    <div v-if="showMore" class="icons cursor-pointer" @click.stop="onMore($event)">
       <RxSvgIcon name="base/rx_ic_more-v" class="pointer-events-none" color="#FAFAFA" />
     </div>
   </div>

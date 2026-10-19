@@ -186,23 +186,17 @@ const _originalModel = [
       return false
     },
     quick: true,
-    onlyQuick: true,
-    multiple: {
-      name: 'G1',
-      props: {
-        label: 'Restart',
-      },
-    },
+    menu: false,
   },
   {
     label: 'only multiple',
     icon: 'base/rx_ic_shut_down',
     command: () => {
     },
-    quick: true,
-    onlyMultiple: true,
-    multiple: {
+    menu: false,
+    batch: {
       name: 'G2',
+      quick: true,
     },
   },
   {
@@ -212,8 +206,9 @@ const _originalModel = [
       await sleep(2000)
     },
     quick: true,
-    multiple: {
+    batch: {
       name: 'G2',
+      quick: true,
     },
   },
   {

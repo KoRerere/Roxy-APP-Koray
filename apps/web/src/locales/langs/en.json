@@ -4174,5 +4174,10 @@
   "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)",
   "（可选）": "(Optional)",
   "（脚本日志文件不存在）": "(Script log file does not exist)",
-  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount"
+  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount",
+  "允许受控操作": "Allow gated action",
+  "受控操作": "Gated action",
+  "无权限": "No permission",
+  "请求 {count} 次": "Requests: {count}",
+  "重新挂载": "Remount"
 }
