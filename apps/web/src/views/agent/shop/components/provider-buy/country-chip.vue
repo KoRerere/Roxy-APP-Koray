@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RxSvgIcon } from '/@/components/rx-icon'
+import TruncateText from './truncate-text.vue'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
 import { useProxyPurchaseLabels } from '/@/views/agent/shop/utils/proxy-purchase-labels'
 import { NEW_USER_IP_DURATION_DAYS } from '/@/views/campaign/new-user/proxy-pricing'
@@ -66,7 +67,7 @@ const benefitTooltip = computed(() => {
 </script>
 
 <template>
-  <div v-tooltip.top="{ value: benefitTooltip, disabled: !benefitTooltip, showDelay: 400 }" class="w-38 h-10 relative flex items-center justify-center gap-1.5 leading-none cursor-pointer select-none" :class="[styles.radio, active && styles.active, hasNewUserBenefit && styles.newUser]" @click="emit('select', option)">
+  <div v-tooltip.top="{ value: benefitTooltip, disabled: !benefitTooltip, showDelay: 400 }" class="w-full min-w-0 h-10 px-2 relative flex items-center justify-center gap-1.5 leading-none cursor-pointer select-none" :class="[styles.radio, active && styles.active, hasNewUserBenefit && styles.newUser]" @click="emit('select', option)">
     <div v-if="option.isNew"
          class="pointer-events-none absolute top-0 right-0 z-10 -translate-y-2/3 translate-x-2/5 rounded-full bg-[#f53838] font-[DingTalk_JinBuTi] px-1.5 text-2.5 font-bold leading-normal whitespace-nowrap text-white"
     >
@@ -77,10 +78,8 @@ const benefitTooltip = computed(() => {
     >
       HOT
     </div>
-    <RxSvgIcon :name="(option.icon as any)" size="18" />
-    <div :class="styles.purpose">
-      {{ option.name }}
-    </div>
+    <RxSvgIcon class="shrink-0" :name="(option.icon as any)" size="18" />
+    <TruncateText :class="styles.purpose" :text="option.name" />
   </div>
 </template>
 

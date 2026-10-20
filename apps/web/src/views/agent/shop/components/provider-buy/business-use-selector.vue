@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import RxImage from '/@/components/rx-image'
 import RxTooltip from '/@/components/rx-tooltip'
+import TruncateText from './truncate-text.vue'
+import { ProxyUseType } from '/@/enums/proxy'
+import { useOptionGridStyle } from './utils'
 import type { BusinessUseOption } from './utils'
 import { useProxyPurchaseLabels } from '../../utils/proxy-purchase-labels'
 
@@ -14,6 +17,31 @@ const emit = defineEmits<{
 }>()
 
 const labels = useProxyPurchaseLabels()
+
+const { style: optionGridStyle } = useOptionGridStyle()
+
+function isDirectOption(option: BusinessUseOption) {
+  return option.badgeType === ProxyUseType.Direct
+}
+
+/** 第一项（通用）独占一行；其余普通用途排第二行，带「大陆直连」标签的统一排到最后一行 */
+const sortedOptions = computed(() => {
+  const [first, ...rest] = options
+  if (!first) {
+    return []
+  }
+  return [first, ...rest.filter(option => !isDirectOption(option)), ...rest.filter(isDirectOption)]
+})
+
+/** 第一个大陆直连项从新的一行开始 */
+const firstDirectValue = computed(() => sortedOptions.value.slice(1).find(isDirectOption)?.value)
+
+function getItemClass(option: BusinessUseOption, index: number) {
+  if (index === 0) {
+    return 'col-span-full'
+  }
+  return option.value === firstDirectValue.value ? 'col-start-1' : undefined
+}
 
 function select(option: BusinessUseOption) {
   emit('update:modelValue', option)
@@ -30,27 +58,25 @@ function showSpecialOfferHint(option: BusinessUseOption) {
 
 <template>
   <div class="flex gap-2 col-span-2">
-    <div class="w-22 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap">
+    <div class="w-28 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap">
       {{ labels.entityUsage }}
     </div>
-    <div class="flex gap-3 gap-row-3.5 flex-wrap">
-      <RxTooltip v-for="(option, index) in options" :key="option.value" :class="index === 0 ? 'w-full' : undefined">
-        <div class="flex flex-col items-center gap-0.5" :class="index === 0 ? 'w-fit' : 'w-38'">
+    <div class="grid flex-1 min-w-0 justify-start gap-y-3 pr-6" :style="optionGridStyle">
+      <RxTooltip v-for="(option, index) in sortedOptions" :key="option.value" class="min-w-0" :class="getItemClass(option, index)">
+        <div class="flex flex-col items-center gap-0.5 min-w-0" :class="index === 0 ? 'w-fit' : 'w-full'">
           <div class="h-10 relative flex items-center justify-center gap-1.5 leading-none cursor-pointer select-none" :class="[
             $style.radio,
             modelValue?.value === option.value ? $style.active : '',
-            index === 0 ? 'w-fit px-4' : 'w-full',
+            index === 0 ? 'w-fit px-4' : 'w-full px-2',
           ]" @click="select(option)"
           >
             <div v-if="showBadge(option)" class="absolute position-y-center top-0 -right-2 z-10 px-2 rounded-full" :class="$style[option.badgeClass as keyof typeof $style]">
               {{ option.badgeDesc }}
             </div>
-            <RxImage v-if="option.image" class="block w-5" :src="option.image" :dark-src="option.darkImage" :alt="option.label" />
-            <div :class="$style.purpose">
-              {{ option.label }}
-            </div>
+            <RxImage v-if="option.image" class="block w-5 shrink-0" :src="option.image" :dark-src="option.darkImage" :alt="option.label" />
+            <TruncateText :class="$style.purpose" :text="option.label" />
           </div>
-          <div v-if="showSpecialOfferHint(option)" class="color-[#FF7A00] font-[DingTalk_JinBuTi] text-3.25 leading-3.5">
+          <div v-if="showSpecialOfferHint(option)" class="max-w-full truncate color-[#FF7A00] font-[DingTalk_JinBuTi] text-3.25 leading-3.5">
             {{ option.scenePriceDesc }}
           </div>
         </div>

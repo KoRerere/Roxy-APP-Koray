@@ -12,7 +12,10 @@ const props = defineProps<Props>()
 const themeStore = useThemeStore()
 
 const imgSrc = computed(() => {
-  return new URL(`../assets/icons/${themeStore.realTheme === 'light' ? 'empty' : 'empty-dark'}/${props.icon}`, import.meta.url).href
+  // 固定目录前缀，避免开发服务器把整个图标库都加入页面依赖。
+  return themeStore.realTheme === 'light'
+    ? new URL(`../assets/icons/empty/${props.icon}`, import.meta.url).href
+    : new URL(`../assets/icons/empty-dark/${props.icon}`, import.meta.url).href
 })
 </script>
 

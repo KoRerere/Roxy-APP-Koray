@@ -132,7 +132,8 @@ const config: UserConfig = {
   base: '/',
 
   server: {
-    host: '0.0.0.0',
+    // 桌面开发版固定走 IPv4 回环，避免 localhost 在大量模块请求时连接重置。
+    host: '127.0.0.1',
     fs: {
       strict: true,
     },

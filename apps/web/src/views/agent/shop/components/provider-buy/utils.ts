@@ -1,3 +1,5 @@
+import { computed, inject, ref } from 'vue'
+import type { InjectionKey, Ref } from 'vue'
 import { purchaseMonthsToDays } from '/@/views/pay/subscribe/util'
 
 export interface BusinessUseOption {
@@ -110,22 +112,42 @@ export function getProxyTypePriceForSelectedDuration(
   return proxyType.proxyPriceListFmt?.find(row => row.value === durationValue)
 }
 
+/** 购买选项每行固定列数（用途 / 国家 / 带宽 / 时长共用，保证列对齐） */
+export const OPTION_GRID_COLUMNS = 5
+
 /** 选项列最大宽度，对应 UnoCSS `w-38` */
 const OPTION_COLUMN_MAX = '9.5rem'
-/** 选项间距上限，对应 UnoCSS `gap-3` */
-const OPTION_GAP_MAX = '0.75rem'
-/** 选项间距下限，对应 UnoCSS `gap-1.5` */
-const OPTION_GAP_MIN = '0.375rem'
+/** 选项左右间距 8px，对应 UnoCSS `gap-x-2` */
+const OPTION_GAP_MAX = '0.5rem'
 
 /**
  * 购买选项网格样式。
- * 列宽最大 w-38，间距在 gap-1.5 到 gap-3 之间；宽度不够时先缩小间距，间距到下限后再等比收缩列宽，避免折行。
+ * 列宽最大 w-38，左右间距固定 0.5rem（8px）；宽度不够时等比收缩列宽，避免折行。
  */
 export function getOptionGridStyle(count: number) {
   const columns = Math.max(count, 1)
-  const gapCount = Math.max(columns - 1, 1)
   return {
     gridTemplateColumns: `repeat(${columns}, minmax(0, ${OPTION_COLUMN_MAX}))`,
-    columnGap: `max(${OPTION_GAP_MIN}, min(${OPTION_GAP_MAX}, (100% - ${columns} * ${OPTION_COLUMN_MAX}) / ${gapCount}))`,
+    columnGap: OPTION_GAP_MAX,
   }
+}
+
+/** 半屏（窄容器）布局开关，由 provider-buy/index.vue 按容器宽度提供 */
+export const PROXY_PURCHASE_COMPACT_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-compact')
+/** 外部强制半屏（上下）布局，如「购买 + 添加代理」双抽屉并排时，无论宽度都用上下布局 */
+export const PROXY_PURCHASE_FORCE_COMPACT_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-force-compact')
+/** 每行选项列数，由 provider-buy/index.vue 按容器宽度提供（半屏再缩小时变成 4 列） */
+export const PROXY_PURCHASE_COLUMNS_KEY: InjectionKey<Ref<number>> = Symbol('proxy-purchase-columns')
+
+/**
+ * 购买选项网格样式（自动区分全屏 / 半屏）。
+ * 默认每行 5 列、左右间距 0.5rem；全屏列宽最大 w-38，半屏等分铺满，半屏再缩小时每行 4 列。
+ */
+export function useOptionGridStyle() {
+  const compact = inject(PROXY_PURCHASE_COMPACT_KEY, ref(false))
+  const columns = inject(PROXY_PURCHASE_COLUMNS_KEY, ref(OPTION_GRID_COLUMNS))
+  const style = computed(() => compact.value
+    ? { gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))`, columnGap: OPTION_GAP_MAX }
+    : getOptionGridStyle(columns.value))
+  return { compact, style }
 }

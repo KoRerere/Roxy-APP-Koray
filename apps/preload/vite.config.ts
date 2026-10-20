@@ -40,13 +40,16 @@ const config: UserConfig = {
     reportCompressedSize: false,
   },
 
-  plugins: [dts({
-    tsconfigPath: join(PACKAGE_ROOT, 'tsconfig.build.json'),
-    rollupTypes: true,
-    entryRoot: join(PACKAGE_ROOT, 'src'),
-    clearPureImport: false,
-    logLevel: 'silent',
-  })],
+  // 开发态直接使用源码类型；仅在构建产物时生成声明，避免启动时遍历主进程的类型依赖。
+  plugins: process.env.MODE === 'development'
+    ? []
+    : [dts({
+        tsconfigPath: join(PACKAGE_ROOT, 'tsconfig.build.json'),
+        rollupTypes: true,
+        entryRoot: join(PACKAGE_ROOT, 'src'),
+        clearPureImport: false,
+        logLevel: 'silent',
+      })],
 }
 
 export default config

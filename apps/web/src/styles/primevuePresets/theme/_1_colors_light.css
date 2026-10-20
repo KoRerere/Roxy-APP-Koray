@@ -125,6 +125,8 @@
 	--component-alert-bg-error: var(--primitives-red-100);
 	--component-alert-bg-info: var(--primitives-blue-100);
 	--component-alert-bg-warn: var(--primitives-yellow-100);
+	--component-alert-bg-notif: #c1eee4;
+	--component-alert-announcement-icon-notif: #2fc5a5;
 	--component-checker-bg: var(--colors-background-bg-action);
 	--component-checker-bg-inactive: var(--primitives-netural-100);
 	--component-checker-bg-check-inactive: var(--primitives-blue-300);

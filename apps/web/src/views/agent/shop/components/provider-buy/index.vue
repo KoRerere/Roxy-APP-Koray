@@ -1,4 +1,5 @@
 <script setup lang="tsx">
+import { useElementSize } from '@vueuse/core'
 import SellOutModal from '/@/views/agent/shop/components/sell-out-modal.vue'
 import WalletPayModal from '/@/views/pay/wallet/components/wallet-pay-modal.vue'
 import ActivityInfoProxy from '/@/views/campaign/mid-autumn-festival/activity-info-proxy.vue'
@@ -7,6 +8,7 @@ import CountrySelector from '/@/views/agent/shop/components/provider-buy/country
 import BandwidthSelector from '/@/views/agent/shop/components/provider-buy/bandwidth-selector.vue'
 import DurationSelector from '/@/views/agent/shop/components/provider-buy/duration-selector.vue'
 import PurchaseSummary from '/@/views/agent/shop/components/provider-buy/purchase-summary.vue'
+import PurchaseAlerts from '/@/views/agent/shop/components/provider-buy/purchase-alerts.vue'
 import { API } from '/@/api'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { useDialog } from '/@/hooks/useDialog'
@@ -22,6 +24,7 @@ import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook.ts'
 import { createProxyPurchaseCountryCache, useProxyPurchaseApi, useProxyPurchaseForm, useProxyPurchasePricing } from '/@/views/agent/shop/components/provider-buy/useProxyPurchase.ts'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
+import { OPTION_GRID_COLUMNS, PROXY_PURCHASE_COLUMNS_KEY, PROXY_PURCHASE_COMPACT_KEY, PROXY_PURCHASE_FORCE_COMPACT_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
 import type { CountryOption } from '/@/views/agent/shop/components/provider-buy/utils'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { useProxyPurchaseLabels } from '/@/views/agent/shop/utils/proxy-purchase-labels'
@@ -144,12 +147,43 @@ const showBandwidth = computed(() =>
   proxySpeedOptions.value.length > 1 || (isDirect.value && !!currentProxyType.value.showDefaultSupport100M),
 )
 
+/** 容器宽度不足时切到半屏布局（如右侧抽屉打开时），对应设计稿 32217:97582 */
+const COMPACT_MAX_WIDTH = 1024
+const rootRef = useTemplateRef<HTMLElement>('rootRef')
+const { width: rootWidth } = useElementSize(rootRef)
+/** 与「添加代理」抽屉并排时始终上下布局 */
+const forceCompact = inject(PROXY_PURCHASE_FORCE_COMPACT_KEY, ref(false))
+const compact = computed(() => forceCompact.value || (rootWidth.value > 0 && rootWidth.value < COMPACT_MAX_WIDTH))
+provide(PROXY_PURCHASE_COMPACT_KEY, compact)
+
+/** 半屏再缩小（宽度不足 760px）时选项改为一行 4 个，避免文字被大量截断 */
+const NARROW_MAX_WIDTH = 760
+const optionColumns = computed(() => compact.value && rootWidth.value < NARROW_MAX_WIDTH ? 4 : OPTION_GRID_COLUMNS)
+provide(PROXY_PURCHASE_COLUMNS_KEY, optionColumns)
+
 const canPay = computed(() => check('Cost_Center_all'))
 const payTooltip = computed(() => {
   return !canPay.value
     ? $t('暂无权限。如需开通，请联系团队拥有者，开通「充值/账单」权限。')
     : undefined
 })
+
+/** 账单在全屏 / 半屏两处渲染，共用同一组入参 */
+const summaryProps = computed(() => ({
+  isCN: isCN.value,
+  isDirect: isDirect.value,
+  loadingProxyType: loadingProxyType.value,
+  currentInventory: currentProxyType.value.inventory,
+  proxyTypeOptions: proxyTypeOptions.value,
+  subscriptionMonths: subscriptionMonths.value,
+  businessUse: businessUse.value,
+  details: details.value,
+  canPay: canPay.value,
+  payTooltip: payTooltip.value,
+  officialWebsiteUrl: getOfficialWebsite('/copyright/user'),
+  countryCode: purchaseCountry.value?.value,
+  vendorName: provider.vendorName,
+}))
 
 onMounted(() => init())
 
@@ -246,30 +280,31 @@ async function onPay() {
 </script>
 
 <template>
-  <div class="relative flex-1 flex gap-5 overflow-hidden">
+  <div ref="rootRef" class="relative flex-1 flex gap-5 overflow-hidden">
     <RxLoading v-model="loading" :opacity="0.9" />
     <div class="flex-1 min-h-0 flex flex-col rounded-3 overflow-hidden bg-[var(--colors-background-bg-page)]">
-      <div class="flex-1 min-h-0 overflow-y-auto py-5 pl-8">
+      <div class="flex-1 min-h-0 overflow-y-auto py-6 pl-6">
         <div class="grid grid-cols-2 gap-y-6">
           <ActivityInfoProxy class="mr-6 col-span-2" type="proxy" />
+          <!-- 半屏没有右侧栏，提示条挪到选项区顶部 -->
+          <div v-if="compact && (isCN || isDirect)" class="mr-6 col-span-2 flex flex-col gap-2">
+            <PurchaseAlerts :is-c-n="isCN" :is-direct="isDirect" />
+          </div>
           <BusinessUseSelector :options="businessUseOptions" :model-value="businessUse" @update:model-value="selectBusinessUse" />
           <CountrySelector :options="countryOptions" :model-value="purchaseCountry" :loading="loadingPurchaseCountry" @update:model-value="selectCountry" />
         </div>
       </div>
-      <!-- 带宽和时长钉在左侧底部，国家列表只滚动上方区域 -->
-      <div class="relative z-1 shrink-0 flex flex-col gap-4 pl-8 py-5 pinned">
+      <!-- 带宽和时长钉在左侧底部，国家列表只滚动上方区域；半屏时账单也钉在这里 -->
+      <div class="relative z-1 shrink-0 flex flex-col pl-6 pinned" :class="compact ? 'gap-3 py-4' : 'gap-4 py-6'">
         <template v-if="showBandwidth">
           <BandwidthSelector v-model="proxySpeedValue" :options="proxySpeedOptions" :is-direct="isDirect" />
-          <RxDivider class="!pr-8" line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
+          <RxDivider class="!pr-6" line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
         </template>
         <DurationSelector v-model="subscriptionMonths" :options="durationOptions" />
+        <PurchaseSummary v-if="compact" v-bind="summaryProps" v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:is-auto="isAuto" compact @pay="checkStock" />
       </div>
     </div>
-    <PurchaseSummary v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:is-auto="isAuto" :is-c-n="isCN" :is-direct="isDirect"
-                     :loading-proxy-type="loadingProxyType" :current-inventory="currentProxyType.inventory" :proxy-type-options="proxyTypeOptions" :subscription-months="subscriptionMonths"
-                     :business-use="businessUse" :details="details" :can-pay="canPay" :pay-tooltip="payTooltip" :official-website-url="getOfficialWebsite('/copyright/user')" :country-code="purchaseCountry?.value"
-                     :vendor-name="provider.vendorName" @pay="checkStock"
-    />
+    <PurchaseSummary v-if="!compact" v-bind="summaryProps" v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:is-auto="isAuto" @pay="checkStock" />
   </div>
 </template>
 

@@ -50,8 +50,9 @@ const imgSrc = computed(() => {
 <style lang="scss" scoped>
 .banner {
   background-image: v-bind(imgSrc);
-  background-size: auto 100%;
-  background-position: top right;
+  /* 容器比背景图宽时（如半屏布局）等比放大铺满，避免左侧露白 */
+  background-size: cover;
+  background-position: right center;
   background-repeat: no-repeat;
 }
 

@@ -136,12 +136,14 @@
           "text-warning": "{primitives.yellow.600}",
           "text-error": "{primitives.red.500}",
           "text-success": "{primitives.green.600}",
-          "text-info": "{primitives.blue.600}"
+          "text-info": "{primitives.blue.600}",
+          "icon-notif": "#2fc5a5"
         },
         "bg-success": "{primitives.green.100}",
         "bg-error": "{primitives.red.100}",
         "bg-info": "{primitives.blue.100}",
-        "bg-warn": "{primitives.yellow.100}"
+        "bg-warn": "{primitives.yellow.100}",
+        "bg-notif": "#c1eee4"
       },
       "checker": {
         "bg": "{colors.background.bg-action}",
@@ -710,12 +712,14 @@
           "text-warning": "{primitives.yellow.300}",
           "text-error": "{primitives.red.300}",
           "text-success": "{primitives.green.300}",
-          "text-info": "{primitives.blue.300}"
+          "text-info": "{primitives.blue.300}",
+          "icon-notif": "#2fc5a5"
         },
         "bg-success": "{primitives.green.800}",
         "bg-error": "{primitives.red.900}",
         "bg-info": "{primitives.blue.800}",
-        "bg-warn": "{primitives.yellow.800}"
+        "bg-warn": "{primitives.yellow.800}",
+        "bg-notif": "#09463c"
       },
       "checker": {
         "bg": "{colors.background.bg-action}",

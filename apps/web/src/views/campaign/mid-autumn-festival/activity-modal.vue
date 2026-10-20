@@ -15,6 +15,10 @@ import { showToast } from '/@/hooks/useResponseToast/handleBusinessCode'
 import { emitter } from '/@/utils/eventBus'
 import { REDIRECT_ACTION } from '/@/constants/search-params-key'
 import { formatRechargeBenefitText, useMidAutumnActivity } from './hook'
+import ActivityCountdown from './activity-countdown.vue'
+import type { ActivityCountdownUnit } from './activity-countdown.vue'
+import ActivityIntro from './activity-intro.vue'
+import ActivityHeadline from './activity-headline.vue'
 
 const emit = defineEmits(['close', 'confirm', 'dismissToday'])
 
@@ -29,8 +33,17 @@ const { showLuckyDraw } = useMidAutumnActivity()
 
 const styles = useCssModule()
 
-const countdown = ref()
+const countdown = ref<ActivityCountdownUnit[]>([])
 const stopCountdown = ref()
+const introVisible = ref(true)
+const brandTarget = useTemplateRef<HTMLImageElement>('brandTarget')
+const headlineTarget = useTemplateRef<InstanceType<typeof ActivityHeadline>>('headlineTarget')
+const countdownTarget = useTemplateRef<HTMLElement>('countdownTarget')
+const headlinePrefix = computed(() => $t('金秋狂欢季'))
+const headlineMessages = computed<[string, string]>(() => [
+  $t('活动剩余不足 {days} 天', { days: 7 }),
+  $t('四重豪礼享不停'),
+])
 
 const imgSrc = computed(() => `url('${getImage('campaing/mid-autumn-festival/modal_bg.jpg')}')`)
 /** 标题图按语言切资源，缺语言时回退中文 */
@@ -214,15 +227,20 @@ function showInfo() {
       <RxButton size="xxs" severity="secondary" icon="base/rx_ic_delete" :label="$t('今日不再提醒')" @click="emit('dismissToday')" />
       <RxButton size="xxs" severity="secondary" icon="base/rx_ic_delete" :label="$t('关闭')" @click="$emit('close')" />
     </div>
-    <div class="flex-1 min-h-0 w-270 grid rounded-3 overflow-hidden content">
-      <RxMaskScroll class="flex flex-col gap-4 pa-6 pt-7">
+    <div class="relative flex-1 min-h-0 w-270 grid rounded-3 overflow-hidden content">
+      <RxMaskScroll class="flex flex-col gap-4 pa-6 pt-7" :inert="introVisible">
         <div class="flex gap-8 items-center">
           <div class="flex-1 flex flex-col gap-1.5">
-            <div>
-              <img class="h-5" :src="eventTitleSrc">
-            </div>
-            <div class="title">
-              {{ $t('金秋狂欢季 · 四重豪礼享不停') }}
+            <div class="w-fit flex flex-col gap-1.5">
+              <div>
+                <img ref="brandTarget" class="h-5" :src="eventTitleSrc">
+              </div>
+              <ActivityHeadline
+                ref="headlineTarget"
+                :prefix="headlinePrefix"
+                :messages="headlineMessages"
+                :active="!introVisible"
+              />
             </div>
             <div class="flex items-center gap-2 color-white/80 text-4 leading-5.5">
               <span>{{ $t('官网寻隐藏惊喜') }}</span>
@@ -236,20 +254,8 @@ function showInfo() {
               </RxTooltip>
             </div>
           </div>
-          <div class="flex">
-            <div v-for="(item, index) in countdown" :key="item.label" class="flex">
-              <div v-if="index !== 0" class="h-14 flex items-center mx-3 text-8 leading-none color-white/80">
-                :
-              </div>
-              <div class="flex flex-col items-center gap-1.5">
-                <div class="size-14 flex items-center justify-center time">
-                  {{ item.value }}
-                </div>
-                <div class="color-white text-3.25 leading-normal">
-                  {{ item.label }}
-                </div>
-              </div>
-            </div>
+          <div ref="countdownTarget" class="shrink-0">
+            <ActivityCountdown :items="countdown" />
           </div>
         </div>
         <div class="grid gap-3 grid-cols-10">
@@ -300,6 +306,7 @@ function showInfo() {
           </div>
         </div>
       </RxMaskScroll>
+      <ActivityIntro v-if="introVisible" :title-src="eventTitleSrc" :headline-prefix="headlinePrefix" :headline-messages="headlineMessages" :countdown="countdown" :brand-target="brandTarget" :headline-target="headlineTarget?.$el ?? null" :countdown-target="countdownTarget" @finish="introVisible = false" />
     </div>
   </div>
 </template>
@@ -353,29 +360,6 @@ function showInfo() {
   background-position: top center;
   /* 活动弹窗始终深色底，滚动遮罩需贴合背景而非主题 overlay */
   --colors-background-bg-overlay: #1a2744;
-}
-
-.title {
-  font-family: Archivo;
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 150%;
-  background: linear-gradient(180deg, #fbd99b 30.17%, #fcc67e 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.time {
-  color: #fff;
-  font-family: 'JetBrains Mono';
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 150%;
-  border-radius: 8px;
-  border: 2px solid #fbd99b;
-  background: var(--colors-alpha-alpha-black-10, rgba(0, 0, 0, 0.1));
-  backdrop-filter: blur(6px);
 }
 
 .item {

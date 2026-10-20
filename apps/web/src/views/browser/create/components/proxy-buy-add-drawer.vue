@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import Drawer from 'primevue/drawer'
+import { useWindowSize } from '@vueuse/core'
 import ChooseModal from '/@/views/agent/shop/components/choose-modal.vue'
 import SingleProxies from '/@/views/agent/create/components/single-proxies.vue'
 import { RxBreathingLight } from '/@/components/rx-breathing-light'
 import { createProxyCreateLabels } from '/@/views/agent/create/proxy-create-mode'
 import { BuyEntryType } from '/@/enums/proxy'
+import { PROXY_PURCHASE_FORCE_COMPACT_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
 
 const { showBuy = true, showAdd = true, provider } = defineProps<{
   showBuy?: boolean
@@ -29,10 +31,21 @@ const DRAWER_AVAILABLE_WIDTH = `calc(100vw - ${DRAWER_INSET} * 2)`
 const DRAWER_CONTENT_WIDTH = `calc(${DRAWER_AVAILABLE_WIDTH} - ${DRAWER_GAP})`
 const DRAWER_HEIGHT = `calc(100vh - ${DRAWER_INSET} * 2)`
 
-const isDual = computed(() => showBuy && showAdd)
+/**
+ * 窗口太窄时（左侧购买区不足约 640px，内容已看不清）直接隐藏左侧购买抽屉，只保留右侧添加代理。
+ * 宽度恢复后自动重新显示。只用样式隐藏、不销毁抽屉：
+ * 若销毁后重建，购买抽屉的遮罩会叠到添加代理抽屉上方，导致右侧变暗；同时也能保留已选的购买选项。
+ */
+const HIDE_BUY_MAX_WINDOW_WIDTH = 1000
+const { width: windowWidth } = useWindowSize()
+const buyVisible = computed(() => showBuy && !(showAdd && windowWidth.value < HIDE_BUY_MAX_WINDOW_WIDTH))
+
+const isDual = computed(() => buyVisible.value && showAdd)
+/** 购买区与添加代理并排时，购买页始终用上下布局，不随分辨率变成左右布局 */
+provide(PROXY_PURCHASE_FORCE_COMPACT_KEY, isDual)
 
 const buyWidth = computed(() => {
-  if (!showBuy)
+  if (!buyVisible.value)
     return undefined
   if (isDual.value)
     return `calc(${DRAWER_CONTENT_WIDTH} * 2 / 3)`
@@ -49,7 +62,7 @@ const addWidth = computed(() => {
 
 const buyMaskClass = computed(() => {
   const classes = ['proxy-dual-drawer-mask']
-  if (showBuy && !showAdd)
+  if (buyVisible.value && !showAdd)
     classes.push('proxy-dual-drawer-buy-only-mask')
   return classes.join(' ')
 })
@@ -57,7 +70,7 @@ const buyMaskClass = computed(() => {
 const buyDrawerPt = computed(() => ({
   mask: { class: buyMaskClass.value },
   root: {
-    class: `proxy-dual-drawer-root proxy-dual-drawer-buy-root ${showAdd ? '' : '!w-100vw !max-w-300'}`,
+    class: `proxy-dual-drawer-root proxy-dual-drawer-buy-root ${showAdd ? '' : '!w-100vw !max-w-300'} ${buyVisible.value ? '' : '!hidden'}`,
     style: showAdd
       ? {
           width: buyWidth.value,
@@ -93,7 +106,7 @@ function closeDrawer() {
 
 /** 聚焦左侧购买区：播放一次贴边呼吸光，引导用户注意下单面板 */
 function focusBuyPanel() {
-  if (!showBuy)
+  if (!buyVisible.value)
     return
   buyBreathingRef.value?.trigger()
 }

@@ -563,6 +563,7 @@
   "代理 IP 列表": "Proxy List",
   "代理 IP 协议": "Proxy Protocol",
   "代理 IP 密码": "Proxy Password",
+  "代理 IP 对比": "Comparison Proxy",
   "代理 IP 已存在": "Proxy already exists",
   "代理 IP 已购买成功，正在为您配置中，请稍后。若长时间未加载代理 IP，请刷新页面或联系技术支持。": "Proxy purchased successfully. Configuration in progress, please wait. If the proxy doesn't load after a while, please refresh the page or contact support.",
   "代理 IP 操作": "Proxy Actions",
@@ -1205,6 +1206,7 @@
   "和系统快捷键冲突，请调整": "Conflicts with system shortcut, please adjust",
   "商业版": "Business",
   "四等奖": "Fourth Prize",
+  "四重豪礼享不停": "Rewards Keep Coming",
   "回到默认团队": "Back to Default Team",
   "回收站": "Trash",
   "回收站暂无数据": "No Data in Trash",
@@ -1392,7 +1394,6 @@
   "官方模板不存在或已下架": "The official template does not exist or has been removed",
   "官方模板加载失败": "Failed to load official templates",
   "官方网站": "Official Website",
-  "官方自营": "Official direct sales",
   "官方赠送": "Official Gift",
   "官方赠送的代理 IP 无法下载": "Official gifted proxy cannot be downloaded",
   "官网": "Official site",
@@ -4071,7 +4072,7 @@
   "重要更新": "Important Update",
   "重试": "Retry",
   "重试保存模板": "Retry saving template",
-  "金秋狂欢季 · 四重豪礼享不停": "Autumn Celebration · Rewards Keep Coming",
+  "金秋狂欢季": "Autumn Celebration",
   "金秋狂欢季 · 豪礼享不停": "Rewards Keep Coming",
   "金额": "Amount",
   "钱包余额": "Wallet Balance",
@@ -4185,5 +4186,6 @@
   "（仅默认卡片会被用于组合支付）": "(Only default card will be used for combined payment)",
   "（可选）": "(Optional)",
   "（脚本日志文件不存在）": "(Script log file does not exist)",
-  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount"
+  "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount",
+  "活动剩余不足 {days} 天": "Event ends in under {days} days"
 }

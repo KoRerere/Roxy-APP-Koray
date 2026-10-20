@@ -1,0 +1,26 @@
+/* Figma 代理商店变量：品牌色在两种主题中一致，语义颜色由全局主题提供。 */
+.proxy-store {
+  --spacing-md: calc(var(--Spacing-1_5) * 1px);
+  --spacing-lg: calc(var(--Spacing-2) * 1px);
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --font-size-text-lg: 14px;
+  --line-height-text-lg: 20px;
+  --shadow-sm: 0 4px 4px -1px rgb(0 0 0 / 2%), 0 1px 1px rgb(0 0 0 / 6%);
+  --pattern-proxystore-type-card-first-width: 234px;
+  --pattern-proxystore-type-card-height: 150px;
+  --pattern-proxystore-type-body-width: 202px;
+  --pattern-proxystore-type-body-height: 76px;
+  --pattern-proxystore-type-price-height: 18px;
+  --pattern-proxystore-rola-hero-bg: linear-gradient(90deg, #1ad79f 0%, #11a3fd 137.63%);
+  --pattern-proxystore-rola-brand: #1ad79f;
+  --pattern-proxystore-rola-highlight: rgb(26 215 159 / 12%);
+  --pattern-proxystore-rola-logo-border: #e2e9ee;
+  --pattern-proxystore-rola-tag-bg: #e2e9ee;
+  --pattern-proxystore-rola-tag-border: #c7d1d6;
+  --pattern-proxystore-rola-tag-text: #34393d;
+  --pattern-proxystore-partner-gradient: linear-gradient(90deg, #1eed58 0%, #11a3fd 137.63%);
+  --pattern-proxystore-reward-gradient: linear-gradient(90deg, #12a3fc 0%, #db54f9 100%);
+  --pattern-proxystore-support-gradient: linear-gradient(90deg, #fc9d12 0%, #fdae3a 100%);
+  --pattern-proxystore-banner-border: rgb(255 255 255 / 10%);
+}

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import ProviderBuy from './provider-buy/index.vue'
 import ProviderExternal from './provider-external.vue'
+import './proxy-store-tokens.css'
+import navGrid from '/@/assets/images/proxy/store-nav-grid.svg?url'
+import navMask from '/@/assets/images/proxy/store-nav-mask.svg?url'
+import navShapes from '/@/assets/images/proxy/store-nav-shapes.svg?url'
 import { useProxyStore } from '/@/stores/proxy'
 import type { BuyEntryType, ProxyIpType } from '/@/enums/proxy'
 import type { WorkspaceType } from '/@/enums/base'
@@ -35,8 +39,9 @@ onBeforeMount(() => {
 
 async function getProviders() {
   const data = await getProxyVendors()
-  if (!data)
+  if (!data) {
     return
+  }
   providers.value = data.filter(item => entryType ? !item.isJump : true).map(item => ({ title: item.vendorName, value: item.id, image: item.vendorIcon, isJump: item.isJump, data: item }))
   activeKey.value = provider?.proxyProviderId || providers.value[0]?.value
 }
@@ -50,9 +55,13 @@ function toRola() {
 </script>
 
 <template>
-  <div class="relative flex-1 flex flex-col pt-3 w-100vw max-w-300 overflow-hidden provider">
+  <div class="relative flex-1 flex flex-col pt-3 w-100vw max-w-[1217px] overflow-hidden provider proxy-store">
+    <div aria-hidden="true" class="absolute inset-x-0 top-0 h-60 overflow-hidden pointer-events-none bg-[var(--colors-background-bg-page)]">
+      <div class="header-shapes" :style="{ backgroundImage: `url(${navShapes})`, maskImage: `url(${navMask})` }" />
+      <img class="absolute top-0 left-0 max-w-none" :src="navGrid" alt="">
+    </div>
     <template v-if="providers">
-      <div class="flex items-center justify-between pr-7">
+      <div class="relative h-[75px] shrink-0 flex items-center justify-between pr-7">
         <RxTabs v-model:value="activeKey" :tabs="providers" head-tabs only-tabs>
           <template #tab="{ data }">
             <div class="flex items-center gap-3">
@@ -62,20 +71,21 @@ function toRola() {
                   <span class="tt-primary font-[Archivo] text-5 font-700 leading-7">
                     {{ data.title }}
                   </span>
-                  <span class="py-1 px-2 rounded-full color-white font-[DingTalk_JinBuTi] text-3 font-400 leading-none" :class="[data.isJump ? 'partners-tag' : 'official-tag']">{{ data.isJump
-                    ? $t('战略合作') : $t('官方自营') }}</span>
+                  <span v-if="data.isJump" class="py-1 px-2 rounded-full color-white font-[DingTalk_JinBuTi] text-3 font-400 leading-none partners-tag">{{ $t('战略合作') }}</span>
                 </div>
 
-                <div class="font-[DingTalk_JinBuTi] text-3 font-400 leading-none" :class="[data.isJump ? 'partners-desc' : 'official-desc']">
+                <div class="font-[DingTalk_JinBuTi] text-3.5 font-400 leading-none" :class="[data.isJump ? 'partners-desc' : 'official-desc']">
                   {{ data.isJump ? $t('全球动态代理 IP') : $t('超高质量·无网包退') }}
                 </div>
               </div>
             </div>
           </template>
         </RxTabs>
-        <SvgIcon class="cursor-pointer" name="base/rx_ic_delete" size="32" @click="$emit('close')" />
+        <button type="button" class="shrink-0 border-0 bg-transparent p-0 cursor-pointer color-[var(--colors-icon-icon-secondary)]" :aria-label="$t('关闭')" @click="$emit('close')">
+          <SvgIcon name="base/rx_ic_delete" size="32" />
+        </button>
       </div>
-      <div class="flex-1 flex flex-col overflow-hidden content">
+      <div class="relative flex-1 flex flex-col overflow-hidden content">
         <component :is="item.data.isJump ? ProviderExternal : ProviderBuy" v-for="item in providers" v-show="activeKey === item.value" :key="item.value" v-model:auto-jump="autoJump" :data="item.data"
                    :entry-type="entryType" :mode="mode" :workspace-type="workspaceType" :preferred-proxy-type="preferredProxyType" :preferred-country="preferredCountry" :to-rola="toRola" @close="$emit('close')" @success="$emit('success', $event)"
         />
@@ -85,9 +95,31 @@ function toRola() {
 </template>
 
 <style lang="scss" scoped>
+/* Figma 顶部两层装饰，保留源 SVG 尺寸和遮罩位置。 */
+.header-shapes {
+  position: absolute;
+  left: 1px;
+  top: -120px;
+  width: 1306.689px;
+  height: 394.429px;
+  opacity: 0.6;
+  background-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  mask-position: 0 120px;
+  mask-size: 1216px 240px;
+}
+
 .provider {
   :deep(.p-tab) {
-    padding: 16px;
+    padding: 14px 16px;
+  }
+
+  :deep(.p-tablist-tab-list) {
+    gap: 24px;
+  }
+
+  :deep(.p-tab-active) {
+    background: transparent;
   }
 
   :deep(.p-tablist-active-bar) {
@@ -100,12 +132,8 @@ function toRola() {
 }
 
 .official {
-  &-tag {
-    background: linear-gradient(90deg, #15a2fd 0%, #da54f9 100%);
-  }
-
   &-desc {
-    background: linear-gradient(90deg, #fc9d12 0%, #fdae3a 100%);
+    background: var(--pattern-proxystore-support-gradient);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -114,11 +142,11 @@ function toRola() {
 
 .partners {
   &-tag {
-    background: linear-gradient(90deg, #2dc637 0%, #44affb 100%);
+    background: var(--pattern-proxystore-partner-gradient);
   }
 
   &-desc {
-    background: linear-gradient(90deg, #2dc637 0%, #44affb 100%);
+    background: var(--pattern-proxystore-partner-gradient);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;

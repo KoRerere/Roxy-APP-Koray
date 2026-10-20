@@ -66,7 +66,8 @@ function setupMainPackageWatcher({ resolvedUrls }: ViteDevServer) {
 
           console.log('Reloading electron app...', String(electronPath))
           /** 启动新的electron进程 */
-          electronApp = spawn(String(electronPath), ['--inspect=9230', '--remote-debugging-port=9222', '.', '--experimental-network-inspection', '--no-sandbox', '--disable-setuid-sandbox'], {
+          // 开发服务器重建依赖后，旧 HTTP 缓存可能仍引用已移除的分块，导致启动白屏。
+          electronApp = spawn(String(electronPath), ['--inspect=9230', '--remote-debugging-port=9222', '--disable-http-cache', '.', '--experimental-network-inspection', '--no-sandbox', '--disable-setuid-sandbox'], {
             // 设置工作目录
             cwd: path.resolve(import.meta.dirname, '../apps/electron'),
             stdio: ['ignore', 'inherit', 'inherit'],
