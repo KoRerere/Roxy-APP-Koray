@@ -24,7 +24,7 @@ import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook.ts'
 import { createProxyPurchaseCountryCache, useProxyPurchaseApi, useProxyPurchaseForm, useProxyPurchasePricing } from '/@/views/agent/shop/components/provider-buy/useProxyPurchase.ts'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
-import { OPTION_GRID_COLUMNS, PROXY_PURCHASE_COLUMNS_KEY, PROXY_PURCHASE_COMPACT_KEY, PROXY_PURCHASE_FORCE_WIDE_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
+import { OPTION_GRID_COLUMNS, PROXY_PURCHASE_COLUMNS_KEY, PROXY_PURCHASE_COMPACT_KEY, PROXY_PURCHASE_FORCE_WIDE_KEY, PROXY_PURCHASE_STACKED_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
 import type { CountryOption } from '/@/views/agent/shop/components/provider-buy/utils'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { useProxyPurchaseLabels } from '/@/views/agent/shop/utils/proxy-purchase-labels'
@@ -158,21 +158,28 @@ const { width: rootWidth } = useElementSize(rootRef)
 const FORCE_WIDE_MIN_WIDTH = 920
 const forceWide = inject(PROXY_PURCHASE_FORCE_WIDE_KEY, ref(false))
 const compact = computed(() => {
-  if (rootWidth.value <= 0)
+  if (rootWidth.value <= 0) {
     return false
-  if (forceWide.value)
+  }
+  if (forceWide.value) {
     return rootWidth.value < FORCE_WIDE_MIN_WIDTH
+  }
   return rootWidth.value < COMPACT_MAX_WIDTH
 })
 provide(PROXY_PURCHASE_COMPACT_KEY, compact)
+
+/** 左右布局但左侧较窄时，用途 / 国家的标题改为放在选项上方，让选项框更宽 */
+const stacked = computed(() => !compact.value && rootWidth.value > 0 && rootWidth.value < COMPACT_MAX_WIDTH)
+provide(PROXY_PURCHASE_STACKED_KEY, stacked)
 
 /** 半屏再缩小（宽度不足 760px）时选项改为一行 4 个，避免文字被大量截断 */
 const NARROW_MAX_WIDTH = 760
 /** 强制左右布局且容器不足 COMPACT_MAX_WIDTH 时，左侧选项区较窄，改为一行 3 个 */
 const WIDE_NARROW_COLUMNS = 3
 const optionColumns = computed(() => {
-  if (compact.value)
+  if (compact.value) {
     return rootWidth.value < NARROW_MAX_WIDTH ? 4 : OPTION_GRID_COLUMNS
+  }
   return rootWidth.value < COMPACT_MAX_WIDTH ? WIDE_NARROW_COLUMNS : OPTION_GRID_COLUMNS
 })
 provide(PROXY_PURCHASE_COLUMNS_KEY, optionColumns)

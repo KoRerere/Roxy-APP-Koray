@@ -136,6 +136,8 @@ export function getOptionGridStyle(count: number) {
 export const PROXY_PURCHASE_COMPACT_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-compact')
 /** 外部强制左右布局，如「购买 + 添加代理」双抽屉并排时，宽度足够就保持左右布局（设计稿 32217:97259） */
 export const PROXY_PURCHASE_FORCE_WIDE_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-force-wide')
+/** 标题与选项上下排列（标题在上、选项铺满整行），由 provider-buy/index.vue 在左右布局的窄列下提供 */
+export const PROXY_PURCHASE_STACKED_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-stacked')
 /** 每行选项列数，由 provider-buy/index.vue 按容器宽度提供（半屏再缩小时变成 4 列） */
 export const PROXY_PURCHASE_COLUMNS_KEY: InjectionKey<Ref<number>> = Symbol('proxy-purchase-columns')
 
@@ -145,11 +147,12 @@ export const PROXY_PURCHASE_COLUMNS_KEY: InjectionKey<Ref<number>> = Symbol('pro
  */
 export function useOptionGridStyle(minColumns = 1) {
   const compact = inject(PROXY_PURCHASE_COMPACT_KEY, ref(false))
+  const stacked = inject(PROXY_PURCHASE_STACKED_KEY, ref(false))
   const injectedColumns = inject(PROXY_PURCHASE_COLUMNS_KEY, ref(OPTION_GRID_COLUMNS))
   /** 带宽 / 时长固定 4 个选项，传 minColumns=4 保证始终一行放下 */
   const columns = computed(() => Math.max(injectedColumns.value, minColumns))
   const style = computed(() => compact.value
     ? { gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))`, columnGap: OPTION_GAP_MAX }
     : getOptionGridStyle(columns.value))
-  return { compact, style }
+  return { compact, stacked, style }
 }

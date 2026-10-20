@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 const labels = useProxyPurchaseLabels()
 
-const { style: optionGridStyle } = useOptionGridStyle()
+const { stacked, style: optionGridStyle } = useOptionGridStyle()
 
 function isDirectOption(option: BusinessUseOption) {
   return option.badgeType === ProxyUseType.Direct
@@ -52,8 +52,8 @@ function showSpecialOfferHint(option: BusinessUseOption) {
 </script>
 
 <template>
-  <div class="flex gap-2 col-span-2">
-    <div class="w-28 h-10 flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap">
+  <div class="flex gap-2 col-span-2" :class="stacked ? 'flex-col' : ''">
+    <div class="flex items-center tt-primary text-3.5 font-600 leading-normal shrink-0 whitespace-nowrap" :class="stacked ? '' : 'w-28 h-10'">
       {{ labels.entityUsage }}
     </div>
     <div class="grid flex-1 min-w-0 justify-start gap-y-3 pr-6" :style="optionGridStyle">
