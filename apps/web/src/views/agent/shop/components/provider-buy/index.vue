@@ -24,7 +24,7 @@ import { useFreedomActivity } from '/@/views/campaign/freedom/hook.ts'
 import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook.ts'
 import { createProxyPurchaseCountryCache, useProxyPurchaseApi, useProxyPurchaseForm, useProxyPurchasePricing } from '/@/views/agent/shop/components/provider-buy/useProxyPurchase.ts'
 import { useNewUserBenefitStore } from '/@/stores/new-user-benefit'
-import { OPTION_GRID_COLUMNS, PROXY_PURCHASE_COLUMNS_KEY, PROXY_PURCHASE_COMPACT_KEY, PROXY_PURCHASE_FORCE_COMPACT_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
+import { OPTION_GRID_COLUMNS, PROXY_PURCHASE_COLUMNS_KEY, PROXY_PURCHASE_COMPACT_KEY, PROXY_PURCHASE_FORCE_WIDE_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
 import type { CountryOption } from '/@/views/agent/shop/components/provider-buy/utils'
 import { useRouteContext } from '/@/composables/useRouteContext'
 import { useProxyPurchaseLabels } from '/@/views/agent/shop/utils/proxy-purchase-labels'
@@ -151,14 +151,30 @@ const showBandwidth = computed(() =>
 const COMPACT_MAX_WIDTH = 1024
 const rootRef = useTemplateRef<HTMLElement>('rootRef')
 const { width: rootWidth } = useElementSize(rootRef)
-/** 与「添加代理」抽屉并排时始终上下布局 */
-const forceCompact = inject(PROXY_PURCHASE_FORCE_COMPACT_KEY, ref(false))
-const compact = computed(() => forceCompact.value || (rootWidth.value > 0 && rootWidth.value < COMPACT_MAX_WIDTH))
+/**
+ * 与「添加代理」抽屉并排时改用左右布局（左侧选项、右侧账单），对应设计稿 32217:97259。
+ * 容器窄于 FORCE_WIDE_MIN_WIDTH 时左侧放不下 3 列选项，仍回退为上下布局。
+ */
+const FORCE_WIDE_MIN_WIDTH = 920
+const forceWide = inject(PROXY_PURCHASE_FORCE_WIDE_KEY, ref(false))
+const compact = computed(() => {
+  if (rootWidth.value <= 0)
+    return false
+  if (forceWide.value)
+    return rootWidth.value < FORCE_WIDE_MIN_WIDTH
+  return rootWidth.value < COMPACT_MAX_WIDTH
+})
 provide(PROXY_PURCHASE_COMPACT_KEY, compact)
 
 /** 半屏再缩小（宽度不足 760px）时选项改为一行 4 个，避免文字被大量截断 */
 const NARROW_MAX_WIDTH = 760
-const optionColumns = computed(() => compact.value && rootWidth.value < NARROW_MAX_WIDTH ? 4 : OPTION_GRID_COLUMNS)
+/** 强制左右布局且容器不足 COMPACT_MAX_WIDTH 时，左侧选项区较窄，改为一行 3 个 */
+const WIDE_NARROW_COLUMNS = 3
+const optionColumns = computed(() => {
+  if (compact.value)
+    return rootWidth.value < NARROW_MAX_WIDTH ? 4 : OPTION_GRID_COLUMNS
+  return rootWidth.value < COMPACT_MAX_WIDTH ? WIDE_NARROW_COLUMNS : OPTION_GRID_COLUMNS
+})
 provide(PROXY_PURCHASE_COLUMNS_KEY, optionColumns)
 
 const canPay = computed(() => check('Cost_Center_all'))
@@ -301,7 +317,7 @@ async function onPay() {
           <RxDivider class="!pr-6" line-only line-style="dashed" line-color="var(--colors-border-divider-dashed)" />
         </template>
         <DurationSelector v-model="subscriptionMonths" :options="durationOptions" />
-        <PurchaseSummary v-if="compact" v-bind="summaryProps" v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:is-auto="isAuto" compact @pay="checkStock" />
+        <PurchaseSummary v-if="compact" v-bind="summaryProps" v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:is-auto="isAuto" compact :dual-drawer="forceWide" @pay="checkStock" />
       </div>
     </div>
     <PurchaseSummary v-if="!compact" v-bind="summaryProps" v-model:purchase-member="purchaseMember" v-model:proxy-type-value="proxyTypeValue" v-model:is-auto="isAuto" @pay="checkStock" />

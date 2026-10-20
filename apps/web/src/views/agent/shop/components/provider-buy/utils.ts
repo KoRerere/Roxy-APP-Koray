@@ -134,8 +134,8 @@ export function getOptionGridStyle(count: number) {
 
 /** 半屏（窄容器）布局开关，由 provider-buy/index.vue 按容器宽度提供 */
 export const PROXY_PURCHASE_COMPACT_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-compact')
-/** 外部强制半屏（上下）布局，如「购买 + 添加代理」双抽屉并排时，无论宽度都用上下布局 */
-export const PROXY_PURCHASE_FORCE_COMPACT_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-force-compact')
+/** 外部强制左右布局，如「购买 + 添加代理」双抽屉并排时，宽度足够就保持左右布局（设计稿 32217:97259） */
+export const PROXY_PURCHASE_FORCE_WIDE_KEY: InjectionKey<Ref<boolean>> = Symbol('proxy-purchase-force-wide')
 /** 每行选项列数，由 provider-buy/index.vue 按容器宽度提供（半屏再缩小时变成 4 列） */
 export const PROXY_PURCHASE_COLUMNS_KEY: InjectionKey<Ref<number>> = Symbol('proxy-purchase-columns')
 
@@ -143,9 +143,11 @@ export const PROXY_PURCHASE_COLUMNS_KEY: InjectionKey<Ref<number>> = Symbol('pro
  * 购买选项网格样式（自动区分全屏 / 半屏）。
  * 默认每行 5 列、左右间距 0.5rem；全屏列宽最大 w-38，半屏等分铺满，半屏再缩小时每行 4 列。
  */
-export function useOptionGridStyle() {
+export function useOptionGridStyle(minColumns = 1) {
   const compact = inject(PROXY_PURCHASE_COMPACT_KEY, ref(false))
-  const columns = inject(PROXY_PURCHASE_COLUMNS_KEY, ref(OPTION_GRID_COLUMNS))
+  const injectedColumns = inject(PROXY_PURCHASE_COLUMNS_KEY, ref(OPTION_GRID_COLUMNS))
+  /** 带宽 / 时长固定 4 个选项，传 minColumns=4 保证始终一行放下 */
+  const columns = computed(() => Math.max(injectedColumns.value, minColumns))
   const style = computed(() => compact.value
     ? { gridTemplateColumns: `repeat(${columns.value}, minmax(0, 1fr))`, columnGap: OPTION_GAP_MAX }
     : getOptionGridStyle(columns.value))

@@ -6,7 +6,7 @@ import SingleProxies from '/@/views/agent/create/components/single-proxies.vue'
 import { RxBreathingLight } from '/@/components/rx-breathing-light'
 import { createProxyCreateLabels } from '/@/views/agent/create/proxy-create-mode'
 import { BuyEntryType } from '/@/enums/proxy'
-import { PROXY_PURCHASE_FORCE_COMPACT_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
+import { PROXY_PURCHASE_FORCE_WIDE_KEY } from '/@/views/agent/shop/components/provider-buy/utils'
 
 const { showBuy = true, showAdd = true, provider } = defineProps<{
   showBuy?: boolean
@@ -41,8 +41,8 @@ const { width: windowWidth } = useWindowSize()
 const buyVisible = computed(() => showBuy && !(showAdd && windowWidth.value < HIDE_BUY_MAX_WINDOW_WIDTH))
 
 const isDual = computed(() => buyVisible.value && showAdd)
-/** 购买区与添加代理并排时，购买页始终用上下布局，不随分辨率变成左右布局 */
-provide(PROXY_PURCHASE_FORCE_COMPACT_KEY, isDual)
+/** 购买区与添加代理并排时，购买页用左右布局（左侧选项、右侧账单），窗口过窄时才回退为上下布局 */
+provide(PROXY_PURCHASE_FORCE_WIDE_KEY, isDual)
 
 const buyWidth = computed(() => {
   if (!buyVisible.value)

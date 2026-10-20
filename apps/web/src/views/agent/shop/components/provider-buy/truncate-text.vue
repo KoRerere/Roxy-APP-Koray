@@ -19,14 +19,39 @@ const hovering = ref(false)
 const textWidth = ref(0)
 
 const playing = computed(() => overflowed.value && hovering.value)
-const marqueeStyle = computed(() => {
+
+/**
+ * 用 Web Animations API 驱动滚动，不依赖 CSS 模块里的 @keyframes：
+ * 之前 animation 简写里带 var()，构建后动画名可能对不上，导致悬停时不滚动。
+ */
+const innerRef = useTemplateRef<HTMLElement>('innerRef')
+let animation: Animation | undefined
+const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+function stopMarquee() {
+  animation?.cancel()
+  animation = undefined
+}
+
+function startMarquee() {
+  stopMarquee()
+  const el = innerRef.value
+  if (!el || reduceMotion || typeof el.animate !== 'function') {
+    return
+  }
   // 每轮移动「一段文字 + 间隔」的距离，第二段文字正好接到第一段的位置，实现无缝循环
   const distance = textWidth.value + MARQUEE_GAP
-  return {
-    '--marquee-distance': `-${distance}px`,
-    '--marquee-duration': `${distance / MARQUEE_SPEED}s`,
-    '--marquee-gap': `${MARQUEE_GAP}px`,
-  }
+  animation = el.animate(
+    [{ transform: 'translateX(0)' }, { transform: `translateX(-${distance}px)` }],
+    { duration: (distance / MARQUEE_SPEED) * 1000, iterations: Infinity, easing: 'linear' },
+  )
+}
+
+watch(playing, (val) => {
+  if (val)
+    nextTick(startMarquee)
+  else
+    stopMarquee()
 })
 
 function measure() {
@@ -64,6 +89,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  stopMarquee()
   resizeObserver?.disconnect()
   hostEl?.removeEventListener('mouseenter', onEnter)
   hostEl?.removeEventListener('mouseleave', onLeave)
@@ -72,10 +98,10 @@ onBeforeUnmount(() => {
 
 <template>
   <span ref="boxRef" class="block min-w-0 overflow-hidden whitespace-nowrap" :class="playing ? '' : 'text-ellipsis'">
-    <span :class="[$style.inner, playing && $style.playing]" :style="playing ? marqueeStyle : undefined">
+    <span ref="innerRef" :class="[$style.inner, playing && $style.playing]">
       <slot>{{ text }}</slot>
       <!-- 循环滚动时追加一份副本，接在原文后面 -->
-      <span v-if="playing" :class="$style.copy" aria-hidden="true"><slot>{{ text }}</slot></span>
+      <span v-if="playing" class="pl-8" aria-hidden="true"><slot>{{ text }}</slot></span>
     </span>
   </span>
 </template>
@@ -90,26 +116,6 @@ onBeforeUnmount(() => {
 
 .playing {
   display: inline-block;
-  animation: marquee var(--marquee-duration) linear infinite;
-}
-
-.copy {
-  padding-left: var(--marquee-gap);
-}
-
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(var(--marquee-distance));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .playing {
-    animation: none;
-  }
+  will-change: transform;
 }
 </style>

@@ -13,7 +13,8 @@ const modelValue = defineModel<DurationOption>()
 const styles = useCssModule()
 const labels = useProxyPurchaseLabels()
 
-const { compact, style: durationGridStyle } = useOptionGridStyle()
+/** 4 个选项挤在一行，不随左侧窄列变成 3 列折行 */
+const { compact, style: durationGridStyle } = useOptionGridStyle(4)
 </script>
 
 <template>

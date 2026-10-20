@@ -34,6 +34,7 @@ const {
   officialWebsiteUrl,
   countryCode,
   compact = false,
+  dualDrawer = false,
   // vendorName = '',
 } = defineProps<{
   isCN: boolean
@@ -51,6 +52,8 @@ const {
   countryCode?: string
   /** 半屏布局：账单横向三栏，钉在左侧底部（设计稿 32217:97786） */
   compact?: boolean
+  /** 购买与添加代理双抽屉并排时，去掉账单标题及类型栏底部留白 */
+  dualDrawer?: boolean
   // vendorName?: string
 }>()
 
@@ -189,8 +192,8 @@ function listUnitDisplay(item: ProxyTypeOption) {
         <div v-if="showFirstIpHint && newUserOfferKind" class="tt-tertiary text-3 leading-4.5">
           {{ $t('首条 IP 享受 {price} 新用户价，不与其他折扣叠加', { price: currency(newUserBenefitStore.newUserIpUnitPrice(newUserOfferKind)).format() }) }}
         </div>
-        <!-- 动态代理入口固定在代理类型卡片正下方；半屏去掉左右内边距，与卡片外边缘对齐 -->
-        <div class="flex items-center gap-1.5 min-w-0" :class="compact ? 'py-2' : 'py-2.5 px-3'">
+        <!-- 动态代理入口固定在代理类型卡片正下方；半屏左右内边距与卡片内容对齐 -->
+        <div class="flex items-center gap-1.5 min-w-0" :class="compact ? 'py-1.5 px-3.5' : 'py-2.5 px-3'">
           <ReuseRola />
         </div>
       </div>
@@ -228,7 +231,7 @@ function listUnitDisplay(item: ProxyTypeOption) {
 
   <!-- 半屏：横向三栏账单（代理类型 | 明细 | 数量 + 价格 + 支付） -->
   <div v-if="compact" class="mr-6 flex flex-col gap-3 p-3 rounded-1.5" :class="styles.bill">
-    <div class="flex items-center gap-2">
+    <div v-if="!dualDrawer" class="flex items-center gap-2">
       <div class="shrink-0 tt-primary text-3.5 font-600 leading-5">
         {{ labels.entityInfo }}
       </div>
@@ -239,13 +242,13 @@ function listUnitDisplay(item: ProxyTypeOption) {
     <!-- 两行网格：第一行三栏内容；第二行右侧两栏放用户协议 -->
     <div class="grid gap-x-5 gap-y-3" :class="showTypeColumn ? 'grid-cols-[minmax(0,1fr)_0_minmax(0,1fr)_0_minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)_0_minmax(0,1fr)]'">
       <template v-if="showTypeColumn">
-        <div class="min-w-0">
+        <div class="min-w-0" :class="{ 'row-span-2': dualDrawer }">
           <ReuseProxyTypes />
         </div>
-        <!-- 第一条分隔线贯穿两行，并向上延伸到标题行（2rem = 行高 + 行间距） -->
-        <div class="row-span-2 -mt-8" :class="styles.divider" />
+        <!-- 双抽屉类型栏贯穿两行；有标题时分隔线向上延伸到标题行 -->
+        <div class="row-span-2" :class="[styles.divider, { '-mt-8': !dualDrawer }]" />
       </template>
-      <div class="min-w-0 flex flex-col gap-3">
+      <div class="min-w-0 flex flex-col gap-3" :class="{ 'py-2.5': dualDrawer }">
         <template v-for="item in compactInfoItems" :key="item.label">
           <div v-if="item.slot === 'autoRenew'" class="flex items-center justify-between gap-2">
             <TruncateText class="tt-secondary text-3.5 leading-5" :text="$t('自动续费')" />

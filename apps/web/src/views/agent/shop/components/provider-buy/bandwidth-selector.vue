@@ -18,7 +18,8 @@ const modelValue = defineModel<number | undefined>()
 const styles = useCssModule()
 const labels = useProxyPurchaseLabels()
 
-const { compact, style: bandwidthGridStyle } = useOptionGridStyle()
+/** 4 个选项挤在一行，不随左侧窄列变成 3 列折行 */
+const { compact, style: bandwidthGridStyle } = useOptionGridStyle(4)
 
 /** 带宽档位卖点标签（设计稿 32220:124648）：文案用后端返回的 bandwidthSpeedDesc，颜色按带宽数值区分 */
 const BADGE_CLASS_BY_SPEED: Record<number, string | undefined> = {
@@ -67,7 +68,8 @@ function getSpeedBadge(option: BandwidthOption) {
            :class="[compact ? '' : 'max-w-38', styles.period, styles.radio, modelValue === option.value ? styles.active : '']" @click="modelValue = option.value"
       >
         <TruncateText :text="option.label" />
-        <div v-if="getSpeedBadge(option)" class="pointer-events-none absolute -top-2.5 right-1 z-10 px-2 py-0.5 rounded-full" :class="[styles.badge, getSpeedBadge(option)!.class]">
+        <!-- 标签不超出选项框：最大宽度为选项宽度减去左右各 4px，文字过长时显示省略号 -->
+        <div v-if="getSpeedBadge(option)" class="pointer-events-none absolute -top-2.5 right-1 z-10 max-w-[calc(100%-0.5rem)] px-2 py-0.5 rounded-full truncate" :class="[styles.badge, getSpeedBadge(option)!.class]">
           {{ getSpeedBadge(option)!.label }}
         </div>
       </div>
