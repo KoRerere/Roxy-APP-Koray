@@ -4201,5 +4201,7 @@
   "升级会员，解锁全部 Prime 功能": "Upgrade your membership to unlock All Prime Features",
   "个": "IPs",
   "静态住宅代理 IP": "Static Residential IP",
-  "静态机房代理 IP": "Static Datacenter IP"
+  "静态机房代理 IP": "Static Datacenter IP",
+  "团队是相互隔离的工作空间，各团队的数据与资源互不干扰。": "Teams are isolated workspaces — data and resources in each team are kept separate.",
+  "可邀请成员加入团队协作，并为其分配不同权限。": "Invite members to collaborate in your teams and assign them different permissions."
 }
