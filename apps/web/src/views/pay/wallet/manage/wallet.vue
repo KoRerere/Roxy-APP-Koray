@@ -76,7 +76,6 @@ watch(
 )
 
 useEmitterEvent('updateAutoRenewList', getUserPayInfo)
-
 </script>
 
 <template>
@@ -108,10 +107,8 @@ useEmitterEvent('updateAutoRenewList', getUserPayInfo)
             </div>
           </div>
         </div>
-        <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-1.5 cursor-pointer text-3.5 leading-5 font-500 topup-btn" @click="onCharge">
-          <SvgIcon name="base/rx_ic_plus" size="16" color="currentColor" />
-          {{ $t('充值') }}
-        </button>
+        <!-- 描边主按钮组件（lg），仅覆盖为设计稿的白底 + 浅边框 -->
+        <RxButton class="w-full topup-btn" variant="outlined" size="lg" icon="base/rx_ic_plus" :label="$t('充值')" @click="onCharge" />
       </div>
 
       <div class="relative h-0 border-t border-t-dashed border-white/60" />
@@ -147,12 +144,12 @@ useEmitterEvent('updateAutoRenewList', getUserPayInfo)
 
 <style scoped lang="scss">
 .balance {
-  background: linear-gradient(180deg, #11a3fd 20%, rgba(17, 163, 253, 0) 100%);
+  background: linear-gradient(180deg, #11a3fd 36%, rgba(17, 163, 253, 0) 100%);
 }
 
 // 深色模式：取自设计稿深色页面，蓝色更深一档
 [data-theme='dark'] .balance {
-  background: linear-gradient(180deg, #027eca 20%, rgba(2, 126, 202, 0) 100%);
+  background: linear-gradient(180deg, #027eca 36%, rgba(2, 126, 202, 0) 100%);
 }
 
 .text-content {
@@ -160,12 +157,13 @@ useEmitterEvent('updateAutoRenewList', getUserPayInfo)
 }
 
 .topup-btn {
-  color: var(--colors-text-text-brand, #11a3fd);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md, 6px);
+  // 深浅色模式下都保持白底
   background: #fff;
-  transition: background 0.15s;
 
-  &:hover {
+  &:not(:disabled):hover {
+    border-color: rgba(0, 0, 0, 0.1);
     background: #f5fbff;
   }
 }

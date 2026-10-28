@@ -52,7 +52,8 @@ const proxyInfo = computed(() => {
     title: billingLabels.value.proxyEntity,
     usingCount: proxyUsingCount || 0,
     expireCount: proxyExpireCount || 0,
-    unit: isEcommerce.value ? '' : 'IPs',
+    // IP 数量单位：中文「个」，英文「IPs」
+    unit: isEcommerce.value ? '' : $t('个'),
     // 账户级开关：有可享长续首享的可续费 IP 时由后端置 true
     showLongRenewBanner: !!showProxyRenewMinDiscount,
     // 中文展示折数，英/俄展示 % Off，缺省按 30% Off（7 折）
@@ -110,8 +111,8 @@ const proxyStats = computed(() => {
     return [{ label: $t('使用中'), value: proxyInfo.value.usingCount }, expiring]
   }
   return [
-    { label: $t('静态住宅 IP'), value: proxyTypeCounts.value.residential },
-    { label: $t('静态机房 IP'), value: proxyTypeCounts.value.datacenter },
+    { label: $t('静态住宅代理 IP'), value: proxyTypeCounts.value.residential },
+    { label: $t('静态机房代理 IP'), value: proxyTypeCounts.value.datacenter },
     expiring,
   ]
 })
@@ -121,6 +122,13 @@ watch(() => [userPayInfo.value.proxyUsingCount, userPayInfo.value.proxyExpireCou
     getProxyTypeCounts()
   }
 }, { immediate: true })
+
+/** 是否有已购代理 IP（使用中 / 即将到期 / 按类型统计任一大于 0） */
+const hasPurchasedProxy = computed(() => {
+  const { usingCount, expireCount } = proxyInfo.value
+  const typed = proxyTypeCounts.value ? proxyTypeCounts.value.residential + proxyTypeCounts.value.datacenter : 0
+  return usingCount + expireCount + typed > 0
+})
 
 function onBuyProxy() {
   buyProxy().then((orderInfo) => {
@@ -219,7 +227,8 @@ const freeOrExpired = computed(() => {
 })
 
 const animationGradient = computed(() => {
-  const freeBg = 'var(--pattern-wallet-free-bg)'
+  // 未开通会员：设计稿为灰色实线描边（border-inactive）
+  const freeBg = 'var(--colors-border-border-inactive, #e2e9ee)'
   return (freeOrExpired.value)
     // no linear-gradient for free or expired
     ? [freeBg, freeBg]
@@ -239,7 +248,9 @@ const subscribeInfo = computed(() => {
   const openTotal = isPremiumPartner.value ? $t('无限用量') : totalOpenWindowTimes
 
   return {
-    expireTime: isPremiumPartner.value ? $t('永久免费') : $t('到期时间: {value}', { value: format(userPayInfo.value.subEndDate, 'yyyy-MM-dd') }),
+    expireTime: isPremiumPartner.value
+      ? $t('永久免费')
+      : $t('到期时间: {value}', { value: isFree.value ? $t('无期限') : format(userPayInfo.value.subEndDate, 'yyyy-MM-dd') }),
     profileCount: isPremiumPartner.value ? billingLabels.value.unlimitedEntities : billingLabels.value.countEntitiesShort(profileCount.format()),
     profileNumber: isPremiumPartner.value ? Infinity : profileCount.value,
     createWindowTimes,
@@ -383,8 +394,9 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
 <template>
   <div class="flex flex-col gap-2.5">
     <!-- 套餐卡片 -->
-    <AnimationBorder v-if="!isEcommerce" :animation="false" :deg="110" :border-width="2" class="rounded-3" :gradient="animationGradient">
-      <div class="relative flex flex-col gap-5 pa-5 rounded-2.5 overflow-hidden plan">
+    <!-- 未开通会员时为 1px 灰色描边 -->
+    <AnimationBorder v-if="!isEcommerce" :animation="false" :deg="110" :border-width="freeOrExpired ? 1 : 2" class="rounded-3" :gradient="animationGradient">
+      <div class="relative flex flex-col gap-5 pa-5 overflow-hidden plan" :class="freeOrExpired ? 'rounded-[11px]' : 'rounded-2.5'">
         <div v-if="!freeOrExpired" class="plan-glow" />
         <!-- 01 标题 + 到期时间 -->
         <div class="relative flex justify-between items-center gap-3">
@@ -396,7 +408,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
               {{ SubLevelEnumStr[userPayInfo?.subLevel as SubLevelEnum] }}
             </div>
           </div>
-          <div v-if="!isFree && !isTrial" class="shrink-0 text-3 font-500 whitespace-nowrap font-['JetBrains_Mono'] tt-tertiary">
+          <div v-if="!isTrial" class="shrink-0 text-3 font-500 whitespace-nowrap font-['JetBrains_Mono'] tt-tertiary">
             {{ subscribeInfo.expireTime }}
           </div>
         </div>
@@ -438,24 +450,41 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
         </div>
 
         <!-- 03 操作 + Prime 提示 -->
-        <div class="relative flex flex-col gap-4">
-          <div class="flex justify-between items-start gap-3 min-h-8">
-            <RxButton v-if="showAutoRenewSwitch" class="min-w-18" severity="secondary" outlined size="sm"
+        <!-- 未开通会员（免费 / 已过期）：Prime 提示与升级按钮同一行，底部对齐 -->
+        <div v-if="freeOrExpired" class="relative flex justify-between items-end gap-3">
+          <PrimeTips>
+            <template #trigger>
+              <div class="flex items-center gap-1.5 cursor-default text-3 leading-normal whitespace-nowrap">
+                <i class="block size-4 shrink-0 prime-icon prime-icon--muted" />
+                <span class="tt-tertiary">{{ $t('升级会员，解锁全部 Prime 功能') }}</span>
+              </div>
+            </template>
+          </PrimeTips>
+          <div class="flex items-center gap-2.5 shrink-0">
+            <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props"
+                      :severity="item.primary ? undefined : 'secondary'" :outlined="!item.primary" :icon="(item.icon as any)"
+                      :label="item.label" size="md" @click="item.command"
+            />
+          </div>
+        </div>
+        <div v-else class="relative flex flex-col gap-4">
+          <div class="flex justify-between items-start gap-3 min-h-9">
+            <RxButton v-if="showAutoRenewSwitch" severity="secondary" outlined size="md"
                       :label="userPayInfo.isAuto ? $t('管理订阅') : $t('启用自动续费')" @click="enableAutoRenew"
             />
             <div v-else />
             <div class="flex items-center gap-2.5 shrink-0">
-              <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props" class="min-w-18"
+              <RxButton v-for="item in planActions" :key="item.label" v-bind="item.props"
                         :severity="item.primary ? undefined : 'secondary'" :outlined="!item.primary" :icon="(item.icon as any)"
-                        :label="item.label" size="sm" @click="item.command"
+                        :label="item.label" size="md" @click="item.command"
               />
             </div>
           </div>
           <PrimeTips class="self-start">
             <template #trigger>
               <div class="flex items-center gap-1.5 cursor-default text-3 leading-normal whitespace-nowrap">
-                <i class="block size-4 shrink-0 prime-icon" :class="{ 'prime-icon--muted': freeOrExpired }" />
-                <span class="tt-tertiary">{{ freeOrExpired ? $t('解锁全部 Prime 功能') : $t('您已解锁全部 Prime 功能') }}</span>
+                <i class="block size-4 shrink-0 prime-icon" />
+                <span class="tt-tertiary">{{ $t('您已解锁全部 Prime 功能') }}</span>
               </div>
             </template>
           </PrimeTips>
@@ -466,17 +495,15 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
       </div>
     </AnimationBorder>
 
-    <!-- 代理卡片：蓝绿渐变描边，长续首享活动条贴底 -->
-    <div class="flex flex-col overflow-hidden card card--promo">
+    <!-- 代理卡片：有已购 IP 时蓝绿渐变描边；一个都没买时与未开通会员一致，1px 灰色描边 -->
+    <div class="flex flex-col overflow-hidden card" :class="{ 'card--promo': hasPurchasedProxy }">
       <div class="flex flex-col gap-3 pa-5">
         <div class="flex items-start gap-3">
           <div class="flex-1 tt-primary text-4 font-600 leading-5">
             {{ proxyInfo.title }}
           </div>
-          <button class="shrink-0 min-w-16 flex items-center justify-center gap-1 px-2 py-1.5 rounded-1 cursor-pointer text-3 leading-4 font-500 border-none proxy-buy-btn" @click="onBuyProxy">
-            <SvgIcon name="base/rx_ic_cart" size="16" color="currentColor" />
-            {{ $t('购买') }}
-          </button>
+          <!-- 主按钮组件，仅覆盖为设计稿的蓝绿渐变底 -->
+          <RxButton class="shrink-0 proxy-buy-btn" size="xs" icon="base/rx_ic_cart" :label="$t('购买')" @click="onBuyProxy" />
         </div>
         <div class="flex items-center gap-5">
           <template v-for="(stat, index) in proxyStats" :key="stat.label">
@@ -512,7 +539,7 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
               <span class="tt-tertiary text-3.5 font-500 leading-5">{{ item.text }}</span>
             </div>
           </div>
-          <RxButton class="brand-btn" variant="outlined" size="xxs" icon="base/rx_ic_plus" :label="item.addText" @click="item.addClick" />
+          <RxButton variant="outlined" size="xxs" icon="base/rx_ic_plus" :label="item.addText" @click="item.addClick" />
         </div>
       </template>
     </div>
@@ -573,26 +600,16 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     radial-gradient(30% 95% at 100% -8%, rgba(17, 163, 253, 0.22) 0%, rgba(17, 163, 253, 0) 100%);
 }
 
-// 代理购买按钮：与长续首享活动条同色系的蓝绿渐变
+// 代理购买按钮：RxButton 主按钮，仅把底色换成设计稿的蓝绿渐变
 .proxy-buy-btn {
-  color: var(--component-button-primary-text, #fff);
+  border-color: transparent;
   background: linear-gradient(to left, #11cd69, #05b1d7);
-  box-shadow:
-    0 4px 4px -1px rgba(0, 0, 0, 0.02),
-    0 1px 1px 0 rgba(0, 0, 0, 0.06);
-  transition: filter 0.15s;
 
-  &:hover {
+  &:not(:disabled):hover {
+    border-color: transparent;
+    background: linear-gradient(to left, #11cd69, #05b1d7);
     filter: brightness(1.05);
   }
-}
-
-.brand-btn {
-  --button-outlined-info-border-color: var(--colors-border-border-brand, #11a3fd);
-  color: var(--colors-text-text-brand, #11a3fd);
-  border: 0.5px solid var(--colors-border-border-brand, #11a3fd);
-  border-radius: 4px;
-  background: var(--component-button-ghost-bg, #fff);
 }
 
 .tt-warning {

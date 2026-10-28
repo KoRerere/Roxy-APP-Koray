@@ -4189,7 +4189,6 @@
   "，AI Agent 积分 {discount} 折扣": ", Agent credits: {discount} discount",
   "活动剩余不足 {days} 天": "Event ends in under {days} days",
   "窗口套餐": "Profile Plan",
-  "解锁全部 Prime 功能": "Unlock All Prime Features",
   "购买代理": "Purchase Proxies",
   "个 IP 即将过期": "IPs Expiring Soon",
   "付款卡片": "Payment Card",
@@ -4197,5 +4196,10 @@
   "当钱包余额不足以自动续费时，将使用默认银行卡扣款。": "When the wallet balance is insufficient for automatic renewal, the default bank card will be charged instead.",
   "默认卡片": "Default",
   "您已解锁全部 Prime 功能": "You've unlocked access to All Prime Features",
-  "{count} 个可用": "{count} Available"
+  "{count} 个可用": "{count} Available",
+  "无期限": "Unlimited",
+  "升级会员，解锁全部 Prime 功能": "Upgrade your membership to unlock All Prime Features",
+  "个": "IPs",
+  "静态住宅代理 IP": "Static Residential IP",
+  "静态机房代理 IP": "Static Datacenter IP"
 }

@@ -66,7 +66,7 @@ function onRefresh() {
         <div class="shrink-0 w-95 h-full overflow-y-auto scroll-col">
           <div class="flex flex-col pt-8 pb-10">
             <Wallet :balance-refresh-ui="balanceRefreshUi" @refresh="onRefresh" />
-            <BankCards class="-mt-48.5" />
+            <BankCards class="-mt-49.5" />
           </div>
         </div>
       </div>

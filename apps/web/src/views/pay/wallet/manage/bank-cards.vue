@@ -45,11 +45,9 @@ function onSelect(card: BankCard) {
             <span class="text-3.25 leading-normal font-['JetBrains_Mono'] whitespace-nowrap" :class="card.cardDefault ? 'tt-primary font-500' : 'tt-secondary'">**** {{ card.last4 }}</span>
             <span v-if="card.cardDefault" class="px-1 py-0.5 rounded-1 text-3 leading-4 font-500 font-['JetBrains_Mono'] default-tag">{{ $t('默认') }}</span>
           </div>
-          <button class="shrink-0 flex items-center justify-center pa-1 rounded-1 cursor-pointer bg-transparent border-none more-btn"
-                  :class="card.cardDefault ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'" @click.stop="onMenuCommand($event, card)"
-          >
-            <SvgIcon name="base/rx_ic_more-v" size="16" color="var(--colors-icon-icon-secondary, #575d60)" />
-          </button>
+          <RxButton class="shrink-0" :class="card.cardDefault ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'" text severity="secondary" size="xxs"
+                    icon="base/rx_ic_more-v" @click.stop="onMenuCommand($event, card)"
+          />
         </div>
       </div>
     </div>
@@ -116,10 +114,6 @@ function onSelect(card: BankCard) {
   border: 0.5px solid var(--colors-border-border-subtle, #c7d1d6);
   background: var(--colors-background-bg-page, #fff);
 }
-
-.more-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
 </style>
 
 <style lang="scss">
@@ -128,10 +122,6 @@ function onSelect(card: BankCard) {
   .panel {
     border-color: rgba(255, 255, 255, 0.1);
     background: rgba(39, 60, 72, 0.6);
-  }
-
-  .more-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
   }
 }
 </style>
