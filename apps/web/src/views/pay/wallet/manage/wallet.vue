@@ -150,6 +150,11 @@ useEmitterEvent('updateAutoRenewList', getUserPayInfo)
   background: linear-gradient(180deg, #11a3fd 20%, rgba(17, 163, 253, 0) 100%);
 }
 
+// 深色模式：取自设计稿深色页面，蓝色更深一档
+[data-theme='dark'] .balance {
+  background: linear-gradient(180deg, #027eca 20%, rgba(2, 126, 202, 0) 100%);
+}
+
 .text-content {
   color: var(--component-dropdown-text-active, #fff);
 }
