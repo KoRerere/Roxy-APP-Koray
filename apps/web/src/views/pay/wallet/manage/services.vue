@@ -394,9 +394,9 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
 <template>
   <div class="flex flex-col gap-2.5">
     <!-- 套餐卡片 -->
-    <!-- 未开通会员时为 1px 灰色描边 -->
-    <AnimationBorder v-if="!isEcommerce" :animation="false" :deg="110" :border-width="freeOrExpired ? 1 : 2" class="rounded-3" :gradient="animationGradient">
-      <div class="relative flex flex-col gap-5 pa-5 overflow-hidden plan" :class="freeOrExpired ? 'rounded-[11px]' : 'rounded-2.5'">
+    <!-- 未订阅（免费 / 已过期）：1px 灰色描边、8px 圆角、bg-page 底；已订阅：2px 渐变描边、12px 圆角 -->
+    <AnimationBorder v-if="!isEcommerce" :animation="false" :deg="110" :border-width="freeOrExpired ? 1 : 2" :class="freeOrExpired ? 'rounded-2' : 'rounded-3'" :gradient="animationGradient">
+      <div class="relative flex flex-col gap-5 pa-5 overflow-hidden plan" :class="freeOrExpired ? 'rounded-[7px] plan--free' : 'rounded-2.5'">
         <div v-if="!freeOrExpired" class="plan-glow" />
         <!-- 01 标题 + 到期时间 -->
         <div class="relative flex justify-between items-center gap-3">
@@ -559,23 +559,27 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
 .plan {
   background: var(--colors-background-bg-overlay, #fff);
 
+  &--free {
+    background: var(--colors-background-bg-page, #fff);
+  }
+
   &-glow {
+    // 设计稿光斑切图（bg 图层导出），贴卡片右上角 457×160
     position: absolute;
-    inset: 0 0 auto 0;
+    top: 0;
+    right: 0;
+    width: 457px;
     height: 160px;
     pointer-events: none;
-    // 对应设计稿顶部三团模糊光斑：左侧暖黄、中部粉、右上角浅蓝
-    background:
-      radial-gradient(36% 85% at 42% -18%, rgba(255, 215, 170, 0.42) 0%, rgba(255, 215, 170, 0) 100%),
-      radial-gradient(34% 80% at 70% -12%, rgba(243, 168, 222, 0.38) 0%, rgba(243, 168, 222, 0) 100%),
-      radial-gradient(30% 95% at 100% -8%, rgba(120, 205, 255, 0.55) 0%, rgba(120, 205, 255, 0) 100%);
+    background: url('/images/payments/wallet/plan-glow.svg') no-repeat right top / 100% 100%;
   }
 
   &-badge {
     background: linear-gradient(90deg, #8780fe 0%, #c491f1 100%);
 
     &--muted {
-      background: var(--colors-icon-icon-tertiary, #90afc2);
+      // 设计稿为固定色 #90afc2（未绑定变量）
+      background: #90afc2;
     }
   }
 }
@@ -593,11 +597,9 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
     linear-gradient(100deg, #05b1d7 0%, #11cd69 100%) border-box;
 }
 
-// 深色模式下套餐卡光斑：去掉暖黄，只保留淡粉和蓝，避免在深底上发脏
+// 深色模式光斑切图
 [data-theme='dark'] .plan-glow {
-  background:
-    radial-gradient(34% 80% at 70% -12%, rgba(219, 84, 249, 0.16) 0%, rgba(219, 84, 249, 0) 100%),
-    radial-gradient(30% 95% at 100% -8%, rgba(17, 163, 253, 0.22) 0%, rgba(17, 163, 253, 0) 100%);
+  background-image: url('/images/payments/wallet/plan-glow-dark.svg');
 }
 
 // 代理购买按钮：RxButton 主按钮，仅把底色换成设计稿的蓝绿渐变

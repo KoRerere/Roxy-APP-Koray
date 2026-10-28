@@ -1,0 +1,13 @@
+<svg width="457" height="160" viewBox="0 0 457 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#c)">
+<g filter="url(#f0)"><ellipse cx="421.854" cy="-139.207" rx="280.755" ry="124.205" fill="#B000D7"/></g>
+<g filter="url(#f1)"><ellipse cx="513.975" cy="-95.3259" rx="141.024" ry="128.086" fill="#026D82"/></g>
+<g filter="url(#f2)"><ellipse cx="226.895" cy="-146.326" rx="188.895" ry="128.086" fill="#743600"/></g>
+</g>
+<defs>
+<filter id="f0" x="21.0996" y="-383.412" width="801.51" height="488.41" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="60"/></filter>
+<filter id="f1" x="252.951" y="-343.412" width="522.049" height="496.173" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="60"/></filter>
+<filter id="f2" x="-82" y="-394.412" width="617.79" height="496.173" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="60"/></filter>
+<clipPath id="c"><rect width="457" height="160" fill="white"/></clipPath>
+</defs>
+</svg>
