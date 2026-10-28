@@ -158,6 +158,8 @@ const resourceCards = computed(() => {
       total: maxWorkspaceCount,
       text: $t('已使用'),
       addText: $t('新增'),
+      // 未购买团队（额度为 0）时标题与数字置灰
+      inactive: !maxWorkspaceCount,
       visible: isOwner.value,
       addClick: () => onExpand('workspace'),
     },
@@ -169,6 +171,8 @@ const resourceCards = computed(() => {
       total: maxMemberCount,
       text: $t('已使用'),
       addText: $t('新增'),
+      // 未购买成员（额度只有所有者自己或为 0）时标题与数字置灰
+      inactive: (maxMemberCount || 0) <= 1,
       addClick: () => onExpand('staff'),
     },
   ].filter(item => item.visible !== false)
@@ -530,9 +534,9 @@ function onExpand(defaultType?: 'workspace' | 'staff') {
         <div v-if="index > 0" class="shrink-0 w-0 h-15 border-l border-l-dashed border-[var(--colors-border-border-subtle,#c7d1d6)]" />
         <div class="flex-1 min-w-0 flex flex-col items-start gap-3">
           <div class="flex flex-col gap-1.5">
-            <span class="tt-secondary text-3.5 leading-4.5 font-600 truncate">{{ item.title }}</span>
+            <span class="text-3.5 leading-4.5 font-600 truncate" :class="item.inactive ? 'tt-inactive' : 'tt-secondary'">{{ item.title }}</span>
             <div class="flex items-baseline gap-2 whitespace-nowrap">
-              <div class="shrink-0 flex items-baseline gap-1 tt-secondary font-600">
+              <div class="shrink-0 flex items-baseline gap-1 font-600" :class="item.inactive ? 'tt-inactive' : 'tt-secondary'">
                 <span class="text-6 leading-normal">{{ item.used }}</span>
                 <span v-if="item.total !== undefined" class="text-4 leading-6">/{{ item.total }}</span>
               </div>
