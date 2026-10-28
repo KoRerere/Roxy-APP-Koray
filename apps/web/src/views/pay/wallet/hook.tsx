@@ -647,5 +647,6 @@ export function useBankCards() {
     checkAutoRecharge,
     bindCard,
     onMenuCommand,
+    setMainCard,
   }
 }

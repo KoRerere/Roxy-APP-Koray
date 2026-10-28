@@ -30,7 +30,7 @@ const nextBillingDateText = computed(() => {
   }
   // 后端固定 YYYY-MM-DD HH:mm:ss，避免 new Date 对空格分隔格式解析不一致
   const date = parse(lastDeductTime, 'yyyy-MM-dd HH:mm:ss', new Date())
-  return Number.isNaN(date.getTime()) ? lastDeductTime : format(date, 'yyyy / MM / dd')
+  return Number.isNaN(date.getTime()) ? lastDeductTime : format(date, 'yyyy - MM - dd')
 })
 
 /** 扣除金额；接口无记录时 lastDeductAmount 为 0 */
@@ -76,58 +76,70 @@ watch(
 )
 
 useEmitterEvent('updateAutoRenewList', getUserPayInfo)
+
 </script>
 
 <template>
-  <div class="relative flex flex-col pa-5 gap-4 h-full overflow-hidden balance">
-    <div class="relative z-1 flex flex-row justify-between items-center gap-4">
-      <div class="text-4.5 font-600 leading-normal color-white/80 font-[Archivo]">
-        {{ $t('钱包余额') }}
-      </div>
-      <i18n-t class="text-3 leading-4 color-white/80" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })" scope="global">
-        <template #invite>
-          <span class="cursor-pointer color-white link" @click="router.push({ name: 'referral-program' })">{{
-            $t('推广计划') }}
-          </span>
-        </template>
-      </i18n-t>
-    </div>
+  <!-- 钱包卡：蓝色自上而下渐隐，下半部分被付款卡片面板压住 -->
+  <div class="px-3">
+    <div class="relative h-120 flex flex-col gap-5 pa-6 rounded-t-3 overflow-hidden balance">
+      <!-- 右上角装饰：设计稿中的同心圆角方框 -->
+      <div class="deco deco--5" />
+      <div class="deco deco--4" />
+      <div class="deco deco--3" />
+      <div class="deco deco--1" />
+      <div class="deco deco--2" />
 
-    <div class="relative z-1 flex items-center justify-between gap-4 pt-1 pb-3">
-      <div class="flex items-center gap-3">
-        <div class="flex items-baseline gap-0.5 color-white text-8 font-600 leading-normal">
-          <span>$</span>
-          <span class="text-10">{{ currency(userPayInfo.balance, { symbol: '' }).format() }}</span>
+      <div class="relative flex flex-col gap-5">
+        <div class="flex flex-col gap-3">
+          <div class="text-[16px] font-600 leading-[17px] font-[Archivo] text-content">
+            {{ $t('钱包余额') }}
+          </div>
+          <div class="flex items-baseline gap-1 color-white font-600 min-w-0">
+            <span class="text-[24px] leading-[29px]">$</span>
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="text-[32px] leading-[39px] truncate">{{ currency(userPayInfo.balance, { symbol: '' }).format() }}</span>
+              <SvgIcon class="refresh-icon" :class="{
+                         'refresh-icon--spinning': props.balanceRefreshUi === 'loading',
+                         'cursor-pointer': props.balanceRefreshUi === 'idle',
+                       }" :name="props.balanceRefreshUi === 'success' ? 'base/rx_ic_check' : 'base/rx_ic_refresh'" size="16"
+                       :color="props.balanceRefreshUi === 'success' ? 'var(--colors-icon-icon-success)' : '#fff'" @click="props.balanceRefreshUi === 'idle' && $emit('refresh')"
+              />
+            </div>
+          </div>
         </div>
-        <SvgIcon class="refresh-icon" :class="{
-                   'refresh-icon--spinning': props.balanceRefreshUi === 'loading',
-                   'cursor-pointer': props.balanceRefreshUi === 'idle',
-                 }" :name="props.balanceRefreshUi === 'success' ? 'base/rx_ic_check' : 'base/rx_ic_refresh'" size="20"
-                 :color="props.balanceRefreshUi === 'success' ? 'var(--colors-icon-icon-success)' : '#fff'" @click="props.balanceRefreshUi === 'idle' && $emit('refresh')"
-        />
+        <button class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-1.5 cursor-pointer text-3.5 leading-5 font-500 topup-btn" @click="onCharge">
+          <SvgIcon name="base/rx_ic_plus" size="16" color="currentColor" />
+          {{ $t('充值') }}
+        </button>
       </div>
-      <RxButton class="shrink-0" severity="secondary" variant="outlined" size="lg" :label="$t('充值')" @click="onCharge" />
-    </div>
 
-    <RxDivider class="opacity-50" line-only line-style="dashed" line-color="#ffffff" />
+      <div class="relative h-0 border-t border-t-dashed border-white/60" />
 
-    <div class="relative z-1 flex gap-5">
-      <div class="flex-1 flex flex-col gap-1">
-        <div class="text-3.25 leading-4.5 color-white/80">
-          {{ $t('下次扣费') }}
+      <div class="relative flex flex-col gap-3 text-content">
+        <div class="flex gap-5">
+          <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+            <div class="text-3 leading-4 tracking-[-0.12px] opacity-80 truncate">
+              {{ $t('下次扣费') }}
+            </div>
+            <div class="text-3.5 leading-5 font-600 tracking-[-0.14px]">
+              {{ nextBillingDateText }}
+            </div>
+          </div>
+          <div class="flex-1 min-w-0 flex flex-col gap-1.5">
+            <div class="text-3 leading-4 tracking-[-0.12px] opacity-80 truncate">
+              {{ $t('扣除金额') }}
+            </div>
+            <div class="text-3.5 leading-5 font-600 tracking-[-0.14px]">
+              {{ deductionAmountText }}
+            </div>
+          </div>
         </div>
-        <div class="text-4 font-600 leading-6 color-white">
-          {{ nextBillingDateText }}
-        </div>
-      </div>
-      <RxDivider class="opacity-50" line-only line-style="dashed" line-color="#ffffff" vertical />
-      <div class="flex-1 flex flex-col gap-1">
-        <div class="text-3.25 leading-4.5 color-white/80">
-          {{ $t('扣除金额') }}
-        </div>
-        <div class="text-4 font-600 leading-6 color-white">
-          {{ deductionAmountText }}
-        </div>
+        <i18n-t class="text-3 leading-4 referral" tag="div" :keypath="$t('参与 {invite} 获得奖励', { invite: '{invite}' })" scope="global">
+          <template #invite>
+            <span class="cursor-pointer font-500 underline underline-offset-2 opacity-100" @click="router.push({ name: 'referral-program' })">{{ $t('推广计划') }}</span>
+          </template>
+        </i18n-t>
       </div>
     </div>
   </div>
@@ -135,31 +147,78 @@ useEmitterEvent('updateAutoRenewList', getUserPayInfo)
 
 <style scoped lang="scss">
 .balance {
-  border-radius: 12px;
-  background:
-    linear-gradient(122deg, #11a3fd 50.11%, #92d6ff 109.67%), linear-gradient(180deg, #66c4fd 0%, #11a3fd 100%),
-    linear-gradient(
-      180deg,
-      var(--pattern-pay-wallet-bg-start, #fff) -0.2%,
-      var(--pattern-pay-wallet-bg-end, #e0f1fe) 185.89%
-    );
+  background: linear-gradient(180deg, #11a3fd 20%, rgba(17, 163, 253, 0) 100%);
+}
 
-  &:after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: url('/images/payments/ripple_white.svg') no-repeat right top / 299px 166px;
+.text-content {
+  color: var(--component-dropdown-text-active, #fff);
+}
+
+.topup-btn {
+  color: var(--colors-text-text-brand, #11a3fd);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #f5fbff;
   }
 }
 
-.link {
-  text-decoration-line: underline;
-  text-decoration-style: solid;
-  text-decoration-skip-ink: auto;
-  text-decoration-thickness: auto;
-  text-underline-offset: auto;
-  text-underline-position: from-font;
+.referral {
+  color: rgba(255, 255, 255, 0.8);
+
+  span {
+    color: #fff;
+  }
+}
+
+// 装饰方框：坐标取自设计稿（相对卡片左上角，卡宽 356）
+.deco {
+  position: absolute;
+  border: 1.25px solid #fff;
+  pointer-events: none;
+
+  &--1 {
+    left: 291px;
+    top: -107px;
+    width: 150px;
+    height: 150px;
+    border-radius: 15px;
+    opacity: 0.4;
+  }
+  &--2 {
+    left: 304.75px;
+    top: -93.25px;
+    width: 122.5px;
+    height: 122.5px;
+    border-radius: 7.5px;
+    opacity: 0.5;
+  }
+  &--3 {
+    left: 276px;
+    top: -122px;
+    width: 180px;
+    height: 180px;
+    border-radius: 22.5px;
+    opacity: 0.3;
+  }
+  &--4 {
+    left: 261px;
+    top: -137px;
+    width: 210px;
+    height: 210px;
+    border-radius: 33.75px;
+    opacity: 0.2;
+  }
+  &--5 {
+    left: 246px;
+    top: -152px;
+    width: 240px;
+    height: 240px;
+    border-radius: 43.75px;
+    opacity: 0.1;
+  }
 }
 
 .refresh-icon {

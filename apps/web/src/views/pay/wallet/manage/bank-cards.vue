@@ -1,98 +1,137 @@
 <script setup lang="ts">
 import { useBankCards } from '/@/views/pay/wallet/hook.tsx'
 
-const { userCards, autoRecharge, matchCard, checkAutoRecharge, bindCard, onMenuCommand } = useBankCards()
+type BankCard = NonNullable<typeof userCards.value>[number]
+
+const { userCards, autoRecharge, matchCard, checkAutoRecharge, bindCard, onMenuCommand, setMainCard } = useBankCards()
+
+/** 点击卡片行：设为默认卡（默认卡即选中项） */
+function onSelect(card: BankCard) {
+  if (card.cardDefault) {
+    return
+  }
+  setMainCard(card.cardId)
+}
 </script>
 
 <template>
-  <div class="h-full flex flex-col justify-between pa-2 bank-cards">
-    <div class="flex flex-col gap-2 pa-2.5">
-      <div class="flex justify-between items-center">
-        <div class="tt-primary text-3.5 font-600 leading-5">
+  <!-- 付款卡片面板：上移压在钱包卡渐隐区域之上 -->
+  <div class="relative z-1 flex flex-col gap-6 px-5 pt-5 pb-6 rounded-3 panel">
+    <div class="flex flex-col gap-4">
+      <div class="flex items-center gap-4">
+        <div class="flex-1 min-w-0 flex flex-col gap-1">
+          <div class="tt-primary text-3.5 font-600 leading-5">
+            {{ $t('付款卡片') }}
+          </div>
+          <div class="tt-secondary text-3 leading-4">
+            {{ $t('默认卡片将用于续费。') }}
+          </div>
+        </div>
+        <RxButton class="shrink-0" severity="secondary" outlined size="sm" icon="base/rx_ic_plus" :disabled="!!userCards && userCards.length >= 4" :label="$t('新增卡片')" @click="bindCard()" />
+      </div>
+
+      <div v-if="!userCards?.length" class="flex flex-col items-center justify-center gap-2 h-30 rounded-1.5 empty">
+        <SvgIcon name="base/rx_ic_credit_card" size="24" color="var(--colors-icon-icon-note)" />
+        <span class="tt-tertiary text-3.5">{{ $t('暂无绑定卡片') }}</span>
+      </div>
+
+      <div v-else class="flex flex-col gap-2">
+        <div v-for="card in userCards" :key="card.cardId" class="group flex items-center justify-between gap-2.5 px-4 py-2.5 rounded-1.5 cursor-pointer card-row"
+             :class="{ 'card-row--active': card.cardDefault }" @click="onSelect(card)"
+        >
+          <div class="flex-1 min-w-0 flex items-center gap-2.5">
+            <div class="radio" :class="{ 'radio--checked': card.cardDefault }" />
+            <SvgIcon class="shrink-0" :name="matchCard(card.brand!)" size="32" />
+            <span class="text-3.25 leading-normal font-['JetBrains_Mono'] whitespace-nowrap" :class="card.cardDefault ? 'tt-primary font-500' : 'tt-secondary'">**** {{ card.last4 }}</span>
+            <span v-if="card.cardDefault" class="px-1 py-0.5 rounded-1 text-3 leading-4 font-500 font-['JetBrains_Mono'] default-tag">{{ $t('默认') }}</span>
+          </div>
+          <button class="shrink-0 flex items-center justify-center pa-1 rounded-1 cursor-pointer bg-transparent border-none more-btn"
+                  :class="card.cardDefault ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'" @click.stop="onMenuCommand($event, card)"
+          >
+            <SvgIcon name="base/rx_ic_more-v" size="16" color="var(--colors-icon-icon-secondary, #575d60)" />
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 组合支付 -->
+    <div class="flex flex-col gap-2">
+      <div class="h-6 flex items-center gap-2">
+        <div class="flex-1 tt-primary text-3.5 font-600 leading-5">
           {{ $t('组合支付') }}
         </div>
         <RxToggleSwitch v-model="autoRecharge" true-value="1" false-value="0" @change="checkAutoRecharge" />
       </div>
       <div class="tt-tertiary text-3.5 leading-5">
-        {{ $t('当钱包余额不足以自动续费时，自动用卡片组合支付。') }}
-        {{ $t('（仅默认卡片会被用于组合支付）') }}
-      </div>
-    </div>
-
-    <div class="flex flex-col gap-2.5 pa-3 panel">
-      <div class="flex justify-between items-center">
-        <div class="tt-primary text-3.5 font-600 leading-5">
-          {{ $t('卡片信息') }}
-        </div>
-        <RxButton variant="outlined" severity="info" size="xxs" :disabled="userCards && userCards.length >= 4" :label="`+ ${$t('新增')}`" @click="bindCard()" />
-      </div>
-      <div v-if="!userCards?.length" class="tt-tertiary text-3.5 leading-5">
-        {{ $t('暂无绑定卡片') }}
-      </div>
-      <div v-else-if="userCards.length === 1" class="h-10 flex justify-between items-center">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <SvgIcon :name="matchCard(userCards[0].brand!)" size="32" />
-          <span class="card-number">{{ `**** **** **** ${userCards[0].last4}` }}</span>
-          <span v-if="userCards[0].cardDefault" class="card-default">DEFAULT</span>
-        </div>
-        <RxButton text severity="secondary" size="xxs" icon="base/rx_ic_more-v" @click="onMenuCommand($event, userCards[0])" />
-      </div>
-      <div v-else class="grid grid-cols-4 gap-1 min-w-0">
-        <div v-for="card in userCards" :key="card.cardId" class="h-10 flex items-center gap-1 px-2 rounded-1 min-w-0 overflow-hidden cursor-pointer"
-             :class="card.cardDefault ? 'card-chip--default' : 'card-chip'" @click="onMenuCommand($event, card)"
-        >
-          <SvgIcon :name="matchCard(card.brand!)" size="32" />
-          <span class="truncate text-3.5 font-500 font-['JetBrains_Mono']" :class="card.cardDefault ? 'color-white' : 'tt-primary'">{{ card.last4 }}</span>
-        </div>
+        {{ $t('当钱包余额不足以自动续费时，将使用默认银行卡扣款。') }}
       </div>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.bank-cards {
-  border-radius: 12px;
-  border: 1px solid var(--colors-border-border-subtle, #c7d1d6);
-  background: var(--colors-background-bg-page, #fff);
-}
-
 .panel {
-  border-radius: 8px;
   border: 1px solid var(--colors-border-border-inactive, #e2e9ee);
-  background: var(--colors-background-bg-block, #f1f5f8);
+  background: rgba(242, 245, 247, 0.6);
+  // Figma 背景模糊 32 ≈ CSS blur(16px)
+  backdrop-filter: blur(16px);
 }
 
-.card-chip {
-  border: 0.5px solid var(--colors-border-border-inactive, #e2e9ee);
+.empty {
+  border: 1px dashed var(--colors-border-border-subtle, #c7d1d6);
   background: var(--colors-background-bg-page, #fff);
 }
 
-.card-chip--default {
+.card-row {
   border: 1px solid var(--colors-border-border-inactive, #e2e9ee);
-  background: linear-gradient(262deg, #34d0a0 -0.48%, #afe42c 100.91%);
-}
+  background: var(--colors-background-bg-page, #fff);
+  transition: border-color 0.15s;
 
-.card {
-  &-number {
-    color: var(--colors-text-text-tertiary);
-    font-family: 'JetBrains Mono';
-    font-size: 12px;
-    line-height: 20px;
+  &:hover {
+    border-color: var(--component-alert-announcement-border-info, #3fb6fd);
   }
 
-  &-default {
-    display: flex;
-    padding: 2px 4px;
-    justify-content: center;
-    align-items: center;
-    border-radius: 2px;
-    border: 1px solid var(--component-tag-border);
-    background: var(--component-tag-bg);
-    color: var(--component-tag-text);
-    font-family: 'JetBrains Mono';
-    font-size: 10px;
-    font-weight: 800;
-    line-height: normal;
+  &--active {
+    border-color: var(--component-alert-announcement-border-info, #3fb6fd);
+    background: var(--component-alert-bg-info, #c8ebfe);
+  }
+}
+
+.radio {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--colors-border-border-subtle, #c7d1d6);
+  background: var(--colors-background-bg-page, #fff);
+  transition: border 0.15s;
+
+  &--checked {
+    border: 5px solid var(--colors-border-border-brand, #11a3fd);
+  }
+}
+
+.default-tag {
+  color: var(--colors-text-text-inactive, #7d8387);
+  border: 0.5px solid var(--colors-border-border-subtle, #c7d1d6);
+  background: var(--colors-background-bg-page, #fff);
+}
+
+.more-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+</style>
+
+<style lang="scss">
+// 深色模式：取自设计稿深色页面
+[data-theme='dark'] {
+  .panel {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(39, 60, 72, 0.6);
+  }
+
+  .more-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
   }
 }
 </style>
