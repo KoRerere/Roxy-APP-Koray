@@ -40,13 +40,13 @@ function isProxyRow(row: RenewRow) {
   return !!row.proxyInfo?.lastIp
 }
 
-/** 下次账单时间：后端为 yyyy-MM-dd HH:mm:ss，展示为 yyyy/MM/dd HH:mm:ss */
+/** 下次账单日期：与钱包设计保持一致，只展示日期。 */
 function formatDate(value?: string) {
   if (!value) {
     return '--'
   }
   const date = parse(value, 'yyyy-MM-dd HH:mm:ss', new Date())
-  return Number.isNaN(date.getTime()) ? value : format(date, 'yyyy/MM/dd HH:mm:ss')
+  return Number.isNaN(date.getTime()) ? value : format(date, 'yyyy/MM/dd')
 }
 
 function toBilling() {

@@ -11,6 +11,7 @@ import { useContextMenu } from '/@/components/rx-ctxmenu'
 
 import { deepClone, getFormData, getSortIcon, isEmptyValue, isFunction, isLikeFunction, operationPower, transformSortOrder } from '/@/utils'
 import type { Operation, SortOrderNumber } from '/@/utils'
+import { useResizeObserver } from '@vueuse/core'
 import { AnimatePresence } from 'motion-v'
 import type { ListCacheEntry } from '/@/stores/listCache'
 import { useListCacheStore } from '/@/stores/listCache'
@@ -312,13 +313,36 @@ onBeforeMount(async () => {
   _firstLoad.value = true
 })
 
+/** 表格是否出现横向滚动：仅在内容被固定列遮挡时才显示固定列的分隔线和阴影 */
+const hasXOverflow = ref(false)
+const xOverflowTargets = shallowRef<HTMLElement[]>([])
+
+function updateXOverflow() {
+  const root = rootElRef.value as HTMLElement | null
+  const container = root?.querySelector<HTMLElement>('.p-datatable-table-container') ?? null
+  const table = root?.querySelector<HTMLElement>('.p-datatable-table') ?? null
+  const targets = [container, table].filter(Boolean) as HTMLElement[]
+  if (targets.length !== xOverflowTargets.value.length || targets.some((el, i) => el !== xOverflowTargets.value[i])) {
+    xOverflowTargets.value = targets
+  }
+
+  const el = getScrollerEl() ?? container
+  hasXOverflow.value = !!el && el.scrollWidth - el.clientWidth > 1
+}
+
+useResizeObserver(xOverflowTargets, updateXOverflow)
+
 onMounted(() => {
   void restoreScrollOffset()
+  updateXOverflow()
 })
 
 watch(tableList, () => {
   void restoreScrollOffset()
+  void nextTick(updateXOverflow)
 })
+
+watch(_columns, () => void nextTick(updateXOverflow))
 
 onBeforeUnmount(() => {
   saveScrollOffset()
@@ -553,7 +577,7 @@ function initBodyrow(options: any) {
     <div class="table-wrapper position-relative flex-1 overflow-hidden">
       <DataTable ref="dataTable" v-model:context-menu-selection="contextMenuSelected" v-model:selection="selectionData" :value="tableList" v-bind="tableAttrs" :sort-order="_sorts.sortOrder"
                  :sort-field="_sorts.sortField" :pt="{
-                   root: ColumnCss_Module.tableroot,
+                   root: [ColumnCss_Module.tableroot, { [ColumnCss_Module.xoverflow]: hasXOverflow }],
                    table: [ColumnCss_Module.table, !tableList?.length ? 'flex-1 !h-full' : 'pb-15'],
                    emptymessagecell: '!whitespace-normal !text-center',
                    tbody: ColumnCss_Module.tbody,
@@ -627,7 +651,8 @@ function initBodyrow(options: any) {
       </DataTable>
       <RxLoading v-if="!skeleton" v-model="_loading" :opacity="0.9" />
     </div>
-    <div v-if="paginator" class="rx-paginator">
+    <!-- 空状态（无数据且总数为 0）时不显示翻页器 -->
+    <div v-if="paginator && (tableList?.length || paginatorConfig.totalRecords > 0)" class="rx-paginator">
       <Paginator v-model:first="paginatorConfig.first" template="JumpToPageInput PrevPageLink PageLinks NextPageLink" :page-link-size="5" :rows="paginatorConfig.rows"
                  :total-records="paginatorConfig.totalRecords" @page="paginatorConfig.onPage"
       >
@@ -819,6 +844,12 @@ function initBodyrow(options: any) {
 
   :global(.p-datatable-scrollable-table > .p-datatable-thead) {
     z-index: 2;
+  }
+
+  // 宽度足够、没有横向滚动时，固定列不需要分隔线和阴影
+  &:not(.xoverflow) .bodycell:global(.p-datatable-frozen-column) {
+    border-left-color: transparent;
+    box-shadow: none;
   }
 
   :global(.row-disabled) {

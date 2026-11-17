@@ -80,8 +80,9 @@ export function resolveFooterMenuRoutes(options: ResolveFooterMenuOptions): Rout
   if (ctx.isPublicMember)
     return []
 
+  const allRoutes = sharedMenuRoutes.flatMap(route => [route, ...(route.children || [])])
   const byName = new Map(
-    sharedMenuRoutes
+    allRoutes
       .filter(route => route.name != null)
       .map(route => [route.name, route]),
   )

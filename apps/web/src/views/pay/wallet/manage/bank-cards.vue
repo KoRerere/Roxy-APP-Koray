@@ -69,10 +69,9 @@ function onSelect(card: BankCard) {
 
 <style lang="scss" scoped>
 .panel {
-  border: 1px solid var(--colors-border-border-inactive, #e2e9ee);
-  background: rgba(242, 245, 247, 0.6);
-  // Figma 背景模糊 32 ≈ CSS blur(16px)
-  backdrop-filter: blur(16px);
+  border: 1px solid var(--pattern-pay-wallet-new-panel-border);
+  background: var(--pattern-pay-wallet-new-panel-bg);
+  backdrop-filter: blur(32px);
 }
 
 .empty {
@@ -100,8 +99,8 @@ function onSelect(card: BankCard) {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1px solid var(--colors-border-border-subtle, #c7d1d6);
-  background: var(--colors-background-bg-page, #fff);
+  border: 1px solid var(--component-checker-outer-border);
+  background: var(--component-checker-bg);
   transition: border 0.15s;
 
   &--checked {
@@ -113,15 +112,5 @@ function onSelect(card: BankCard) {
   color: var(--colors-text-text-inactive, #7d8387);
   border: 0.5px solid var(--colors-border-border-subtle, #c7d1d6);
   background: var(--colors-background-bg-page, #fff);
-}
-</style>
-
-<style lang="scss">
-// 深色模式：取自设计稿深色页面
-[data-theme='dark'] {
-  .panel {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(39, 60, 72, 0.6);
-  }
 }
 </style>

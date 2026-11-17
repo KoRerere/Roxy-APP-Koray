@@ -4,9 +4,13 @@ import currency from 'currency.js'
 import { useCampaignStore } from '/@/stores/campaign'
 import { useUserStore } from '/@/stores/user'
 import { sleep } from '/@/utils'
+import EnterpriseClientModal from '/@/views/enterprise-client/enterprise-client-modal.vue'
+import { isEnterpriseRechargeEligible } from '/@/views/enterprise-client/eligibility'
 
 const emit = defineEmits(['confirm'])
 const dialogRef = inject<any>('dialogRef')
+const rechargeAmount = Number(dialogRef.value.data?.rechargeAmount)
+const showEnterpriseCredits = isEnterpriseRechargeEligible(rechargeAmount)
 const { userInfo, userPayInfo } = storeToRefs(useUserStore())
 const { getUserPayInfo } = useUserStore()
 const { getActualRecharge } = useCampaignStore()
@@ -43,7 +47,8 @@ function close() {
 </script>
 
 <template>
-  <CardContainer>
+  <EnterpriseClientModal v-if="showEnterpriseCredits" :recharge-amount="rechargeAmount" :balance="userPayInfo?.balance || 0" @close="close" />
+  <CardContainer v-else>
     <CardBody class="flex flex-col pa-8 gap-12 popup">
       <div class="flex flex-col w-full justify-between pa-4 min-h-63 rounded-xl bg-white overflow-hidden card">
         <div class="flex justify-between items-center">

@@ -17,6 +17,8 @@ import AccountList from '/@/views/account/list/quick.vue'
 import TransferModal from '/@/views/browser/list/transfer/components/transfer-modal.vue'
 import ProxyBuyAddDrawer from '/@/views/browser/create/components/proxy-buy-add-drawer.vue'
 import BatchProxies from '/@/views/agent/create/components/batch-proxies.vue'
+import BatchProxyBind from './components/batch-proxy-bind.vue'
+import type { ProxyBindGroup } from './components/batch-proxy-bind.vue'
 import { RxAlert } from '/@/components/rx-alert'
 import { useConfirm } from 'primevue/useconfirm'
 import { useDialog } from 'primevue/usedialog'
@@ -771,16 +773,17 @@ function multipleProxyChange(data: Data | Data[], { proxyMethod }: any) {
   const datas = ([] as Data[]).concat(data)
   const isChoose = proxyMethod === 'choose'
 
-  // 勾选 2 个以上走批量抽屉；1 条仍走单窗流程（底部批量栏勾 1 条时 operationType 也是 batch）
+  // 勾选 2 个以上走「批量配置 IP」抽屉（左选 IP、右逐个绑定）；1 条仍走单窗流程（底部批量栏勾 1 条时 operationType 也是 batch）
   if (!isChoose) {
     if (datas.length > 1) {
-      return openBatchInlineProxyDrawer(datas)
+      return openBatchProxyBindDrawer(datas)
     }
     return openAddProxyBuyAddDrawer(datas)
   }
 
+  // 「选择已有代理 IP」多选时同样走「批量配置 IP」抽屉
   if (datas.length > 1) {
-    return openBatchChooseProxyDrawer(datas)
+    return openBatchProxyBindDrawer(datas)
   }
   return openChooseProxyDrawer(datas)
 }
@@ -812,8 +815,8 @@ function openChooseProxyDrawer(datas: Data[]) {
   return promise
 }
 
-/** 多窗口选择已有代理：批量勾选 + 关联数量，按下标一一绑定 */
-function openBatchChooseProxyDrawer(datas: Data[]) {
+/** 多窗口选择已有代理：批量勾选 + 关联数量，按下标一一绑定（入口已改为「批量配置 IP」，暂保留旧流程） */
+function _openBatchChooseProxyDrawer(datas: Data[]) {
   const { promise, resolve } = Promise.withResolvers<void>()
 
   drawerInstance.showDrawer({
@@ -851,8 +854,52 @@ async function openAddProxyBuyAddDrawer(datas: Data[]) {
   })
 }
 
-/** 多窗口批量添加：解析结果按顺序内联绑到窗口，不写入代理库 */
-function openBatchInlineProxyDrawer(datas: Data[]) {
+/**
+ * 批量配置 IP：右侧单选已有代理 IP，左侧对本次多选的窗口逐个「绑定 / 解绑」（或勾选后「替换为新代理」批量绑定），
+ * 保存时按代理分组提交；未配置的窗口保留原代理
+ */
+function openBatchProxyBindDrawer(datas: Data[]) {
+  const { promise, resolve } = Promise.withResolvers<void>()
+
+  drawerInstance.showDrawer({
+    title: $t('批量配置代理 IP'),
+    pt: {
+      root: {
+        class: 'overflow-hidden rounded-2 border-0.5 max-w-full',
+        style: { width: 'min(1360px, calc(100vw - 24px))' },
+      },
+    },
+    slots: {
+      header: ({ closeCallback }: { closeCallback: () => void }) => (
+        <div class="flex justify-between items-center self-stretch gap-3 py-3 pl-6 pr-3 shrink-0 border-b border-b-solid border-[var(--colors-border-divider)]">
+          <div class="tt-primary text-4 font-600 leading-[25.6px]">{$t('批量配置代理 IP')}</div>
+          <RxButton text severity="secondary" size="xs" icon="base/rx_ic_delete" onClick={closeCallback} />
+        </div>
+      ),
+      container: () => (
+        <BatchProxyBind profiles={datas} workspaceName={workspaceName.value} onConfirm={onConfirm} />
+      ),
+    },
+    onHide: resolve,
+  })
+
+  async function onConfirm(groups: ProxyBindGroup[]) {
+    for (const group of groups) {
+      const ok = await bindChosenProxyToProfiles(group.profiles as Data[], group.proxy)
+      if (!ok) {
+        return false
+      }
+    }
+    showToast(0, $t('保存成功'))
+    drawerInstance.hideDrawer()
+    return true
+  }
+
+  return promise
+}
+
+/** 多窗口批量添加：解析结果按顺序内联绑到窗口，不写入代理库（入口已改为「批量配置 IP」，暂保留旧流程） */
+function _openBatchInlineProxyDrawer(datas: Data[]) {
   const { promise, resolve } = Promise.withResolvers<void>()
 
   drawerInstance.showDrawer({
@@ -941,7 +988,7 @@ async function bindChosenProxyToProfiles(datas: Data[], formData: any) {
   } as any)
   onlyErrorToast(code, msg)
   if (code !== 0) {
-    return
+    return false
   }
 
   const { protocol, proxyCategory, proxyType, isDirect, ...rest } = restForm
@@ -957,6 +1004,7 @@ async function bindChosenProxyToProfiles(datas: Data[], formData: any) {
   datas.forEach((item) => {
     silentUpdateProxy(item, params)
   })
+  return true
 }
 
 /** 手动添加的自定义 IP绑定到窗口 */

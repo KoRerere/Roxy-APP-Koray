@@ -3,17 +3,30 @@ import { WorkspaceType } from '/@/enums'
 
 const privateOnly = [WorkspaceType.Private] as const
 
+/** 标题延迟到读取时翻译，让菜单计算属性跟随当前语言更新，避免固化模块加载时的语言。 */
 export const normalMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'browser',
     name: 'browser',
-    meta: { title: $t('窗口管理'), icon: 'base/rx_ic_browser', workspaceTypes: [...privateOnly] },
+    meta: {
+      get title() {
+        return $t('窗口管理')
+      },
+      icon: 'base/rx_ic_browser',
+      workspaceTypes: [...privateOnly],
+    },
     redirect: { name: 'browser-list' },
     children: [
       {
         path: 'list',
         name: 'browser-list',
-        meta: { title: $t('窗口管理'), hideInMenu: true, workspaceTypes: [...privateOnly] },
+        meta: {
+          get title() {
+            return $t('窗口管理')
+          },
+          hideInMenu: true,
+          workspaceTypes: [...privateOnly],
+        },
         component: () => import('/@/views/browser/list'),
       },
       {
@@ -41,10 +54,50 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: 'cloud-phone',
+    name: 'cloud-phone',
+    meta: {
+      get title() {
+        return $t('云手机')
+      },
+      icon: 'base/rx_ic_cloud_phone',
+      workspaceTypes: [...privateOnly],
+    },
+    redirect: { name: 'cloud-phone-list' },
+    children: [
+      {
+        path: 'list',
+        name: 'cloud-phone-list',
+        meta: {
+          get title() {
+            return $t('云手机')
+          },
+          hideInMenu: true,
+          workspaceTypes: [...privateOnly],
+        },
+        component: () => import('/@/views/cloud-phone/index.vue'),
+      },
+      {
+        path: 'create',
+        name: 'cloud-phone-create',
+        meta: {
+          get title() {
+            return $t('创建云手机')
+          },
+          hideInMenu: true,
+          workspaceTypes: [...privateOnly],
+        },
+        component: () => import('/@/views/cloud-phone/create/index.vue'),
+      },
+    ],
+  },
+  {
     path: 'projects',
     name: 'projects',
     meta: {
-      title: $t('项目管理'),
+      get title() {
+        return $t('项目管理')
+      },
       icon: 'base/rx_ic_stack',
       permissions: ['Projects_view_page'],
       workspaceTypes: [...privateOnly],
@@ -78,13 +131,21 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'resource',
     name: 'resource',
-    meta: { title: $t('工具'), type: 'flat', workspaceTypes: [...privateOnly] },
+    meta: {
+      get title() {
+        return $t('工具')
+      },
+      type: 'flat',
+      workspaceTypes: [...privateOnly],
+    },
     children: [
       {
         path: 'agent',
         name: 'agent-list',
         meta: {
-          title: $t('代理 IP'),
+          get title() {
+            return $t('代理 IP')
+          },
           icon: 'base/rx_ic_internet',
           permissions: ['Proxy_List_view_page'],
           permissionMode: 'any',
@@ -97,7 +158,9 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         path: 'create',
         name: 'agent-create',
         meta: {
-          title: $t('新建代理 IP'),
+          get title() {
+            return $t('新建代理 IP')
+          },
           hideInMenu: true,
           permissions: ['Proxy_List_add'],
           workspaceTypes: [...privateOnly],
@@ -108,7 +171,9 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         path: 'account',
         name: 'account-list',
         meta: {
-          title: $t('平台账号'),
+          get title() {
+            return $t('平台账号')
+          },
           icon: 'base/rx_ic_keys',
           permissions: ['Platform_view_page'],
           workspaceTypes: [...privateOnly],
@@ -119,7 +184,9 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         path: 'accountcreate',
         name: 'account-create',
         meta: {
-          title: $t('新建账号'),
+          get title() {
+            return $t('新建账号')
+          },
           hideInMenu: true,
           permissions: ['Platform_add'],
           workspaceTypes: [...privateOnly],
@@ -130,7 +197,9 @@ export const normalMenuRoutes: RouteRecordRaw[] = [
         path: 'extensions',
         name: 'extensions',
         meta: {
-          title: $t('扩展中心'),
+          get title() {
+            return $t('扩展中心')
+          },
           icon: 'base/rx_ic_extension_store',
           permissions: ['Plugin_Installed_view_page'],
           workspaceTypes: [...privateOnly],

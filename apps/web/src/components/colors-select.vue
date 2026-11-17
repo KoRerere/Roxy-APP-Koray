@@ -7,11 +7,10 @@ const selectedColor = defineModel()
 </script>
 
 <template>
-  <div class="flex items-center gap-5">
-    <template v-for="color in colors" :key="color">
+  <div class="flex items-center gap-5" role="radiogroup">
+    <button v-for="color in colors" :key="color" type="button" role="radio" :aria-label="color" :aria-checked="color === selectedColor" class="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 p-0" :style="{ backgroundColor: color === selectedColor ? 'transparent' : color }" @click="selectedColor = color">
       <SvgIcon v-if="color === selectedColor" name="base/rx_ic_check_line" :size="20" :color="color" />
-      <div v-else class="w-5 h-5 rounded-full cursor-pointer" :style="{ backgroundColor: color }" @click="selectedColor = color" />
-    </template>
+    </button>
   </div>
 </template>
 

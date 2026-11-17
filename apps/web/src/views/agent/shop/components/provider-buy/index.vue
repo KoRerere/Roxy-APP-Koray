@@ -30,6 +30,7 @@ import { useRouteContext } from '/@/composables/useRouteContext'
 import { useProxyPurchaseLabels } from '/@/views/agent/shop/utils/proxy-purchase-labels'
 import type { ProxyPurchaseMode } from '/@/views/agent/shop/utils/proxy-purchase-labels'
 import type { WorkspaceType } from '/@/enums/base'
+import { useEnterpriseClient } from '/@/views/enterprise-client/useEnterpriseClient'
 
 const {
   data: provider = {},
@@ -84,6 +85,7 @@ const { mixpanelTrack } = useUserStore()
 const { check } = usePermission()
 const { showFreedomActivityModal } = useFreedomActivity()
 const { showLuckyDrawAfterPay } = useMidAutumnActivity()
+const { maybeShowEnterpriseProxyPurchase } = useEnterpriseClient()
 
 const api = useProxyPurchaseApi({ entryType, mode: resolvedMode, workspaceType: resolvedWorkspaceType })
 
@@ -276,6 +278,8 @@ async function onPay() {
       workspaceType,
       isAuto: isAuto.value,
     }
+    // 固定本次订单数量，支付等待期间调整表单不会改变优惠弹窗的判断。
+    const enterprisePurchaseCount = resolvedMode.value === 'proxy' ? payload.purchaseMember : undefined
     const { code, data, msg } = await API.pay.userBuyProxySettlementCreate(payload)
     onlyErrorToast(code, msg)
     if (code !== 0) {
@@ -289,13 +293,15 @@ async function onPay() {
         await useNewUserBenefitStore().refreshBenefitIfEligible()
         emit('success', data)
         emit('close')
-        maybeShowFirstConsumeReferralPopup((reason) => {
-          // 查看详情会自己跳推广页，只跳过后续默认动作；抽奖次数已到账，仍要弹出抽奖盘
-          showLuckyDrawAfterPay()
-          if (reason === 'view-details') {
-            return
-          }
-          showFreedomActivityModal()
+        maybeShowEnterpriseProxyPurchase(enterprisePurchaseCount, () => {
+          maybeShowFirstConsumeReferralPopup((reason) => {
+            // 查看详情会自己跳推广页，只跳过后续默认动作；抽奖次数已到账，仍要弹出抽奖盘
+            showLuckyDrawAfterPay()
+            if (reason === 'view-details') {
+              return
+            }
+            showFreedomActivityModal()
+          })
         })
       })
   }

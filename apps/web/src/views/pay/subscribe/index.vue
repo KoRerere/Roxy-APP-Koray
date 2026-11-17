@@ -22,6 +22,7 @@ import { deepClone } from '/@/utils'
 import { discountCalculate, durationAmountFromMonthly, durationPayableAmount, hasVisiblePriceDiscount, tierCalculate } from './util'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnum, SubLevelEnumStr } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import { useRouteContext } from '/@/composables/useRouteContext'
 import { useMidAutumnActivity } from '/@/views/campaign/mid-autumn-festival/hook'
 import type { Plan } from './type'
 
@@ -36,6 +37,7 @@ const { showLuckyDrawAfterPay } = useMidAutumnActivity()
 const [showModal] = useDialog()
 const [showToast, onlyErrorToast] = useResponseToast()
 const billingLabels = useBillingEntityLabels()
+const { isNormal } = useRouteContext()
 
 const rawList = ref<Plan[]>()
 const dataList = ref<Plan[]>()
@@ -262,11 +264,13 @@ async function onSubscribe() {
         onClose: hideModal,
         onConfirm: async ({ payType, isAuto }) => {
           mixpanelTrack('click_pay_subscribe')
+          const orderProfileCount = selectedCount.value
+          const profilePurchaseCount = isNormal.value ? orderProfileCount : undefined
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
             isAuto,
             payType,
             purchaseMember: {
-              profile: selectedCount.value,
+              profile: orderProfileCount,
             },
             subLevel: selectedPlan.value.subLevel,
             subscriptionDays: selectedDuration.value.day,
@@ -276,15 +280,18 @@ async function onSubscribe() {
           })
           onlyErrorToast(code, msg)
           if (code === 0) {
-            (payType === PayWay.Balance ? planSuccessFreedomActivity2() : openProcessing({ payType, ...data }, OrderType.Subscribe))
-              .then(() => {
+            (payType === PayWay.Balance
+              ? planSuccessFreedomActivity2(profilePurchaseCount)
+              : openProcessing({ payType, ...data }, OrderType.Subscribe, { profilePurchaseCount }))
+              .then((reason) => {
+                const targetRoute = reason === 'create-profiles' ? 'browser-create' : 'browser-list'
                 maybeShowFirstConsumeReferralPopup((reason) => {
                   // 查看详情会自己跳推广页，不能再推窗口列表；抽奖次数已到账，仍要弹出抽奖盘
                   showLuckyDrawAfterPay()
                   if (reason === 'view-details') {
                     return
                   }
-                  router.push({ name: 'browser-list' })
+                  router.push({ name: targetRoute })
                 })
               })
           }

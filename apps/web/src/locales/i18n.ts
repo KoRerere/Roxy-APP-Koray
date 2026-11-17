@@ -1,5 +1,5 @@
 import type { Locale } from 'vue-i18n'
-import { type App, unref } from 'vue'
+import { unref } from 'vue'
 import { createI18n } from 'vue-i18n'
 import type {
   ImportLocaleFn,
@@ -8,21 +8,27 @@ import type {
   SupportedLanguagesType,
 } from './typing'
 
-const i18n = createI18n({
-  globalInjection: true,
-  fallbackLocale: 'en',
-  legacy: false,
-  locale: '',
-  messages: {},
-  missingWarn: false,
-  fallbackWarn: false,
-  messageResolver(obj, path) {
-    const msg = obj[path]
-    return msg || path
-  },
-})
+function createAppI18n() {
+  return createI18n({
+    globalInjection: true,
+    fallbackLocale: 'en',
+    legacy: false,
+    locale: '',
+    messages: {},
+    missingWarn: false,
+    fallbackWarn: false,
+    messageResolver(obj, path) {
+      const msg = obj[path]
+      return msg || path
+    },
+  })
+}
+
+// 热更新时复用已安装到 Vue 的实例，让全局 $t 和组件共享当前语言及词条。
+const i18n: ReturnType<typeof createAppI18n> = import.meta.hot?.data.i18n ?? createAppI18n()
 
 if (import.meta.hot) {
+  import.meta.hot.data.i18n = i18n
   // Prevent full reload, see https://github.com/vitejs/vite/issues/5763#issuecomment-1974235806
   import.meta.hot.on('vite:beforeFullReload', (payload) => {
     // console.log('path', payload.path)
@@ -46,7 +52,7 @@ const langModules = import.meta.glob('./langs/*.json')
 
 export const localesMap = loadLocalesMap(langModules)
 
-let loadMessages: LoadMessageFn
+let loadMessages: LoadMessageFn = import.meta.hot?.data.loadMessages ?? (async () => ({}))
 
 /**
  * Load locale modules
@@ -81,6 +87,9 @@ async function setupI18n(options: LocaleSetupOptions = {}) {
    * app可以自行扩展一些第三方库和组件库的国际化
    */
   loadMessages = options.loadMessages || (async () => ({}))
+  if (import.meta.hot) {
+    import.meta.hot.data.loadMessages = loadMessages
+  }
   console.log('defaultLocale', defaultLocale)
   if (defaultLocale) {
     await loadLocaleMessages(defaultLocale)

@@ -31,11 +31,15 @@ import { I18nT } from 'vue-i18n'
 import { useOpenRoxyAIAgent } from '/@/hooks/useOpenRoxyAIAgent.tsx'
 import { isMainWindow } from '/@/utils/common'
 import { useFirstConsumeReferralPopup } from '/@/views/referral-program/useFirstConsumeReferralPopup'
+import { isEnterpriseProfilePurchaseEligible, isEnterpriseRechargeEligible } from '/@/views/enterprise-client/eligibility'
+import { useEnterpriseClient } from '/@/views/enterprise-client/useEnterpriseClient'
+import type { EnterprisePurchaseCloseReason } from '/@/views/enterprise-client/useEnterpriseClient'
 
 type Data = UserRechargeSettlementCreateData['data']
 /** 钱包充值会带上返回回调，扫码弹窗据此显示返回并重新打开充值弹窗 */
 type PayModalData = Data & {
   onBack?: () => void
+  rechargeAmount?: number
 }
 interface ChargeParams {
   next?: (data: PayModalData) => void
@@ -66,6 +70,7 @@ export function usePay() {
   const { showFreedomActivityModal, showSlotMachine } = useFreedomActivity()
   const { showLuckyDrawAfterPay } = useMidAutumnActivity()
   const { maybeShowFirstConsumeReferralPopup } = useFirstConsumeReferralPopup()
+  const { maybeShowEnterpriseProfilePurchase } = useEnterpriseClient()
 
   function openProcessing(
     data: Record<string, any>,
@@ -74,13 +79,15 @@ export function usePay() {
       cancelRedirect?: boolean
       /** 从钱包充值进入扫码支付时，返回并重新打开充值弹窗 */
       onBack?: () => void
+      /** 本次已提交窗口订单的付费数量，仅窗口购买和升级入口传入。 */
+      profilePurchaseCount?: number
     } = {},
   ) {
     const { cancelRedirect = true, onBack: onBackOption } = options
     // 钱包充值会把返回回调挂在结算数据上；订阅、账单重试等入口没有该字段
     const { onBack: onBackFromData, ...payData } = data
     const onBack = onBackOption ?? (typeof onBackFromData === 'function' ? onBackFromData : undefined)
-    const { promise, resolve, reject } = Promise.withResolvers<void>()
+    const { promise, resolve, reject } = Promise.withResolvers<EnterprisePurchaseCloseReason | void>()
     if (isCardPayWay(payData.payType) || payData.payType === PayWay.Balance) {
       onConfirm()
       return promise
@@ -119,11 +126,13 @@ export function usePay() {
     async function onConfirm() {
       switch (type) {
         case OrderType.Subscribe:
+          planSuccessFreedomActivity(options.profilePurchaseCount).then(resolve)
+          break
         case OrderType.Renew:
           planSuccessFreedomActivity().then(resolve)
           break
         case OrderType.Recharge:
-          balanceSuccessForFreedomActivity().then(resolve)
+          balanceSuccessForFreedomActivity(Number(payData.rechargeAmount ?? payData.orderAmount)).then(resolve)
           break
         case OrderType.Purchase:
           purchaseSuccess()
@@ -154,24 +163,34 @@ export function usePay() {
   /**
    * 充值
    */
-  async function planSuccessFreedomActivity() {
+  async function planSuccessFreedomActivity(profilePurchaseCount?: number) {
     if (userPayInfo.value?.isFreedom) {
+      if (isEnterpriseProfilePurchaseEligible(profilePurchaseCount)) {
+        const reason = await planSuccess(true, profilePurchaseCount)
+        showFreedomActivityModal()
+        return reason
+      }
       return showFreedomActivityModal()
     }
     else {
-      return planSuccess()
+      return planSuccess(false, profilePurchaseCount)
     }
   }
 
   /**
    * 充值+购买
    */
-  async function planSuccessFreedomActivity2() {
+  async function planSuccessFreedomActivity2(profilePurchaseCount?: number) {
     if (userPayInfo.value?.isFreedom) {
+      if (isEnterpriseProfilePurchaseEligible(profilePurchaseCount)) {
+        const reason = await planSuccess(true, profilePurchaseCount)
+        showFreedomActivityModal(true)
+        return reason
+      }
       return showFreedomActivityModal(true)
     }
     else {
-      return planSuccess()
+      return planSuccess(false, profilePurchaseCount)
     }
   }
 
@@ -184,7 +203,7 @@ export function usePay() {
     return promise
   }
 
-  async function planSuccess(notSlotMachine?: boolean) {
+  async function planSuccess(notSlotMachine?: boolean, profilePurchaseCount?: number) {
     // 窗口订阅/续费成功后刷新新人买赠资格；无资格则跳过
     void useNewUserBenefitStore().refreshBenefitIfEligible()
 
@@ -193,7 +212,19 @@ export function usePay() {
     }
 
     await getUserPayInfo()
-    const { promise, resolve } = Promise.withResolvers<void>()
+    const { promise, resolve } = Promise.withResolvers<EnterprisePurchaseCloseReason | void>()
+    if (isEnterpriseProfilePurchaseEligible(profilePurchaseCount)) {
+      maybeShowEnterpriseProfilePurchase(profilePurchaseCount, (reason) => {
+        if (notSlotMachine) {
+          resolve(reason)
+        }
+        else {
+          showSlotMachine(() => resolve(reason))
+        }
+      })
+      return promise
+    }
+
     dialog.open(PlanSuccessModal, {
       props: {
         showHeader: false,
@@ -220,32 +251,42 @@ export function usePay() {
     return promise
   }
 
-  async function balanceSuccessForFreedomActivity() {
+  async function balanceSuccessForFreedomActivity(rechargeAmount?: number) {
     if (userPayInfo.value?.isFreedom) {
       const { promise, resolve } = Promise.withResolvers<void>()
       showFreedomActivityModal(false, resolve)
-      return promise
+      await promise
+      if (isEnterpriseRechargeEligible(rechargeAmount)) {
+        return balanceSuccess(rechargeAmount)
+      }
     }
     else {
-      return balanceSuccess()
+      return balanceSuccess(rechargeAmount)
     }
   }
 
-  async function balanceSuccess() {
+  async function balanceSuccess(rechargeAmount?: number) {
     if (!check('Cost_Center_all')) {
       return
     }
     const { promise, resolve } = Promise.withResolvers<void>()
     dialog.open(BalanceSuccessModal, {
+      data: { rechargeAmount },
+      onClose: () => resolve(),
       props: {
         showHeader: false,
         modal: true,
         blockScroll: true,
         pt: {
           root: '!bg-transparent !border-none !shadow-none',
-          content: '!pa-20',
+          content: isEnterpriseRechargeEligible(rechargeAmount) ? '!pa-0' : '!pa-20',
           mask: '!backdrop-blur-md',
         },
+        ...(isEnterpriseRechargeEligible(rechargeAmount)
+          ? {
+              style: { width: '640px', maxWidth: 'calc(100vw - 32px)' },
+            }
+          : {}),
       },
       emits: {
         onConfirm: () => {
@@ -327,6 +368,7 @@ export function usePay() {
 
         await settlementNext?.({
           ...data,
+          rechargeAmount,
           onBack: backToRecharge,
         })
       }

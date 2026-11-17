@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Menu from 'primevue/menu'
-import type { MenuItem } from 'primevue/menuitem'
 import SelectionMenuItem from './menu-selection-item.vue'
 import type { PropType } from 'vue'
 import type { SvgNames } from '/@/components/rx-icon'
@@ -40,6 +39,9 @@ async function onMenuCommand(event: Event, item: any) {
 }
 
 defineExpose({
+  hide() {
+    menuRef.value?.hide()
+  },
   toggle(event: Event) {
     menuRef.value?.toggle(event)
   },

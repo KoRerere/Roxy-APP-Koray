@@ -14,6 +14,9 @@ import { resolveFooterMenuRoutes } from '/@/router/resolve-menu'
 import type { SvgNames } from '/@/components/rx-icon'
 import type { RouteRecordNameGeneric } from 'vue-router'
 
+const KernelOptimizationDialog = defineAsyncComponent(() => import('./components/kernel-optimization-dialog.vue'))
+const kernelOptimizationVisible = ref(false)
+
 const router = useRouter()
 const roleStore = useRoleStore()
 const { check } = usePermission()
@@ -40,8 +43,9 @@ interface FooterMenuItem {
 }
 
 const items = computed(() => {
-  if (isPublicMember.value)
+  if (isPublicMember.value) {
     return []
+  }
 
   const routes = resolveFooterMenuRoutes({
     ctx: ctx.value,
@@ -60,8 +64,9 @@ const items = computed(() => {
       // 仅展示层差异，不进 RouteMeta
       shiny: routeName === 'referral-program',
       command: () => {
-        if (routeName != null)
+        if (routeName != null) {
           router.push({ name: routeName })
+        }
       },
     }
 
@@ -81,7 +86,7 @@ const items = computed(() => {
     <TieredMenu :model="items" :pt="{ rootlist: menuCss.rootlist }" @hide="hidePreventMask" @show="showPreventMask">
       <template #item="{ item, props }">
         <ShinyButton v-if="item.shiny" class="w-full cursor-pointer rounded" :title="item.label">
-          <a v-ripple :id="item.routeName === 'referral-program' ? 'REFERRAL_PROGRAM_ENTRY' : undefined" class="relative menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
+          <a :id="item.routeName === 'referral-program' ? 'REFERRAL_PROGRAM_ENTRY' : undefined" v-ripple class="relative menu-item" :class="{ 'root-menu': item.rootMenu, 'active': item.routeName === $route.name }" v-bind="props.action">
             <SvgIcon class="menu-icon" v-bind="item.iconAttr" :name="item.icon" :size="18" />
             <span v-if="!collapsed || !item.rootMenu" class="ellipsis-1 menu-title flex gap-1.5" :title="(item.label as string)">
               {{ item.label }}
@@ -96,6 +101,16 @@ const items = computed(() => {
         </a>
       </template>
     </TieredMenu>
+    <button
+      v-if="!collapsed && siteLocale === 'zh'"
+      type="button"
+      class="ai-accounts-card block w-full cursor-pointer overflow-hidden rounded-md border-0 bg-transparent p-0 transition-transform hover:scale-[1.01] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#11a3fd]"
+      :title="$t('专为 AI 账号深度优化')"
+      @click="kernelOptimizationVisible = true"
+    >
+      <img src="/images/ai-accounts-promo.png" class="w-full block" :alt="$t('专为 AI 账号深度优化')" draggable="false">
+    </button>
+    <KernelOptimizationDialog v-if="kernelOptimizationVisible" v-model:visible="kernelOptimizationVisible" />
     <Campaign :collapsed />
     <PayMetrics v-if="roleStore.isOwner && !isEcommerce" :collapsed />
     <div v-else-if="!roleStore.isOwner && !collapsed" class="no-permission">

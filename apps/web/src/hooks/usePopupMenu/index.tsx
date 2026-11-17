@@ -85,5 +85,5 @@ export function usePopupMenu() {
     destroy()
   })
 
-  return { showMenu, destroy }
+  return { showMenu, hideMenu: () => opRef.value?.hide(), destroy }
 }

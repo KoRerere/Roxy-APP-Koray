@@ -21,6 +21,7 @@ import { useCampaignStore } from '/@/stores/campaign'
 import { useResponseToast } from '/@/hooks/useResponseToast'
 import { OrderType, PaySubOrderType, PayWay, PurchaseType, SubLevelEnumStr } from '/@/enums/pay'
 import { useBillingEntityLabels } from '/@/composables/useBillingEntityLabels'
+import { useRouteContext } from '/@/composables/useRouteContext'
 import type { SubLevelEnum } from '/@/enums/pay'
 import type { Plan } from './type'
 
@@ -33,6 +34,7 @@ const { getUserPayInfo, mixpanelTrack } = useUserStore()
 const { userPayInfo } = storeToRefs(useUserStore())
 const { seasonalActivity } = storeToRefs(useCampaignStore())
 const billingLabels = useBillingEntityLabels()
+const { isNormal } = useRouteContext()
 const popupCss = useCssModule('popup')
 
 const loading = ref(false)
@@ -286,9 +288,11 @@ async function planUpgrade() {
         onClose: hideModal,
         onConfirm: async ({ payType }) => {
           mixpanelTrack('click_pay_change_plan')
+          const orderProfileCount = selectedCount.value
+          const profilePurchaseCount = isNormal.value ? orderProfileCount : undefined
           const { code, data, msg } = await API.pay.userPaySettlementCreate({
             payType,
-            purchaseMember: { profile: selectedCount.value },
+            purchaseMember: { profile: orderProfileCount },
             subLevel: selectedPlan.value.subLevel,
             isAuto: !!userPayInfo.value.isAuto,
             purchaseType: PurchaseType.Profile,
@@ -297,10 +301,11 @@ async function planUpgrade() {
           })
           onlyErrorToast(code, msg)
           if (code === 0) {
-            (payType === PayWay.Balance ? planSuccessFreedomActivity2() : openProcessing({ payType, ...data }, OrderType.Subscribe))
-              .then(() => {
-                // showFreedomActivityModal()
-                router.push({ name: 'browser-list' })
+            (payType === PayWay.Balance
+              ? planSuccessFreedomActivity2(profilePurchaseCount)
+              : openProcessing({ payType, ...data }, OrderType.Subscribe, { profilePurchaseCount }))
+              .then((reason) => {
+                router.push({ name: reason === 'create-profiles' ? 'browser-create' : 'browser-list' })
               })
           }
         },

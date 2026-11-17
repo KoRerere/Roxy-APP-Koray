@@ -14,7 +14,9 @@ export const roxyGeoRoute: RouteRecordRaw = {
   path: 'roxy-geo',
   name: 'roxy-geo',
   meta: {
-    title: $t('跨境营销'),
+    get title() {
+      return $t('跨境营销')
+    },
     icon: 'websites/rx_accounts_tiktok',
     type: 'button',
     // locales: ['zh'],
@@ -35,13 +37,21 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'automation',
     name: 'automation',
-    meta: { title: $t('AI & 自动化'), type: 'group', workspaceTypes: [WorkspaceType.Private] },
+    meta: {
+      get title() {
+        return $t('AI & 自动化')
+      },
+      type: 'group',
+      workspaceTypes: [WorkspaceType.Private],
+    },
     children: [
       {
         path: 'sync-control',
         name: 'sync-control',
         meta: {
-          title: $t('窗口同步'),
+          get title() {
+            return $t('窗口同步')
+          },
           type: 'button',
           menuAction: 'sync-control',
           icon: 'base/rx_ic_frame_stack',
@@ -64,23 +74,12 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
         redirect: { name: 'agent-console-chat' },
       },
       {
-        path: 'template-store',
-        name: 'template-store',
-        meta: {
-          title: $t('模板商城'),
-          type: 'button',
-          menuAction: 'roxy-agent-template-store',
-          icon: 'roxy-agent/rx-ic-templates-store',
-          // hideInMenu: true,
-          permissions: ['Roxy_AI_Agent_All'],
-        },
-        redirect: { name: 'agent-console-template-store' },
-      },
-      {
         path: 'task-manager',
         name: 'task-manager',
         meta: {
-          title: $t('任务管理'),
+          get title() {
+            return $t('任务管理')
+          },
           type: 'button',
           menuAction: 'roxy-agent-task-manager',
           icon: 'roxy-agent/rx-ic-task-manager',
@@ -90,10 +89,27 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
         redirect: { name: 'agent-console-task-manager' },
       },
       {
+        path: 'template-store',
+        name: 'template-store',
+        meta: {
+          get title() {
+            return $t('模板商城')
+          },
+          type: 'button',
+          menuAction: 'roxy-agent-template-store',
+          icon: 'roxy-agent/rx-ic-templates-store',
+          // hideInMenu: true,
+          permissions: ['Roxy_AI_Agent_All'],
+        },
+        redirect: { name: 'agent-console-template-store' },
+      },
+      {
         path: 'my-templates',
         name: 'my-templates',
         meta: {
-          title: $t('我的模板'),
+          get title() {
+            return $t('我的模板')
+          },
           type: 'button',
           menuAction: 'roxy-agent-my-templates',
           icon: 'roxy-agent/rx-ic-templates',
@@ -117,20 +133,35 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
   {
     path: 'ecosystem',
     name: 'ecosystem',
-    meta: { title: $t('生态系统'), type: 'group' },
+    // 扁平分组：不渲染「生态系统」标题行，子项（跨境营销）直接铺到一级菜单
+    meta: {
+      get title() {
+        return $t('生态系统')
+      },
+      type: 'flat',
+    },
     children: [roxyGeoRoute],
   },
   {
     path: 'workspace',
     name: 'workspace',
-    meta: { title: $t('团队协作'), type: 'group' },
+    meta: {
+      get title() {
+        return $t('团队协作')
+      },
+      type: 'group',
+      hideInMenu: true,
+    },
     redirect: { name: 'teams' },
     children: [
       {
         path: 'teams',
         name: 'teams',
         meta: {
-          title: $t('团队管理'),
+          // 复用已有 i18n key「团队」→ en: Team，zh: 团队，ru: Команда
+          get title() {
+            return $t('团队')
+          },
           icon: 'base/rc_ic_user_referral',
           permissions: ['Team_Member_view_page'],
         },
@@ -142,7 +173,9 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
     name: 'wallet',
     path: 'wallet',
     meta: {
-      title: $t('充值/账单'),
+      get title() {
+        return $t('充值/账单')
+      },
       icon: 'base/rx_ic_wallet',
       hideInMenu: true,
       permissions: ['Cost_Center_all'],
@@ -153,7 +186,9 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
     name: 'subscribe-plan',
     path: 'subscribe-plan',
     meta: {
-      title: $t('选择套餐'),
+      get title() {
+        return $t('选择套餐')
+      },
       icon: 'base/rx_ic_wallet',
       hideInMenu: true,
       permissions: ['Cost_Center_all'],
@@ -164,7 +199,9 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
     name: 'upgrade-plan',
     path: 'upgrade-plan',
     meta: {
-      title: $t('更改套餐'),
+      get title() {
+        return $t('更改套餐')
+      },
       icon: 'base/rx_ic_wallet',
       hideInMenu: true,
       permissions: ['Cost_Center_all'],
@@ -175,7 +212,9 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
     name: 'tutorial',
     path: 'tutorial',
     meta: {
-      title: $t('新手教程'),
+      get title() {
+        return $t('新手教程')
+      },
       icon: 'base/rx_ic_books',
       hideInMenu: true,
     },
@@ -185,7 +224,9 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
     name: 'referral-program',
     path: 'referral-program',
     meta: {
-      title: $t('推广计划'),
+      get title() {
+        return $t('推广计划')
+      },
       icon: 'base/rx_ic_coins_hand',
       hideInMenu: true,
     },
@@ -207,7 +248,7 @@ export const sharedMenuRoutes: RouteRecordRaw[] = [
  * 侧栏底部入口（顺序即展示顺序）。
  * 路由仍用 hideInMenu 从侧栏树排除；footer 按此名单取 title/icon/permissions，避免与路由表双份维护。
  */
-export const footerMenuRouteNames = ['tutorial', 'wallet', 'referral-program'] as const
+export const footerMenuRouteNames = ['teams', 'wallet', 'referral-program', 'tutorial'] as const
 
 async function handleSyncControlClick(event: Event) {
   const { mixpanelTrack } = useUserStore()

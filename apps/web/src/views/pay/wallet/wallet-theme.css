@@ -1,0 +1,14 @@
+/* 对应 Figma pattern/pay/wallet-new，钱包页内共用同一组明暗主题变量。 */
+.wallet-page {
+  --pattern-pay-wallet-new-wallet-card-1: #11a3fd;
+  --pattern-pay-wallet-new-wallet-card-2: #11a3fd00;
+  --pattern-pay-wallet-new-panel-bg: #f2f5f799;
+  --pattern-pay-wallet-new-panel-border: #e2e9ee;
+}
+
+[data-theme='dark'] .wallet-page {
+  --pattern-pay-wallet-new-wallet-card-1: #027eca;
+  --pattern-pay-wallet-new-wallet-card-2: #027eca00;
+  --pattern-pay-wallet-new-panel-bg: #273c4899;
+  --pattern-pay-wallet-new-panel-border: #8a909399;
+}

@@ -23,14 +23,15 @@ const emit = defineEmits<{
 const router = useRouter()
 
 const features = ref(props.newFeatureTips)
-const page = ref(0)
+const page = defineModel<number>('page', { default: 0 })
 const appUpgradeTips = ref<HTMLElement | null>(null)
 
 const isLastPage = computed(() => page.value === features.value.length - 1)
 
 const nextText = computed(() => {
-  if (!isLastPage.value)
+  if (!isLastPage.value) {
     return $t('下一个')
+  }
   return props.actionMode === 'upgrade' ? $t('重启并更新') : $t('完成')
 })
 
@@ -68,8 +69,9 @@ onMounted(() => {
 
 function syncVideoPlayback() {
   const container = appUpgradeTips.value
-  if (!container)
+  if (!container) {
     return
+  }
 
   const players = [...container.querySelectorAll('roxy-video-player')] as HTMLElement[]
 
@@ -77,8 +79,9 @@ function syncVideoPlayback() {
     const pageIndex = Number((player as HTMLElement).dataset.page)
     const video = (player as any).shadowRoot?.querySelector('video') as HTMLVideoElement | null
 
-    if (!video || Number.isNaN(pageIndex))
+    if (!video || Number.isNaN(pageIndex)) {
       return
+    }
 
     if (pageIndex === page.value) {
       video.play().catch(() => { })
@@ -90,10 +93,12 @@ function syncVideoPlayback() {
 }
 
 function handlePrimaryAction() {
-  if (props.actionMode === 'upgrade')
+  if (props.actionMode === 'upgrade') {
     emit('upgrade')
-  else
+  }
+  else {
     emit('skip')
+  }
 }
 
 function handleSkip() {
@@ -132,6 +137,7 @@ function onHtmlClick(e: MouseEvent) {
 
 <template>
   <div ref="appUpgradeTips" class="app-upgrade-tips">
+    <slot name="before-content" />
     <div v-if="props.remindCopy?.title || props.remindCopy?.content" class="mb-4 flex flex-col gap-1.5">
       <div v-if="props.remindCopy.title" class="tt-primary text-3.5 font-600 leading-5.5">
         {{ props.remindCopy.title }}
@@ -150,35 +156,37 @@ function onHtmlClick(e: MouseEvent) {
       </template>
     </div>
 
-    <div class="flex items-center justify-between">
-      <template v-if="formatFeatures.length > 1">
-        <RxButton severity="secondary" outlined @click="handleSkip">
-          {{ skipLabel }}
-        </RxButton>
+    <slot name="actions">
+      <div class="flex items-center justify-between">
+        <template v-if="formatFeatures.length > 1">
+          <RxButton severity="secondary" outlined @click="handleSkip">
+            {{ skipLabel }}
+          </RxButton>
 
-        <div class="flex items-center gap-2">
-          <RxButton variant="text" severity="secondary" @click="handlePrev">
-            {{ $t('上一个') }}
+          <div class="flex items-center gap-2">
+            <RxButton variant="text" severity="secondary" @click="handlePrev">
+              {{ $t('上一个') }}
+            </RxButton>
+            <RxButton @click="handleNext">
+              {{ nextText }} ({{ page + 1 }}/{{ formatFeatures.length }})
+            </RxButton>
+          </div>
+        </template>
+        <template v-else-if="actionMode === 'upgrade'">
+          <RxButton severity="secondary" outlined class="mt-[6px]" @click="handleSkip">
+            {{ skipLabel }}
           </RxButton>
-          <RxButton @click="handleNext">
-            {{ nextText }} ({{ page + 1 }}/{{ formatFeatures.length }})
+          <RxButton class="mt-[6px]" @click="handlePrimaryAction">
+            {{ singlePageLabel }}
           </RxButton>
-        </div>
-      </template>
-      <template v-else-if="actionMode === 'upgrade'">
-        <RxButton severity="secondary" outlined class="mt-[6px]" @click="handleSkip">
-          {{ skipLabel }}
-        </RxButton>
-        <RxButton class="mt-[6px]" @click="handlePrimaryAction">
-          {{ singlePageLabel }}
-        </RxButton>
-      </template>
-      <template v-else>
-        <RxButton class="ml-auto mt-[6px]" @click="handlePrimaryAction">
-          {{ singlePageLabel }}
-        </RxButton>
-      </template>
-    </div>
+        </template>
+        <template v-else>
+          <RxButton class="ml-auto mt-[6px]" @click="handlePrimaryAction">
+            {{ singlePageLabel }}
+          </RxButton>
+        </template>
+      </div>
+    </slot>
   </div>
 </template>
 

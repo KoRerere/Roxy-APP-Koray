@@ -21,7 +21,7 @@ const proxyList = defineModel<any[]>('modelValue', { default: () => [] })
 const { presetTemplate, pauseCreateGuide, continueCreateGuideAfterBuy } = useTableContext()
 const { purchaseImmediateOfficialProxy } = usePurchaseOfficialProxy()
 
-const mode = ref<ProxyInfoMode>('noproxy')
+const mode = defineModel<ProxyInfoMode>('mode', { default: 'noproxy' })
 /** 避免用户手动切 tab 后被 watch 再次 hydrate 抢回 */
 const hydrated = ref(false)
 
