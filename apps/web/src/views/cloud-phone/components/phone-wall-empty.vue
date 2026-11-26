@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
-import { useDocumentVisibility, useElementSize, useElementVisibility, useEventListener, usePreferredReducedMotion } from '@vueuse/core'
+import { useDocumentVisibility, useElementSize, useElementVisibility, useEventListener, usePreferredReducedMotion, useWindowSize } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
+import RxButton from '/@/components/rx-button'
+import { RxSvgIcon } from '/@/components/rx-icon'
 import AndroidHomeScreen from './android-home-screen.vue'
 import mainWindowVideo from '/@/assets/videos/cloud-phone-main/main-window.mp4'
 
@@ -16,9 +18,10 @@ const { t: $t } = useI18n()
 
 /* ---------------- 开机序列与矩阵配置 ---------------- */
 
-const GRID_ROWS = 2
-/** 小屏尺寸按 2.3 行计算：比按 3 行大约 30% */
-const SIZE_ROWS = 2.3
+/** 小屏固定尺寸：窗口缩放时手机大小不变，只增减行数 / 列数 */
+const SMALL_CARD_H = 220
+/** 右侧最多显示的行数，避免超大屏时一次渲染过多台桌面 */
+const MAX_GRID_ROWS = 4
 const GRID_GAP = 14
 /** 手机屏幕宽高比 9:18 */
 const PHONE_ASPECT = 9 / 18
@@ -27,8 +30,8 @@ const PHONE_ASPECT = 9 / 18
 const BOOT_CONFIG = {
   initialHold: 550, // 进场先停留展示全员“未打开”状态
   itemStagger: 115, // 每台云手机依次开始启动的间隔
-  stepDuration: 420, // 每个启动步骤的时长（共 4 步）
-  revealDelay: 160, // 4 步全绿后短暂停留再淡出遮罩显现桌面
+  stepDuration: 200, // 每个启动步骤的时长（共 4 步）：单台 4 步 + 停留 = 900ms，一秒内跑完
+  revealDelay: 100, // 4 步全绿后短暂停留再淡出遮罩显现桌面
 }
 const SINGLE_BOOT_TOTAL = BOOT_CONFIG.stepDuration * 4 + BOOT_CONFIG.revealDelay
 
@@ -61,35 +64,30 @@ const PHONE_NAMES = [
 const sectionRef = useTemplateRef<HTMLElement>('section')
 const gridWrapRef = useTemplateRef<HTMLElement>('gridWrap')
 const stageRef = useTemplateRef<HTMLElement>('stage')
-const { width: stageWidth } = useElementSize(stageRef)
+const { width: stageWidth, height: stageHeight } = useElementSize(stageRef)
 const { height: gridHeight } = useElementSize(gridWrapRef)
 const STAGE_GAP = 20
 /** 主屏高度 = 右侧 2 行小屏 + 1 个间距（比整列高度更小） */
-const MAIN_ROWS = 1.75
+const MAIN_ROWS = 2
+/** 主屏窗口顶部标题栏（红黄绿三点那一栏）高度，与模板里 h-9 一致 */
+const MAIN_TITLEBAR_H = 36
 
-/** 右侧小屏按 3 行高度与标准宽高比算出统一宽度，保持所有小屏宽度一致且不裁切 */
-const smallCardH = computed(() => {
-  const h = gridHeight.value || 540
-  return Math.max((h - GRID_GAP * (SIZE_ROWS - 1)) / SIZE_ROWS, 120)
+/** 小屏尺寸固定，不再随容器缩放（缩放时所有桌面都要按新尺寸重排，是拖动窗口卡顿的原因） */
+const smallCardH = computed(() => SMALL_CARD_H)
+const smallCardW = computed(() => Math.round(SMALL_CARD_H * PHONE_ASPECT))
+/** 行数按右侧可用高度计算：窗口变高就多一行，至少 1 行 */
+const gridRows = computed(() => {
+  const h = gridHeight.value || SMALL_CARD_H * 2 + GRID_GAP
+  return Math.min(MAX_GRID_ROWS, Math.max(1, Math.floor((h + GRID_GAP) / (SMALL_CARD_H + GRID_GAP))))
 })
-const smallCardW = computed(() => Math.round(smallCardH.value * PHONE_ASPECT))
-const mainScreenH = computed(() => Math.round(smallCardH.value * MAIN_ROWS + GRID_GAP * (MAIN_ROWS - 1)))
+/** 主屏整个窗口（标题栏 + 屏幕）的高度 = 右侧 2 行小屏 + 1 个间距，上下边与右侧两行严格对齐 */
+const mainDeviceH = computed(() => Math.round(smallCardH.value * MAIN_ROWS + GRID_GAP * (MAIN_ROWS - 1)))
+const mainScreenH = computed(() => mainDeviceH.value - MAIN_TITLEBAR_H)
 /** 左侧主控大屏按手机标准宽高比计算宽度，避免裁切 */
 const mainColWidth = computed(() => Math.round(mainScreenH.value * PHONE_ASPECT))
 /** 主屏右侧边缘操作栏宽度：按屏幕宽度等比（参照云手机窗口约 12.5%） */
 const TOOLBAR_W = computed(() => Math.min(Math.max(Math.round(mainColWidth.value * 0.09), 34), 46))
 const mainFrameWidth = computed(() => mainColWidth.value + TOOLBAR_W.value)
-
-const C = (cx: number, cy: number, r: number) => `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${r * 2} 0a${r} ${r} 0 1 0 ${-r * 2} 0Z`
-const TOOLBAR_ITEMS = [
-  { key: 'timer', label: 'Timer', d: `${C(12, 12, 8.5)}M12 7.5V12l3 2` },
-  { key: 'rotate', label: 'Rotate', d: 'M9 3.5h5a1 1 0 0 1 1 1V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1ZM15 9.5h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1V18M18 3.5a3 3 0 0 1 2.5 2.5M19.5 5.5l1 .5.5-1' },
-  { key: 'shot', label: 'Screenshot', d: `M4 3.5h16v17H4ZM8.5 6.5l7 8M15.5 6.5l-7 8${C(8.5, 16.5, 2)}${C(15.5, 16.5, 2)}` },
-  { key: 'upload', label: 'Upload', d: 'M4 13.5h4.5l1 2h5l1-2H20M4 13.5V20h16v-6.5M4 13.5 6 5h3M20 13.5 18 5h-3M12 12V3.5M9 6.5l3-3 3 3' },
-  { key: 'export', label: 'Export', d: 'M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 15v3.5a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V15' },
-  { key: 'camera', label: 'Camera', d: `${C(12, 10, 7)}${C(12, 10, 2.8)}M8 21h8M12 17v4` },
-  { key: 'crop', label: 'Get text', d: 'M6.5 2.5v13a2 2 0 0 0 2 2h13M17.5 21.5v-13a2 2 0 0 0-2-2h-13' },
-]
 /** 列数按舞台剩余宽度计算，右侧宽度收紧到内容宽度，便于整体居中 */
 /** 左侧云手机窗口数量：只保留 1 台主控窗口 */
 const MAX_WINDOWS = 1
@@ -108,6 +106,31 @@ const gridCols = computed(() => {
 })
 const gridContentWidth = computed(() => gridCols.value * smallCardW.value + (gridCols.value - 1) * GRID_GAP)
 
+/* ---------------- 空状态提示卡片位置 ---------------- */
+
+/** 设计稿：卡片最宽 987px，左右各比手机区域内缩约 72px。
+ * 只有 1～2 行时，卡片按前两行（与主屏同高）的底边定位；
+ * 大屏多出第 3、4 行时，改按最后一行的底边定位，放到整个矩阵下方，不压在中间那几行上 */
+const NOTICE_MAX_W = 987
+const NOTICE_INSET_X = 72
+/** 卡片底边相对参照行底边的偏移：正数往下。卡片略微压出手机底边，与设计稿一致 */
+const NOTICE_OFFSET_Y = 64
+/** 手机区域顶部的标题行（h-9 = 36px）+ 间距（gap-2 = 8px） */
+const STAGE_HEADER_H = 36 + 8
+const noticeStyle = computed(() => {
+  const areaW = leftWidth.value + STAGE_GAP + gridContentWidth.value
+  const width = Math.max(320, Math.min(NOTICE_MAX_W, areaW - NOTICE_INSET_X * 2))
+  const gridH = gridRows.value * smallCardH.value + (gridRows.value - 1) * GRID_GAP
+  const contentBottom = STAGE_HEADER_H + (gridRows.value > 2 ? gridH : mainDeviceH.value)
+  return {
+    width: `${width}px`,
+    left: `${Math.round((areaW - width) / 2)}px`,
+    // 卡片底边不超出舞台底部，避免窗口刚好只放得下两行时被裁掉
+    top: `${stageHeight.value > 0 ? Math.min(contentBottom + NOTICE_OFFSET_Y, stageHeight.value - 1) : contentBottom + NOTICE_OFFSET_Y}px`,
+    transform: 'translateY(-100%)',
+  }
+})
+
 interface PhoneItem {
   /** 全局启动顺序索引：0 为左侧主屏，1..N 为右侧网格从左到右逐行排列 */
   order: number
@@ -116,7 +139,7 @@ interface PhoneItem {
 }
 
 const smallPhones = computed<PhoneItem[]>(() => {
-  const total = GRID_ROWS * gridCols.value
+  const total = gridRows.value * gridCols.value
   return Array.from({ length: total }, (_, idx) => {
     const order = idx + windowCount.value
     const hex = (0x9E3779B1 + order * 0x1041).toString(16).slice(0, 8)
@@ -285,15 +308,45 @@ function selectAsMain(phone: PhoneItem, state: CardBootState) {
 }
 
 const lightboxOn = ref(false)
+/** 放大动画结束后才让灯箱里的桌面开始演示，避免动画过程中同时开 APP、解码视频导致掉帧 */
+const lbPlaying = ref(false)
+/** 动画进行中：提前提升为合成层，动画结束后释放 */
+const lbAnimating = ref(false)
 const lbMoveRef = useTemplateRef<HTMLElement>('lbMove')
 let lbCard: HTMLElement | null = null
+let lbToken = 0
 
+/** 灯箱尺寸跟随窗口大小 */
+const { width: winW, height: winH } = useWindowSize()
 const lbFrame = computed(() => {
-  const pad = Math.min(Math.max(window.innerWidth * 0.05, 16), 64) * 2
-  const maxH = window.innerHeight - pad
+  const pad = Math.min(Math.max(winW.value * 0.05, 16), 64) * 2
+  const maxH = winH.value - pad
   const h = Math.min(maxH, 720)
   return { width: Math.round(h * PHONE_ASPECT), height: Math.round(h) }
 })
+
+/** 等 transform 过渡结束（带兜底超时，防止 transitionend 没触发） */
+function waitTransform(el: HTMLElement, fallback = 520) {
+  return new Promise<void>((resolve) => {
+    let done = false
+    const finish = () => {
+      if (done) {
+        return
+      }
+      done = true
+      el.removeEventListener('transitionend', onEnd)
+      clearTimeout(timer)
+      resolve()
+    }
+    const onEnd = (e: TransitionEvent) => {
+      if (e.target === el && e.propertyName === 'transform') {
+        finish()
+      }
+    }
+    el.addEventListener('transitionend', onEnd)
+    const timer = setTimeout(finish, fallback)
+  })
+}
 
 function flipTo(rect: DOMRect) {
   const move = lbMoveRef.value
@@ -320,8 +373,11 @@ async function openLightbox(index: number) {
   if (!card) {
     return
   }
+  const token = ++lbToken
   lightboxOrder.value = win.phone.order
   lbCard = card
+  lbPlaying.value = false
+  lbAnimating.value = true
   lightbox.value = { from: card.getBoundingClientRect() }
   await nextTick()
   const move = lbMoveRef.value
@@ -331,25 +387,44 @@ async function openLightbox(index: number) {
   move.style.transition = 'none'
   flipTo(lightbox.value.from)
   move.getBoundingClientRect()
-  requestAnimationFrame(() => {
+  // 多等一帧：让新挂载的桌面先完成首帧绘制，再开始放大，避免动画第一帧卡住
+  requestAnimationFrame(() => requestAnimationFrame(async () => {
+    if (token !== lbToken) {
+      return
+    }
     lightboxOn.value = true
     move.style.transition = ''
     move.style.transform = 'none'
-  })
+    await waitTransform(move)
+    if (token !== lbToken) {
+      return
+    }
+    lbAnimating.value = false
+    lbPlaying.value = true
+  }))
 }
 
-function closeLightbox() {
-  if (!lightbox.value) {
+async function closeLightbox() {
+  if (!lightbox.value || !lightboxOn.value) {
     return
   }
+  const token = ++lbToken
+  const move = lbMoveRef.value
+  lbAnimating.value = true
   if (lbCard) {
     flipTo(lbCard.getBoundingClientRect())
   }
   lightboxOn.value = false
-  setTimeout(() => {
-    lightbox.value = null
-    last = performance.now()
-  }, 400)
+  if (move) {
+    await waitTransform(move)
+  }
+  if (token !== lbToken) {
+    return
+  }
+  lightbox.value = null
+  lbAnimating.value = false
+  lbPlaying.value = false
+  last = performance.now()
 }
 useEventListener(window, 'keydown', (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
@@ -378,10 +453,10 @@ onBeforeUnmount(() => {
     class="phone-wall flex flex-col overflow-hidden bg-[var(--colors-background-bg-page)] p-4 px-16 pt-16"
     aria-label="Cloud phone matrix preview"
   >
-    <!-- 左一大 + 右多小群控矩阵 -->
+    <!-- 左一大 + 右多小群控矩阵：左对齐，缩放时左侧主屏位置固定，只在右侧增减列 -->
     <div
       ref="stage"
-      class="phone-wall__stage min-h-0 w-full flex flex-1 justify-center gap-5 overflow-hidden select-none"
+      class="phone-wall__stage relative min-h-0 w-full flex flex-1 justify-start gap-5 overflow-hidden select-none"
     >
       <!-- 左侧：多台云手机窗口（第 1 台为可切换的主控屏） -->
       <div class="h-full flex shrink-0 gap-5">
@@ -393,13 +468,13 @@ onBeforeUnmount(() => {
       >
         <!-- 设备标题（独立放在窗口上方，与右侧状态栏等高 h-9） -->
         <div class="h-9 flex shrink-0 items-center px-0.5">
-          <span class="min-w-0 truncate text-3.25 font-600 tt-primary" :title="win.phone.id">
+          <span class="min-w-0 truncate text-4 font-600 tt-primary" :title="win.phone.id">
             {{ win.phone.name }}
           </span>
         </div>
 
         <!-- 云手机窗口：顶部标题栏 + 屏幕 + 右侧边缘操作栏 -->
-        <div class="phone-wall__device flex shrink-0 flex-col overflow-hidden rounded-[18px]" :style="{ height: `${mainScreenH + 36}px` }">
+        <div class="phone-wall__device flex shrink-0 flex-col overflow-hidden rounded-[18px]" :style="{ height: `${mainDeviceH}px` }">
         <!-- 窗口标题栏（高 36px） -->
         <div class="phone-wall__titlebar h-9 flex shrink-0 items-center gap-2 px-3">
           <span class="flex shrink-0 items-center gap-1.5" aria-hidden="true">
@@ -409,8 +484,10 @@ onBeforeUnmount(() => {
           </span>
           <span class="flex-1" />
           <button type="button" class="phone-wall__title-btn" title="Phone page" aria-label="Phone page" @click="emit('create')">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M4.5 11.5L11.5 4.5M11.5 4.5H6M11.5 4.5V10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            <!-- lucide: arrow-up-right -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 7h10v10" />
+              <path d="M7 17 17 7" />
             </svg>
           </button>
           <button
@@ -421,9 +498,10 @@ onBeforeUnmount(() => {
             title="Expand preview"
             @click="openLightbox(wi)"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8" />
-              <path d="M14.5 4.5v15" stroke="currentColor" stroke-width="1.8" />
+            <!-- lucide: panel-right -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="18" height="18" x="3" y="3" rx="2" />
+              <path d="M15 3v18" />
             </svg>
           </button>
         </div>
@@ -436,7 +514,7 @@ onBeforeUnmount(() => {
           @click="openLightbox(wi)"
         >
           <div class="phone-wall__media absolute inset-0" :class="{ 'is-visible': win.state.stage === 'running' }">
-            <AndroidHomeScreen :autoplay="bootFinished" :offset="win.phone.order" :video="win.phone.order === 0 ? mainWindowVideo : undefined" />
+            <AndroidHomeScreen :autoplay="bootFinished" :offset="win.phone.order" :video="win.phone.order === 0 ? mainWindowVideo : undefined" loop />
           </div>
 
           <!-- 主屏开机状态覆盖层 -->
@@ -478,9 +556,6 @@ onBeforeUnmount(() => {
                     }"
                   />
                 </svg>
-                <span class="phone-wall__ring-time absolute font-600 tt-primary tabular-nums">
-                  {{ win.state.timerText }}
-                </span>
               </div>
 
               <div class="phone-wall__boot-hint mt-[5cqw] tt-secondary">
@@ -516,31 +591,103 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <!-- 边缘操作栏（参照云手机窗口右侧操作栏） -->
+        <!-- 边缘操作栏（图标来自 Lucide：https://lucide.dev/icons/） -->
         <aside
           class="phone-wall__toolbar h-full flex shrink-0 flex-col items-center"
           :style="{ width: `${TOOLBAR_W}px`, '--tb': `${TOOLBAR_W}px` }"
           @click.stop
         >
-          <div class="phone-wall__tool">
-            <span class="phone-wall__tool-btn">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M6 19v-2.5M10 19v-5M14 19v-8M18 19V8.5" stroke="#22C55E" stroke-width="2.6" stroke-linecap="round" />
+          <!-- lucide: signal 去掉最左的点，保留 4 条信号柱 -->
+          <div class="phone-wall__tool" title="Signal">
+            <span class="phone-wall__tool-btn" style="color: #22C55E">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4.5 20v-3" />
+                <path d="M9.5 20v-7" />
+                <path d="M14.5 20v-11" />
+                <path d="M19.5 20V5" />
               </svg>
             </span>
           </div>
-          <div v-for="item in TOOLBAR_ITEMS" :key="item.key" class="phone-wall__tool" :title="item.label">
+          <!-- lucide: timer -->
+          <div class="phone-wall__tool" title="Timer">
             <span class="phone-wall__tool-btn">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path :d="item.d" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="10" x2="14" y1="2" y2="2" />
+                <line x1="12" x2="15" y1="14" y2="11" />
+                <circle cx="12" cy="14" r="8" />
+              </svg>
+            </span>
+          </div>
+          <!-- lucide: rotate-cw-square -->
+          <div class="phone-wall__tool" title="Rotate">
+            <span class="phone-wall__tool-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 5H6a2 2 0 0 0-2 2v3" />
+                <path d="m9 8 3-3-3-3" />
+                <path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+              </svg>
+            </span>
+          </div>
+          <!-- lucide: scissors -->
+          <div class="phone-wall__tool" title="Screenshot">
+            <span class="phone-wall__tool-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="6" cy="6" r="3" />
+                <path d="M8.12 8.12 12 12" />
+                <path d="M20 4 8.12 15.88" />
+                <circle cx="6" cy="18" r="3" />
+                <path d="M14.8 14.8 20 20" />
+              </svg>
+            </span>
+          </div>
+          <!-- lucide: upload -->
+          <div class="phone-wall__tool" title="Upload">
+            <span class="phone-wall__tool-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 3v12" />
+                <path d="m17 8-5-5-5 5" />
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              </svg>
+            </span>
+          </div>
+          <!-- lucide: download -->
+          <div class="phone-wall__tool" title="Export">
+            <span class="phone-wall__tool-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 15V3" />
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="m7 10 5 5 5-5" />
+              </svg>
+            </span>
+          </div>
+          <!-- lucide: webcam -->
+          <div class="phone-wall__tool" title="Camera">
+            <span class="phone-wall__tool-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="10" r="8" />
+                <circle cx="12" cy="10" r="3" />
+                <path d="M7 22h10" />
+                <path d="M12 22v-4" />
+              </svg>
+            </span>
+          </div>
+          <!-- lucide: crop -->
+          <div class="phone-wall__tool" title="Crop">
+            <span class="phone-wall__tool-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 2v14a2 2 0 0 0 2 2h14" />
+                <path d="M18 22V8a2 2 0 0 0-2-2H2" />
               </svg>
             </span>
           </div>
           <div class="min-h-0 flex-1" />
+          <!-- lucide: shopping-bag -->
           <div class="phone-wall__tool" title="Apps">
             <span class="phone-wall__tool-btn">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M5.5 7.5h13l-1 13h-11l-1-13ZM9 10.5V7a3 3 0 0 1 6 0v3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 10a4 4 0 0 1-8 0" />
+                <path d="M3.103 6.034h17.794" />
+                <path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z" />
               </svg>
             </span>
           </div>
@@ -553,29 +700,23 @@ onBeforeUnmount(() => {
       <!-- 右侧：顶部状态栏 + 多行多列小屏矩阵 -->
       <div class="min-w-0 flex shrink-0 flex-col gap-2" :style="{ width: `${gridContentWidth}px` }">
         <!-- 状态栏（与左侧顶部栏等高 h-9，保证左右屏幕顶边严格对齐） -->
-        <div class="h-9 flex shrink-0 items-center gap-2.5 px-0.5">
-          <span class="text-3 font-600 tt-primary">
-            Active streams <span class="font-400 tt-secondary">({{ totalStreamCount }})</span>
+        <div class="h-9 flex shrink-0 items-center gap-2.5 pl-0.5">
+          <span class="text-4 font-600 tt-primary">
+            Active streams
           </span>
-          <span class="text-2.75 tt-secondary">
-            Click a phone to make it the main stream.
-          </span>
-          <span
-            v-if="runningCount > 0"
-            class="inline-flex items-center gap-1.5 rounded-full bg-[#16A34A]/12 px-2 py-0.5 text-2.5 font-500 text-[#16A34A] tabular-nums"
-          >
-            <span class="size-1.5 rounded-full bg-[#16A34A]" />
-            {{ runningCount }} running
+          <!-- 运行台数（按设计稿）：钉钉进步体 12px，成功色文字 + 成功色浅底，圆角 6px -->
+          <span v-if="runningCount > 0" class="phone-wall__running ml-auto inline-flex items-center justify-center tabular-nums">
+            {{ runningCount }} Running
           </span>
         </div>
 
-        <!-- 2 行多列小屏网格（每台小屏保持统一标准宽度，不裁切） -->
+        <!-- 多行多列小屏网格：小屏尺寸固定，行数 / 列数随可用空间增减 -->
         <div
           ref="gridWrap"
           class="min-h-0 flex-1 grid content-start justify-start"
           :style="{
             gridTemplateColumns: `repeat(${gridCols}, ${smallCardW}px)`,
-            gridTemplateRows: `repeat(${GRID_ROWS}, ${smallCardH}px)`,
+            gridTemplateRows: `repeat(${gridRows}, ${smallCardH}px)`,
             gap: `${GRID_GAP}px`,
           }"
         >
@@ -593,7 +734,7 @@ onBeforeUnmount(() => {
           >
             <!-- 底层：Android 桌面（纯圆角矩形裁切，无 border） -->
             <div class="phone-wall__media absolute inset-0" :class="{ 'is-visible': smallStates[idx].stage === 'running' }">
-              <AndroidHomeScreen :autoplay="bootFinished" :offset="phone.order" :play-video="false" />
+              <AndroidHomeScreen :autoplay="bootFinished" :offset="phone.order" :play-video="false" loop :loop-pause="6000 + (phone.order % 4) * 1500" />
             </div>
 
             <!-- 顶层：未打开 -> 四步开机 -> 淡出遮罩 -->
@@ -635,9 +776,6 @@ onBeforeUnmount(() => {
                       }"
                     />
                   </svg>
-                  <span class="phone-wall__ring-time absolute font-600 tt-primary tabular-nums">
-                    {{ smallStates[idx].timerText }}
-                  </span>
                 </div>
 
                 <div class="phone-wall__boot-hint mt-[5cqw] tt-secondary">
@@ -674,6 +812,22 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
+
+      <!-- 空状态提示卡片（按设计稿）：毛玻璃底，压在手机矩阵底部、水平居中 -->
+      <div class="phone-wall__notice absolute z-10 flex items-center gap-6 p-8" :style="noticeStyle">
+        <div class="min-w-0 flex flex-1 items-start gap-6">
+          <RxSvgIcon name="base/rx_ic_cloud_phone" size="40" color="var(--colors-icon-icon-brand)" class="shrink-0" aria-hidden="true" />
+          <div class="min-w-0 flex flex-1 flex-col items-start gap-3">
+            <h2 class="m-0 text-4.5 font-600 leading-normal tt-primary">
+              {{ $t('暂无云手机') }}
+            </h2>
+            <p class="m-0 text-3.25 font-400 leading-4 tt-secondary">
+              {{ $t('创建您的第一台云手机以开始使用。您的免费试用包含 30 分钟使用时间。') }}
+            </p>
+          </div>
+        </div>
+        <RxButton size="md" icon="base/rx_ic_browser_add" :label="$t('创建云手机')" class="shrink-0" @click="emit('create')" />
+      </div>
     </div>
 
     <!-- 灯箱：高清放大预览左侧主控桌面 -->
@@ -682,9 +836,9 @@ onBeforeUnmount(() => {
         v-if="lightbox" class="phone-wall__lb fixed inset-0 z-2000 flex items-center justify-center"
         :class="{ 'is-on': lightboxOn }" @click.self="closeLightbox"
       >
-        <div ref="lbMove" class="phone-wall__lb-move">
+        <div ref="lbMove" class="phone-wall__lb-move" :class="{ 'is-animating': lbAnimating }">
           <div class="relative overflow-hidden rounded-[21px]" :style="{ width: `${lbFrame.width}px`, height: `${lbFrame.height}px` }">
-            <AndroidHomeScreen :autoplay="bootFinished" :offset="lightboxOrder" :video="lightboxOrder === 0 ? mainWindowVideo : undefined" />
+            <AndroidHomeScreen :autoplay="bootFinished && lbPlaying" :offset="lightboxOrder" :video="lightboxOrder === 0 ? mainWindowVideo : undefined" loop />
           </div>
         </div>
         <button class="phone-wall__lb-close absolute right-5 top-5 size-10 flex cursor-pointer items-center justify-center rounded-full" :aria-label="$t('关闭')" @click="closeLightbox">
@@ -709,7 +863,17 @@ onBeforeUnmount(() => {
 }
 
 .phone-wall__card--small {
+  --bezel: 3px;
   clip-path: inset(0 round 11px);
+  background: #000;
+}
+
+/* 屏幕内容缩进边框宽度，边框像手机外框一样围在屏幕外面，不再盖住内容 */
+.phone-wall__card--small > .phone-wall__media,
+.phone-wall__card--small > .phone-wall__boot-overlay {
+  inset: var(--bezel);
+  overflow: hidden;
+  border-radius: calc(11px - var(--bezel));
 }
 
 /* 小屏浅色描边：用内嵌覆盖层绘制（外层 clip-path 会裁掉普通 border/外阴影），
@@ -719,13 +883,17 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   z-index: 5;
-  border: 2px solid rgba(15, 23, 42, 0.1);
-  border-radius: inherit;
+  border: var(--bezel) solid #000;
+  border-radius: 11px;
   pointer-events: none;
 }
 
+.phone-wall__card--small.is-selected {
+  --bezel: 4px;
+}
+
 .phone-wall__card--small.is-selected::after {
-  border: 3px solid #10b981;
+  border-color: #10b981;
 }
 
 .phone-wall__card.is-selected {
@@ -743,9 +911,6 @@ onBeforeUnmount(() => {
   opacity: 1;
 }
 
-.phone-wall__card.is-running:hover .phone-wall__media {
-  transform: scale(1.03);
-}
 
 /* 开机状态覆盖层（默认加载时的蓝灰色底，兼容浅色/深色主题） */
 .phone-wall__boot-overlay {
@@ -807,10 +972,6 @@ onBeforeUnmount(() => {
   animation: phone-wall-pulse 1.1s ease-in-out infinite;
 }
 
-.phone-wall__ring-time {
-  font-size: clamp(7.5px, 7.6cqw, 14px);
-  line-height: 1;
-}
 
 .phone-wall__boot-hint {
   font-size: clamp(6.5px, 5.8cqw, 11px);
@@ -879,8 +1040,8 @@ onBeforeUnmount(() => {
 
 /* 灯箱 */
 .phone-wall__lb {
-  background: rgba(8, 8, 10, 0.9);
-  backdrop-filter: blur(14px);
+  /* 不用 backdrop-filter：全屏模糊会在背后十几台桌面每次重绘时整屏重算，是放大/缩小卡顿的主要来源 */
+  background: rgba(8, 8, 10, 0.92);
   opacity: 0;
   transition: opacity 0.32s;
 }
@@ -892,6 +1053,10 @@ onBeforeUnmount(() => {
 .phone-wall__lb-move {
   transform-origin: 0 0;
   transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.phone-wall__lb-move.is-animating {
+  will-change: transform;
 }
 
 .phone-wall__lb-close {
@@ -918,8 +1083,8 @@ onBeforeUnmount(() => {
 
 .phone-wall__title-btn {
   display: flex;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
@@ -940,8 +1105,23 @@ onBeforeUnmount(() => {
 }
 
 .phone-wall__device {
+  position: relative;
+  /* 自成层叠上下文：描边覆盖层的 z-index 只在窗口内部生效，不会盖到外面的空状态卡片上 */
+  isolation: isolate;
   background: #f1f4f9;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+/* 窗口描边：画在窗口内部的覆盖层上。
+   原来用外扩 1px 的 box-shadow，但外层列容器有 overflow: hidden 且窗口贴着列的左边缘，
+   左侧（以及右侧）那 1px 被裁掉，浅色 APP 界面时左边就像没有边框 */
+.phone-wall__device::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 /* 右侧操作栏：浅蓝灰底、白色圆按钮、图标下方深灰文字 */
@@ -949,7 +1129,7 @@ onBeforeUnmount(() => {
   gap: calc(var(--tb) * 0.2);
   padding: calc(var(--tb) * 0.28) 0 calc(var(--tb) * 0.22);
   background: #f1f4f9;
-  color: #111827;
+  color: #6b7280;
   overflow: hidden;
 }
 
@@ -971,8 +1151,8 @@ onBeforeUnmount(() => {
 }
 
 .phone-wall__tool-btn svg {
-  width: 48%;
-  height: 48%;
+  width: 50%;
+  height: 50%;
 }
 
 .phone-wall__tool-label {
@@ -983,5 +1163,26 @@ onBeforeUnmount(() => {
   font-size: calc(var(--tb) * 0.22);
   line-height: 1.2;
   color: #374151;
+}
+
+/* 运行台数：与站内其他数字展示一致，使用钉钉进步体 */
+.phone-wall__running {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--colors-background-bg-success);
+  color: var(--colors-text-text-success);
+  font-family: 'DingTalk JinBuTi', Inter, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+/* 空状态提示卡片：毛玻璃底（在设计稿 #E5E5E5 80% 基础上略微提亮）+ 白色 20% 描边 + 12px 背景模糊 */
+.phone-wall__notice {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(238, 238, 238, 0.84);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 </style>
